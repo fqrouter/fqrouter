@@ -1,0 +1,3 @@
+sudo apt-get install python python-setuptools python2.6-dev
+easy_install virtualenv
+virtualenv env
