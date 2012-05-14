@@ -14,12 +14,12 @@ define Build/Prepare
 endef
 
 define Package/iptables-mod-wcs2
-  CATEGORY:=Network
-  SUBMENU:=Firewall
-  TITLE:=West Chamber Season2 Iptables Module
-  URL:=http://code.google.com/p/xt-wcs2/
-  MAINTAINER:=FQ-Router Development Team <fqrouter-devel@googlegroups.com>
-  DEPENDS:= @!LINUX_2_4 iptables
+    CATEGORY:=Network
+    SUBMENU:=Firewall
+    TITLE:=West Chamber Season2 Netfilter Extension (User Land)
+    URL:=http://code.google.com/p/xt-wcs2/
+    MAINTAINER:=FQ-Router Development Team <fqrouter-devel@googlegroups.com>
+    DEPENDS:= @!LINUX_2_4 iptables +kmod-ipt-wcs2
 endef
 
 define Package/iptables-mod-wcs2/install

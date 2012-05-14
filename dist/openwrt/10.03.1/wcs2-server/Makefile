@@ -13,10 +13,10 @@ define Build/Prepare
 endef
 
 define Package/wcs2-server
-  CATEGORY:=Network
-  TITLE:=West Chamber Season2 Server
-  URL:=http://code.google.com/p/xt-wcs2/
-  MAINTAINER:=FQ-Router Development Team <fqrouter-devel@googlegroups.com>  
+    CATEGORY:=Network
+    TITLE:=West Chamber Season2 Server
+    URL:=http://code.google.com/p/xt-wcs2/
+    MAINTAINER:=FQ-Router Development Team <fqrouter-devel@googlegroups.com>
 endef
 
 define Package/wcs2-server/install
