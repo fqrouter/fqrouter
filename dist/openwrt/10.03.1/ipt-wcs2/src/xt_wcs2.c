@@ -57,9 +57,6 @@ xt_wcs2_tg(struct sk_buff *skb, const struct xt_target_param *par)
 		}
 	}
 
-	/* Do checksum of payload. */
-	skb->csum = csum_partial(iph, payload_len, 0);
-
 	if (!skb_make_writable(skb, skb->len)) {
 		pr_info("iptables: xt_wcs2: skb_make_writable faied. ");
 		return NF_DROP;
@@ -86,12 +83,8 @@ xt_wcs2_tg(struct sk_buff *skb, const struct xt_target_param *par)
 	udph->source = htons(58371);
 	udph->dest = htons(info->udp_port);
 	udph->len = htons(sizeof(struct udphdr) + payload_len);
-	/* Do checksums of UDP header and combine the payload checksum */
+	/* Disable UDP checksum */
 	udph->check = 0;
-	skb->csum = csum_partial((char *)udph, sizeof(struct udphdr), skb->csum);
-	udph->check = csum_tcpudp_magic(saddr, info->gateway.in.s_addr, payload_len + sizeof(struct udphdr), IPPROTO_UDP, skb->csum);
-	if (udph->check == 0)
-		udph->check = -1;
 
 	/* Get IP header. */
 	iph = (struct iphdr*)skb_push(skb, sizeof(struct iphdr));
