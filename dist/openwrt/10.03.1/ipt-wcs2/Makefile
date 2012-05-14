@@ -14,7 +14,9 @@ define Build/Prepare
 endef
 
 define Build/Compile
-    $(MAKE) -C $(LINUX_DIR) SUBDIRS=$(PKG_BUILD_DIR) LDDINC=$(LINUX_DIR)/include modules
+    $(MAKE) -C $(LINUX_DIR) SUBDIRS=$(PKG_BUILD_DIR) LDDINC=$(LINUX_DIR)/include \
+        ARCH="$(LINUX_KARCH)" CROSS_COMPILE="$(TARGET_CROSS)" \
+        LDFLAGS="$(TARGET_LDFLAGS)" CFLAGS="$(CFLAGS)" modules
 endef
 
 define KernelPackage/ipt-wcs2
