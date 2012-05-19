@@ -30,11 +30,11 @@ def handle_syn(external_ips, payload, ip_packet):
     print(guesses)
 
 
-def monitor_output(external_ips):
+def monitor_output(external_ips, queue_number):
     q = nfqueue.queue()
     try:
         q.set_callback(functools.partial(handle_output, external_ips))
-        q.fast_open(0, socket.AF_INET)
+        q.fast_open(queue_number, socket.AF_INET)
         q.set_queue_maxlen(50000)
         q.try_run()
     finally:
