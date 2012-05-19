@@ -1,3 +1,6 @@
+# *Scout* work with remote *Helpers* (STUN servers, etc) to know:
+# If port of NAT(s) can be guessed (if port is in range of [local_port, local_port + N]
+# External ips of my NAT(s), so that *Guesser* can make educated guess base upon that
 from . import rfc_3489
 
 def detect_nat_status(stun_servers=()):
