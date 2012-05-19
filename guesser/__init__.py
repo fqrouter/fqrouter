@@ -4,5 +4,5 @@
 # Know the external ip and port used by the connection
 from . import output
 
-def start():
-    output.monitor_output()
+def start(external_ips):
+    output.monitor_output(external_ips)
