@@ -45,6 +45,12 @@ class Future(object):
             raise Exception('Internal Error')
 
     def _read(self):
+        done = self._just_read()
+        if done:
+            self.dispose()
+        return done
+
+    def _just_read(self):
         try:
             self.result = self.read()
         except socket.error:
@@ -56,6 +62,7 @@ class Future(object):
         except:
             self.exc_info = sys.exc_info()
         return True
+
 
 
 class ReadFailed(Exception):
