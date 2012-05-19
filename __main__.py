@@ -1,5 +1,11 @@
 import scout
 
-reflexive_transport_addr = scout.detect_reflexive_transport_address(stun_server_ip='sip1.lakedestiny.cordiaip.com')
-if reflexive_transport_addr:
-    print(reflexive_transport_addr)
+requests = []
+
+external_ips = scout.detect_nat_status([
+    'provserver.televolution.net',
+    'sip1.lakedestiny.cordiaip.com',
+    'stun1.voiceeclipse.net',
+    'stun.callwithus.com'
+])
+print(external_ips)

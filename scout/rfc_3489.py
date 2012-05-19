@@ -1,9 +1,11 @@
 # using old version of STUN
+import functools
 import socket
 import binascii
 import struct
 from dpkt import stun
 import random
+import nio
 
 IP_ADDR_FAMILY_V4 = 0x01
 
@@ -75,19 +77,26 @@ def unpack_mapped_address(bytes):
     return '%s.%s.%s.%s' % (ip_addr_1, ip_addr_2, ip_addr_3, ip_addr_4), port
 
 
-def detect_reflexive_transport_address(stun_server_ip, stun_server_port=3478):
+@nio.async
+def detect_reflexive_transport_address(stun_server_host, stun_server_port=3478):
     s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-    try:
-        request = stun.STUN(type=stun.BINDING_REQUEST, len=0, xid=generateTransactionId())
-        s.sendto(str(request), (stun_server_ip, stun_server_port))
-        response = stun.STUN(s.recv(1024))
-        if request.xid != response.xid:
-            return None
-        buffer = response.data
-        while buffer:
-            t, l, v, buffer = stun.tlv(buffer)
-            if stun.MAPPED_ADDRESS == t:
-                return unpack_mapped_address(v)
-    finally:
-        s.close()
+    s.setblocking(0)
+    request = stun.STUN(type=stun.BINDING_REQUEST, len=0, xid=generateTransactionId())
+    s.sendto(str(request), (stun_server_host, stun_server_port))
+    return functools.partial(read, s, request), functools.partial(dispose, s)
+
+
+def read(s, request):
+    response = stun.STUN(s.recv(1024))
+    if request.xid != response.xid:
+        return None
+    buffer = response.data
+    while buffer:
+        t, l, v, buffer = stun.tlv(buffer)
+        if stun.MAPPED_ADDRESS == t:
+            return unpack_mapped_address(v)
     return None
+
+
+def dispose(s):
+    s.close()
