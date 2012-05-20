@@ -6,7 +6,10 @@ import socket
 import sys
 import traceback
 from dpkt import tcp, ip
-import nfqueue
+try:
+    import nfqueue
+except ImportError:
+    nfqueue = None
 from . import probe
 from fqrouter.utility import rfc_3489
 from fqrouter.utility import shell
@@ -14,6 +17,9 @@ from fqrouter.utility import shell
 LOGGER = logging.getLogger(__name__)
 
 def start(args):
+    if not nfqueue:
+        LOGGER.error('No nfqueue')
+        sys.exit(1)
     socket.setdefaulttimeout(5)
     probe_node_host, probe_node_port = parse_addr(args.probe_node, probe.DEFAULT_PORT)
     external_ips = check_NAT(args.rfc_3489_servers)
