@@ -20,7 +20,7 @@ def start(args):
 
 def verify_guess(dst, dport, guess_id, guess):
     ip_packet = ip.IP(src=socket.inet_aton(dst), dst=socket.inet_aton(guess['ip']), p=ip.IP_PROTO_TCP)
-    ip_packet.data = tcp.TCP(sport=int(dport), dport=int(guess['port']), ack=int(guess_id), flags=tcp.TH_SYN | tcp.TH_ACK)
+    ip_packet.data = tcp.TCP(sport=int(dport), dport=int(guess['port']), ack=socket.htonl(int(guess_id)), flags=tcp.TH_SYN | tcp.TH_ACK)
     ip_packet.len += len(ip_packet.data)
     with closing(socket.socket(socket.AF_INET, socket.SOCK_RAW, socket.IPPROTO_RAW)) as s:
         s.setsockopt(socket.SOL_IP, socket.IP_HDRINCL, 1)

@@ -81,7 +81,7 @@ class Smuggler(object):
         guesses = {}
         for external_ip in self.external_ips:
             for port_offset in range(2):
-                guesses[generate_guess_id(set(tcp_packet.seq + 1).union(guesses.keys()))] = {
+                guesses[generate_guess_id(set([tcp_packet.seq + 1]).union(guesses.keys()))] = {
                     'ip': external_ip,
                     'port': tcp_packet.sport + port_offset
                 }
