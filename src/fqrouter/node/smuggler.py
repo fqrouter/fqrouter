@@ -4,6 +4,7 @@ import logging
 import random
 import socket
 import sys
+import traceback
 from dpkt import tcp, ip
 import nfqueue
 from . import probe
@@ -60,9 +61,8 @@ class Smuggler(object):
         if ip.IP_PROTO_TCP != ip_packet.p:
             return
         tcp_packet = ip_packet.data
-        if not (tcp.TH_SYN & tcp_packet.flags):
-            return
-        self.on_outbound_syn(nfqueue_element)
+        if tcp.TH_SYN == tcp_packet.flags:
+            self.on_outbound_syn(nfqueue_element)
 
     def on_outbound_syn(self, nfqueue_element):
         ip_packet = ip.IP(nfqueue_element.get_data())
@@ -70,10 +70,9 @@ class Smuggler(object):
         if LOGGER.isEnabledFor(logging.DEBUG):
             LOGGER.debug('Received SYN from %s:%s to %s:%s'
             % (socket.inet_ntoa(ip_packet.src), tcp_packet.sport, socket.inet_ntoa(ip_packet.dst), tcp_packet.dport))
-        self.make_guesses_then_send(tcp_packet)
+        self.make_guesses_then_send(ip_packet, tcp_packet)
 
-    @async
-    def make_guesses_then_send(self, tcp_packet):
+    def make_guesses_then_send(self, ip_packet, tcp_packet):
         guesses = {}
         for external_ip in self.external_ips:
             for port_offset in range(2):
@@ -81,11 +80,15 @@ class Smuggler(object):
                     'ip': external_ip,
                     'port': tcp_packet.sport + port_offset
                 }
-        self.send_guesses(data=json.dumps(guesses))
+        self.send_probe_request(data=json.dumps({
+            'dst': socket.inet_ntoa(ip_packet.dst),
+            'dport': tcp_packet.dport,
+            'guesses': guesses
+        }))
         if LOGGER.isEnabledFor(logging.DEBUG):
-            LOGGER.debug('Sent GUESSES: %s' % str(guesses))
+            LOGGER.debug('Sent PROBE REQUEST: %s' % str(guesses))
 
-    def send_guesses(self, data):
+    def send_probe_request(self, data):
         with closing(socket.socket(socket.AF_INET, socket.SOCK_DGRAM)) as s:
             s.sendto(data, (self.probe_node_host, self.probe_node_port))
 
@@ -95,6 +98,8 @@ def forward_output_to_nfqueue():
     shell.call('iptables -t mangle -I OUTPUT -p tcp -j NFQUEUE')
     try:
         yield
+    except:
+        traceback.print_exc()
     finally:
         shell.call('iptables -t mangle -D OUTPUT -p tcp -j NFQUEUE')
 
