@@ -15,4 +15,8 @@ def start(args):
                 print(guess_id, guess)
 
 
+def verify_guess(ack_id, ip, port):
+    pass
+
+
 

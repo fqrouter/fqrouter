@@ -10,6 +10,7 @@ LOGGING_LEVEL_TRACE = 5
 LOGGER = logging.getLogger(__name__)
 
 def async(func):
+# makes func returning Future
     @functools.wraps(func)
     def wrapper(*args, **kwargs):
         async = kwargs.pop('async', True)
@@ -67,4 +68,4 @@ class Future(object):
                     return None
                 else:
                     raise ExecutionFailed(self.func, self.args, self.kwargs, self.exc_info)
-            raise Exception('Internal Error')
+            raise Exception('Future should either have return_value or exc_info')
