@@ -1,7 +1,6 @@
 import argparse
 import logging
-import sys
-from .node import smuggler, probe, ping_pong
+from fqrouter.node import smuggler, probe, ping_pong
 
 root_parser = argparse.ArgumentParser(description="Qin Fen's Router")
 root_parser.add_argument('--debug', action='store_const', const=True, default=False)

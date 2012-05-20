@@ -10,7 +10,7 @@ try:
     import nfqueue
 except ImportError:
     nfqueue = None
-from . import probe
+from fqrouter.node import probe
 from fqrouter.utility import rfc_3489
 from fqrouter.utility import shell
 

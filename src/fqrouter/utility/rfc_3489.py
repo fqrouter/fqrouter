@@ -4,7 +4,7 @@ import binascii
 import struct
 from dpkt import stun, tcp
 import random
-from .future import async
+from fqrouter.utility.future import async
 
 IP_ADDR_FAMILY_V4 = 0x01
 
