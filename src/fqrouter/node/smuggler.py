@@ -76,7 +76,6 @@ class Smuggler(object):
             LOGGER.debug('Received SYN from %s:%s to %s:%s'
             % (socket.inet_ntoa(ip_packet.src), tcp_packet.sport, socket.inet_ntoa(ip_packet.dst), tcp_packet.dport))
         self.make_guesses_then_send(ip_packet, tcp_packet)
-        nfqueue_element.set_verdict(nfqueue.NF_DROP)
 
     def make_guesses_then_send(self, ip_packet, tcp_packet):
         guesses = {}
