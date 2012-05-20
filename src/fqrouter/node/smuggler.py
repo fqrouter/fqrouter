@@ -9,7 +9,6 @@ from dpkt import tcp, ip
 import nfqueue
 from . import probe
 from fqrouter.utility import rfc_3489
-from fqrouter.utility.future import async
 from fqrouter.utility import shell
 
 LOGGER = logging.getLogger(__name__)
