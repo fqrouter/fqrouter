@@ -1,3 +1,4 @@
+# Provides Future
 import functools
 import socket
 import sys
@@ -15,6 +16,21 @@ def async(func):
 
     return wrapper
 
+
+class ReadFailed(Exception):
+    def __init__(self, exc_info):
+        super(ReadFailed, self).__init__()
+        self.exc_info = exc_info
+
+
+class Timeout(Exception):
+    def __init__(self, started_at, timeout_at):
+        super(Timeout, self).__init__()
+        self.started_at = started_at
+        self.timeout_at = timeout_at
+
+
+# === IMPLEMENTATION ===
 
 def read_pool(waiting_for):
     while pool:
@@ -62,17 +78,3 @@ class Future(object):
         except:
             self.exc_info = sys.exc_info()
         return True
-
-
-
-class ReadFailed(Exception):
-    def __init__(self, exc_info):
-        super(ReadFailed, self).__init__()
-        self.exc_info = exc_info
-
-
-class Timeout(Exception):
-    def __init__(self, started_at, timeout_at):
-        super(Timeout, self).__init__()
-        self.started_at = started_at
-        self.timeout_at = timeout_at

@@ -1,0 +1,15 @@
+#!/bin/bash
+
+# initialize environment variables
+if [ -z `readlink $0` ] ; then
+    BIN_DIR=$(cd `dirname $0` && pwd)
+else
+    BIN_DIR=$(dirname $(readlink $0))
+fi
+if [ -z "$FQROUTER_HOME" ] ; then
+    export FQROUTER_HOME=`dirname $BIN_DIR`
+fi
+
+# pass control to python __main__.py
+cd $FQROUTER_HOME/src
+python -m fqrouter $@
