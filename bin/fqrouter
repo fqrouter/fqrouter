@@ -12,4 +12,4 @@ fi
 
 # pass control to python __main__.py
 cd $FQROUTER_HOME/src
-python -m fqrouter $@
+python -u -m fqrouter $@

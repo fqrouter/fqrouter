@@ -1,25 +1,33 @@
 # rfc_3489 is old version of STUN protocol, but serves our purpose
-import functools
 import socket
 import binascii
 import struct
 from dpkt import stun
 import random
-from . import nio
+from .future import async
 
 IP_ADDR_FAMILY_V4 = 0x01
 
-@nio.async
+@async
 def detect_reflexive_transport_address(stun_server_host, stun_server_port=3478):
 # => Future((external_ip, external_port), local_port)
     s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-    s.setblocking(0)
-    local_port = random.randint(19840, 20120)
-    s.bind(('0.0.0.0', local_port))
-    request = stun.STUN(type=stun.BINDING_REQUEST, len=0, xid=generateTransactionId())
-    s.sendto(str(request), (stun_server_host, stun_server_port))
-    return functools.partial(read, s, request, local_port), functools.partial(dispose, s)
-
+    try:
+        local_port = random.randint(19840, 20120)
+        s.bind(('0.0.0.0', local_port))
+        request = stun.STUN(type=stun.BINDING_REQUEST, len=0, xid=generateTransactionId())
+        s.sendto(str(request), (stun_server_host, stun_server_port))
+        response = stun.STUN(s.recv(1024))
+        if request.xid != response.xid:
+            return None
+        buffer = response.data
+        while buffer:
+            t, l, v, buffer = stun.tlv(buffer)
+            if stun.MAPPED_ADDRESS == t:
+                return unpack_mapped_address(v), local_port
+        return None
+    finally:
+        s.close()
 
 # === IMPLEMENTATION ===
 
@@ -89,19 +97,3 @@ def unpack_mapped_address(bytes):
     if IP_ADDR_FAMILY_V4 != ip_addr_family:
         return None
     return '%s.%s.%s.%s' % (ip_addr_1, ip_addr_2, ip_addr_3, ip_addr_4), port
-
-
-def read(s, request, local_port):
-    response = stun.STUN(s.recv(1024))
-    if request.xid != response.xid:
-        return None
-    buffer = response.data
-    while buffer:
-        t, l, v, buffer = stun.tlv(buffer)
-        if stun.MAPPED_ADDRESS == t:
-            return unpack_mapped_address(v), local_port
-    return None
-
-
-def dispose(s):
-    s.close()
