@@ -2,7 +2,7 @@
 import socket
 import binascii
 import struct
-from dpkt import stun
+from dpkt import stun, tcp
 import random
 from .future import async
 
@@ -13,11 +13,11 @@ def detect_reflexive_transport_address(stun_server_host, stun_server_port=3478):
 # => Future((external_ip, external_port), local_port)
     s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
     try:
-        local_port = random.randint(19840, 20120)
+        local_port = random.randint(1025, tcp.TCP_PORT_MAX)
         s.bind(('0.0.0.0', local_port))
         request = stun.STUN(type=stun.BINDING_REQUEST, len=0, xid=generateTransactionId())
         s.sendto(str(request), (stun_server_host, stun_server_port))
-        response = stun.STUN(s.recv(1024))
+        response = stun.STUN(s.recv(4096))
         if request.xid != response.xid:
             return None
         buffer = response.data

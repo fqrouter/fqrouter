@@ -1,6 +1,5 @@
 import argparse
 import logging
-import socket
 from . import smuggler_node
 from . import probe_node
 
@@ -20,5 +19,4 @@ args = root_parser.parse_args()
 
 if args.debug:
     logging.basicConfig(level=logging.DEBUG, format='[%(levelname)s] %(asctime)s %(message)s')
-socket.setdefaulttimeout(5)
 args.handle_by(args)

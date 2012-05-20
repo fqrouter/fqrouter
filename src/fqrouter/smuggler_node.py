@@ -1,4 +1,4 @@
-from contextlib import contextmanager, closing
+from contextlib import contextmanager
 import functools
 import threading
 import nfqueue
@@ -13,16 +13,17 @@ from .protocol import Protocol
 LOCK_PROBE_SOCKET = threading.RLock()
 
 def start(args):
+    socket.setdefaulttimeout(5)
+    probe_node_host, probe_node_port = parse_addr(args.probe_node, probe_node.DEFAULT_PORT)
     with forward_output_to_nfqueue():
-        with closing(socket.socket(socket.AF_INET, socket.SOCK_DGRAM)) as probe_socket:
-            protocol = Protocol(
-                detect_reflexive_transport_addresses=functools.partial(detect_reflexive_transport_addresses,
-                    rfc_3489_servers=args.rfc_3489_servers),
-                monitor_nfqueue=functools.partial(monitor_nfqueue,
-                    queue_number=args.queue_number),
-                send_guesses=functools.partial(send_guesses,
-                    s=probe_socket, addr=args.probe_node))
-            protocol.start_smuggler()
+        protocol = Protocol(
+            detect_reflexive_transport_addresses=functools.partial(detect_reflexive_transport_addresses,
+                rfc_3489_servers=args.rfc_3489_servers),
+            monitor_nfqueue=functools.partial(monitor_nfqueue,
+                queue_number=args.queue_number),
+            probe_node_host=probe_node_host,
+            probe_node_port=probe_node_port)
+        protocol.start_smuggler()
 
 
 @contextmanager
@@ -38,9 +39,9 @@ def detect_reflexive_transport_addresses(rfc_3489_servers):
     results = []
     for stun_server in rfc_3489_servers:
         if isinstance(stun_server, (list, tuple)):
-            results.append(rfc_3489.detect_reflexive_transport_address(*stun_server))
+            results.append(rfc_3489.detect_reflexive_transport_address(*stun_server, logs_exception=False))
         else:
-            results.append(rfc_3489.detect_reflexive_transport_address(stun_server))
+            results.append(rfc_3489.detect_reflexive_transport_address(stun_server, logs_exception=False))
     results = [r.get(ignores_error=True) for r in results if r.get(ignores_error=True)]
     return results
 
@@ -77,11 +78,6 @@ def handle_packet(nfqueue_element):
     if not (tcp.TH_SYN & tcp_packet.flags):
         return
     Protocol.INSTANCE.on_outbound_syn(nfqueue_element)
-
-
-def send_guesses(s, addr, data):
-    with LOCK_PROBE_SOCKET:
-        s.sendto(data, parse_addr(addr, probe_node.DEFAULT_PORT))
 
 
 def parse_addr(addr, default_port):

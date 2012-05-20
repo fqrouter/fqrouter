@@ -1,18 +1,21 @@
+from contextlib import closing
 import json
 import logging
 import random
 import socket
 from dpkt import ip
+from .future import async
 
 LOGGER = logging.getLogger(__name__)
 
 # send/receive packets
 class Protocol(object):
-    def __init__(self, detect_reflexive_transport_addresses, monitor_nfqueue, send_guesses):
+    def __init__(self, detect_reflexive_transport_addresses, monitor_nfqueue, probe_node_host, probe_node_port):
         super(Protocol, self).__init__()
         self.detect_reflexive_transport_addresses = detect_reflexive_transport_addresses
         self.monitor_nfqueue = monitor_nfqueue
-        self.send_guesses = send_guesses
+        self.probe_node_host = probe_node_host
+        self.probe_node_port = probe_node_port
         self.external_ips = set()
         Protocol.INSTANCE = self
 
@@ -36,15 +39,26 @@ class Protocol(object):
             % (socket.inet_ntoa(ip_packet.src), tcp_packet.sport, socket.inet_ntoa(ip_packet.dst), tcp_packet.dport))
         self.make_guesses_then_send(tcp_packet)
 
+    @async
     def make_guesses_then_send(self, tcp_packet):
-        guesses = []
+        guesses = {}
         for external_ip in self.external_ips:
             for port_offset in range(2):
-                guesses.append({
-                    'id': random.randint(19840, 20120),
+                guesses[self.generate_guess_id({tcp_packet.seq + 1}.union(guesses.keys()))] = {
                     'ip': external_ip,
                     'port': tcp_packet.sport + port_offset
-                })
+                }
         self.send_guesses(data=json.dumps(guesses))
         if LOGGER.isEnabledFor(logging.DEBUG):
-            LOGGER.debug('Sent GUESSES: %s' % guesses)
+            LOGGER.debug('Sent GUESSES: %s' % str(guesses))
+
+    def generate_guess_id(self, used_ids):
+        id = random.randint(1, 65534)
+        while id in used_ids:
+            id = random.randint(1, 65534)
+        return id
+
+    def send_guesses(self, data):
+        with closing(socket.socket(socket.AF_INET, socket.SOCK_DGRAM)) as s:
+            s.sendto(data, (self.probe_node_host, self.probe_node_port))
+
