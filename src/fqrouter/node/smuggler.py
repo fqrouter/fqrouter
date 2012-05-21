@@ -4,7 +4,6 @@ import logging
 import random
 import socket
 import sys
-import traceback
 from dpkt import tcp, ip
 try:
     import nfqueue
@@ -15,6 +14,7 @@ from fqrouter.utility import rfc_3489
 from fqrouter.utility import shell
 
 LOGGER = logging.getLogger(__name__)
+MARK_OUTBOUND = 1
 
 def start(args):
     if not nfqueue:
@@ -23,12 +23,13 @@ def start(args):
     socket.setdefaulttimeout(5)
     probe_node_host, probe_node_port = parse_addr(args.probe_node, probe.DEFAULT_PORT)
     external_ips = check_NAT(args.rfc_3489_servers)
-    with forward_output_to_nfqueue():
-        smuggler = Smuggler(
-            external_ips=external_ips,
-            probe_node_host=probe_node_host,
-            probe_node_port=probe_node_port)
-        smuggler.monitor_nfqueue(args.queue_number)
+    with mark_outbound_packets():
+        with forward_outbound_packets_to_nfqueue():
+            smuggler = Smuggler(
+                external_ips=external_ips,
+                probe_node_host=probe_node_host,
+                probe_node_port=probe_node_port)
+            smuggler.monitor_nfqueue(args.queue_number)
 
 
 class Smuggler(object):
@@ -62,6 +63,11 @@ class Smuggler(object):
                 pass # tried your best
 
     def on_nfqueue_element(self, nfqueue_element):
+        if MARK_OUTBOUND == nfqueue_element.get_nfmark():
+            return self.on_outbound_nfqueue_element(nfqueue_element)
+
+
+    def on_outbound_nfqueue_element(self, nfqueue_element):
         ip_packet = ip.IP(nfqueue_element.get_data())
         if ip.IP_PROTO_TCP != ip_packet.p:
             return
@@ -99,14 +105,21 @@ class Smuggler(object):
 
 
 @contextmanager
-def forward_output_to_nfqueue():
-    shell.call('iptables -t mangle -I OUTPUT -p tcp -j NFQUEUE')
+def forward_outbound_packets_to_nfqueue():
+    shell.call('iptables -t mangle -A OUTPUT -p tcp -j NFQUEUE')
     try:
         yield
-    except:
-        traceback.print_exc()
     finally:
         shell.call('iptables -t mangle -D OUTPUT -p tcp -j NFQUEUE')
+
+
+@contextmanager
+def mark_outbound_packets():
+    shell.call('iptables -t mangle -A OUTPUT -p tcp -j MARK --set-mark %s' % MARK_OUTBOUND)
+    try:
+        yield
+    finally:
+        shell.call('iptables -t mangle -D OUTPUT -p tcp -j MARK --set-mark %s' % MARK_OUTBOUND)
 
 
 def check_NAT(rfc_3489_servers):
