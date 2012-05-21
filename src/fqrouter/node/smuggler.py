@@ -5,6 +5,7 @@ import random
 import socket
 import sys
 from dpkt import tcp, ip
+
 try:
     import nfqueue
 except ImportError:
@@ -16,6 +17,8 @@ from fqrouter.utility import shell
 LOGGER = logging.getLogger(__name__)
 MARK_OUTBOUND = 1
 
+handlers = {}
+
 def start(args):
     if not nfqueue:
         LOGGER.error('No nfqueue')
@@ -23,59 +26,60 @@ def start(args):
     socket.setdefaulttimeout(5)
     probe_node_host, probe_node_port = parse_addr(args.probe_node, probe.DEFAULT_PORT)
     external_ips = check_NAT(args.rfc_3489_servers)
+    handlers['=>syn'] = OutboundSynHandler(external_ips, probe_node_host, probe_node_port)
     with mark_outbound_packets():
         with forward_outbound_packets_to_nfqueue():
-            smuggler = Smuggler(
-                external_ips=external_ips,
-                probe_node_host=probe_node_host,
-                probe_node_port=probe_node_port)
-            smuggler.monitor_nfqueue(args.queue_number)
+            monitor_nfqueue(args.queue_number)
 
 
-class Smuggler(object):
+def monitor_nfqueue(queue_number):
+    q = nfqueue.queue()
+    try:
+        q.open()
+        try:
+            q.unbind(socket.AF_INET)
+            q.bind(socket.AF_INET)
+        except:
+            print('Can not bind to nfqueue, are you running as ROOT?')
+            sys.exit(1)
+        q.set_callback(on_nfqueue_element)
+        q.create_queue(queue_number)
+        q.try_run()
+    finally:
+        try:
+            q.unbind(socket.AF_INET)
+        except:
+            pass # tried your best
+        try:
+            q.close()
+        except:
+            pass # tried your best
+
+
+def on_nfqueue_element(nfqueue_element):
+    if MARK_OUTBOUND == nfqueue_element.get_nfmark():
+        return on_outbound_nfqueue_element(nfqueue_element)
+
+
+def on_outbound_nfqueue_element(nfqueue_element):
+    ip_packet = ip.IP(nfqueue_element.get_data())
+    if ip.IP_PROTO_TCP != ip_packet.p:
+        return
+    tcp_packet = ip_packet.data
+    if tcp.TH_SYN == tcp_packet.flags:
+        handler = handlers.get('=>syn')
+        if handler:
+            handler(nfqueue_element)
+
+
+class OutboundSynHandler(object):
     def __init__(self, external_ips, probe_node_host, probe_node_port):
-        super(Smuggler, self).__init__()
+        super(OutboundSynHandler, self).__init__()
         self.external_ips = external_ips
         self.probe_node_host = probe_node_host
         self.probe_node_port = probe_node_port
 
-    def monitor_nfqueue(self, queue_number):
-        q = nfqueue.queue()
-        try:
-            q.open()
-            try:
-                q.unbind(socket.AF_INET)
-                q.bind(socket.AF_INET)
-            except:
-                print('Can not bind to nfqueue, are you running as ROOT?')
-                sys.exit(1)
-            q.set_callback(self.on_nfqueue_element)
-            q.create_queue(queue_number)
-            q.try_run()
-        finally:
-            try:
-                q.unbind(socket.AF_INET)
-            except:
-                pass # tried your best
-            try:
-                q.close()
-            except:
-                pass # tried your best
-
-    def on_nfqueue_element(self, nfqueue_element):
-        if MARK_OUTBOUND == nfqueue_element.get_nfmark():
-            return self.on_outbound_nfqueue_element(nfqueue_element)
-
-
-    def on_outbound_nfqueue_element(self, nfqueue_element):
-        ip_packet = ip.IP(nfqueue_element.get_data())
-        if ip.IP_PROTO_TCP != ip_packet.p:
-            return
-        tcp_packet = ip_packet.data
-        if tcp.TH_SYN == tcp_packet.flags:
-            self.on_outbound_syn(nfqueue_element)
-
-    def on_outbound_syn(self, nfqueue_element):
+    def __call__(self, nfqueue_element):
         ip_packet = ip.IP(nfqueue_element.get_data())
         tcp_packet = ip_packet.data
         if LOGGER.isEnabledFor(logging.DEBUG):
@@ -87,7 +91,7 @@ class Smuggler(object):
         guesses = {}
         for external_ip in self.external_ips:
             for port_offset in range(2):
-                guesses[generate_guess_id(set([tcp_packet.seq + 1]).union(guesses.keys()))] = {
+                guesses[self.generate_guess_id(set([tcp_packet.seq + 1]).union(guesses.keys()))] = {
                     'ip': external_ip,
                     'port': tcp_packet.sport + port_offset
                 }
@@ -102,6 +106,13 @@ class Smuggler(object):
     def send_probe_request(self, data):
         with closing(socket.socket(socket.AF_INET, socket.SOCK_DGRAM)) as s:
             s.sendto(data, (self.probe_node_host, self.probe_node_port))
+
+    @staticmethod
+    def generate_guess_id(used_ids):
+        id = random.randint(1, 65534)
+        while id in used_ids:
+            id = random.randint(1, 65534)
+        return id
 
 
 @contextmanager
@@ -148,10 +159,3 @@ def parse_addr(addr, default_port):
         return addr.split(':')
     else:
         return addr, default_port
-
-
-def generate_guess_id(used_ids):
-    id = random.randint(1, 65534)
-    while id in used_ids:
-        id = random.randint(1, 65534)
-    return id
