@@ -28,7 +28,7 @@ def start(args):
     impersonator_host, impersonator_port = parse_addr(args.impersonator_address, 19840)
     impersonator_ip = socket.gethostbyname(impersonator_host)
     handlers['=>'] = DefaultOutboundHandler(
-        impersonator_ip, impersonator_port, args.my_internal_ip, args.my_internal_ip)
+        impersonator_ip, impersonator_port, args.my_internal_ip, args.my_external_ip)
     with forward_outbound_packets_to_nfqueue():
         monitor_nfqueue()
 
