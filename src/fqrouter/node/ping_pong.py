@@ -1,5 +1,5 @@
 # utility node used to test if the host/network support IP SPOOFING
-# IP SPOOFING is a hard requirement for the IMPERSONATOR node
+# support of IP SPOOFING is a hard requirement for the IMPERSONATOR node
 from contextlib import closing
 import logging
 import socket
@@ -36,13 +36,13 @@ def pong(args):
         if REQUEST_PING != request:
             LOGGER.error('Unexpected request: %s' % request)
     LOGGER.info('Received PONG from %s:%s' % (ping_ip, ping_port))
-    udp_packet = udp.UDP(sport=SPOOF_PORT, dport=int(ping_port), sum=0)
-    udp_packet.data = 'pong'
-    udp_packet.ulen = len(udp_packet)
-    ip_packet = ip.IP(src=socket.inet_aton(SPOOF_IP), dst=socket.inet_aton(ping_ip), p=ip.IP_PROTO_UDP)
-    ip_packet.data = udp_packet
-    ip_packet.len += len(ip_packet.data)
+    segment = udp.UDP(sport=SPOOF_PORT, dport=int(ping_port), sum=0)
+    segment.data = 'pong'
+    segment.ulen = len(segment)
+    packet = ip.IP(src=socket.inet_aton(SPOOF_IP), dst=socket.inet_aton(ping_ip), p=ip.IP_PROTO_UDP)
+    packet.data = segment
+    packet.len += len(packet.data)
     with closing(socket.socket(socket.AF_INET, socket.SOCK_RAW, socket.IPPROTO_RAW)) as raw_socket:
         raw_socket.setsockopt(socket.SOL_IP, socket.IP_HDRINCL, 1)
-        raw_socket.sendto(str(ip_packet), (ping_ip, 0))
+        raw_socket.sendto(str(packet), (ping_ip, 0))
     LOGGER.info('Sent PING as if it is from %s:%s' % (SPOOF_IP, SPOOF_PORT))

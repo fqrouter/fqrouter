@@ -7,4 +7,4 @@ else
     BIN_DIR=$(dirname $(readlink $0))
 fi
 
-$BIN_DIR/fqrouter --debug smuggler $@
+$BIN_DIR/fqrouter --debug impersonator $@
