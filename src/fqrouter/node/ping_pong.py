@@ -1,3 +1,5 @@
+# utility node used to test if the host/network support IP SPOOFING
+# IP SPOOFING is a hard requirement for the IMPERSONATOR node
 from contextlib import closing
 import logging
 import socket
