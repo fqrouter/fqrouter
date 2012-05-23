@@ -110,4 +110,5 @@ class DefaultOutboundHandler(object):
     def alter_src(self, packet, new_src):
         packet.src = new_src
         packet.sum = 0
+        packet.data.sum = 0
         return packet

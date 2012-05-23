@@ -13,6 +13,6 @@ def start(args):
                 packet_bytes = server_socket.recv(4096)
                 packet = ip.IP(packet_bytes)
                 dst = socket.inet_ntoa(packet.dst)
-                print('=> %s' % dst)
+                print('%s:%s => %s:%s' % (socket.inet_ntoa(packet.src), packet.data.sport, dst, packet.data.dport))
                 raw_socket.sendto(packet_bytes, (dst, 0))
 
