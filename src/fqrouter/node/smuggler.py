@@ -4,8 +4,7 @@ import logging
 import random
 import socket
 import sys
-import threading
-from dpkt import tcp, ip
+from dpkt import tcp, ip, dpkt
 
 try:
     import nfqueue
@@ -31,6 +30,7 @@ def start(args):
     connection_tracker = ConnectionTracker()
     handlers['=>syn'] = OutboundSynHandler(connection_tracker, external_ips, probe_node_host, probe_node_port)
     handlers['<=syn+ack'] = InboundSynAckHandler(connection_tracker)
+    handlers['=>*'] = OutboundDefaultHandler(connection_tracker)
     with mark_outbound_packets():
         with forward_outbound_packets_to_nfqueue():
             with mark_inbound_packets():
@@ -75,9 +75,9 @@ def on_outbound_nfqueue_element(nfqueue_element):
         return
     tcp_packet = ip_packet.data
     if tcp.TH_SYN == tcp_packet.flags:
-        handler = handlers.get('=>syn')
-        if handler:
-            handler(nfqueue_element)
+        invoke_handler('=>syn', nfqueue_element)
+    else:
+        invoke_handler('=>*', nfqueue_element)
 
 
 def on_inbound_nfqueue_element(nfqueue_element):
@@ -86,9 +86,7 @@ def on_inbound_nfqueue_element(nfqueue_element):
         return
     tcp_packet = ip_packet.data
     if (tcp.TH_SYN | tcp.TH_ACK) == tcp_packet.flags:
-        handler = handlers.get('<=syn+ack')
-        if handler:
-            handler(nfqueue_element)
+        invoke_handler('<=syn+ack', nfqueue_element)
 
 
 class OutboundSynHandler(object):
@@ -130,6 +128,40 @@ class OutboundSynHandler(object):
         return id
 
 
+class OutboundDefaultHandler(object):
+    def __init__(self, connection_tracker):
+        super(OutboundDefaultHandler, self).__init__()
+        self.connection_tracker = connection_tracker
+        self.flag = True
+
+    def __call__(self, nfqueue_element):
+        ip_packet = ip.IP(nfqueue_element.get_data())
+        tcp_packet = ip_packet.data
+        connection = self.connection_tracker.get_connection(
+            ip_packet.src, tcp_packet.sport, ip_packet.dst, tcp_packet.dport)
+        if not connection:
+            return
+
+        def is_nat_outbound_addr_set(connection):
+            return connection.nat_outbound_addr
+
+        def smuggle(connection):
+            pass
+
+        def wait_for_smuggle(connection):
+            if tcp.TH_ACK == tcp_packet.flags and self.flag:
+                self.flag = False
+                tcp_packet.data = ''
+                s = dpkt.struct.pack('>4s4sxBH', ip_packet.src, ip_packet.dst, ip.IP_PROTO_TCP, len(tcp_packet))
+                tcp_packet.sum = dpkt.in_cksum(s + str(tcp_packet))
+                nfqueue_element.set_verdict_modified(nfqueue.NF_ACCEPT, str(ip_packet), len(ip_packet))
+            else:
+                nfqueue_element.set_verdict(nfqueue.NF_DROP)
+
+
+        connection.conditionally_execute(is_nat_outbound_addr_set, smuggle, wait_for_smuggle)
+
+
 class InboundSynAckHandler(object):
     def __init__(self, connection_tracker):
         super(InboundSynAckHandler, self).__init__()
@@ -143,9 +175,11 @@ class InboundSynAckHandler(object):
 
 class ConnectionTracker(object):
     def __init__(self):
+        import threading
+
         super(ConnectionTracker, self).__init__()
-        self.connections = {} # (src, sport, dst, dport) => connection
         self.lock = threading.RLock()
+        self.connections = {} # (src, sport, dst, dport) => connection
 
     def on_outbound_syn(self, ip_packet, tcp_packet, probe_request):
         key = (ip_packet.src, tcp_packet.sport, ip_packet.dst, tcp_packet.dport)
@@ -156,22 +190,49 @@ class ConnectionTracker(object):
         key = (ip_packet.dst, tcp_packet.dport, ip_packet.src, tcp_packet.sport)
         with self.lock:
             connection = self.connections.get(key)
-        if connection:
-            connection.on_inbound_syn_ack(ip_packet, tcp_packet)
+        if not connection:
+            return None
+        connection.on_inbound_syn_ack(ip_packet, tcp_packet)
+        return connection
+
+    def get_connection(self, src, sport, dst, dport):
+        key = (src, sport, dst, dport)
+        with self.lock:
+            return self.connections.get(key)
+
+    def get_connection_by_outbound_packet(self, ip_packet):
+        return self.get_connection(ip_packet.src, ip_packet.data.sport, ip_packet.dst, ip_packet.data.dport)
 
 
 class Connection(object):
     def __init__(self, syn_ip_packet, guesses):
         super(Connection, self).__init__()
         self.syn_ip_packet = syn_ip_packet
+        self.correct_syn_ack_received = False
         self.guesses = guesses
-        self.lock = threading.RLock()
+        self.nat_outbound_addr = None
 
     def on_inbound_syn_ack(self, ip_packet, tcp_packet):
+        if self.syn_ip_packet.data.seq + 1 == tcp_packet.ack:
+            self.correct_syn_ack_received = True
+            return
         guess = self.guesses.get(tcp_packet.ack)
-        if guess:
-            LOGGER.info('We found it! %s' % guess)
+        if not guess:
+            return
+        nat_outbound_add = (socket.inet_aton(guess['ip']), int(guess['port']))
+        if self.nat_outbound_addr:
+            LOGGER.error('Identified different NAT outbound address %, was %s'
+            % (nat_outbound_add, self.nat_outbound_addr))
+        else:
+            if LOGGER.isEnabledFor(logging.DEBUG):
+                LOGGER.debug('Verified guess: %s' % guess)
+            self.nat_outbound_addr = nat_outbound_add
 
+    def conditionally_execute(self, evaluate_condition, on_true, on_false):
+        if evaluate_condition(self):
+            on_true(self)
+        else:
+            on_false(self)
 
 @contextmanager
 def mark_outbound_packets():
@@ -235,3 +296,12 @@ def parse_addr(addr, default_port):
         return addr.split(':')
     else:
         return addr, default_port
+
+
+def invoke_handler(handler_name, nfqueue_element):
+    handler = handlers.get(handler_name)
+    if handler:
+        handler(nfqueue_element)
+    else:
+        if LOGGER.isEnabledFor(logging.DEBUG):
+            LOGGER.debug('Missing handler for %s' % handler_name)

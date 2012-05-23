@@ -1,4 +1,5 @@
 # rfc_3489 is old version of STUN protocol, but serves our purpose
+import logging
 import socket
 import binascii
 import struct
@@ -7,6 +8,7 @@ import random
 from fqrouter.utility.future import async
 
 IP_ADDR_FAMILY_V4 = 0x01
+LOGGER = logging.getLogger(__name__)
 
 @async
 def detect_reflexive_transport_address(stun_server_host, stun_server_port=3478):
@@ -17,7 +19,11 @@ def detect_reflexive_transport_address(stun_server_host, stun_server_port=3478):
         s.bind(('0.0.0.0', local_port))
         request = stun.STUN(type=stun.BINDING_REQUEST, len=0, xid=generateTransactionId())
         s.sendto(str(request), (stun_server_host, stun_server_port))
-        response = stun.STUN(s.recv(4096))
+        try:
+            response = stun.STUN(s.recv(4096))
+        except:
+            LOGGER.debug('Failed to query %s:%s' % (stun_server_host, stun_server_port))
+            raise
         if request.xid != response.xid:
             return None
         buffer = response.data

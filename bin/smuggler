@@ -1,0 +1,11 @@
+#!/bin/bash
+
+# initialize environment variables
+if [ -z `readlink $0` ] ; then
+    BIN_DIR=$(cd `dirname $0` && pwd)
+else
+    BIN_DIR=$(dirname $(readlink $0))
+fi
+
+$BIN_DIR/fqrouter --debug smuggler --probe-node 58.64.179.126 --rfc-3489-server provserver.televolution.net \
+--rfc-3489-server sip1.lakedestiny.cordiaip.com --rfc-3489-server stunserver.org --rfc-3489-server stun.sipgate.net
