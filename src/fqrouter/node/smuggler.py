@@ -2,6 +2,7 @@
 # CLIENT =NFQUEUE=> SMUGGLER =IP/UDP/ORIG_IP_PACKET=> IMPERSONATOR
 from contextlib import contextmanager
 import logging
+import random
 import socket
 import sys
 from dpkt import ip, udp
@@ -28,9 +29,11 @@ def start(args):
     impersonator_host, impersonator_port = parse_addr(args.impersonator_address, 19840)
     impersonator_ip = socket.gethostbyname(impersonator_host)
     handlers['=>'] = DefaultOutboundHandler(
-        impersonator_ip, impersonator_port, args.my_internal_ip, args.my_external_ip)
-    with forward_outbound_packets_to_nfqueue():
-        monitor_nfqueue()
+        impersonator_ip, impersonator_port, args.my_public_ip)
+    with forward_outbound_packets_to_nfqueue('-p tcp --dport 80'):
+        with forward_outbound_packets_to_nfqueue('-p tcp --dport 443'):
+            with forward_outbound_packets_to_nfqueue('-p udp --dport 53'):
+                monitor_nfqueue()
 
 
 def parse_addr(addr, default_port):
@@ -44,8 +47,8 @@ def parse_addr(addr, default_port):
 
 
 @contextmanager
-def forward_outbound_packets_to_nfqueue():
-    rule = ('mangle', 'OUTPUT', '-p tcp --dport 80', '-j NFQUEUE')
+def forward_outbound_packets_to_nfqueue(match):
+    rule = ('mangle', 'OUTPUT', match, '-j NFQUEUE')
     append_iptables_rule(*rule)
     try:
         yield
@@ -90,25 +93,17 @@ def on_nfqueue_element(nfqueue_element):
 
 
 class DefaultOutboundHandler(object):
-    def __init__(self, impersonator_ip, impersonator_port, my_internal_ip, my_external_ip):
+    def __init__(self, impersonator_ip, impersonator_port, my_public_ip):
         super(DefaultOutboundHandler, self).__init__()
         self.impersonator_ip = socket.inet_aton(impersonator_ip)
         self.impersonator_port = int(impersonator_port)
-        self.my_internal_ip = socket.inet_aton(my_internal_ip)
-        self.my_external_ip = socket.inet_aton(my_external_ip)
+        self.my_public_ip = socket.inet_aton(my_public_ip)
 
     def __call__(self, nfqueue_element):
-        orig_packet = ip.IP(nfqueue_element.get_data())
-        segment = udp.UDP(dport=self.impersonator_port, sport=0)
-        segment.data = str(self.alter_src(orig_packet, self.my_external_ip))
+        segment = udp.UDP(dport=self.impersonator_port, sport=random.randint(1025, 65535))
+        segment.data = nfqueue_element.get_data()
         segment.ulen = len(segment)
-        packet = ip.IP(src=self.my_internal_ip, dst=self.impersonator_ip, p=ip.IP_PROTO_UDP)
+        packet = ip.IP(src=self.my_public_ip, dst=self.impersonator_ip, p=ip.IP_PROTO_UDP)
         packet.data = segment
         packet.len += len(packet.data)
         nfqueue_element.set_verdict_modified(nfqueue.NF_ACCEPT, str(packet), len(packet))
-
-    def alter_src(self, packet, new_src):
-        packet.src = new_src
-        packet.sum = 0
-        packet.data.sum = 0
-        return packet

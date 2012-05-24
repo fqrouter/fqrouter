@@ -17,8 +17,7 @@ pong_parser.set_defaults(handle_by=ping_pong.pong)
 
 smuggler_parser = sub_parsers.add_parser('smuggler')
 smuggler_parser.add_argument('--impersonator-address', required=True)
-smuggler_parser.add_argument('--my-external-ip', required=True)
-smuggler_parser.add_argument('--my-internal-ip', required=True)
+smuggler_parser.add_argument('--my-public-ip', required=True)
 smuggler_parser.set_defaults(handle_by=smuggler.start)
 
 impersonator_parser = sub_parsers.add_parser('impersonator')
