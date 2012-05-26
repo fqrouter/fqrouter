@@ -1,6 +1,6 @@
 /* iptables module for outbound/inbound table
  *
- * (C) 2005 by Harald Welte <laforge@netfilter.org>
+ * (C) 2012 by Qin Fen <fqrouter@gmail.com>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 2 as
@@ -46,36 +46,36 @@ outbound_table_hook(unsigned int hook,
 		     const struct net_device *out,
 		     int (*okfn)(struct sk_buff *))
 {
-    struct fqrouter_net *fqn;
+    struct fqrouter_net *fqrouter_net;
 
-    fqn = (struct netns_fqrouter *)net_generic(dev_net(out), fqrouter_net_id);
-	return ipt_do_table(skb, hook, in, out, fqn->outbound_table);
+    fqrouter_net = (struct netns_fqrouter *)net_generic(dev_net(out), fqrouter_net_id);
+	return ipt_do_table(skb, hook, in, out, fqrouter_net->outbound_table);
 }
 
 // init/exit pairs
 static int __net_init fqrouter_net_init(struct net *net)
 {
-    struct fqrouter_net *fqn;
+    struct fqrouter_net *fqrouter_net;
 	struct ipt_replace *repl;
 
-    fqn = (struct fqrouter_net *)net_generic(net, fqrouter_net_id);
+    fqrouter_net = (struct fqrouter_net *)net_generic(net, fqrouter_net_id);
 	repl = ipt_alloc_initial_table(&outbound_table_def);
 	if (repl == NULL)
 		return -ENOMEM;
-	fqn->outbound_table =
+	fqrouter_net->outbound_table =
 		ipt_register_table(net, &outbound_table_def, repl);
 	kfree(repl);
-	if (IS_ERR(fqn->outbound_table))
-		return PTR_ERR(fqn->outbound_table);
+	if (IS_ERR(fqrouter_net->outbound_table))
+		return PTR_ERR(fqrouter_net->outbound_table);
 	return 0;
 }
 
 static void __net_exit fqrouter_net_exit(struct net *net)
 {
-    struct fqrouter_net *fqn;
+    struct fqrouter_net *fqrouter_net;
 
-    fqn = (struct fqrouter_net *)net_generic(net, fqrouter_net_id);
-	ipt_unregister_table(net, fqn->outbound_table);
+    fqrouter_net = (struct fqrouter_net *)net_generic(net, fqrouter_net_id);
+	ipt_unregister_table(net, fqrouter_net->outbound_table);
 }
 
 static struct pernet_operations fqrouter_net_ops = {
@@ -102,9 +102,9 @@ static int __init xt_fqrouter_init(void)
 
 	return ret;
 
- cleanup_table:
-	unregister_pernet_subsys(&fqrouter_net_ops);
-	return ret;
+cleanup_table:
+    unregister_pernet_subsys(&fqrouter_net_ops);
+    return ret;
 }
 
 static void __exit xt_fqrouter_exit(void)
