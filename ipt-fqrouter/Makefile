@@ -10,7 +10,7 @@ include $(INCLUDE_DIR)/package.mk
 
 define Build/Prepare
 	mkdir -p $(PKG_BUILD_DIR)
-	$(CP) ./src/* $(PKG_BUILD_DIR)/
+	$(CP) ./code/* $(PKG_BUILD_DIR)/
 endef
 
 define Build/Compile
