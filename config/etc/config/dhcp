@@ -14,7 +14,7 @@ config dnsmasq
 	option readethers	1
 	option leasefile	'/tmp/dhcp.leases'
 	option resolvfile	'/tmp/resolv.conf.auto'
-	#list server		'/mycompany.local/1.2.3.4'
+	list server		'127.0.0.1#1053'
 	#option nonwildcard	1
 	#list interface		br-lan
 	#list notinterface	lo
