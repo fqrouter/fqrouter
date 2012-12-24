@@ -7,29 +7,29 @@
 
 include $(TOPDIR)/rules.mk
 
-PKG_NAME:=NetfilterQueue
-PKG_VERSION:=0.3
+PKG_NAME:=python-netfilterqueue
+PKG_VERSION:=0.4
 PKG_RELEASE:=1
 
-PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
-PKG_SOURCE_URL:=http://pypi.python.org/packages/source/N/NetfilterQueue/
-PKG_MD5SUM:=4bc4cab885a0326fad3f6d8e2c5c3b09
+PKG_SOURCE:=v$(PKG_VERSION).tar.gz
+PKG_SOURCE_URL:=https://github.com/fqrouter/python-netfilterqueue/archive/
+PKG_MD5SUM:=f8e94b19616a45f40bb5ef989dba6396
 
 PKG_BUILD_DEPENDS:=python
 
 include $(INCLUDE_DIR)/package.mk
 $(call include_mk, python-package.mk)
 
-define Package/python-netfilter-queue
+define Package/python-netfilterqueue
 	SUBMENU:=Python
 	SECTION:=lang
 	CATEGORY:=Languages
 	TITLE:=Python bindings for libnetfilter_queue
-	URL:=https://github.com/kti/python-netfilterqueue/
+	URL:=https://github.com/fqrouter/python-netfilterqueue/
 	DEPENDS:=+python-mini +libnetfilter-queue
 endef
 
-define PyPackage/python-netfilter-queue/filespec
+define PyPackage/python-netfilterqueue/filespec
 +|$(PYTHON_PKG_DIR)/netfilterqueue.so
 endef
 
@@ -40,6 +40,6 @@ define Build/Compile
 	)
 endef
 
-$(eval $(call PyPackage,python-netfilter-queue))
-$(eval $(call BuildPackage,python-netfilter-queue))
+$(eval $(call PyPackage,python-netfilterqueue))
+$(eval $(call BuildPackage,python-netfilterqueue))
 
