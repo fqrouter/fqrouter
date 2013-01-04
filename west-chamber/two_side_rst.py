@@ -4,6 +4,10 @@ import socket
 import traceback
 from netfilterqueue import NetfilterQueue
 
+# Very similiar to original west-chamber season 1 implementation
+# NOT WORKING
+# GFW seems not care if the tcp connection is actually open or not
+
 raw_socket = socket.socket(socket.AF_INET, socket.SOCK_RAW, socket.IPPROTO_RAW)
 raw_socket.setsockopt(socket.SOL_IP, socket.IP_HDRINCL, 1)
 injecting_connection_packets = {} # (src, sport, dst, dport) => [packets...]

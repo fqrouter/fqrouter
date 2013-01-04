@@ -4,6 +4,9 @@ import socket
 import traceback
 import dpkt
 
+# It is working, although not working for ip blocked site as it is blocked in the layer below
+# also for some downstream content still triggers RST
+
 raw_socket = socket.socket(socket.AF_INET, socket.SOCK_RAW, socket.IPPROTO_RAW)
 raw_socket.setsockopt(socket.SOL_IP, socket.IP_HDRINCL, 1)
 
