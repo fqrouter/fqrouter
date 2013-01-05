@@ -1,0 +1,10 @@
+git clone git://github.com/fqrouter/openwrt-attitude-adjustment.git
+scripts/feeds update -a
+scripts/feeds install nano
+scripts/feeds install luci
+make menuconfig => result saved in internal-rom/720n/.config
+    make usb and ext4 working
+    include luci and nano
+    include kexec
+make kernel_menuconfig => result saved in internal-rom/720n/target/linux/ar71xx/config-3.3
+    make kernel support kexec

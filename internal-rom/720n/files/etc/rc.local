@@ -1,0 +1,13 @@
+mkdir /tmp/new
+until [ -e /dev/sda1 ]; do
+  sleep 1
+done
+mount /dev/sda1 /tmp/new
+if [ -f /tmp/new/linux.elf ]; then
+     kexec -l /tmp/new/linux.elf --command-line="board=TL-WR720N console=ttyATH0,115200"
+     #Set the watchdog, so that the booting should complete before the watchdog restarts the system
+     killall watchdog
+     watchdog -T 300 -t 30 /dev/watchdog
+     kexec -e
+fi
+exit 0
