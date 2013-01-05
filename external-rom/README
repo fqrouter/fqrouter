@@ -1,0 +1,13 @@
+git clone git://github.com/fqrouter/openwrt-trunk.git
+ln -s /opt/fqrouter/external-rom/feeds.conf feeds.conf
+scripts/feeds update -a
+scripts/feeds install nano
+scripts/feeds install python-netfilterqueue
+scripts/feeds install shadow
+scripts/feeds install luci
+make menuconfig => result saved in external-rom/720n/.config
+    make usb and ext4 working
+    include luci and nano
+    include python-netfilterqueue
+    include shadow (include libintl to fix compilation error)
+    target image ramdisk
