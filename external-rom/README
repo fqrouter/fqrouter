@@ -10,4 +10,5 @@ make menuconfig => result saved in external-rom/720n/.config
     include luci and nano
     include python-netfilterqueue
     include shadow (include libintl to fix compilation error)
+    include kmod-ipt-extra kmod-ipt-ipset
     target image ramdisk

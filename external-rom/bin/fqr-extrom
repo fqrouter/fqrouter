@@ -1,0 +1,13 @@
+#!/bin/bash
+if [ -z `readlink $0` ] ; then
+    BIN_DIR=$(cd `dirname $0` && pwd)
+else
+    BIN_DIR=$(dirname $(readlink $0))
+fi
+if [ -z "$1" ] ; then
+    ls $BIN_DIR
+    exit
+fi
+SCRIPT_NAME=$1
+shift
+exec python $BIN_DIR/$SCRIPT_NAME.py "$@"
