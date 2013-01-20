@@ -30,7 +30,12 @@ start() {
         echo 'skip sub boot due to initramfs not found'
         exit
     fi
-    kexec -l /tmp/usb_boot/fqrouter/$FQROUTER_VERSION.initramfs $KERNEL_COMMAND_LINE
+    if [ -n "$KERNEL_COMMAND_LINE" ] ; then
+        kexec -l /tmp/usb_boot/fqrouter/$FQROUTER_VERSION.initramfs --command-line="$KERNEL_COMMAND_LINE"
+    else
+        echo 'no kernel command line might not boot'
+        kexec -l /tmp/usb_boot/fqrouter/$FQROUTER_VERSION.initramfs
+    fi
     #Set the watchdog, so that the booting should complete before the watchdog restarts the system
     killall watchdog
     watchdog -T 300 -t 30 /dev/watchdog
