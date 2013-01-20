@@ -34,8 +34,16 @@ boot_rootfs() {
             exit
         fi
         losetup /dev/loop0 /udisk/fqrouter/$FQROUTER_VERSION.rootfs
-        mkdir /rootfs
+        mkdir /mnt
         mount -o noatime -t ext4 /dev/loop0 /mnt
+        mkdir /mnt/udisk
+        mount -o noatime,move /udisk /mnt/udisk
+        mkdir /mnt/udisk/fqrouter/config
+        if [ ! -d /mnt/etc/config.orig ] ; then
+            mv /mnt/etc/config /mnt/etc/config.orig
+            mkdir /mnt/etc/config
+        fi
+        mount -t overlayfs -o lowerdir=/mnt/etc/config.orig,upperdir=/mnt/udisk/fqrouter/config overlayfs /mnt/etc/config
         mount -o noatime,move /proc /mnt/proc
         mount -o noatime,move /dev /mnt/dev
         mount -o noatime,move /dev/pts /mnt/dev/pts
