@@ -1,0 +1,50 @@
+#!/bin/sh
+
+d() {
+    echo $1 > /dev/null
+}
+
+mount_usb() {
+    for disk in $(find /dev/sd*)
+    do
+        d $(mount $disk /udisk 2>&1)
+        if [ -f /udisk/fqrouter/boot ] ; then
+            echo "found fqrouter in $disk"
+            return
+        fi
+        d $(umount /udisk 2>&1)
+    done
+}
+
+boot_rootfs() {
+    if [ -n "$INITRAMFS" ]; then
+        load_modules /etc/modules /etc/modules.d/*
+        mkdir /udisk
+        mount_usb
+        if [ ! -f /udisk/fqrouter/boot ] ; then
+            echo 'skip usb boot due to the boot file not found'
+            sleep 1
+            exit
+        fi
+        . /udisk/fqrouter/boot
+        echo "fqrouter version: $FQROUTER_VERSION"
+        if [ ! -f /udisk/fqrouter/$FQROUTER_VERSION.rootfs ] ; then
+            echo 'skip sub boot due to rootfs not found'
+            sleep 1
+            exit
+        fi
+        losetup /dev/loop0 /udisk/fqrouter/$FQROUTER_VERSION.rootfs
+        mkdir /rootfs
+        mount -o noatime -t ext4 /dev/loop0 /mnt
+        mount -o noatime,move /proc /mnt/proc
+        mount -o noatime,move /dev /mnt/dev
+        mount -o noatime,move /dev/pts /mnt/dev/pts
+        mount -o noatime,move /tmp /mnt/tmp
+        mount -o noatime,move /sys /mnt/sys
+        mount -o noatime none /tmp -t tmpfs
+        echo 'about to switch root'
+        exec switch_root -c /dev/console /mnt /sbin/init
+    fi
+}
+
+boot_hook_add initramfs boot_rootfs

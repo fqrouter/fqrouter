@@ -3,8 +3,16 @@ scripts/feeds update -a
 scripts/feeds install nano
 scripts/feeds install luci
 make menuconfig => result saved in internal-rom/720n/.config
-    make usb and ext4 working
-    include luci and nano
-    include kexec
+    Kernel modules => USB Support => kmod-usb-ohci
+    Kernel modules => USB Support => kmod-usb-uhci
+    Kernel modules => USB Support => kmod-usb-storage
+    Kernel modules => USB Support => kmod-usb2
+    Kernel modules => Filesystems => kmod-fs-ext4
+    Kernel modules => Filesystems => kmod-fs-ntfs
+    Kernel modules => Filesystems => kmod-fs-vfat
+    Utilities => Filesystem => e2fsprogs
+    Utilities => Editors => nano
+    Utilities => Kexec-tools
+    Luci => Collections => luci
 make kernel_menuconfig => result saved in internal-rom/720n/target/linux/ar71xx/config-3.3
     make kernel support kexec
