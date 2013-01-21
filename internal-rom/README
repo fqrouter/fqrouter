@@ -10,9 +10,12 @@ make menuconfig => result saved in internal-rom/720n/.config
     Kernel modules => Filesystems => kmod-fs-ext4
     Kernel modules => Filesystems => kmod-fs-ntfs
     Kernel modules => Filesystems => kmod-fs-vfat
+    Kernel modules => Native Language Support => kmod-nls-437
+    Kernel modules => Native Language Support => kmod-nls-iso8859-1
     Utilities => Filesystem => e2fsprogs
     Utilities => Editors => nano
     Utilities => Kexec-tools
     Luci => Collections => luci
+    Luci => Themes => luci-theme-bootstrap
 make kernel_menuconfig => result saved in internal-rom/720n/target/linux/ar71xx/config-3.3
-    make kernel support kexec
+    Kernel type => Kexec system call

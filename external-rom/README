@@ -6,8 +6,21 @@ scripts/feeds install python-netfilterqueue
 scripts/feeds install shadow
 scripts/feeds install luci
 make menuconfig => result saved in external-rom/720n/.config
-    make usb and ext4 working
-    include luci and nano
+    Kernel modules => Block Devices => kmod-loop
+    Kernel modules => USB Support => kmod-usb-ohci
+    Kernel modules => USB Support => kmod-usb-uhci
+    Kernel modules => USB Support => kmod-usb-storage
+    Kernel modules => USB Support => kmod-usb2
+    Kernel modules => Filesystems => kmod-fs-ext4
+    Kernel modules => Filesystems => kmod-fs-ntfs
+    Kernel modules => Filesystems => kmod-fs-vfat
+    Kernel modules => Native Language Support => kmod-nls-437
+    Kernel modules => Native Language Support => kmod-nls-iso8859-1
+    Utilities => Filesystem => e2fsprogs
+    Utilities => Editors => nano
+    Utilities => losetup
+    Luci => Collections => luci
+    Luci => Themes => luci-theme-bootstrap
     include python-netfilterqueue
     include shadow (include libintl to fix compilation error)
     include kmod-ipt-extra kmod-ipt-ipset

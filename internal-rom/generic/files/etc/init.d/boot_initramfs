@@ -21,14 +21,14 @@ start() {
     mount_usb
     if [ ! -f /tmp/usb_boot/fqrouter/boot ] ; then
         echo 'skip usb boot due to the boot file not found'
-        exit
+        return
     fi
     . /tmp/usb_boot/fqrouter/boot
     echo "fqrouter version: $FQROUTER_VERSION"
     echo "kernel command line: $KERNEL_COMMAND_LINE"
     if [ ! -f /tmp/usb_boot/fqrouter/$FQROUTER_VERSION.initramfs ] ; then
         echo 'skip sub boot due to initramfs not found'
-        exit
+        return
     fi
     if [ -n "$KERNEL_COMMAND_LINE" ] ; then
         kexec -l /tmp/usb_boot/fqrouter/$FQROUTER_VERSION.initramfs --command-line="$KERNEL_COMMAND_LINE"
