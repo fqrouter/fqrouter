@@ -5,10 +5,10 @@ START=11
 d() {
     echo $1 > /dev/null
 }
-mount_usb() {
+mount_fqrouter_partition() {
     for disk in $(find /dev/sd*)
     do
-        d $(mount $disk /tmp/usb_boot 2>&1)
+        d $(mount -o noatime $disk /tmp/usb_boot 2>&1)
         if [ -f /tmp/usb_boot/fqrouter/boot ] ; then
             echo "found fqrouter in $disk"
             return
@@ -28,23 +28,23 @@ get_kernel_cmdline() {
 }
 start() {
     mkdir /tmp/usb_boot
-    mount_usb
+    mount_fqrouter_partition
     if [ ! -f /tmp/usb_boot/fqrouter/boot ] ; then
         echo 'skip usb boot due to the boot file not found'
         return
     fi
     . /tmp/usb_boot/fqrouter/boot
     echo "fqrouter version: $FQROUTER_VERSION"
-    if [ ! -f /tmp/usb_boot/fqrouter/$FQROUTER_VERSION.initramfs ] ; then
-        echo 'skip sub boot due to initramfs not found'
+    if [ ! -f /tmp/usb_boot/fqrouter/$FQROUTER_VERSION.kernel ] ; then
+        echo 'skip sub boot due to kernel not found'
         return
     fi
     KERNEL_COMMAND_LINE=$(get_kernel_cmdline)
     if [ -n "$KERNEL_COMMAND_LINE" ] ; then
-        kexec -l /tmp/usb_boot/fqrouter/$FQROUTER_VERSION.initramfs --command-line="$KERNEL_COMMAND_LINE"
+        kexec -l /tmp/usb_boot/fqrouter/$FQROUTER_VERSION.kernel --command-line="$KERNEL_COMMAND_LINE"
     else
         echo 'no kernel command line might not boot'
-        kexec -l /tmp/usb_boot/fqrouter/$FQROUTER_VERSION.initramfs
+        kexec -l /tmp/usb_boot/fqrouter/$FQROUTER_VERSION.kernel
     fi
     #Set the watchdog, so that the booting should complete before the watchdog restarts the system
     killall watchdog

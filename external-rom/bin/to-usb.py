@@ -15,7 +15,7 @@ ARCHITECTURE = ARCHITECTURES[hardware]
 VERSION = '{}-{}-snapshot{}'.format(hardware, recovery_version, time.strftime("%Y%m%d%H%M%S", time.localtime()))
 ROOTFS_TAR_GZ = 'bin/{}/openwrt-{}-generic-rootfs.tar.gz'.format(ARCHITECTURE, ARCHITECTURE)
 ROOTFS_PATH = 'bin/{}/{}.rootfs'.format(ARCHITECTURE, VERSION)
-INITRAMFS_PATH = 'bin/{}/openwrt-{}-generic-vmlinux-initramfs.elf'.format(ARCHITECTURE, ARCHITECTURE)
+KERNEL_PATH = 'bin/{}/openwrt-{}-generic-vmlinux-initramfs.elf'.format(ARCHITECTURE, ARCHITECTURE)
 
 def execute(command):
     print(command)
@@ -42,7 +42,7 @@ def to_usb():
     with open('/opt/usb/fqrouter/boot', 'w') as f:
         f.write('FQROUTER_VERSION={}\n'.format(VERSION))
     execute('cp {} /opt/usb/fqrouter/{}.rootfs'.format(ROOTFS_PATH, VERSION))
-    execute('cp {} /opt/usb/fqrouter/{}.initramfs'.format(INITRAMFS_PATH, VERSION))
+    execute('cp {} /opt/usb/fqrouter/{}.kernel'.format(KERNEL_PATH, VERSION))
 
 prepare_rootfs()
 to_usb()

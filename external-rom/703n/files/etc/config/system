@@ -1,0 +1,12 @@
+config system
+        option conloglevel '8'
+        option cronloglevel '8'
+        option hostname 'fqrouter-703n'
+        option zonename 'Asia/Shanghai'
+        option timezone 'CST-8'
+
+config timeserver 'ntp'
+        list server '0.openwrt.pool.ntp.org'
+        list server '1.openwrt.pool.ntp.org'
+        list server '2.openwrt.pool.ntp.org'
+        list server '3.openwrt.pool.ntp.org'

@@ -4,10 +4,10 @@ d() {
     echo $1 > /dev/null
 }
 
-mount_usb() {
+mount_fqrouter_partition() {
     for disk in $(find /dev/sd*)
     do
-        d $(mount $disk /udisk 2>&1)
+        d $(mount -o noatime $disk /udisk 2>&1)
         if [ -f /udisk/fqrouter/boot ] ; then
             echo "found fqrouter in $disk"
             return
@@ -16,16 +16,16 @@ mount_usb() {
     done
 }
 
-boot_rootfs() {
+switch_to_rootfs() {
     if [ -n "$INITRAMFS" ]; then
         load_modules /etc/modules /etc/modules.d/*
         sleep 3 # wait for /dev/sd*
         mkdir /udisk
-        mount_usb
+        mount_fqrouter_partition
         if [ ! -f /udisk/fqrouter/boot ] ; then
             echo 'skip usb boot due to the boot file not found'
             sleep 1
-            export NOMOUNT="skip usb boot due to the boot file not found"
+            export FQROUTER_BOOT_ERROR="skip usb boot due to the boot file not found"
             exec /sbin/init
         fi
         . /udisk/fqrouter/boot
@@ -33,14 +33,14 @@ boot_rootfs() {
         if [ ! -f /udisk/fqrouter/$FQROUTER_VERSION.rootfs ] ; then
             echo 'skip usb boot due to rootfs not found'
             sleep 1
-            export NOMOUNT="skip usb boot due to rootfs not found"
+            export FQROUTER_BOOT_ERROR="skip usb boot due to rootfs not found"
             exec /sbin/init
         fi
         losetup /dev/loop1 /udisk/fqrouter/$FQROUTER_VERSION.rootfs
         if [ $? -ne 0 ] ; then
             echo 'skip usb boot due to loopback mount failed'
             sleep 1
-            export NOMOUNT="skip usb boot due to loopback mount failed"
+            export FQROUTER_BOOT_ERROR="skip usb boot due to loopback mount failed"
             exec /sbin/init
         fi
         mkdir /mnt
@@ -64,4 +64,4 @@ boot_rootfs() {
     fi
 }
 
-boot_hook_add initramfs boot_rootfs
+boot_hook_add initramfs switch_to_rootfs
