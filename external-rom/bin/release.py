@@ -1,11 +1,16 @@
 import subprocess
 import time
 import sys
+import os
 
 if len(sys.argv) < 2:
     raise Exception('must specify hardware')
 hardware = sys.argv[1]
-recovery_version = 'recovery20130123'
+recovery_version_path = os.path.join(os.path.dirname(__file__), '../../internal-rom/generic/files/etc/fqrouter_recovery_version')
+if not os.path.exists(recovery_version_path):
+    raise Exception('missing {}'.find(recovery_version_path))
+with open(recovery_version_path) as f:
+    recovery_version = f.read()
 
 ARCHITECTURES = {
     '703n': 'ar71xx',
@@ -43,6 +48,7 @@ def to_usb():
         f.write('FQROUTER_VERSION={}\n'.format(VERSION))
     execute('cp {} /opt/usb/fqrouter/{}.rootfs'.format(ROOTFS_PATH, VERSION))
     execute('cp {} /opt/usb/fqrouter/{}.kernel'.format(KERNEL_PATH, VERSION))
+    subprocess.call('cd /mnt/hgfs/usb/ && zip -r extrom-{}.zip fqrouter'.format(VERSION), shell=True)
 
 prepare_rootfs()
 to_usb()
