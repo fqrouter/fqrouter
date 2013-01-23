@@ -5,18 +5,13 @@ import sys
 if len(sys.argv) < 2:
     raise Exception('must specify hardware')
 hardware = sys.argv[1]
-recovery_version = 'recovery20130121'
+recovery_version = 'recovery20130123'
 
 ARCHITECTURES = {
     '703n': 'ar71xx',
     '720n': 'ar71xx'
 }
-KERNEL_COMMAND_LINES = {
-    '703n': 'board=TL-WR703N console=ttyATH0,115200',
-    '720n': 'board=TL-WR720N console=ttyATH0,115200'
-}
 ARCHITECTURE = ARCHITECTURES[hardware]
-KERNEL_COMMAND_LINE = KERNEL_COMMAND_LINES[hardware]
 VERSION = '{}-{}-snapshot{}'.format(hardware, recovery_version, time.strftime("%Y%m%d%H%M%S", time.localtime()))
 ROOTFS_TAR_GZ = 'bin/{}/openwrt-{}-generic-rootfs.tar.gz'.format(ARCHITECTURE, ARCHITECTURE)
 ROOTFS_PATH = 'bin/{}/{}.rootfs'.format(ARCHITECTURE, VERSION)
@@ -46,7 +41,6 @@ def to_usb():
     execute('mkdir /opt/usb/fqrouter')
     with open('/opt/usb/fqrouter/boot', 'w') as f:
         f.write('FQROUTER_VERSION={}\n'.format(VERSION))
-        f.write('KERNEL_COMMAND_LINE="{}"\n'.format(KERNEL_COMMAND_LINE))
     execute('cp {} /opt/usb/fqrouter/{}.rootfs'.format(ROOTFS_PATH, VERSION))
     execute('cp {} /opt/usb/fqrouter/{}.initramfs'.format(INITRAMFS_PATH, VERSION))
 

@@ -16,6 +16,16 @@ mount_usb() {
         d $(umount /tmp/usb_boot 2>&1)
     done
 }
+get_kernel_cmdline() {
+    cmdline=$(cat /proc/cmdline)
+    for arg in $cmdline
+    do
+            case "$arg" in
+                    board=*) echo -n $arg; echo -n " " ;;
+                    console=*) echo -n $arg; echo -n " " ;;
+            esac
+    done
+}
 start() {
     mkdir /tmp/usb_boot
     mount_usb
@@ -25,11 +35,11 @@ start() {
     fi
     . /tmp/usb_boot/fqrouter/boot
     echo "fqrouter version: $FQROUTER_VERSION"
-    echo "kernel command line: $KERNEL_COMMAND_LINE"
     if [ ! -f /tmp/usb_boot/fqrouter/$FQROUTER_VERSION.initramfs ] ; then
         echo 'skip sub boot due to initramfs not found'
         return
     fi
+    KERNEL_COMMAND_LINE=$(get_kernel_cmdline)
     if [ -n "$KERNEL_COMMAND_LINE" ] ; then
         kexec -l /tmp/usb_boot/fqrouter/$FQROUTER_VERSION.initramfs --command-line="$KERNEL_COMMAND_LINE"
     else
