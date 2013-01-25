@@ -27,7 +27,7 @@ def execute(command):
     subprocess.call(command, shell=True)
 
 def prepare_rootfs():
-    execute('dd if=/dev/zero of={} bs=1M count=128'.format(ROOTFS_PATH))
+    execute('dd if=/dev/zero of={} bs=1M count=16'.format(ROOTFS_PATH))
     execute('losetup /dev/loop6 {}'.format(ROOTFS_PATH))
     try:
         execute('mkfs -t ext4 -v /dev/loop6')
