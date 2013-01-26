@@ -14,7 +14,7 @@ os.execute('logger -s -t fqrouter no sta mode wifi interface enabled')
 function is_wlan0_up()
     local f = assert(io.popen('ifconfig wlan0', 'r'))
     local output = assert(f:read('*a'))
-    return not output:find('not found')
+    return output:find('RUNNING')
 end
 for count=1,5 do
     if is_wlan0_up() then
@@ -27,6 +27,7 @@ if not is_wlan0_up() then
     os.exit()
 end
 os.execute('logger -s -t fqrouter wlan0 is up')
+os.execute('sleep 3')
 
 local f = assert(io.popen('iw dev wlan0 scan | grep SSID', 'r'))
 local accessPoints = assert(f:read('*a'))
