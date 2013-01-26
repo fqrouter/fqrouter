@@ -23,11 +23,10 @@ for count=1,10 do
     os.execute('sleep 1')
 end
 if not is_wlan0_up() then
-    os.execute('logger -s -t fqrouter wlan0 not up in 5 seconds')
+    os.execute('logger -s -t fqrouter wlan0 not up in given time')
     os.exit()
 end
 os.execute('logger -s -t fqrouter wlan0 is up')
-os.execute('sleep 3')
 
 local f = assert(io.popen('iw dev wlan0 scan | grep SSID', 'r'))
 local accessPoints = assert(f:read('*a'))
@@ -38,7 +37,9 @@ function enable_sta_mode_wifi_interface(section)
 		os.execute('logger -s -t fqrouter found ' .. section.ssid)
 		x:set('wireless', section['.name'], 'disabled', 0)
 		x:commit('wireless')
-		os.execute('wifi up &')
+		os.execute('touch /tmp/skip-only-enable-connectable-sta-mode-wifi-interface')
+		os.execute('wifi up')
+		os.execute('rm /tmp/skip-only-enable-connectable-sta-mode-wifi-interface')
 		os.exit()
 	end
 end

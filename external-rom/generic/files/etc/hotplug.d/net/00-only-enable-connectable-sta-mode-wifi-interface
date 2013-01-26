@@ -1,0 +1,12 @@
+if [ -f /tmp/skip-only-enable-connectable-sta-mode-wifi-interface ] ; then
+	logger -s -t fqrouter skip-only-enable-connectable-sta-mode-wifi-interface found
+	return
+fi
+
+if [ "remove" == "$ACTION" -a "wlan0" == "$INTERFACE" ] ; then
+	/etc/init.d/disable_sta_mode_wifi_interfaces start
+fi
+if [ "add" == "$ACTION" -a "wlan0" == "$INTERFACE" ] ; then
+    logger -s -t fqrouter try to bring up sta mode wifi interface
+	sta-mode-wifi-interface-up &
+fi
