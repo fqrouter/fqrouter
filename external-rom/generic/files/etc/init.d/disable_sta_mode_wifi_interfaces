@@ -14,5 +14,5 @@ start() {
 	config_load 'wireless'
 	config_foreach disable_sta_mode_wifi_interface 'wifi-iface'
 	uci_commit
-	sta-mod-wifi-interface-up &
+	sta-mode-wifi-interface-up &
 }
