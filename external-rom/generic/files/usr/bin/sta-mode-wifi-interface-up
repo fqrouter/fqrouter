@@ -16,7 +16,7 @@ function is_wlan0_up()
     local output = assert(f:read('*a'))
     return output:find('RUNNING')
 end
-for count=1,5 do
+for count=1,10 do
     if is_wlan0_up() then
         break
     end
