@@ -9,7 +9,25 @@ function exit_if_sta_mode_wifi_interface_enabled(section)
 	end
 end
 x:foreach('wireless', 'wifi-iface', exit_if_sta_mode_wifi_interface_enabled)
-os.execute('sleep 3')
+os.execute('logger -s -t fqrouter no sta mode wifi interface enabled')
+
+function is_wlan0_up()
+    local f = assert(io.popen('ifconfig wlan0', 'r'))
+    local output = assert(f:read('*a'))
+    return not output:find('not found')
+end
+for count in 1,5 do
+    if is_wlan0_up() then
+        break
+    end
+    os.execute('sleep 1')
+end
+if not is_wlan0_up() then
+    os.execute('logger -s -t fqrouter wlan0 not up in 5 seconds')
+    os.exit()
+end
+os.execute('logger -s -t fqrouter wlan0 is up')
+
 local f = assert(io.popen('iw dev wlan0 scan | grep SSID', 'r'))
 local accessPoints = assert(f:read('*a'))
 f:close()
@@ -19,6 +37,7 @@ function enable_sta_mode_wifi_interface(section)
 		os.execute('logger -s -t fqrouter found ' .. section.ssid)
 		x:set('wireless', section['.name'], 'disabled', 0)
 		x:commit('wireless')
+		os.execute('wifi up')
 	end
 end
 x:foreach('wireless', 'wifi-iface', enable_sta_mode_wifi_interface)
