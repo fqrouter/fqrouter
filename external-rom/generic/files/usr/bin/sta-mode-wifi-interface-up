@@ -1,0 +1,25 @@
+#!/usr/bin/lua
+require 'uci'
+
+x = uci.cursor()
+function exit_if_sta_mode_wifi_interface_enabled(section)
+	if 'sta' == section.mode and '0' == section.disabled then
+		os.execute('logger -s -t fqrouter std mod wifi interface ' .. section.ssid .. ' already enabled')
+		os.exit()
+	end
+end
+x:foreach('wireless', 'wifi-iface', exit_if_sta_mode_wifi_interface_enabled)
+os.execute('sleep 1')
+local f = assert(io.popen('iw dev wlan0 scan | grep SSID', 'r'))
+local accessPoints = assert(f:read('*a'))
+f:close()
+os.execute('logger -s -t fqrouter "' .. accessPoints .. '"')
+function enable_sta_mode_wifi_interface(section)
+	if 'sta' == section.mode and accessPoints:find(section.ssid, nil, true) then
+		os.execute('logger -s -t fqrouter found ' .. section.ssid)
+		x:set('wireless', section['.name'], 'disabled', 0)
+		x:commit('wireless')
+		os.execute('wifi up')
+	end
+end
+x:foreach('wireless', 'wifi-iface', enable_sta_mode_wifi_interface)

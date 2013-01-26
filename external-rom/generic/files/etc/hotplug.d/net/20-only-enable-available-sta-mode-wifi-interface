@@ -5,8 +5,10 @@ disable_sta_mode_wifi_interface() {
 		uci_set wireless $section disabled 1
 	fi
 }
-
+logger $ACTION $INTERFACE
 if [ remove == $ACTION -a wlan0 == $INTERFACE ] ; then
+	scan_result=$(iw dev wlan0 scan | grep SSID)
+	logger !!! $scan_result
 	config_load 'wireless'
 	config_foreach disable_sta_mode_wifi_interface 'wifi-iface'
 	uci_commit
