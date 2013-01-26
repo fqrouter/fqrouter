@@ -1,6 +1,18 @@
 #!/usr/bin/lua
 require 'uci'
 
+function skip_if_flag_found()
+	local f=io.open('/tmp/skip-sta-mod-wifi-interface-up','r')
+	if f~=nil then 
+		io.close(f)
+		os.execute('logger -s -t fqrouter skip-sta-mod-wifi-interface-up found')
+		os.execute('rm /tmp/skip-sta-mod-wifi-interface-up')
+		os.exit()
+	else 
+		os.execute('logger -s -t fqrouter not found flag skip-sta-mod-wifi-interface-up')
+	end
+end
+skip_if_flag_found()
 x = uci.cursor()
 function exit_if_sta_mode_wifi_interface_enabled(section)
 	if 'sta' == section.mode and '0' == section.disabled then
@@ -9,16 +21,17 @@ function exit_if_sta_mode_wifi_interface_enabled(section)
 	end
 end
 x:foreach('wireless', 'wifi-iface', exit_if_sta_mode_wifi_interface_enabled)
-os.execute('sleep 1')
+os.execute('sleep 3')
 local f = assert(io.popen('iw dev wlan0 scan | grep SSID', 'r'))
 local accessPoints = assert(f:read('*a'))
 f:close()
-os.execute('logger -s -t fqrouter "' .. accessPoints .. '"')
+os.execute('logger -s -t fqrouter "access points: ' .. accessPoints .. '"')
 function enable_sta_mode_wifi_interface(section)
 	if 'sta' == section.mode and accessPoints:find(section.ssid, nil, true) then
 		os.execute('logger -s -t fqrouter found ' .. section.ssid)
 		x:set('wireless', section['.name'], 'disabled', 0)
 		x:commit('wireless')
+		os.execute('touch /tmp/skip-sta-mod-wifi-interface-up')
 		os.execute('wifi up')
 	end
 end
