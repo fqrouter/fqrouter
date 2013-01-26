@@ -16,7 +16,7 @@ function is_wlan0_up()
     local output = assert(f:read('*a'))
     return not output:find('not found')
 end
-for count in 1,5 do
+for count=1,5 do
     if is_wlan0_up() then
         break
     end
@@ -37,7 +37,8 @@ function enable_sta_mode_wifi_interface(section)
 		os.execute('logger -s -t fqrouter found ' .. section.ssid)
 		x:set('wireless', section['.name'], 'disabled', 0)
 		x:commit('wireless')
-		os.execute('wifi up')
+		os.execute('wifi up &')
+		os.exit()
 	end
 end
 x:foreach('wireless', 'wifi-iface', enable_sta_mode_wifi_interface)
