@@ -1,0 +1,13 @@
+disable_sta_mode_wifi_interface() {
+	local section="$1"
+	config_get mode $section 'mode'
+	if [ sta == $mode ] ; then
+		uci_set wireless $section disabled 1
+	fi
+}
+
+if [ remove == $ACTION -a wlan0 == $INTERFACE ] ; then
+	config_load 'wireless'
+	config_foreach disable_sta_mode_wifi_interface 'wifi-iface'
+	uci_commit
+fi
