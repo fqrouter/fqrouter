@@ -1,8 +1,8 @@
 module('luci.controller.fqrouter.network', package.seeall)
 
 function index()
-    entry({'fqrouter','network'}, call('network_status'), 'Network Status', 10).dependent=false
-    entry({'fqrouter','network', 'update'}, call('update_lan_ip'), 'Update Lan IP', 10).dependent=false
+    entry({'fqrouter','network', 'status'}, call('network_status'), 'Network Status', 10).dependent=false
+    entry({'fqrouter','network', 'lan_ip', 'update'}, call('update_lan_ip'), 'Update Lan IP', 10).dependent=false
 end
 
 function network_status()

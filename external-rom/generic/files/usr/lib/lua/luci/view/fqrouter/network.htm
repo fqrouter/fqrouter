@@ -5,8 +5,8 @@
 </head>
 <body>
 <ul>
-    <form method="POST" action="update">
-        本路由器地址 <input type="text" value="<%=lan:ipaddr()%>"/>
+    <form method="POST" action="lan_ip/update">
+        本路由器地址 <input type="text" name="lan_ip" value="<%=lan:ipaddr()%>"/>
         <button>更新</button>
     </form>
 </ul>
