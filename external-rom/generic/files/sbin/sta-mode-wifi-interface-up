@@ -1,8 +1,23 @@
 #!/usr/bin/lua
 require 'uci'
 require 'dumper'
+require 'nixio'
 
-os.execute('rm /tmp/error-found-during-sta-mode-wifi-interface-up')
+local pid_file = io.open('/tmp/sta-mode-wifi-interface-up.pid', 'r')
+if pid_file ~= nil then
+    local that_pid = pid_file:read('*a')
+    io.close(pid_file)
+    os.execute('logger -s -t fqrouter sta-mode-wifi-interface-up that pid is: ' .. that_pid)
+    local cmdline_file = io.open('/proc/' .. that_pid .. '/cmdline', 'r')
+    if cmdline_file ~= nil then
+        io.close(cmdline_file)
+        os.execute('logger -s -t fqrouter sta-mode-wifi-interface-up found another instance ' .. that_pid)
+        os.exit()
+    end
+end
+local this_pid = nixio.getpid()
+os.execute('echo -n ' .. this_pid .. ' > /tmp/sta-mode-wifi-interface-up.pid')
+os.execute('logger -s -t fqrouter sta-mode-wifi-interface-up.pid: ' .. this_pid)
 x = uci.cursor()
 function exit_if_sta_mode_wifi_interface_enabled(section)
 	if 'sta' == section.mode and '0' == section.disabled then
@@ -13,31 +28,35 @@ end
 x:foreach('wireless', 'wifi-iface', exit_if_sta_mode_wifi_interface_enabled)
 os.execute('logger -s -t fqrouter no sta mode wifi interface enabled')
 
-function is_wlan0_up()
-    local f = assert(io.popen('ifconfig wlan0', 'r'))
+function is_interface_up(ifname)
+    local f = assert(io.popen('ifconfig '..ifname, 'r'))
     local output = assert(f:read('*a'))
     return output:find('RUNNING')
 end
 for count=1,10 do
-    if is_wlan0_up() then
+    if is_interface_up('wlan0') then
         break
     end
     os.execute('sleep 1')
 end
-if not is_wlan0_up() then
+if not is_interface_up('wlan0') then
     os.execute('logger -s -t fqrouter wlan0 not up in given time')
     os.exit()
 end
 os.execute('logger -s -t fqrouter wlan0 is up')
 
-local iw = require'luci.sys'.wifi.getiwinfo('radio0')
 local ssid_list = {}
 local ssid_present = {}
-for k, v in ipairs(iw.scanlist or {}) do
-    table.insert(ssid_list, v.ssid)
-    ssid_present[v.ssid] = v
+for i = 1, 3 do
+    local iw = require'luci.sys'.wifi.getiwinfo('radio0')
+    for k, v in ipairs(iw.scanlist or {}) do
+        if v.ssid ~= nil and ssid_present[v.ssid] == nil then
+            table.insert(ssid_list, v.ssid)
+            ssid_present[v.ssid] = v
+        end
+    end
+    os.execute('logger -s -t fqrouter "ssid list: ' .. table.concat(ssid_list, ', ') .. '"')
 end
-os.execute('logger -s -t fqrouter "ssid list: ' .. table.concat(ssid_list, ', ') .. '"')
 local no_sta_mode_wifi_interface_configured = true
 function enable_sta_mode_wifi_interface(section)
 	if 'sta' == section.mode then
@@ -49,15 +68,29 @@ function enable_sta_mode_wifi_interface(section)
             os.execute('touch /tmp/skip-only-enable-connectable-sta-mode-wifi-interface')
             os.execute('wifi up')
             os.execute('rm /tmp/skip-only-enable-connectable-sta-mode-wifi-interface')
+            os.execute('sleep 10')
+            if is_interface_up('wlan0-1') then
+                os.execute('rm /tmp/upstream-status')
+            else
+                os.execute('echo "UPSTREAM_TIMEOUT" > /tmp/upstream-status')
+                os.execute('logger -s -t fqrouter sta mode wifi interface not up in given time')
+                x:set('wireless', section['.name'], 'disabled', 1)
+                x:commit('wireless')
+                os.execute('touch /tmp/skip-only-enable-connectable-sta-mode-wifi-interface')
+                os.execute('wifi down')
+                os.execute('wifi up')
+                os.execute('rm /tmp/skip-only-enable-connectable-sta-mode-wifi-interface')
+            end
             os.exit()
         end
 	end
 end
+x = uci.cursor()
 x:foreach('wireless', 'wifi-iface', enable_sta_mode_wifi_interface)
 if no_sta_mode_wifi_interface_configured then
-    os.execute('echo "UPSTREAM_NOT_CONFIGURED" > /tmp/error-found-during-sta-mode-wifi-interface-up')
+    os.execute('echo "UPSTREAM_NOT_CONFIGURED" > /tmp/upstream-status')
     os.execute('logger -s -t fqrouter no sta mode wifi interface configured')
 else
-    os.execute('echo "UPSTREAM_NOT_AVAILABLE" > /tmp/error-found-during-sta-mode-wifi-interface-up')
+    os.execute('echo "UPSTREAM_NOT_AVAILABLE" > /tmp/upstream-status')
     os.execute('logger -s -t fqrouter no sta mode wifi interface available')
 end

@@ -55,7 +55,7 @@ function upstream_status()
         end
     end
     if 'NOT_CONNECTED' == upstream_status then
-        local error_file = io.open('/tmp/error-found-during-sta-mode-wifi-interface-up', 'r')
+        local error_file = io.open('/tmp/upstream-status', 'r')
         if error_file ~= nil then
             upstream_status = error_file:read('*all')
             io.close(error_file)
@@ -68,7 +68,8 @@ end
 function upstream_list()
     local iw = require'luci.sys'.wifi.getiwinfo('radio0')
     local upstream_list = {}
-    local no_upstream_found = true
+    local remote_saved_upstream_list = {}
+    local no_upstream_available = true
     for k, v in ipairs(iw.scanlist or {}) do
         upstream_list[v.ssid] = {
             signal_strength = calculate_signal_strength(v),
@@ -76,19 +77,29 @@ function upstream_list()
             encryption = get_encryption(v),
             password = nil
         }
-        no_upstream_found = false
+        no_upstream_available = false
     end
-    function read_password(section)
-        if 'sta' == section.mode and upstream_list[section.ssid] ~= nil then
-            upstream_list[section.ssid].password = section.key
+    function add_saved_upstream(section)
+        if 'sta' == section.mode then
+            if upstream_list[section.ssid] == nil then
+                table.insert(remote_saved_upstream_list, {
+                    ssid = section.ssid,
+                    bssid = section.bssid,
+                    encryption = section.encryption,
+                    password = section.password
+                })
+            else
+                upstream_list[section.ssid].password = section.key
+            end
         end
     end
 
     x = require'uci'.cursor()
-    x:foreach('wireless', 'wifi-iface', read_password)
+    x:foreach('wireless', 'wifi-iface', add_saved_upstream)
     require'luci.template'.render('fqrouter/network/upstream-list', {
         upstream_list = upstream_list,
-        no_upstream_found = no_upstream_found,
+        remote_saved_upstream_list=remote_saved_upstream_list,
+        no_upstream_available = no_upstream_available,
         connect_url = luci.dispatcher.build_url('fqrouter', 'network', 'upstream', 'connect'),
         configure_url = luci.dispatcher.build_url('fqrouter', 'network', 'upstream', 'config')
     })
@@ -193,9 +204,10 @@ end
 
 function restart_network()
     if 'POST' == luci.http.getenv().REQUEST_METHOD then
-        os.execute('rm /tmp/error-found-during-sta-mode-wifi-interface-up; '
-            ..'killall wpa_supplicant && /etc/init.d/network restart && sleep 1 && '
-            ..'/etc/init.d/dnsmasq restart && sleep 1 && /etc/init.d/firewall restart')
+        os.execute('echo "RESTARTING" > /tmp/upstream-status && '
+            ..'/etc/init.d/network restart && sleep 1 && '
+            ..'/etc/init.d/dnsmasq restart && sleep 1 && '
+            ..'/etc/init.d/firewall restart')
     else
         require'luci.template'.render('fqrouter/network/restart', {
             restart_url = luci.dispatcher.build_url('fqrouter', 'network', 'restart'),

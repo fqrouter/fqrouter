@@ -53,6 +53,16 @@
     <div class="CHECKING alert alert-info">
         正在检查上级无线连接状态……
     </div>
+    <div class="RESTARTING alert alert-info">
+        正在重新连接，请耐心等待……
+        <a href="javascript:window.location.reload();" class="btn">重新检测</a>
+        <a href="<%=restart_url%>" class="btn">重新连接</a>
+    </div>
+    <div class="STARTING alert alert-info">
+        正在连接，请耐心等待……
+        <a href="javascript:window.location.reload();" class="btn">重新检测</a>
+        <a href="<%=restart_url%>" class="btn">重新连接</a>
+    </div>
     <div class="UPSTREAM_NOT_CONFIGURED alert">
         上级无线尚未设置
         <a href="<%=upstream_list_url%>" class="btn">设置上级无线</a>
@@ -60,6 +70,12 @@
     <div class="UPSTREAM_NOT_AVAILABLE alert">
         设置的上级无线没有扫描到
         <a href="<%=upstream_list_url%>" class="btn">查看附近的无线</a>
+        <a href="<%=restart_url%>" class="btn">重新扫描</a>
+    </div>
+    <div class="UPSTREAM_TIMEOUT alert alert-error">
+        上级无线连接超时
+        <a href="<%=upstream_list_url%>" class="btn">设置上级无线</a>
+        <a href="<%=restart_url%>" class="btn">重新连接</a>
     </div>
     <div class="ERROR alert alert-error">
         上级无线未能正常连接
@@ -73,6 +89,9 @@
 <div class="internet-status">
     <div class="CHECKING alert alert-info">
         正在检查互联网连接状态……
+    </div>
+    <div class="ERROR alert alert-error">
+        互联网未能正常连接
     </div>
     <div class="CONNECTED alert alert-success">
         网络状态检查完毕，一切正常！
@@ -101,6 +120,8 @@
                     showStatus('upstream-status', status);
                     if ('CONNECTED' == status) {
                         checkInternetStatus();
+                    } else if ('STARTING' == status || 'RESTARTING' == status) {
+                        // pass
                     } else {
                         showStatus('internet-status', 'ERROR');
                     }

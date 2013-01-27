@@ -13,6 +13,7 @@ disable_sta_mode_wifi_interface() {
 }
 
 start() {
+    echo "STARTING" > /tmp/upstream-status
 	config_load 'wireless'
 	config_foreach disable_sta_mode_wifi_interface 'wifi-iface'
 	uci_commit

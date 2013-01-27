@@ -9,8 +9,8 @@
         width: 2em;
     }
 </style>
-<h2>上级无线列表</h2>
-<% if not no_upstream_found then %>
+<h2>扫描到的无线</h2>
+<% if not no_upstream_available then %>
 <table class="table">
     <thead>
     <tr>
@@ -63,11 +63,27 @@
     </tbody>
 </table>
 <% else %>
-<p>没有找到任何上级无线</p>
+<p>没有扫描到无线</p>
+<% end %>
+<% if #remote_saved_upstream_list > 0 then %>
+<h2>不在附近的无线</h2>
+<ul>
+    <% for i, upstream in ipairs(remote_saved_upstream_list) do %>
+    <li>
+        <form method="GET" action="<%=configure_url%>">
+            <input type="hidden" name="ssid" value="<%=upstream.ssid%>">
+            <input type="hidden" name="bssid" value="<%=upstream.bssid%>">
+            <input type="hidden" name="encryption" value="<%=upstream.encryption%>">
+            <input type="hidden" name="password" value="<%=upstream.password%>">
+            <a href="javascript:void(0);" class="edit"><%=upstream.ssid%> <i class="icon-edit"></i></a>
+        </form>
+    </li>
+    <% end %>
+</ul>
 <% end %>
 <script type="text/javascript">
     $(document).ready(function () {
-        $('a.edit').click(function() {
+        $('a.edit').click(function () {
             $(this).parents('form').submit();
         });
     });
