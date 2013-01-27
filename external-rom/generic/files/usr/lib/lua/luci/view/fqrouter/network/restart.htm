@@ -1,0 +1,27 @@
+<%title='正在应用网络设置'%>
+<%+fqrouter/header%>
+<style type="text/css">
+    .message {
+        margin-top: 8em;
+    }
+</style>
+<div class="message">
+    <p><%=notice%></p>
+
+    <p>正在应用网络设置……请耐心等待<span id="remaining-seconds">10</span>秒钟</p>
+</div>
+<script type="text/javascript">
+    $.post('<%=restart_url%>');
+    window.pong = function () {
+        window.location.href = '<%=status_url%>';
+    };
+    setInterval(function () {
+        var remainingSeconds = parseInt($('#remaining-seconds').html()) - 1;
+        if (remainingSeconds <= 0) {
+            window.pong();
+        }
+        $('#remaining-seconds').html(remainingSeconds);
+        $.getScript('<%=ping_url%>');
+    }, 1000);
+</script>
+<%+fqrouter/footer%>

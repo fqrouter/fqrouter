@@ -1,0 +1,39 @@
+<%title='网络状态'%>
+<%+fqrouter/header%>
+<style type="text/css">
+    dt {
+        width: 6em;
+        display: inline-block;
+    }
+
+    dd {
+        display: inline-block;
+    }
+</style>
+<h2>网络状态</h2>
+<p>
+    你的电脑 => 本路由器 => 上级无线 => 互联网
+</p>
+<ul>
+    <li>
+        <dt>上级无线</dt>
+        <dd id="upstream-status">连接状态检测中……</dd>
+    </li>
+    <li>
+        <dt>互联网</dt>
+        <dd id="internet-status">连接状态检测中……</dd>
+    </li>
+</ul>
+<script type="text/javascript">
+    $(document).ready(function () {
+        $('#upstream-status').load('<%=upstream_status_url%>');
+        var timeoutId = setTimeout(function() {
+            $('#internet-status').html('可能没有连上');
+        }, 1000 * 10);
+        $.getJSON('<%=internet_status_url%>', function(result) {
+            $('#internet-status').html('已经连上互联网，ip是：' + result.ip_addr);
+            clearTimeout(timeoutId);
+        });
+    });
+</script>
+<%+fqrouter/footer%>
