@@ -58,11 +58,6 @@
         <a href="javascript:window.location.reload();" class="btn">重新检测</a>
         <a href="<%=restart_url%>" class="btn">重新连接</a>
     </div>
-    <div class="STARTING alert alert-info">
-        正在连接，请耐心等待……
-        <a href="javascript:window.location.reload();" class="btn">重新检测</a>
-        <a href="<%=restart_url%>" class="btn">重新连接</a>
-    </div>
     <div class="UPSTREAM_NOT_CONFIGURED alert">
         上级无线尚未设置
         <a href="<%=upstream_list_url%>" class="btn">设置上级无线</a>
@@ -120,7 +115,7 @@
                     showStatus('upstream-status', status);
                     if ('CONNECTED' == status) {
                         checkInternetStatus();
-                    } else if ('STARTING' == status || 'RESTARTING' == status) {
+                    } else if ('RESTARTING' == status) {
                         // pass
                     } else {
                         showStatus('internet-status', 'ERROR');
