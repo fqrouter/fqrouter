@@ -1,0 +1,59 @@
+<%title='上级无线列表'%>
+<%+fqrouter/header%>
+<style type="text/css">
+    .ssid {
+        width: 12em;
+    }
+
+    .signal-strength {
+        width: 2em;
+    }
+</style>
+<h2>上级无线列表</h2>
+<% if not no_upstream_found then %>
+<table class="table">
+    <thead>
+    <tr>
+        <th class="ssid">无线名称</th>
+        <th class="signal-strength">信号强度</th>
+        <th></th>
+    </tr>
+    </thead>
+    <tbody>
+    <% for ssid, wifi in pairs(upstream_list) do %>
+    <% if wifi.is_configured then %>
+    <tr class="ssid-configured">
+        <% else %>
+    <tr class="ssid-not-configured"
+        data-ssid="<%=ssid%>"
+        data-bssid="<%=wifi.bssid%>"
+        data-encryption="<%=wifi.encryptio%>">
+        <% end %>
+        <td><%=ssid%></td>
+        <td><%=wifi.signal_strength%></td>
+        <td>
+            <% if wifi.encryption then %>
+            <button class="btn connect">连接</button>
+            <% else %>
+            <p>尚未支持该无线的加密方式</p>
+            <% end %>
+        </td>
+    </tr>
+    <% end %>
+    </tbody>
+</table>
+<% else %>
+<p>没有找到任何上级无线</p>
+<% end %>
+<script type="text/javascript">
+    $(document).ready(function () {
+        $('.ssid-configured .connect').click(function () {
+            alert('connect now');
+        });
+        $('.ssid-not-configured .connect').click(function () {
+            var wifi = $(this).parents('tr');
+            alert('configure now ' + wifi.data('ssid'));
+        });
+    });
+</script>
+<%+fqrouter/footer%>

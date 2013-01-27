@@ -24,16 +24,11 @@
         <dd id="internet-status">连接状态检测中……</dd>
     </li>
 </ul>
+<a class="btn" href="<%=upstream_list_url%>">连接上级无线</a>
 <script type="text/javascript">
     $(document).ready(function () {
         $('#upstream-status').load('<%=upstream_status_url%>');
-        var timeoutId = setTimeout(function() {
-            $('#internet-status').html('可能没有连上');
-        }, 1000 * 10);
-        $.getJSON('<%=internet_status_url%>', function(result) {
-            $('#internet-status').html('已经连上互联网，ip是：' + result.ip_addr);
-            clearTimeout(timeoutId);
-        });
+        $('#internet-status').load('<%=internet_status_url%>');
     });
 </script>
 <%+fqrouter/footer%>
