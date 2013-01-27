@@ -1,10 +1,16 @@
 module('luci.controller.fqrouter.network', package.seeall)
 
 function index()
+    local root = node()
+    root.target = alias('fqrouter', 'network', 'status')
+    root.index = true
     entry({ 'fqrouter', 'network', 'status' }, call('network_status'), 'Network Status', 10).dependent = false
     entry({ 'fqrouter', 'network', 'upstream', 'status' }, call('upstream_status'), 'Upstream Status', 10).dependent = false
     entry({ 'fqrouter', 'network', 'internet', 'status' }, call('internet_status'), 'Internet Status', 10).dependent = false
     entry({ 'fqrouter', 'network', 'upstream', 'list' }, call('upstream_list'), 'Upstream List', 10).dependent = false
+    entry({ 'fqrouter', 'network', 'upstream', 'config' }, call('upstream_config'), 'Upstream Config', 10).dependent = false
+    entry({ 'fqrouter', 'network', 'upstream', 'connect' }, call('connect_upstream'), 'Connect Upstream', 10).dependent = false
+    entry({ 'fqrouter', 'network', 'upstream', 'delete' }, call('delete_upstream'), 'Delete Upstream', 10).dependent = false
     entry({ 'fqrouter', 'network', 'ping.js' }, call('network_ping'), 'Network Ping', 10).dependent = false
     entry({ 'fqrouter', 'network', 'lan_ip', 'update' }, call('update_lan_ip'), 'Update Lan IP', 10).dependent = false
     entry({ 'fqrouter', 'network', 'restart' }, call('restart_network'), 'Restart Network', 10).dependent = false
@@ -46,25 +52,28 @@ function upstream_list()
     local iw = require'luci.sys'.wifi.getiwinfo('radio0')
     local upstream_list = {}
     local no_upstream_found = true
-    for k, v in ipairs(iw.scanlist or { }) do
+    for k, v in ipairs(iw.scanlist or {}) do
         upstream_list[v.ssid] = {
-            signal_strength=calculate_signal_strength(v),
-            bssid=v.bssid,
-            encryption=get_encryption(v),
-            is_configured=false
+            signal_strength = calculate_signal_strength(v),
+            bssid = v.bssid,
+            encryption = get_encryption(v),
+            password = nil
         }
         no_upstream_found = false
     end
-    function set_is_configured_flag(section)
+    function read_password(section)
         if 'sta' == section.mode and upstream_list[section.ssid] ~= nil then
-            upstream_list[section.ssid].is_configured=true
+            upstream_list[section.ssid].password = section.key
         end
     end
+
     x = require'uci'.cursor()
-    x:foreach('wireless', 'wifi-iface', set_is_configured_flag)
+    x:foreach('wireless', 'wifi-iface', read_password)
     require'luci.template'.render('fqrouter/network/upstream-list', {
         upstream_list = upstream_list,
-        no_upstream_found=no_upstream_found
+        no_upstream_found = no_upstream_found,
+        connect_url = luci.dispatcher.build_url('fqrouter', 'network', 'upstream', 'connect'),
+        configure_url = luci.dispatcher.build_url('fqrouter', 'network', 'upstream', 'config')
     })
 end
 
@@ -85,6 +94,65 @@ function calculate_signal_strength(info)
     else
         return 0
     end
+end
+
+function upstream_config()
+    local ssid = luci.http.formvalue('ssid')
+    local bssid = luci.http.formvalue('bssid')
+    local encryption = luci.http.formvalue('encryption')
+    local password = luci.http.formvalue('password')
+    require'luci.template'.render('fqrouter/network/upstream-config', {
+        ssid = ssid,
+        bssid = bssid,
+        encryption = encryption,
+        password = password,
+        connect_url = luci.dispatcher.build_url('fqrouter', 'network', 'upstream', 'connect'),
+        delete_url = luci.dispatcher.build_url('fqrouter', 'network', 'upstream', 'delete')
+    })
+end
+
+function connect_upstream()
+    local ssid = luci.http.formvalue('ssid')
+    local bssid = luci.http.formvalue('bssid')
+    local encryption = luci.http.formvalue('encryption')
+    local password = luci.http.formvalue('password')
+
+    x = require'uci'.cursor()
+    function delete_existing(section)
+        if ssid == section.ssid then
+            x:delete('wireless', section['.name'])
+        end
+    end
+
+    x:foreach('wireless', 'wifi-iface', delete_existing)
+    local section_name = x:add('wireless', 'wifi-iface')
+    x:set('wireless', section_name, 'network', 'wan')
+    x:set('wireless', section_name, 'ssid', ssid)
+    x:set('wireless', section_name, 'encryption', encryption)
+    x:set('wireless', section_name, 'device', 'radio0')
+    x:set('wireless', section_name, 'mode', 'sta')
+    x:set('wireless', section_name, 'bssid', bssid)
+    x:set('wireless', section_name, 'key', password)
+    x:commit('wireless')
+    require'luci.template'.render('fqrouter/network/restart', {
+        restart_url = luci.dispatcher.build_url('fqrouter', 'network', 'restart'),
+        status_url = luci.dispatcher.build_url('fqrouter', 'network', 'status'),
+        ping_url = luci.dispatcher.build_url('fqrouter', 'network', 'ping.js')
+    })
+end
+
+function delete_upstream()
+    local ssid = luci.http.formvalue('ssid')
+    x = require'uci'.cursor()
+    function delete_existing(section)
+        if ssid == section.ssid then
+            x:delete('wireless', section['.name'])
+        end
+    end
+
+    x:foreach('wireless', 'wifi-iface', delete_existing)
+    x:commit('wireless')
+    luci.http.redirect(luci.dispatcher.build_url('fqrouter', 'network', 'upstream', 'list'))
 end
 
 function network_ping()

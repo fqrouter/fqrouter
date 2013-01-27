@@ -1,0 +1,41 @@
+<%title='上级无线'%>
+<%+fqrouter/header%>
+<style type="text/css">
+    dt {
+        width: 6em;
+        display: inline-block;
+    }
+
+    dd {
+        display: inline-block;
+    }
+</style>
+<h2>上级无线</h2>
+<form method="POST" action="<%=connect_url%>">
+    <input type="hidden" name="bssid" value="<%=bssid%>">
+    <input type="hidden" name="ssid" value="<%=ssid%>">
+    <input type="hidden" name="encryption" value="<%=encryption%>">
+    <ul>
+        <li>
+            <dt>名称</dt>
+            <dd><%=ssid%></dd>
+        </li>
+        <li>
+            <dt>密码</dt>
+            <dd><input type="text" name="password" value="<%=password%>"></dd>
+        </li>
+    </ul>
+    <button class="btn" type="submit">连接</button>
+    <% if password then %>
+    <button class="btn btn-danger" type="button" id="delete-config">删除设置</button>
+    <% end %>
+</form>
+<script type="text/javascript">
+    $(document).ready(function() {
+        $('#delete-config').click(function() {
+            $(this).parents('form').attr('action', '<%=delete_url%>');
+            $(this).parents('form').submit();
+        });
+    });
+</script>
+<%+fqrouter/footer%>
