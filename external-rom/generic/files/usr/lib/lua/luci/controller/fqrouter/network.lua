@@ -22,16 +22,17 @@ function network_status()
     require'luci.template'.render('fqrouter/network/status', {
         upstream_status_url = luci.dispatcher.build_url('fqrouter', 'network', 'upstream', 'status'),
         upstream_list_url = luci.dispatcher.build_url('fqrouter', 'network', 'upstream', 'list'),
-        internet_status_url = luci.dispatcher.build_url('fqrouter', 'network', 'internet', 'status')
+        internet_status_url = luci.dispatcher.build_url('fqrouter', 'network', 'internet', 'status'),
+        restart_url = luci.dispatcher.build_url('fqrouter', 'network', 'restart')
     })
 end
 
 function internet_status()
-    local internet_status = '没有与互联网连接好'
+    local internet_status = 'NOT_CONNECTED'
     local f = assert(io.popen('ping 8.8.8.8 -c 1'))
     local output = assert(f:read('*a'))
     if output:find('1 packets received') then
-        internet_status = '已经连上了互联网'
+        internet_status = 'CONNECTED'
     end
     luci.http.prepare_content('text/plain')
     luci.http.write(internet_status)
@@ -41,17 +42,23 @@ function upstream_status()
     local netm = require'luci.model.network'.init()
     local lan_ip = netm:get_network('lan'):ipaddr()
     local lan_ip_part1, lan_ip_part2, lan_ip_part3 = lan_ip:match('(%d%d?%d?)%.(%d%d?%d?)%.(%d%d?%d?)%.%d%d?%d?')
-    local upstream_status = '没有与上级无线连接好'
+    local upstream_status = 'NOT_CONNECTED'
     for i, network in ipairs(netm:get_networks()) do
         if network:gwaddr() then
             local wan_ip = network:ipaddr()
             local wan_ip_part1, wan_ip_part2, wan_ip_part3 = wan_ip:match('(%d%d?%d?)%.(%d%d?%d?)%.(%d%d?%d?)%.%d%d?%d?')
             if lan_ip_part1 == wan_ip_part1 and lan_ip_part2 == wan_ip_part2 and lan_ip_part3 == wan_ip_part3 then
-                local lan_ip_config_url = luci.dispatcher.build_url('fqrouter', 'network', 'lan-ip', 'config')
-                upstream_status = '本路由器ip地址与上级无线分配的ip地址冲突，<a href="' .. lan_ip_config_url .. '">请修改本路由器ip地址</a>'
+                upstream_status = 'CONFLICT_IP_DETECTED'
             else
-                upstream_status = '已经连上了上级无线'
+                upstream_status = 'CONNECTED'
             end
+        end
+    end
+    if 'NOT_CONNECTED' == upstream_status then
+        local error_file = io.open('/tmp/error-found-during-sta-mode-wifi-interface-up', 'r')
+        if error_file ~= nil then
+            upstream_status = error_file:read('*all')
+            io.close(error_file)
         end
     end
     luci.http.prepare_content('text/plain')
@@ -144,11 +151,7 @@ function connect_upstream()
     x:set('wireless', section_name, 'bssid', bssid)
     x:set('wireless', section_name, 'key', password)
     x:commit('wireless')
-    require'luci.template'.render('fqrouter/network/restart', {
-        restart_url = luci.dispatcher.build_url('fqrouter', 'network', 'restart'),
-        status_url = luci.dispatcher.build_url('fqrouter', 'network', 'status'),
-        ping_url = luci.dispatcher.build_url('fqrouter', 'network', 'ping.js')
-    })
+    luci.http.redirect(luci.dispatcher.build_url('fqrouter', 'network', 'restart'))
 end
 
 function delete_upstream()
@@ -169,8 +172,8 @@ function lan_ip_config()
     local netm = require'luci.model.network'.init()
     local lan_ip = netm:get_network('lan'):ipaddr()
     require'luci.template'.render('fqrouter/network/lan-ip-config', {
-        lan_ip=lan_ip,
-        update_url=luci.dispatcher.build_url('fqrouter', 'network', 'lan-ip', 'update')
+        lan_ip = lan_ip,
+        update_url = luci.dispatcher.build_url('fqrouter', 'network', 'lan-ip', 'update')
     })
 end
 
@@ -189,7 +192,17 @@ function update_lan_ip()
 end
 
 function restart_network()
-    os.execute('/etc/init.d/network restart && sleep 1 && /etc/init.d/dnsmasq restart')
+    if 'POST' == luci.http.getenv().REQUEST_METHOD then
+        os.execute('rm /tmp/error-found-during-sta-mode-wifi-interface-up; '
+            ..'killall wpa_supplicant && /etc/init.d/network restart && sleep 1 && '
+            ..'/etc/init.d/dnsmasq restart && sleep 1 && /etc/init.d/firewall restart')
+    else
+        require'luci.template'.render('fqrouter/network/restart', {
+            restart_url = luci.dispatcher.build_url('fqrouter', 'network', 'restart'),
+            status_url = luci.dispatcher.build_url('fqrouter', 'network', 'status'),
+            ping_url = luci.dispatcher.build_url('fqrouter', 'network', 'ping.js')
+        })
+    end
 end
 
 function network_ping()

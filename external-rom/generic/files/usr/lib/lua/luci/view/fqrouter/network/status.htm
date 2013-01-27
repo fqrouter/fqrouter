@@ -1,34 +1,125 @@
 <%title='网络状态'%>
 <%+fqrouter/header%>
 <style type="text/css">
-    dt {
-        width: 6em;
-        display: inline-block;
+    .upstream-status .label {
+        display: none;
     }
 
-    dd {
-        display: inline-block;
+    .upstream-status .alert {
+        display: none;
+    }
+
+    .upstream-status .DEFAULT {
+        display: inline;
+    }
+
+    .internet-status .label {
+        display: none;
+    }
+
+    .internet-status .alert {
+        display: none;
+    }
+
+    .internet-status .DEFAULT {
+        display: inline;
     }
 </style>
 <h2>网络状态</h2>
 <p>
-    你的电脑 => 本路由器 => 上级无线 => 互联网
+    <span class="label label-info">你的电脑</span>
+    =>
+    <span class="label label-success">OK</span>
+    =>
+    <span class="label label-info">本路由器</span>
+    =>
+    <span class="upstream-status">
+        <span class="DEFAULT CHECKING label label-warning">?</span>
+        <span class="CONNECTED label label-success">OK</span>
+        <span class="ERROR label label-important">ERROR</span>
+    </span>
+    =>
+    <span class="label label-info">上级无线</span>
+    =>
+    <span class="internet-status">
+        <span class="DEFAULT CHECKING label label-warning">?</span>
+        <span class="CONNECTED label label-success">OK</span>
+        <span class="ERROR label label-important">ERROR</span>
+    </span>
+    =>
+    <span class="label label-info">互联网</span>
 </p>
-<ul>
-    <li>
-        <dt>互联网</dt>
-        <dd id="internet-status">连接状态检测中……</dd>
-    </li>
-    <li>
-        <dt>上级无线</dt>
-        <dd id="upstream-status">连接状态检测中……</dd>
-    </li>
-</ul>
-<a class="btn" href="<%=upstream_list_url%>">连接上级无线</a>
+<div class="upstream-status">
+    <div class="CHECKING alert alert-info">
+        正在检查上级无线连接状态……
+    </div>
+    <div class="UPSTREAM_NOT_CONFIGURED alert">
+        上级无线尚未设置
+        <a href="<%=upstream_list_url%>" class="btn">设置上级无线</a>
+    </div>
+    <div class="UPSTREAM_NOT_AVAILABLE alert">
+        设置的上级无线没有扫描到
+        <a href="<%=upstream_list_url%>" class="btn">查看附近的无线</a>
+    </div>
+    <div class="ERROR alert alert-error">
+        上级无线未能正常连接
+        <a href="javascript:window.location.reload();" class="btn">重新检测</a>
+        <a href="<%=restart_url%>" class="btn">重新连接</a>
+    </div>
+    <div class="CONNECTED alert alert-success">
+        上级无线连接正常
+    </div>
+</div>
+<div class="internet-status">
+    <div class="CHECKING alert alert-info">
+        正在检查互联网连接状态……
+    </div>
+    <div class="CONNECTED alert alert-success">
+        网络状态检查完毕，一切正常！
+    </div>
+</div>
 <script type="text/javascript">
     $(document).ready(function () {
-        $('#upstream-status').load('<%=upstream_status_url%>');
-        $('#internet-status').load('<%=internet_status_url%>');
+        function showStatus(target, status) {
+            $('.' + target + ' .label').hide();
+            $('.' + target + ' .alert').hide();
+            $('.' + target).each(function () {
+                if ($(this).find('.' + status).length) {
+                    $(this).find('.' + status).css('display', 'inline-block');
+                } else {
+                    $(this).find('.ERROR').css('display', 'inline-block');
+                }
+            });
+        }
+
+        function checkUpstreamStatus() {
+            showStatus('upstream-status', 'CHECKING');
+            $.ajax({
+                type:'GET',
+                url:'<%=upstream_status_url%>',
+                success:function (status) {
+                    showStatus('upstream-status', status);
+                    if ('CONNECTED' == status) {
+                        checkInternetStatus();
+                    } else {
+                        showStatus('internet-status', 'ERROR');
+                    }
+                }
+            });
+        }
+
+        function checkInternetStatus() {
+            showStatus('internet-status', 'CHECKING');
+            $.ajax({
+                type:'GET',
+                url:'<%=internet_status_url%>',
+                success:function (status) {
+                    showStatus('internet-status', status);
+                }
+            });
+        }
+
+        checkUpstreamStatus();
     });
 </script>
 <%+fqrouter/footer%>
