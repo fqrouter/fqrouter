@@ -1,0 +1,8 @@
+<%title='本路由器IP'%>
+<%+fqrouter/header%>
+<h2>本路由器IP</h2>
+<form method="POST" action="<%=update_url%>">
+    <input type="text" name="lan_ip" value="<%=lan_ip%>">
+    <button>更新</button>
+</form>
+<%+fqrouter/footer%>

@@ -5,15 +5,16 @@ function index()
     root.target = alias('fqrouter', 'network', 'status')
     root.index = true
     entry({ 'fqrouter', 'network', 'status' }, call('network_status'), 'Network Status', 10).dependent = false
-    entry({ 'fqrouter', 'network', 'upstream', 'status' }, call('upstream_status'), 'Upstream Status', 10).dependent = false
     entry({ 'fqrouter', 'network', 'internet', 'status' }, call('internet_status'), 'Internet Status', 10).dependent = false
+    entry({ 'fqrouter', 'network', 'upstream', 'status' }, call('upstream_status'), 'Upstream Status', 10).dependent = false
     entry({ 'fqrouter', 'network', 'upstream', 'list' }, call('upstream_list'), 'Upstream List', 10).dependent = false
     entry({ 'fqrouter', 'network', 'upstream', 'config' }, call('upstream_config'), 'Upstream Config', 10).dependent = false
     entry({ 'fqrouter', 'network', 'upstream', 'connect' }, call('connect_upstream'), 'Connect Upstream', 10).dependent = false
     entry({ 'fqrouter', 'network', 'upstream', 'delete' }, call('delete_upstream'), 'Delete Upstream', 10).dependent = false
-    entry({ 'fqrouter', 'network', 'ping.js' }, call('network_ping'), 'Network Ping', 10).dependent = false
-    entry({ 'fqrouter', 'network', 'lan_ip', 'update' }, call('update_lan_ip'), 'Update Lan IP', 10).dependent = false
+    entry({ 'fqrouter', 'network', 'lan-ip', 'config' }, call('lan_ip_config'), 'Lan IP Config', 10).dependent = false
+    entry({ 'fqrouter', 'network', 'lan-ip', 'update' }, call('update_lan_ip'), 'Update Lan IP', 10).dependent = false
     entry({ 'fqrouter', 'network', 'restart' }, call('restart_network'), 'Restart Network', 10).dependent = false
+    entry({ 'fqrouter', 'network', 'ping.js' }, call('network_ping'), 'Network Ping', 10).dependent = false
 end
 
 function network_status()
@@ -25,18 +26,6 @@ function network_status()
     })
 end
 
-function upstream_status()
-    local netm = require'luci.model.network'.init()
-    local upstream_status = '没有与上级无线连接好'
-    for i, network in ipairs(netm:get_networks()) do
-        if network:gwaddr() then
-            upstream_status = '已经连上了上级无线'
-        end
-    end
-    luci.http.prepare_content('text/plain')
-    luci.http.write(upstream_status)
-end
-
 function internet_status()
     local internet_status = '没有与互联网连接好'
     local f = assert(io.popen('ping 8.8.8.8 -c 1'))
@@ -46,6 +35,27 @@ function internet_status()
     end
     luci.http.prepare_content('text/plain')
     luci.http.write(internet_status)
+end
+
+function upstream_status()
+    local netm = require'luci.model.network'.init()
+    local lan_ip = netm:get_network('lan'):ipaddr()
+    local lan_ip_part1, lan_ip_part2, lan_ip_part3 = lan_ip:match('(%d%d?%d?)%.(%d%d?%d?)%.(%d%d?%d?)%.%d%d?%d?')
+    local upstream_status = '没有与上级无线连接好'
+    for i, network in ipairs(netm:get_networks()) do
+        if network:gwaddr() then
+            local wan_ip = network:ipaddr()
+            local wan_ip_part1, wan_ip_part2, wan_ip_part3 = wan_ip:match('(%d%d?%d?)%.(%d%d?%d?)%.(%d%d?%d?)%.%d%d?%d?')
+            if lan_ip_part1 == wan_ip_part1 and lan_ip_part2 == wan_ip_part2 and lan_ip_part3 == wan_ip_part3 then
+                local lan_ip_config_url = luci.dispatcher.build_url('fqrouter', 'network', 'lan-ip', 'config')
+                upstream_status = '本路由器ip地址与上级无线分配的ip地址冲突，<a href="' .. lan_ip_config_url .. '">请修改本路由器ip地址</a>'
+            else
+                upstream_status = '已经连上了上级无线'
+            end
+        end
+    end
+    luci.http.prepare_content('text/plain')
+    luci.http.write(upstream_status)
 end
 
 function upstream_list()
@@ -155,9 +165,13 @@ function delete_upstream()
     luci.http.redirect(luci.dispatcher.build_url('fqrouter', 'network', 'upstream', 'list'))
 end
 
-function network_ping()
-    luci.http.prepare_content('application/javascript')
-    luci.http.write('window.pong();')
+function lan_ip_config()
+    local netm = require'luci.model.network'.init()
+    local lan_ip = netm:get_network('lan'):ipaddr()
+    require'luci.template'.render('fqrouter/network/lan-ip-config', {
+        lan_ip=lan_ip,
+        update_url=luci.dispatcher.build_url('fqrouter', 'network', 'lan-ip', 'update')
+    })
 end
 
 function update_lan_ip()
@@ -175,5 +189,10 @@ function update_lan_ip()
 end
 
 function restart_network()
-    os.execute('/etc/init.d/network restart')
+    os.execute('/etc/init.d/network restart && sleep 1 && /etc/init.d/dnsmasq restart')
+end
+
+function network_ping()
+    luci.http.prepare_content('application/javascript')
+    luci.http.write('window.pong();')
 end
