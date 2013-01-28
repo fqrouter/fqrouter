@@ -13,8 +13,8 @@ with open(recovery_version_path) as f:
     recovery_version = f.read()
 
 ARCHITECTURES = {
-    '703n': 'ar71xx',
-    '720n': 'ar71xx'
+    'tl-wr703n': 'ar71xx',
+    'tl-wr720n': 'ar71xx'
 }
 ARCHITECTURE = ARCHITECTURES[hardware]
 VERSION = '{}-{}-snapshot{}'.format(hardware, recovery_version, time.strftime("%Y%m%d%H%M%S", time.localtime()))
