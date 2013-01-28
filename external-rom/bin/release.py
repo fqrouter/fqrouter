@@ -6,18 +6,18 @@ import os
 if len(sys.argv) < 2:
     raise Exception('must specify hardware')
 hardware = sys.argv[1]
-recovery_version_path = os.path.join(os.path.dirname(__file__), '../../internal-rom/generic/files/etc/fqrouter_recovery_version')
-if not os.path.exists(recovery_version_path):
-    raise Exception('missing {}'.find(recovery_version_path))
-with open(recovery_version_path) as f:
-    recovery_version = f.read()
+introm_version_path = os.path.join(os.path.dirname(__file__), '../../internal-rom/generic/files/etc/fqrouter_introm_version')
+if not os.path.exists(introm_version_path):
+    raise Exception('missing {}'.find(introm_version_path))
+with open(introm_version_path) as f:
+    introm_version = f.read()
 
 ARCHITECTURES = {
     'tl-wr703n': 'ar71xx',
     'tl-wr720n': 'ar71xx'
 }
 ARCHITECTURE = ARCHITECTURES[hardware]
-VERSION = '{}-{}-snapshot{}'.format(hardware, recovery_version, time.strftime("%Y%m%d%H%M%S", time.localtime()))
+VERSION = '{}-{}-extrom{}'.format(hardware, introm_version, time.strftime("%Y%m%d%H%M%S", time.localtime()))
 ROOTFS_TAR_GZ = 'bin/{}/openwrt-{}-generic-rootfs.tar.gz'.format(ARCHITECTURE, ARCHITECTURE)
 ROOTFS_PATH = 'bin/{}/{}.rootfs'.format(ARCHITECTURE, VERSION)
 KERNEL_PATH = 'bin/{}/openwrt-{}-generic-vmlinux-initramfs.elf'.format(ARCHITECTURE, ARCHITECTURE)
@@ -48,7 +48,7 @@ def to_usb():
         f.write('FQROUTER_VERSION={}\n'.format(VERSION))
     execute('cp {} /opt/usb/fqrouter/{}.rootfs'.format(ROOTFS_PATH, VERSION))
     execute('cp {} /opt/usb/fqrouter/{}.kernel'.format(KERNEL_PATH, VERSION))
-    subprocess.call('cd /mnt/hgfs/usb/ && zip -r extrom-{}.zip fqrouter'.format(VERSION), shell=True)
+    subprocess.call('cd /mnt/hgfs/usb/ && zip -r {}.zip fqrouter'.format(VERSION), shell=True)
 
 prepare_rootfs()
 to_usb()
