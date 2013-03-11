@@ -3,6 +3,7 @@ import thread
 from netfilterqueue import NetfilterQueue
 import socket
 import time
+import collections
 
 import dpkt
 
@@ -36,14 +37,26 @@ RULE_INPUT_SYN_ACK = (
     ('filter', 'INPUT', '-i wlan0 -p tcp --tcp-flags ALL SYN,ACK -j NFQUEUE --queue-num 2')
 )
 
+RULE_INPUT_RST = (
+    {'target': 'NFQUEUE', 'extra': 'tcp flags:0x3F/0x04 NFQUEUE num 2'},
+    ('filter', 'INPUT', '-i wlan0 -p tcp --tcp-flags ALL RST -j NFQUEUE --queue-num 2')
+)
+
 RULE_FORWARD_SYN_ACK = (
     {'target': 'NFQUEUE', 'extra': 'tcp flags:0x3F/0x12 NFQUEUE num 2'},
     ('filter', 'FORWARD', '-i wlan0 -p tcp --tcp-flags ALL SYN,ACK -j NFQUEUE --queue-num 2')
 )
 
+RULE_FORWARD_RST = (
+    {'target': 'NFQUEUE', 'extra': 'tcp flags:0x3F/0x04 NFQUEUE num 2'},
+    ('filter', 'FORWARD', '-i wlan0 -p tcp --tcp-flags ALL RST -j NFQUEUE --queue-num 2')
+)
+
 RULES = (
     RULE_INPUT_SYN_ACK,
-    RULE_FORWARD_SYN_ACK
+    RULE_INPUT_RST,
+    RULE_FORWARD_SYN_ACK,
+    RULE_FORWARD_RST
 )
 
 raw_socket = socket.socket(socket.AF_INET, socket.SOCK_RAW, socket.IPPROTO_RAW)
@@ -61,6 +74,7 @@ SYN_ACK_TIMEOUT = 2 # seconds
 international_zone = set() # found by fake DNS packet sent back by GFW caused by our stimulation
 domestic_zone = set() # found by RST sent back by server caused by our stimulation
 pending_syn_ack = {} # ip => (time, sport => packet)
+recent_rst_packets = collections.deque(maxlen=30)
 
 
 def insert_iptables_rules():
@@ -84,13 +98,25 @@ def handle_nfqueue():
 def handle_packet(nfqueue_element):
     try:
         ip_packet = dpkt.ip.IP(nfqueue_element.get_payload())
-        if handle_syn_ack(ip_packet):
+        if dpkt.tcp.TH_RST & ip_packet.tcp.flags:
+            should_accept = handle_rst(ip_packet)
+        else:
+            should_accept = handle_syn_ack(ip_packet)
+        if should_accept:
             nfqueue_element.accept()
         else:
             nfqueue_element.drop()
     except:
         LOGGER.exception('failed to handle packet')
         nfqueue_element.accept()
+
+
+def handle_rst(rst):
+    LOGGER.debug('received RST: %s' % format_ip_packet(rst))
+    rst.src_ip = socket.inet_ntoa(rst.src)
+    rst.dst_ip = socket.inet_ntoa(rst.dst)
+    recent_rst_packets.append(rst)
+    return True # receiving RST we already screwed, dropping it will not help
 
 
 def handle_syn_ack(syn_ack):
@@ -143,16 +169,16 @@ def handle_dns_wrong_answer(question):
             _, packets = pending_syn_ack.pop(international_ip)
             for syn_ack in packets.values():
                 inject_poison_ack_to_fill_gfw_buffer_with_garbage(syn_ack)
+            for syn_ack in packets.values():
                 inject_back_syn_ack(syn_ack)
 
 
 def inject_back_syn_ack(syn_ack):
+    LOGGER.debug('inject back syn ack: %s' % format_ip_packet(syn_ack))
     syn_ack.ttl = 255
     syn_ack.sum = 0
     syn_ack.tcp.sum = 0
     raw_socket.sendto(str(syn_ack), (socket.inet_ntoa(syn_ack.dst), 0))
-    LOGGER.debug('inject back syn ack: %s => %s %s'
-                 % (socket.inet_ntoa(syn_ack.src), socket.inet_ntoa(syn_ack.dst), repr(syn_ack)))
 
 
 def inject_poison_ack_to_fill_gfw_buffer_with_garbage(syn_ack):
@@ -163,7 +189,7 @@ def inject_poison_ack_to_fill_gfw_buffer_with_garbage(syn_ack):
     ip_packet = dpkt.ip.IP(dst=syn_ack.src, src=syn_ack.dst, p=dpkt.ip.IP_PROTO_TCP, ttl=TTL_TO_GFW)
     ip_packet.data = ip_packet.tcp = tcp_packet
     raw_socket.sendto(str(ip_packet), (socket.inet_ntoa(ip_packet.dst), 0))
-    LOGGER.debug('inject empty ACK: %s' % repr(ip_packet))
+    LOGGER.debug('inject empty ACK: %s' % format_ip_packet(ip_packet))
     tcp_packet = dpkt.tcp.TCP(
         sport=syn_ack.tcp.dport, dport=syn_ack.tcp.sport,
         flags=dpkt.tcp.TH_ACK, seq=syn_ack.tcp.ack, ack=syn_ack.tcp.seq + 1,
@@ -171,4 +197,8 @@ def inject_poison_ack_to_fill_gfw_buffer_with_garbage(syn_ack):
     ip_packet = dpkt.ip.IP(dst=syn_ack.src, src=syn_ack.dst, p=dpkt.ip.IP_PROTO_TCP, ttl=TTL_TO_GFW)
     ip_packet.data = ip_packet.tcp = tcp_packet
     raw_socket.sendto(str(ip_packet), (socket.inet_ntoa(ip_packet.dst), 0))
-    LOGGER.debug('inject poison ACK: %s' % repr(ip_packet))
+    LOGGER.debug('inject poison ACK: %s' % format_ip_packet(ip_packet))
+
+
+def format_ip_packet(ip_packet):
+    return '%s=>%s %s' % (socket.inet_ntoa(ip_packet.src), socket.inet_ntoa(ip_packet.dst), repr(ip_packet))
