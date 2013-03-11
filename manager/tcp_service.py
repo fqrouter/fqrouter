@@ -26,13 +26,19 @@ def clean():
 
 #=== private ===
 
-RULE_SERVER_SYN_ACK = (
+RULE_INPUT_SYN_ACK = (
     {'target': 'NFQUEUE', 'extra': 'tcp flags:0x3F/0x12 NFQUEUE num 2'},
     ('filter', 'INPUT', '-p tcp --tcp-flags ALL SYN,ACK -j NFQUEUE --queue-num 2')
 )
 
+RULE_FORWARD_SYN_ACK = (
+    {'target': 'NFQUEUE', 'extra': 'tcp flags:0x3F/0x12 NFQUEUE num 2'},
+    ('filter', 'FORWARD', '-p tcp --tcp-flags ALL SYN,ACK -j NFQUEUE --queue-num 2')
+)
+
 RULES = (
-    RULE_SERVER_SYN_ACK,
+    RULE_INPUT_SYN_ACK,
+    RULE_FORWARD_SYN_ACK
 )
 
 raw_socket = socket.socket(socket.AF_INET, socket.SOCK_RAW, socket.IPPROTO_RAW)
