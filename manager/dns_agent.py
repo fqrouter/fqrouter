@@ -9,7 +9,7 @@ import iptables
 
 LOGGER = logging.getLogger(__name__)
 
-CLEAN_DNS = '8.8.4.4' # GFW will drop packet to 8.8.8.8 for twitter or facebook
+CLEAN_DNS = '8.8.8.8'
 
 RULE_REDIRECT_TO_CLEAN_DNS = [
     {'target': 'DNAT', 'extra': 'udp dpt:53 to:%s:53' % CLEAN_DNS},
@@ -44,6 +44,7 @@ WRONG_ANSWERS = {
     '202.106.1.2',
     '202.181.7.85',
     '203.161.230.171',
+    '203.98.7.65',
     '207.12.88.98',
     '208.56.31.43',
     '209.36.73.33',
@@ -52,7 +53,8 @@ WRONG_ANSWERS = {
     '211.94.66.147',
     '213.169.251.35',
     '216.221.188.182',
-    '216.234.179.13'
+    '216.234.179.13',
+    '243.185.187.39'
 }
 
 
@@ -73,10 +75,15 @@ def run():
             nfqueue_element.accept()
 
     def contains_wrong_answer(dns_packet):
+        if dpkt.dns.DNS_A not in [question.type for question in dns_packet.qd]:
+            return False # not answer to A question, might be PTR
         for answer in dns_packet.an:
-            if dpkt.dns.DNS_A == answer.type and socket.inet_ntoa(answer['rdata']) in WRONG_ANSWERS:
-                return True
-        return False
+            if dpkt.dns.DNS_A == answer.type:
+                if socket.inet_ntoa(answer['rdata']) in WRONG_ANSWERS:
+                    return True # to find wrong answer
+                else:
+                    return False # if the blacklist is incomplete, we will think it is right answer
+        return True # to find empty answer
 
     nfqueue = NetfilterQueue()
     nfqueue.bind(1, handle_packet)
