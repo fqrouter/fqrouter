@@ -1,10 +1,12 @@
 import os
-import thread
+import logging
+
 import tornado.ioloop
 import tornado.template
 import tornado.web
-import logging
+
 import dns_service
+import tcp_service
 
 
 ROOT_DIR = os.path.dirname(__file__)
@@ -30,5 +32,6 @@ application = tornado.web.Application([
 if '__main__' == __name__:
     logging.basicConfig(level=logging.DEBUG)
     dns_service.run()
+    tcp_service.run()
     application.listen(8888, '127.0.0.1')
     tornado.ioloop.IOLoop.instance().start()

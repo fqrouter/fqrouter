@@ -7,6 +7,26 @@ LOGGER = logging.getLogger(__name__)
 RE_CHAIN_NAME = re.compile(r'Chain (.+) \(')
 RE_SPACE = re.compile(r'\s+')
 
+def insert_rules(rules):
+    for signature, rule_args in rules:
+        table, chain, _ = rule_args
+        if contains_rule(table, chain, signature):
+            LOGGER.info('skip insert rule: -t %s -I %s %s' % rule_args)
+        else:
+            insert_rule(*rule_args)
+
+
+def delete_rules(rules):
+    for signature, rule_args in rules:
+        try:
+            table, chain, _ = rule_args
+            if contains_rule(table, chain, signature):
+                LOGGER.info('skip delete rule: -t %s -D %s %s' % rule_args)
+            else:
+                delete_rule(*rule_args)
+        except:
+            LOGGER.exception('failed to delete rule: -t %s -D %s %s' % rule_args)
+
 
 def insert_rule(table, chain, rule_text):
     command = 'iptables -t %s -I %s %s' % (table, chain, rule_text)

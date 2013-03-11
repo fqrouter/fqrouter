@@ -1,15 +1,12 @@
 import logging
 from netfilterqueue import NetfilterQueue
 import socket
-import atexit
-import signal
 import thread
-import os
 
 import dpkt
 
 import iptables
-
+import shutdown_hook
 
 LOGGER = logging.getLogger(__name__)
 # background service to fix dns
@@ -32,14 +29,18 @@ def clean():
 
 CLEAN_DNS = '8.8.8.8'
 
-RULE_REDIRECT_TO_CLEAN_DNS = [
+RULE_REDIRECT_TO_CLEAN_DNS = (
     {'target': 'DNAT', 'extra': 'udp dpt:53 to:%s:53' % CLEAN_DNS},
     ('nat', 'OUTPUT', '-p udp --dport 53 -j DNAT --to-destination %s:53' % CLEAN_DNS)
-]
-RULE_DROP_PACKET = [
+)
+RULE_DROP_PACKET = (
     {'target': 'NFQUEUE', 'extra': 'udp spt:53 NFQUEUE num 1'},
     ('filter', 'INPUT', '-p udp --sport 53 -j NFQUEUE --queue-num 1')
-]
+)
+RULES = (
+    RULE_REDIRECT_TO_CLEAN_DNS,
+    RULE_DROP_PACKET
+)
 
 # source http://zh.wikipedia.org/wiki/%E5%9F%9F%E5%90%8D%E6%9C%8D%E5%8A%A1%E5%99%A8%E7%BC%93%E5%AD%98%E6%B1%A1%E6%9F%93
 WRONG_ANSWERS = {
@@ -80,35 +81,12 @@ WRONG_ANSWERS = {
 
 
 def insert_iptables_rules():
-    atexit.register(delete_iptables_rules)
-
-    def handle_exit_signals(signum, frame):
-        try:
-            delete_iptables_rules()
-        finally:
-            signal.signal(signum, signal.SIG_DFL)
-            os.kill(os.getpid(), signum) # Rethrow signal
-
-    signal.signal(signal.SIGTERM, handle_exit_signals)
-    signal.signal(signal.SIGINT, handle_exit_signals)
-    for signature, rule_args in [RULE_REDIRECT_TO_CLEAN_DNS, RULE_DROP_PACKET]:
-        table, chain, _ = rule_args
-        if iptables.contains_rule(table, chain, signature):
-            LOGGER.info('skip insert rule: -t %s -I %s %s' % rule_args)
-        else:
-            iptables.insert_rule(*rule_args)
+    shutdown_hook.add(delete_iptables_rules)
+    iptables.insert_rules(RULES)
 
 
 def delete_iptables_rules():
-    for signature, rule_args in [RULE_REDIRECT_TO_CLEAN_DNS, RULE_DROP_PACKET]:
-        try:
-            table, chain, _ = rule_args
-            if iptables.contains_rule(table, chain, signature):
-                LOGGER.info('skip delete rule: -t %s -D %s %s' % rule_args)
-            else:
-                iptables.delete_rule(*rule_args)
-        except:
-            LOGGER.exception('failed to delete rule: -t %s -D %s %s' % rule_args)
+    iptables.delete_rules(RULES)
 
 
 def handle_nfqueue():
