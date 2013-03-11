@@ -7,6 +7,7 @@ import tornado.web
 
 import dns_service
 import tcp_service
+import sys
 
 
 ROOT_DIR = os.path.dirname(__file__)
@@ -30,7 +31,11 @@ application = tornado.web.Application([
 ])
 
 if '__main__' == __name__:
-    logging.basicConfig(level=logging.DEBUG)
+    logger = logging.getLogger()
+    logger.level = logging.INFO
+    handler = logging.StreamHandler(os.fdopen(sys.stderr.fileno(), 'w', 0))
+    handler.setFormatter(logging.Formatter(logging.BASIC_FORMAT))
+    logger.addHandler(handler)
     dns_service.run()
     tcp_service.run()
     application.listen(8888, '127.0.0.1')

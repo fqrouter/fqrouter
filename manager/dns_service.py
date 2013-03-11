@@ -9,9 +9,12 @@ import iptables
 import shutdown_hook
 
 LOGGER = logging.getLogger(__name__)
+DNS_PROBE_SPORT = 19840
 # background service to fix dns
 # redirect the dns request to a clean dns server
 # drop fake dns packet responded by GFW instead of the dns server
+wrong_dns_answer_handlers = []
+
 
 def run():
     insert_iptables_rules()
@@ -25,19 +28,28 @@ def status():
 def clean():
     delete_iptables_rules()
 
+
+def add_wrong_dns_answer_handler(handler):
+    wrong_dns_answer_handlers.append(handler)
+
 # === private ===
 
 CLEAN_DNS = '8.8.8.8'
 
+RULE_DO_NOT_REDIRECT_OUR_PROBE = (
+    {'target': 'ACCEPT', 'extra': 'udp spt:%s dpt:53' % DNS_PROBE_SPORT},
+    ('nat', 'OUTPUT', '-o wlan0 -p udp --dport 53 --sport %s -j ACCEPT' % DNS_PROBE_SPORT)
+)
 RULE_REDIRECT_TO_CLEAN_DNS = (
     {'target': 'DNAT', 'extra': 'udp dpt:53 to:%s:53' % CLEAN_DNS},
-    ('nat', 'OUTPUT', '-p udp --dport 53 -j DNAT --to-destination %s:53' % CLEAN_DNS)
+    ('nat', 'OUTPUT', '-o wlan0 -p udp --dport 53 -j DNAT --to-destination %s:53' % CLEAN_DNS)
 )
 RULE_DROP_PACKET = (
     {'target': 'NFQUEUE', 'extra': 'udp spt:53 NFQUEUE num 1'},
-    ('filter', 'INPUT', '-p udp --sport 53 -j NFQUEUE --queue-num 1')
+    ('filter', 'INPUT', '-i wlan0 -p udp --sport 53 -j NFQUEUE --queue-num 1')
 )
 RULES = (
+    RULE_DO_NOT_REDIRECT_OUR_PROBE,
     RULE_REDIRECT_TO_CLEAN_DNS,
     RULE_DROP_PACKET
 )
@@ -104,6 +116,8 @@ def handle_packet(nfqueue_element):
         dns_packet = dpkt.dns.DNS(ip_packet.udp.data)
         if contains_wrong_answer(dns_packet):
             LOGGER.debug('drop fake dns packet: %s' % repr(dns_packet))
+            for handler in wrong_dns_answer_handlers:
+                handler(dns_packet.qd[0].name)
             nfqueue_element.drop()
             return
         nfqueue_element.accept()

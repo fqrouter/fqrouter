@@ -8,7 +8,7 @@ RE_CHAIN_NAME = re.compile(r'Chain (.+) \(')
 RE_SPACE = re.compile(r'\s+')
 
 def insert_rules(rules):
-    for signature, rule_args in rules:
+    for signature, rule_args in reversed(rules): # insert the last one first
         table, chain, _ = rule_args
         if contains_rule(table, chain, signature):
             LOGGER.info('skip insert rule: -t %s -I %s %s' % rule_args)
@@ -37,7 +37,10 @@ def insert_rule(table, chain, rule_text):
 def delete_rule(table, chain, rule_text):
     command = 'iptables -t %s -D %s %s' % (table, chain, rule_text)
     LOGGER.info('delete rule: %s' % command)
-    subprocess.check_call(shlex.split(command))
+    try:
+        subprocess.check_call(shlex.split(command))
+    except:
+        LOGGER.exception('failed to delete rule: %s' % command)
 
 
 def contains_rule(table, chain, signature):
