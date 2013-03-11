@@ -9,10 +9,15 @@ import java.io.File;
 public class ManagerProcess {
 
     public static void kill() throws Exception {
-        int processId = findProcessId();
-        if (processId > 0) {
-            Log.i("fqrouter", "kill manager process " + processId);
-            ShellUtils.sudo("/system/bin/kill " + processId);
+        try {
+            int processId = findProcessId();
+            if (processId > 0) {
+                Log.i("fqrouter", "kill manager process " + processId);
+                ShellUtils.sudo("/system/bin/kill " + processId);
+            }
+        } finally {
+            ShellUtils.sudo("PYTHONHOME=" + Deployer.PYTHON_DIR + " " +
+                    Deployer.PYTHON_LAUNCHER + " " + Deployer.MANAGER_CLEAN_PY);
         }
     }
 

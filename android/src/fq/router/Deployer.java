@@ -20,6 +20,7 @@ public class Deployer {
     public static File WIFI_TOOLS_DIR = new File(DATA_DIR, "wifi-tools");
     public static File MANAGER_DIR = new File(DATA_DIR, "manager");
     public static File MANAGER_MAIN_PY = new File(MANAGER_DIR, "main.py");
+    public static File MANAGER_CLEAN_PY = new File(MANAGER_DIR, "clean.py");
     private final AssetManager assetManager;
     private final StatusUpdater statusUpdater;
 
@@ -41,7 +42,13 @@ public class Deployer {
         }
         if (foundPayloadUpdate) {
             try {
-                ManagerProcess.kill();
+                try {
+                    ManagerProcess.kill();
+                } catch (Exception e) {
+                    Log.e("fqrouter", "failed to kill manager before redeploy", e);
+                    statusUpdater.appendLog("failed to kill manager before redeploy");
+                    // ignore and continue
+                }
                 clearDataDirectory();
             } catch (Exception e) {
                 Log.e("fqrouter", "failed to clear data directory", e);
