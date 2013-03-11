@@ -9,7 +9,8 @@
 </head>
 <body>
 <ul class="status">
-    <li>DNS: {{ dns_agent_status() }}</li>
+    <li>DNS: {{ dns_service_status() }}</li>
+    <li>TCP: {{ tcp_service_status() }}</li>
 </ul>
 </body>
 </html>

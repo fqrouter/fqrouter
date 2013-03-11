@@ -1,6 +1,7 @@
 env
 .idea
 *.pyc
+*.apk
 android/payload
 android/assets
 android/gen

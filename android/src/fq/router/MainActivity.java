@@ -41,8 +41,6 @@ public class MainActivity extends Activity implements StatusUpdater {
                     ManagerProcess.kill();
                 } catch (Exception e) {
                     Log.e("fqrouter", "failed to kill manager process", e);
-                    updateStatus("Error: failed to kill manager process");
-                    return;
                 }
                 finish();
             }

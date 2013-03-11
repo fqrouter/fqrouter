@@ -142,7 +142,7 @@ public class Deployer {
         }
         statusUpdater.appendLog("unzipping payload.zip");
         Process process = Runtime.getRuntime().exec(
-                "/system/xbin/unzip -q payload.zip", new String[0], new File("/data/data/fq.router"));
+                ShellUtils.getPath("unzip") + " -q payload.zip", new String[0], new File("/data/data/fq.router"));
         ShellUtils.waitFor("unzip", process);
         if (!new File("/data/data/fq.router/payload.zip").delete()) {
             statusUpdater.appendLog("failed to delete payload.zip after unzip");

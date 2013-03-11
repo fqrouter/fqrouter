@@ -3,6 +3,7 @@ package fq.router.utils;
 import android.util.Log;
 
 import java.io.BufferedReader;
+import java.io.File;
 import java.io.InputStreamReader;
 import java.io.OutputStreamWriter;
 import java.util.Arrays;
@@ -46,5 +47,15 @@ public class ShellUtils {
         if (0 != process.exitValue()) {
             throw new Exception("failed to execute: " + command);
         }
+    }
+
+    public static String getPath(String command) {
+        if (new File("/system/bin/" + command).exists()) {
+            return "/system/bin/" + command;
+        }
+        if (new File("/system/xbin/" + command).exists()) {
+            return "/system/xbin/" + command;
+        }
+        throw new RuntimeException("can not find path of command: " + command);
     }
 }
