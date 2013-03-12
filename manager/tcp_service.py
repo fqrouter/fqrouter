@@ -30,10 +30,11 @@ def clean():
 #=== private ===
 
 NO_PROCESSING_MAGICAL_TTL = 255
-TTL_TO_GFW = 9 # based on black magic
 MIN_TTL_TO_GFW = 8
 MAX_TTL_TO_GFW = 12
+DEFAULT_TTL_TO_GFW = 9
 RANGE_OF_TTL_TO_GFW = range(MIN_TTL_TO_GFW, MAX_TTL_TO_GFW + 1)
+LIST_OF_NO_PROCESSING_TTL = set(list(RANGE_OF_TTL_TO_GFW) + [NO_PROCESSING_MAGICAL_TTL])
 
 RULE_INPUT_SYN_ACK = (
     {'target': 'NFQUEUE', 'extra': 'tcp flags:0x3F/0x12 NFQUEUE num 2'},
@@ -78,8 +79,8 @@ def find_probe_src():
 
 PROBE_SRC = find_probe_src() # local routing table decision
 
-international_zone = set() # found by fake DNS packet sent back by GFW caused by our stimulation
-domestic_zone = set() # found by china_ip or timeout
+international_zone = {} # found by icmp time exceeded
+domestic_zone = set() # found by china_ip or icmp time exceeded or timeout
 recent_rst_packets = collections.deque(maxlen=30)
 
 
@@ -105,7 +106,7 @@ def handle_packet(nfqueue_element):
     try:
         ip_packet = dpkt.ip.IP(nfqueue_element.get_payload())
         if hasattr(ip_packet, 'tcp'):
-            if ip_packet.ttl in (NO_PROCESSING_MAGICAL_TTL, TTL_TO_GFW):
+            if ip_packet.ttl in LIST_OF_NO_PROCESSING_TTL:
                 nfqueue_element.accept()
                 return
             if dpkt.tcp.TH_RST & ip_packet.tcp.flags:
@@ -144,14 +145,17 @@ def handle_psh_ack(psh_ack):
     if -1 == pos:
         return True
     pos += len('Host')
-    inject_scrambled_http_get_to_let_gfw_type2_miss_keyword(psh_ack, pos)
+    ttl_to_gfw = international_zone.get(socket.inet_ntoa(psh_ack.dst))
+    if not ttl_to_gfw:
+        return True
+    inject_scrambled_http_get_to_let_gfw_type2_miss_keyword(psh_ack, pos, ttl_to_gfw)
     return False
 
 
 def handle_syn_ack(syn_ack):
     uncertain_ip = socket.inet_ntoa(syn_ack.src)
     if uncertain_ip in international_zone:
-        inject_poison_ack_to_fill_gfw_buffer_with_garbage(syn_ack)
+        inject_poison_ack_to_fill_gfw_buffer_with_garbage(syn_ack, international_zone[uncertain_ip])
         return True
     elif uncertain_ip in domestic_zone:
         return True
@@ -161,7 +165,7 @@ def handle_syn_ack(syn_ack):
         if timeouted:
             international_ip = uncertain_ip
             LOGGER.info('treat ip as international due to timeout: %s' % international_ip)
-            add_international_ip(international_ip)
+            add_international_ip(international_ip, DEFAULT_TTL_TO_GFW)
         return False
     elif china_ip.is_china_ip(uncertain_ip):
         domestic_ip = uncertain_ip
@@ -205,21 +209,21 @@ def handle_time_exceeded(ip_packet):
         return
     elif not is_china_router and MIN_TTL_TO_GFW == ttl:
         LOGGER.info('treat ip as international as min ttl is not in china: %s' % dst_ip)
-        add_international_ip(dst_ip)
+        add_international_ip(dst_ip, MAX_TTL_TO_GFW)
         return
     else:
         pending_connection.record_router(dst_ip, ttl, is_china_router)
         ttl_to_gfw = pending_connection.get_ttl_to_gfw(dst_ip)
         if ttl_to_gfw:
             LOGGER.info('found ttl to gfw: %s %s' % (dst_ip, ttl_to_gfw))
-            add_international_ip(dst_ip)
+            add_international_ip(dst_ip, ttl_to_gfw)
 
 
-def add_international_ip(international_ip):
-    international_zone.add(international_ip)
+def add_international_ip(international_ip, ttl):
+    international_zone[international_ip] = ttl
     syn_ack_packets = pending_connection.pop_syn_ack_packets(international_ip)
     for syn_ack in syn_ack_packets:
-        inject_poison_ack_to_fill_gfw_buffer_with_garbage(syn_ack)
+        inject_poison_ack_to_fill_gfw_buffer_with_garbage(syn_ack, ttl)
     for syn_ack in syn_ack_packets:
         inject_back_syn_ack(syn_ack)
 
@@ -245,7 +249,7 @@ def format_ip_packet(ip_packet):
 # above is just about finding the right time and right TTL
 # below is doing the real stuff at the chosen time using the exact TTL
 
-def inject_scrambled_http_get_to_let_gfw_type2_miss_keyword(psh_ack, pos):
+def inject_scrambled_http_get_to_let_gfw_type2_miss_keyword(psh_ack, pos, ttl_to_gfw):
 # we still need to make the keyword less obvious by splitting the packet into two
 # to make it harder to rebuilt the stream, we injected two more fake packets to poison the stream
 # first_packet .. fake_second_packet => GFW ? wrong
@@ -262,14 +266,14 @@ def inject_scrambled_http_get_to_let_gfw_type2_miss_keyword(psh_ack, pos):
     first_packet.tcp.sum = 0
     raw_socket.sendto(str(first_packet), (dst, 0))
     fake_second_packet = dpkt.ip.IP(str(psh_ack))
-    fake_second_packet.ttl = TTL_TO_GFW
+    fake_second_packet.ttl = ttl_to_gfw
     fake_second_packet.tcp.seq += len(first_part)
     fake_second_packet.tcp.data = ': baidu.com\r\n\r\n'
     fake_second_packet.sum = 0
     fake_second_packet.tcp.sum = 0
     raw_socket.sendto(str(fake_second_packet), (dst, 0))
     fake_first_packet = dpkt.ip.IP(str(psh_ack))
-    fake_first_packet.ttl = TTL_TO_GFW
+    fake_first_packet.ttl = ttl_to_gfw
     fake_first_packet.tcp.data = len(first_part) * '0'
     fake_first_packet.sum = 0
     fake_first_packet.tcp.sum = 0
@@ -283,7 +287,7 @@ def inject_scrambled_http_get_to_let_gfw_type2_miss_keyword(psh_ack, pos):
     raw_socket.sendto(str(second_packet), (dst, 0))
 
 
-def inject_poison_ack_to_fill_gfw_buffer_with_garbage(syn_ack):
+def inject_poison_ack_to_fill_gfw_buffer_with_garbage(syn_ack, ttl_to_gfw):
 # poison ack should blind most GFW checking rules
 # because the seq of the tcp is the same, GFW will take the first one for the same seq
 # seq 1: xxx
@@ -296,13 +300,13 @@ def inject_poison_ack_to_fill_gfw_buffer_with_garbage(syn_ack):
         sport=syn_ack.tcp.dport, dport=syn_ack.tcp.sport,
         flags=dpkt.tcp.TH_ACK, seq=syn_ack.tcp.ack, ack=syn_ack.tcp.seq + 1,
         data='', opts='')
-    ip_packet = dpkt.ip.IP(dst=syn_ack.src, src=syn_ack.dst, p=dpkt.ip.IP_PROTO_TCP, ttl=TTL_TO_GFW)
+    ip_packet = dpkt.ip.IP(dst=syn_ack.src, src=syn_ack.dst, p=dpkt.ip.IP_PROTO_TCP, ttl=ttl_to_gfw)
     ip_packet.data = ip_packet.tcp = tcp_packet
     raw_socket.sendto(str(ip_packet), (dst, 0))
     tcp_packet = dpkt.tcp.TCP(
         sport=syn_ack.tcp.dport, dport=syn_ack.tcp.sport,
         flags=dpkt.tcp.TH_ACK, seq=syn_ack.tcp.ack, ack=syn_ack.tcp.seq + 1,
         data=5 * '0', opts='')
-    ip_packet = dpkt.ip.IP(dst=syn_ack.src, src=syn_ack.dst, p=dpkt.ip.IP_PROTO_TCP, ttl=TTL_TO_GFW)
+    ip_packet = dpkt.ip.IP(dst=syn_ack.src, src=syn_ack.dst, p=dpkt.ip.IP_PROTO_TCP, ttl=ttl_to_gfw)
     ip_packet.data = ip_packet.tcp = tcp_packet
     raw_socket.sendto(str(ip_packet), (dst, 0))
