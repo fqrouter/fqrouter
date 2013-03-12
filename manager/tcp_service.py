@@ -9,7 +9,6 @@ import dpkt
 import iptables
 import pending_connection
 import shutdown_hook
-import dns_service
 import china_ip
 
 
@@ -18,7 +17,6 @@ LOGGER = logging.getLogger(__name__)
 
 def run():
     insert_iptables_rules()
-    dns_service.add_wrong_dns_answer_handler(handle_dns_wrong_answer)
     thread.start_new(handle_nfqueue, ())
 
 
@@ -72,8 +70,7 @@ def find_probe_src():
 PROBE_SRC = find_probe_src() # local routing table decision
 
 international_zone = set() # found by fake DNS packet sent back by GFW caused by our stimulation
-domestic_zone = set() # found by RST sent back by server caused by our stimulation
-connections = {} # ip => (time, sport => packet)
+domestic_zone = set() # found by china_ip or timeout
 recent_rst_packets = collections.deque(maxlen=30)
 
 
@@ -156,7 +153,6 @@ def handle_syn_ack(syn_ack):
         return True
     else:
         pending_connection.record_syn_ack(syn_ack)
-        inject_offending_dns_question_to_probe_gfw(uncertain_ip)
         return False
 
 
@@ -166,33 +162,6 @@ def add_international_ip(international_ip, syn_ack_packets):
         inject_poison_ack_to_fill_gfw_buffer_with_garbage(syn_ack)
     for syn_ack in syn_ack_packets:
         inject_back_syn_ack(syn_ack)
-
-
-def inject_offending_dns_question_to_probe_gfw(uncertain_ip):
-# the router deployed with http rst is very likely to have dns hijacking deployed
-# if the ttl can reach a router with dns hijacking deployed
-# then we assume there is gfw device between us and the server
-# the uncertain ip will be recognized as "international"
-    udp_packet = dpkt.udp.UDP(sport=dns_service.DNS_PROBE_SPORT, dport=53) # using special sport to avoid redirection
-    udp_packet.data = dpkt.dns.DNS(qd=[dpkt.dns.DNS.Q(name='%s.twitter.com' % uncertain_ip.replace('.', '-'))])
-    udp_packet.ulen += len(udp_packet.data)
-    ip_packet = dpkt.ip.IP(
-        dst=socket.inet_aton(uncertain_ip), src=socket.inet_aton(PROBE_SRC),
-        p=dpkt.ip.IP_PROTO_UDP, ttl=TTL_TO_GFW)
-    ip_packet.data = str(udp_packet)
-    raw_socket.sendto(str(ip_packet), (socket.inet_ntoa(ip_packet.dst), 0))
-    LOGGER.debug('probe with DNS: %s' % repr(ip_packet))
-
-
-def handle_dns_wrong_answer(question):
-    if not question.endswith('.twitter.com'):
-        return
-    possible_ip = question.replace('.twitter.com', '')
-    if 4 == len(possible_ip.split('-')):
-        international_ip = possible_ip.replace('-', '.')
-        LOGGER.info('found international ip: %s' % international_ip)
-        syn_ack_packets = pending_connection.pop_timeout_syn_ack_packets(international_ip)
-        add_international_ip(international_ip, syn_ack_packets)
 
 
 def inject_back_syn_ack(syn_ack):
