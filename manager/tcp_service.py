@@ -191,9 +191,9 @@ def handle_syn_ack(syn_ack):
     elif uncertain_ip in pending_syn_ack:
         pending_syn_ack.setdefault(uncertain_ip, (time.time(), {}))[1][syn_ack.tcp.dport] = syn_ack
         if time.time() - pending_syn_ack[uncertain_ip][0] > SYN_ACK_TIMEOUT:
-            domestic_ip = uncertain_ip
-            LOGGER.info('treat the ip as domestic due to timeout: %s' % domestic_ip)
-            add_domestic_ip(domestic_ip)
+            international_ip = uncertain_ip
+            LOGGER.info('treat ip as international due to timeout: %s' % international_ip)
+            add_international_ip(international_ip)
         return False
     elif china_ip.is_china_ip(uncertain_ip):
         domestic_ip = uncertain_ip
@@ -211,6 +211,16 @@ def add_domestic_ip(domestic_ip):
     _, packets = pending_syn_ack.pop(domestic_ip)
     for syn_ack in packets.values():
         inject_back_syn_ack(syn_ack)
+
+
+def add_international_ip(international_ip):
+    international_zone.add(international_ip)
+    if international_ip in pending_syn_ack:
+        _, packets = pending_syn_ack.pop(international_ip)
+        for syn_ack in packets.values():
+            inject_poison_ack_to_fill_gfw_buffer_with_garbage(syn_ack)
+        for syn_ack in packets.values():
+            inject_back_syn_ack(syn_ack)
 
 
 def inject_offending_dns_question_to_probe_gfw(uncertain_ip):
@@ -236,13 +246,7 @@ def handle_dns_wrong_answer(question):
     if 4 == len(possible_ip.split('-')):
         international_ip = possible_ip.replace('-', '.')
         LOGGER.info('found international ip: %s' % international_ip)
-        international_zone.add(international_ip)
-        if international_ip in pending_syn_ack:
-            _, packets = pending_syn_ack.pop(international_ip)
-            for syn_ack in packets.values():
-                inject_poison_ack_to_fill_gfw_buffer_with_garbage(syn_ack)
-            for syn_ack in packets.values():
-                inject_back_syn_ack(syn_ack)
+        add_international_ip(international_ip)
 
 
 def inject_back_syn_ack(syn_ack):

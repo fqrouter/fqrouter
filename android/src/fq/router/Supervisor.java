@@ -51,13 +51,6 @@ public class Supervisor implements Runnable {
                 return;
             }
             statusUpdater.updateStatus("Ready! manage button activated");
-            while (true) {
-                sleepOneSecond();
-                if (!ping()) {
-                    statusUpdater.updateStatus("Error: manager not responding");
-                    return;
-                }
-            }
         } finally {
             statusUpdater.appendLog("supervisor thread stopped");
         }
