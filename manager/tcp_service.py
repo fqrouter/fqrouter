@@ -49,33 +49,16 @@ RULE_OUTPUT_PSH_ACK = (
     ('filter', 'OUTPUT', '-o wlan0 -p tcp --tcp-flags ALL PSH,ACK -j NFQUEUE --queue-num 2')
 )
 
-RULE_FORWARD_SYN_ACK = (
-    {'target': 'NFQUEUE', 'extra': 'tcp flags:0x3F/0x12 NFQUEUE num 2'},
-    ('filter', 'FORWARD', '-i wlan0 -p tcp --tcp-flags ALL SYN,ACK -j NFQUEUE --queue-num 2')
-)
-
-RULE_FORWARD_RST = (
-    {'target': 'NFQUEUE', 'extra': 'tcp flags:0x3F/0x04 NFQUEUE num 2'},
-    ('filter', 'FORWARD', '-i wlan0 -p tcp --tcp-flags ALL RST -j NFQUEUE --queue-num 2')
-)
-
-RULE_FORWARD_PSH_ACK = (
-    {'target': 'NFQUEUE', 'extra': 'tcp flags:0x3F/0x18 NFQUEUE num 2'},
-    ('filter', 'FORWARD', '-o wlan0 -p tcp --tcp-flags ALL PSH,ACK -j NFQUEUE --queue-num 2')
-)
-
 RULES = (
     RULE_INPUT_SYN_ACK,
     RULE_INPUT_RST,
-    RULE_OUTPUT_PSH_ACK,
-    RULE_FORWARD_SYN_ACK,
-    RULE_FORWARD_RST,
-    RULE_FORWARD_PSH_ACK
+    RULE_OUTPUT_PSH_ACK
 )
 
 raw_socket = socket.socket(socket.AF_INET, socket.SOCK_RAW, socket.IPPROTO_RAW)
 shutdown_hook.add(raw_socket.close)
 raw_socket.setsockopt(socket.SOL_IP, socket.IP_HDRINCL, 1)
+
 
 def find_probe_src():
     s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
@@ -147,34 +130,7 @@ def handle_psh_ack(psh_ack):
         return True
     LOGGER.debug('found HTTP GET: %s' % format_ip_packet(psh_ack))
     pos += len('Host')
-    first_part = psh_ack.tcp.data[:pos]
-    second_part = psh_ack.tcp.data[pos:]
-    first_packet = dpkt.ip.IP(str(psh_ack))
-    first_packet.ttl = NO_PROCESSING_MAGICAL_TTL
-    first_packet.tcp.data = first_part
-    first_packet.sum = 0
-    first_packet.tcp.sum = 0
-    raw_socket.sendto(str(first_packet), (socket.inet_ntoa(first_packet.dst), 0))
-    fake_second_packet = dpkt.ip.IP(str(psh_ack))
-    fake_second_packet.ttl = TTL_TO_GFW
-    fake_second_packet.tcp.seq += len(first_part)
-    fake_second_packet.tcp.data = ': baidu.com\r\n\r\n'
-    fake_second_packet.sum = 0
-    fake_second_packet.tcp.sum = 0
-    raw_socket.sendto(str(fake_second_packet), (socket.inet_ntoa(fake_second_packet.dst), 0))
-    fake_first_packet = dpkt.ip.IP(str(psh_ack))
-    fake_first_packet.ttl = TTL_TO_GFW
-    fake_first_packet.tcp.data = len(first_part) * '0'
-    fake_first_packet.sum = 0
-    fake_first_packet.tcp.sum = 0
-    raw_socket.sendto(str(fake_first_packet), (socket.inet_ntoa(fake_first_packet.dst), 0))
-    second_packet = dpkt.ip.IP(str(psh_ack))
-    second_packet.ttl = NO_PROCESSING_MAGICAL_TTL
-    second_packet.tcp.seq += len(first_part)
-    second_packet.tcp.data = second_part
-    second_packet.sum = 0
-    second_packet.tcp.sum = 0
-    raw_socket.sendto(str(second_packet), (socket.inet_ntoa(second_packet.dst), 0))
+    inject_scrambled_http_get_to_let_gfw_type2_miss_keyword(psh_ack, pos)
     return False
 
 
@@ -247,7 +203,53 @@ def inject_back_syn_ack(syn_ack):
     raw_socket.sendto(str(syn_ack), (socket.inet_ntoa(syn_ack.dst), 0))
 
 
+def format_ip_packet(ip_packet):
+    return '%s=>%s %s' % (socket.inet_ntoa(ip_packet.src), socket.inet_ntoa(ip_packet.dst), repr(ip_packet))
+
+
+def inject_scrambled_http_get_to_let_gfw_type2_miss_keyword(psh_ack, pos):
+# we still need to make the keyword less obvious by splitting the packet into two
+# to make it harder to rebuilt the stream, we injected two more fake packets to poison the stream
+# first_packet .. fake_second_packet => GFW ? wrong
+# fake_first_packet .. second_packet => GFW ? wrong
+# first_packet .. second_packet => server ? yes, it is a HTTP GET
+    first_part = psh_ack.tcp.data[:pos]
+    second_part = psh_ack.tcp.data[pos:]
+    first_packet = dpkt.ip.IP(str(psh_ack))
+    first_packet.ttl = NO_PROCESSING_MAGICAL_TTL
+    first_packet.tcp.data = first_part
+    first_packet.sum = 0
+    first_packet.tcp.sum = 0
+    raw_socket.sendto(str(first_packet), (socket.inet_ntoa(first_packet.dst), 0))
+    fake_second_packet = dpkt.ip.IP(str(psh_ack))
+    fake_second_packet.ttl = TTL_TO_GFW
+    fake_second_packet.tcp.seq += len(first_part)
+    fake_second_packet.tcp.data = ': baidu.com\r\n\r\n'
+    fake_second_packet.sum = 0
+    fake_second_packet.tcp.sum = 0
+    raw_socket.sendto(str(fake_second_packet), (socket.inet_ntoa(fake_second_packet.dst), 0))
+    fake_first_packet = dpkt.ip.IP(str(psh_ack))
+    fake_first_packet.ttl = TTL_TO_GFW
+    fake_first_packet.tcp.data = len(first_part) * '0'
+    fake_first_packet.sum = 0
+    fake_first_packet.tcp.sum = 0
+    raw_socket.sendto(str(fake_first_packet), (socket.inet_ntoa(fake_first_packet.dst), 0))
+    second_packet = dpkt.ip.IP(str(psh_ack))
+    second_packet.ttl = NO_PROCESSING_MAGICAL_TTL
+    second_packet.tcp.seq += len(first_part)
+    second_packet.tcp.data = second_part
+    second_packet.sum = 0
+    second_packet.tcp.sum = 0
+    raw_socket.sendto(str(second_packet), (socket.inet_ntoa(second_packet.dst), 0))
+
+
 def inject_poison_ack_to_fill_gfw_buffer_with_garbage(syn_ack):
+# poison ack should blind most GFW checking rules
+# because the seq of the tcp is the same, GFW will take the first one for the same seq
+# seq 1: xxx
+# seq 1: yyy
+# GFW think it is xxx
+# server think it is yyy
     tcp_packet = dpkt.tcp.TCP(
         sport=syn_ack.tcp.dport, dport=syn_ack.tcp.sport,
         flags=dpkt.tcp.TH_ACK, seq=syn_ack.tcp.ack, ack=syn_ack.tcp.seq + 1,
@@ -264,7 +266,3 @@ def inject_poison_ack_to_fill_gfw_buffer_with_garbage(syn_ack):
     ip_packet.data = ip_packet.tcp = tcp_packet
     raw_socket.sendto(str(ip_packet), (socket.inet_ntoa(ip_packet.dst), 0))
     LOGGER.debug('inject poison ACK: %s' % format_ip_packet(ip_packet))
-
-
-def format_ip_packet(ip_packet):
-    return '%s=>%s %s' % (socket.inet_ntoa(ip_packet.src), socket.inet_ntoa(ip_packet.dst), repr(ip_packet))
