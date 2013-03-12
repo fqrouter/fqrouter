@@ -31,6 +31,9 @@ def clean():
 
 NO_PROCESSING_MAGICAL_TTL = 255
 TTL_TO_GFW = 9 # based on black magic
+MIN_TTL_TO_GFW = 8
+MAX_TTL_TO_GFW = 12
+RANGE_OF_TTL_TO_GFW = range(MIN_TTL_TO_GFW, MAX_TTL_TO_GFW + 1)
 
 RULE_INPUT_SYN_ACK = (
     {'target': 'NFQUEUE', 'extra': 'tcp flags:0x3F/0x12 NFQUEUE num 2'},
@@ -42,6 +45,11 @@ RULE_INPUT_RST = (
     ('filter', 'INPUT', '-i wlan0 -p tcp --tcp-flags ALL RST -j NFQUEUE --queue-num 2')
 )
 
+RULE_INPUT_ICMP = (
+    {'target': 'NFQUEUE', 'extra': 'NFQUEUE num 2'},
+    ('filter', 'INPUT', '-i wlan0 -p icmp -j NFQUEUE --queue-num 2')
+)
+
 RULE_OUTPUT_PSH_ACK = (
     {'target': 'NFQUEUE', 'extra': 'tcp flags:0x3F/0x18 NFQUEUE num 2'},
     ('filter', 'OUTPUT', '-o wlan0 -p tcp --tcp-flags ALL PSH,ACK -j NFQUEUE --queue-num 2')
@@ -50,6 +58,7 @@ RULE_OUTPUT_PSH_ACK = (
 RULES = (
     RULE_INPUT_SYN_ACK,
     RULE_INPUT_RST,
+    RULE_INPUT_ICMP,
     RULE_OUTPUT_PSH_ACK
 )
 
@@ -95,15 +104,24 @@ def handle_nfqueue():
 def handle_packet(nfqueue_element):
     try:
         ip_packet = dpkt.ip.IP(nfqueue_element.get_payload())
-        if ip_packet.ttl in (NO_PROCESSING_MAGICAL_TTL, TTL_TO_GFW):
-            nfqueue_element.accept()
-            return
-        if dpkt.tcp.TH_RST & ip_packet.tcp.flags:
-            should_accept = handle_rst(ip_packet)
-        elif dpkt.tcp.TH_PUSH & ip_packet.tcp.flags:
-            should_accept = handle_psh_ack(ip_packet)
+        if hasattr(ip_packet, 'tcp'):
+            if ip_packet.ttl in (NO_PROCESSING_MAGICAL_TTL, TTL_TO_GFW):
+                nfqueue_element.accept()
+                return
+            if dpkt.tcp.TH_RST & ip_packet.tcp.flags:
+                should_accept = handle_rst(ip_packet)
+            elif dpkt.tcp.TH_PUSH & ip_packet.tcp.flags:
+                should_accept = handle_psh_ack(ip_packet)
+            else:
+                should_accept = handle_syn_ack(ip_packet)
+        elif hasattr(ip_packet, 'icmp'):
+            icmp_packet = ip_packet.data
+            if dpkt.icmp.ICMP_TIMEXCEED == icmp_packet.type and dpkt.icmp.ICMP_TIMEXCEED_INTRANS == icmp_packet.code:
+                handle_time_exceeded(ip_packet)
+            should_accept = True
         else:
-            should_accept = handle_syn_ack(ip_packet)
+            LOGGER.error('can not handle: %s' % repr(ip_packet))
+            should_accept = True
         if should_accept:
             nfqueue_element.accept()
         else:
@@ -125,7 +143,6 @@ def handle_psh_ack(psh_ack):
     pos = psh_ack.tcp.data.find('Host:')
     if -1 == pos:
         return True
-    LOGGER.debug('found HTTP GET: %s' % format_ip_packet(psh_ack))
     pos += len('Host')
     inject_scrambled_http_get_to_let_gfw_type2_miss_keyword(psh_ack, pos)
     return False
@@ -140,11 +157,11 @@ def handle_syn_ack(syn_ack):
         return True
     elif pending_connection.is_ip_pending(uncertain_ip):
         pending_connection.record_syn_ack(syn_ack)
-        syn_ack_packets = pending_connection.pop_timeout_syn_ack_packets(uncertain_ip)
-        if syn_ack_packets:
+        timeouted = pending_connection.is_ip_timeouted(uncertain_ip)
+        if timeouted:
             international_ip = uncertain_ip
             LOGGER.info('treat ip as international due to timeout: %s' % international_ip)
-            add_international_ip(international_ip, syn_ack_packets)
+            add_international_ip(international_ip)
         return False
     elif china_ip.is_china_ip(uncertain_ip):
         domestic_ip = uncertain_ip
@@ -153,19 +170,68 @@ def handle_syn_ack(syn_ack):
         return True
     else:
         pending_connection.record_syn_ack(syn_ack)
+        inject_ping_requests_to_find_right_ttl(uncertain_ip)
         return False
 
 
-def add_international_ip(international_ip, syn_ack_packets):
+def inject_ping_requests_to_find_right_ttl(dst):
+    LOGGER.debug('inject ping request: %s' % dst)
+    for ttl in RANGE_OF_TTL_TO_GFW:
+        icmp_packet = dpkt.icmp.ICMP(type=dpkt.icmp.ICMP_ECHO, data=dpkt.icmp.ICMP.Echo(id=ttl, seq=1, data=''))
+        ip_packet = dpkt.ip.IP(src=socket.inet_aton(PROBE_SRC), dst=socket.inet_aton(dst), p=dpkt.ip.IP_PROTO_ICMP)
+        ip_packet.ttl = ttl
+        ip_packet.data = icmp_packet
+        raw_socket.sendto(str(ip_packet), (dst, 0))
+
+
+def handle_time_exceeded(ip_packet):
+    time_exceed = ip_packet.icmp.data
+    if not isinstance(time_exceed.data, dpkt.ip.IP):
+        return
+    te_ip_packet = time_exceed.data
+    if not isinstance(te_ip_packet.data, dpkt.icmp.ICMP):
+        return
+    te_icmp_packet = te_ip_packet.data
+    if not isinstance(te_icmp_packet.data, dpkt.icmp.ICMP.Echo):
+        return
+    te_icmp_echo = te_icmp_packet.data
+    ttl = te_icmp_echo.id
+    dst_ip = socket.inet_ntoa(te_ip_packet.dst)
+    router_ip = socket.inet_ntoa(ip_packet.src)
+    is_china_router = china_ip.is_china_ip(router_ip)
+    if is_china_router and MAX_TTL_TO_GFW == ttl:
+        LOGGER.info('treat ip as domestic as max ttl is still in china: %s' % dst_ip)
+        add_domestic_ip(dst_ip)
+        return
+    elif not is_china_router and MIN_TTL_TO_GFW == ttl:
+        LOGGER.info('treat ip as international as min ttl is not in china: %s' % dst_ip)
+        add_international_ip(dst_ip)
+        return
+    else:
+        pending_connection.record_router(dst_ip, ttl, is_china_router)
+        ttl_to_gfw = pending_connection.get_ttl_to_gfw(dst_ip)
+        if ttl_to_gfw:
+            LOGGER.info('found ttl to gfw: %s %s' % (dst_ip, ttl_to_gfw))
+            add_international_ip(dst_ip)
+
+
+def add_international_ip(international_ip):
     international_zone.add(international_ip)
+    syn_ack_packets = pending_connection.pop_syn_ack_packets(international_ip)
     for syn_ack in syn_ack_packets:
         inject_poison_ack_to_fill_gfw_buffer_with_garbage(syn_ack)
     for syn_ack in syn_ack_packets:
         inject_back_syn_ack(syn_ack)
 
 
+def add_domestic_ip(domestic_ip):
+    domestic_zone.add(domestic_ip)
+    syn_ack_packets = pending_connection.pop_syn_ack_packets(domestic_ip)
+    for syn_ack in syn_ack_packets:
+        inject_back_syn_ack(syn_ack)
+
+
 def inject_back_syn_ack(syn_ack):
-    LOGGER.debug('inject back syn ack: %s' % format_ip_packet(syn_ack))
     syn_ack.ttl = NO_PROCESSING_MAGICAL_TTL
     syn_ack.sum = 0
     syn_ack.tcp.sum = 0
@@ -175,6 +241,9 @@ def inject_back_syn_ack(syn_ack):
 def format_ip_packet(ip_packet):
     return '%s=>%s %s' % (socket.inet_ntoa(ip_packet.src), socket.inet_ntoa(ip_packet.dst), repr(ip_packet))
 
+#=== important ===
+# above is just about finding the right time and right TTL
+# below is doing the real stuff at the chosen time using the exact TTL
 
 def inject_scrambled_http_get_to_let_gfw_type2_miss_keyword(psh_ack, pos):
 # we still need to make the keyword less obvious by splitting the packet into two
@@ -182,6 +251,8 @@ def inject_scrambled_http_get_to_let_gfw_type2_miss_keyword(psh_ack, pos):
 # first_packet .. fake_second_packet => GFW ? wrong
 # fake_first_packet .. second_packet => GFW ? wrong
 # first_packet .. second_packet => server ? yes, it is a HTTP GET
+    dst = socket.inet_ntoa(psh_ack.dst)
+    LOGGER.debug('inject scrambled ack: %s' % dst)
     first_part = psh_ack.tcp.data[:pos]
     second_part = psh_ack.tcp.data[pos:]
     first_packet = dpkt.ip.IP(str(psh_ack))
@@ -189,27 +260,27 @@ def inject_scrambled_http_get_to_let_gfw_type2_miss_keyword(psh_ack, pos):
     first_packet.tcp.data = first_part
     first_packet.sum = 0
     first_packet.tcp.sum = 0
-    raw_socket.sendto(str(first_packet), (socket.inet_ntoa(first_packet.dst), 0))
+    raw_socket.sendto(str(first_packet), (dst, 0))
     fake_second_packet = dpkt.ip.IP(str(psh_ack))
     fake_second_packet.ttl = TTL_TO_GFW
     fake_second_packet.tcp.seq += len(first_part)
     fake_second_packet.tcp.data = ': baidu.com\r\n\r\n'
     fake_second_packet.sum = 0
     fake_second_packet.tcp.sum = 0
-    raw_socket.sendto(str(fake_second_packet), (socket.inet_ntoa(fake_second_packet.dst), 0))
+    raw_socket.sendto(str(fake_second_packet), (dst, 0))
     fake_first_packet = dpkt.ip.IP(str(psh_ack))
     fake_first_packet.ttl = TTL_TO_GFW
     fake_first_packet.tcp.data = len(first_part) * '0'
     fake_first_packet.sum = 0
     fake_first_packet.tcp.sum = 0
-    raw_socket.sendto(str(fake_first_packet), (socket.inet_ntoa(fake_first_packet.dst), 0))
+    raw_socket.sendto(str(fake_first_packet), (dst, 0))
     second_packet = dpkt.ip.IP(str(psh_ack))
     second_packet.ttl = NO_PROCESSING_MAGICAL_TTL
     second_packet.tcp.seq += len(first_part)
     second_packet.tcp.data = second_part
     second_packet.sum = 0
     second_packet.tcp.sum = 0
-    raw_socket.sendto(str(second_packet), (socket.inet_ntoa(second_packet.dst), 0))
+    raw_socket.sendto(str(second_packet), (dst, 0))
 
 
 def inject_poison_ack_to_fill_gfw_buffer_with_garbage(syn_ack):
@@ -219,19 +290,19 @@ def inject_poison_ack_to_fill_gfw_buffer_with_garbage(syn_ack):
 # seq 1: yyy
 # GFW think it is xxx
 # server think it is yyy
+    dst = socket.inet_ntoa(syn_ack.src)
+    LOGGER.debug('inject poison ack: %s' % dst)
     tcp_packet = dpkt.tcp.TCP(
         sport=syn_ack.tcp.dport, dport=syn_ack.tcp.sport,
         flags=dpkt.tcp.TH_ACK, seq=syn_ack.tcp.ack, ack=syn_ack.tcp.seq + 1,
         data='', opts='')
     ip_packet = dpkt.ip.IP(dst=syn_ack.src, src=syn_ack.dst, p=dpkt.ip.IP_PROTO_TCP, ttl=TTL_TO_GFW)
     ip_packet.data = ip_packet.tcp = tcp_packet
-    raw_socket.sendto(str(ip_packet), (socket.inet_ntoa(ip_packet.dst), 0))
-    LOGGER.debug('inject empty ACK: %s' % format_ip_packet(ip_packet))
+    raw_socket.sendto(str(ip_packet), (dst, 0))
     tcp_packet = dpkt.tcp.TCP(
         sport=syn_ack.tcp.dport, dport=syn_ack.tcp.sport,
         flags=dpkt.tcp.TH_ACK, seq=syn_ack.tcp.ack, ack=syn_ack.tcp.seq + 1,
         data=5 * '0', opts='')
     ip_packet = dpkt.ip.IP(dst=syn_ack.src, src=syn_ack.dst, p=dpkt.ip.IP_PROTO_TCP, ttl=TTL_TO_GFW)
     ip_packet.data = ip_packet.tcp = tcp_packet
-    raw_socket.sendto(str(ip_packet), (socket.inet_ntoa(ip_packet.dst), 0))
-    LOGGER.debug('inject poison ACK: %s' % format_ip_packet(ip_packet))
+    raw_socket.sendto(str(ip_packet), (dst, 0))
