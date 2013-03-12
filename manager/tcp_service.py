@@ -2,12 +2,12 @@ import logging
 import thread
 from netfilterqueue import NetfilterQueue
 import socket
-import time
 import collections
 
 import dpkt
 
 import iptables
+import pending_connection
 import shutdown_hook
 import dns_service
 import china_ip
@@ -77,9 +77,6 @@ raw_socket = socket.socket(socket.AF_INET, socket.SOCK_RAW, socket.IPPROTO_RAW)
 shutdown_hook.add(raw_socket.close)
 raw_socket.setsockopt(socket.SOL_IP, socket.IP_HDRINCL, 1)
 
-SYN_ACK_TIMEOUT = 2 # seconds
-
-
 def find_probe_src():
     s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
     try:
@@ -93,7 +90,7 @@ PROBE_SRC = find_probe_src() # local routing table decision
 
 international_zone = set() # found by fake DNS packet sent back by GFW caused by our stimulation
 domestic_zone = set() # found by RST sent back by server caused by our stimulation
-pending_syn_ack = {} # ip => (time, sport => packet)
+connections = {} # ip => (time, sport => packet)
 recent_rst_packets = collections.deque(maxlen=30)
 
 
@@ -188,12 +185,13 @@ def handle_syn_ack(syn_ack):
         return True
     elif uncertain_ip in domestic_zone:
         return True
-    elif uncertain_ip in pending_syn_ack:
-        pending_syn_ack.setdefault(uncertain_ip, (time.time(), {}))[1][syn_ack.tcp.dport] = syn_ack
-        if time.time() - pending_syn_ack[uncertain_ip][0] > SYN_ACK_TIMEOUT:
+    elif pending_connection.is_ip_pending(uncertain_ip):
+        pending_connection.record_syn_ack(syn_ack)
+        syn_ack_packets = pending_connection.pop_timeout_syn_ack_packets(uncertain_ip)
+        if syn_ack_packets:
             international_ip = uncertain_ip
             LOGGER.info('treat ip as international due to timeout: %s' % international_ip)
-            add_international_ip(international_ip)
+            add_international_ip(international_ip, syn_ack_packets)
         return False
     elif china_ip.is_china_ip(uncertain_ip):
         domestic_ip = uncertain_ip
@@ -201,26 +199,17 @@ def handle_syn_ack(syn_ack):
         domestic_zone.add(domestic_ip)
         return True
     else:
-        pending_syn_ack.setdefault(uncertain_ip, (time.time(), {}))[1][syn_ack.tcp.dport] = syn_ack
+        pending_connection.record_syn_ack(syn_ack)
         inject_offending_dns_question_to_probe_gfw(uncertain_ip)
         return False
 
 
-def add_domestic_ip(domestic_ip):
-    domestic_zone.add(domestic_ip)
-    _, packets = pending_syn_ack.pop(domestic_ip)
-    for syn_ack in packets.values():
-        inject_back_syn_ack(syn_ack)
-
-
-def add_international_ip(international_ip):
+def add_international_ip(international_ip, syn_ack_packets):
     international_zone.add(international_ip)
-    if international_ip in pending_syn_ack:
-        _, packets = pending_syn_ack.pop(international_ip)
-        for syn_ack in packets.values():
-            inject_poison_ack_to_fill_gfw_buffer_with_garbage(syn_ack)
-        for syn_ack in packets.values():
-            inject_back_syn_ack(syn_ack)
+    for syn_ack in syn_ack_packets:
+        inject_poison_ack_to_fill_gfw_buffer_with_garbage(syn_ack)
+    for syn_ack in syn_ack_packets:
+        inject_back_syn_ack(syn_ack)
 
 
 def inject_offending_dns_question_to_probe_gfw(uncertain_ip):
@@ -246,7 +235,8 @@ def handle_dns_wrong_answer(question):
     if 4 == len(possible_ip.split('-')):
         international_ip = possible_ip.replace('-', '.')
         LOGGER.info('found international ip: %s' % international_ip)
-        add_international_ip(international_ip)
+        syn_ack_packets = pending_connection.pop_timeout_syn_ack_packets(international_ip)
+        add_international_ip(international_ip, syn_ack_packets)
 
 
 def inject_back_syn_ack(syn_ack):
