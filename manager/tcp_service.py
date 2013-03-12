@@ -76,13 +76,19 @@ raw_socket = socket.socket(socket.AF_INET, socket.SOCK_RAW, socket.IPPROTO_RAW)
 shutdown_hook.add(raw_socket.close)
 raw_socket.setsockopt(socket.SOL_IP, socket.IP_HDRINCL, 1)
 
-udp_socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM, socket.IPPROTO_UDP)
-shutdown_hook.add(udp_socket.close)
-udp_socket.settimeout(0)
-udp_socket.setsockopt(socket.SOL_IP, socket.IP_TTL, TTL_TO_GFW)
-udp_socket.bind(('', dns_service.DNS_PROBE_SPORT))
-
 SYN_ACK_TIMEOUT = 2 # seconds
+
+
+def find_probe_src():
+    s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+    try:
+        s.connect(('8.8.8.8', 80))
+        return s.getsockname()[0]
+    finally:
+        s.close()
+
+
+PROBE_SRC = find_probe_src() # local routing table decision
 
 international_zone = set() # found by fake DNS packet sent back by GFW caused by our stimulation
 domestic_zone = set() # found by RST sent back by server caused by our stimulation
@@ -188,9 +194,16 @@ def inject_dns_question_to_stimulate_gfw(uncertain_ip):
 # if the ttl can reach a router with dns hijacking deployed
 # then we assume there is gfw device between us and the server
 # the uncertain ip will be recognized as "international"
-    dns_question = dpkt.dns.DNS(qd=[dpkt.dns.DNS.Q(name='%s.twitter.com' % uncertain_ip.replace('.', '-'))])
-    LOGGER.debug('inject DNS question: %s' % repr(dns_question))
-    udp_socket.sendto(str(dns_question), (uncertain_ip, 53))
+    udp_packet = dpkt.udp.UDP(sport=dns_service.DNS_PROBE_SPORT, dport=53) # using special sport to avoid redirection
+    udp_packet.data = dpkt.dns.DNS(qd=[dpkt.dns.DNS.Q(name='%s.twitter.com' % uncertain_ip.replace('.', '-'))])
+    udp_packet.ulen += len(udp_packet.data)
+    ip_packet = dpkt.ip.IP(
+        dst=socket.inet_aton(uncertain_ip), src=socket.inet_aton(PROBE_SRC),
+        p=dpkt.ip.IP_PROTO_UDP, ttl=TTL_TO_GFW)
+    ip_packet.data = str(udp_packet)
+    ip_packet.len += len(ip_packet.data)
+    raw_socket.sendto(str(ip_packet), (socket.inet_ntoa(ip_packet.dst), 0))
+    LOGGER.debug('inject DNS question: %s' % repr(ip_packet))
 
 
 def handle_dns_wrong_answer(question):
