@@ -1,4 +1,5 @@
 adb shell su -c "killall python"
+adb push china_ip.py /sdcard/manager/china_ip.py
 adb push tcp_service.py /sdcard/manager/tcp_service.py
 adb push dns_service.py /sdcard/manager/dns_service.py
 adb push iptables.py /sdcard/manager/iptables.py

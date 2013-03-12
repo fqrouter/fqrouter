@@ -10,6 +10,7 @@ import dpkt
 import iptables
 import shutdown_hook
 import dns_service
+import china_ip
 
 
 LOGGER = logging.getLogger(__name__)
@@ -187,16 +188,21 @@ def handle_syn_ack(syn_ack):
         return True
     elif uncertain_ip in domestic_zone:
         return True
+    elif uncertain_ip in pending_syn_ack:
+        pending_syn_ack.setdefault(uncertain_ip, (time.time(), {}))[1][syn_ack.tcp.dport] = syn_ack
+        if time.time() - pending_syn_ack[uncertain_ip][0] > SYN_ACK_TIMEOUT:
+            domestic_ip = uncertain_ip
+            LOGGER.info('treat the ip as domestic due to timeout: %s' % domestic_ip)
+            add_domestic_ip(domestic_ip)
+        return False
+    elif china_ip.is_china_ip(uncertain_ip):
+        domestic_ip = uncertain_ip
+        LOGGER.info('found domestic ip: %s' % domestic_ip)
+        domestic_zone.add(domestic_ip)
+        return True
     else:
-        if uncertain_ip in pending_syn_ack:
-            pending_syn_ack.setdefault(uncertain_ip, (time.time(), {}))[1][syn_ack.tcp.dport] = syn_ack
-            if time.time() - pending_syn_ack[uncertain_ip][0] > SYN_ACK_TIMEOUT:
-                domestic_ip = uncertain_ip
-                LOGGER.info('treat the ip as domestic due to timeout: %s' % domestic_ip)
-                add_domestic_ip(domestic_ip)
-        else:
-            pending_syn_ack.setdefault(uncertain_ip, (time.time(), {}))[1][syn_ack.tcp.dport] = syn_ack
-            inject_offending_dns_question_to_probe_gfw(uncertain_ip)
+        pending_syn_ack.setdefault(uncertain_ip, (time.time(), {}))[1][syn_ack.tcp.dport] = syn_ack
+        inject_offending_dns_question_to_probe_gfw(uncertain_ip)
         return False
 
 
@@ -221,6 +227,7 @@ def inject_offending_dns_question_to_probe_gfw(uncertain_ip):
     ip_packet.data = str(udp_packet)
     raw_socket.sendto(str(ip_packet), (socket.inet_ntoa(ip_packet.dst), 0))
     LOGGER.debug('probe with DNS: %s' % repr(ip_packet))
+
 
 def handle_dns_wrong_answer(question):
     if not question.endswith('.twitter.com'):
