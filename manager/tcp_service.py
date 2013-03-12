@@ -90,6 +90,7 @@ def insert_iptables_rules():
 
 
 def delete_iptables_rules():
+    iptables.delete_nfqueue_rules(2)
     iptables.delete_rules(RULES)
 
 

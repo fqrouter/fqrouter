@@ -7,6 +7,7 @@ LOGGER = logging.getLogger(__name__)
 RE_CHAIN_NAME = re.compile(r'Chain (.+) \(')
 RE_SPACE = re.compile(r'\s+')
 
+
 def insert_rules(rules):
     for signature, rule_args in reversed(rules): # insert the last one first
         table, chain, _ = rule_args
@@ -21,11 +22,22 @@ def delete_rules(rules):
         try:
             table, chain, _ = rule_args
             if contains_rule(table, chain, signature):
-                LOGGER.info('skip delete rule: -t %s -D %s %s' % rule_args)
-            else:
                 delete_rule(*rule_args)
+            else:
+                LOGGER.info('skip delete rule: -t %s -D %s %s' % rule_args)
         except:
             LOGGER.exception('failed to delete rule: -t %s -D %s %s' % rule_args)
+
+
+def delete_nfqueue_rules(queue_number):
+    signature = 'NFQUEUE num %s' % queue_number
+    for table in ('filter', 'nat'):
+        rules = dump_table(table)
+        for chain, chain_rules in rules.items():
+            for i, rule in enumerate(reversed(chain_rules)):
+                index = len(chain_rules) - i
+                if signature in rule['extra']:
+                    delete_rule(table, chain, str(index))
 
 
 def insert_rule(table, chain, rule_text):
@@ -102,4 +114,4 @@ Chain OUTPUT (policy ACCEPT 15 packets, 1260 bytes)
 Chain POSTROUTING (policy ACCEPT 52 packets, 3425 bytes)
  pkts bytes target     prot opt in     out     source               destination
  """
-    print(parse(sample_output))
+    delete_nfqueue_rules(1)
