@@ -30,6 +30,7 @@ def clean():
 
 #=== private ===
 
+NO_PROCESSING_MAGICAL_TTL = 255
 TTL_TO_GFW = 11 # based on black magic
 
 RULE_INPUT_SYN_ACK = (
@@ -42,6 +43,11 @@ RULE_INPUT_RST = (
     ('filter', 'INPUT', '-i wlan0 -p tcp --tcp-flags ALL RST -j NFQUEUE --queue-num 2')
 )
 
+RULE_OUTPUT_PSH_ACK = (
+    {'target': 'NFQUEUE', 'extra': 'tcp flags:0x3F/0x18 NFQUEUE num 2'},
+    ('filter', 'OUTPUT', '-o wlan0 -p tcp --tcp-flags ALL PSH,ACK -j NFQUEUE --queue-num 2')
+)
+
 RULE_FORWARD_SYN_ACK = (
     {'target': 'NFQUEUE', 'extra': 'tcp flags:0x3F/0x12 NFQUEUE num 2'},
     ('filter', 'FORWARD', '-i wlan0 -p tcp --tcp-flags ALL SYN,ACK -j NFQUEUE --queue-num 2')
@@ -52,11 +58,18 @@ RULE_FORWARD_RST = (
     ('filter', 'FORWARD', '-i wlan0 -p tcp --tcp-flags ALL RST -j NFQUEUE --queue-num 2')
 )
 
+RULE_FORWARD_PSH_ACK = (
+    {'target': 'NFQUEUE', 'extra': 'tcp flags:0x3F/0x18 NFQUEUE num 2'},
+    ('filter', 'FORWARD', '-o wlan0 -p tcp --tcp-flags ALL PSH,ACK -j NFQUEUE --queue-num 2')
+)
+
 RULES = (
     RULE_INPUT_SYN_ACK,
     RULE_INPUT_RST,
+    RULE_OUTPUT_PSH_ACK,
     RULE_FORWARD_SYN_ACK,
-    RULE_FORWARD_RST
+    RULE_FORWARD_RST,
+    RULE_FORWARD_PSH_ACK
 )
 
 raw_socket = socket.socket(socket.AF_INET, socket.SOCK_RAW, socket.IPPROTO_RAW)
@@ -98,8 +111,13 @@ def handle_nfqueue():
 def handle_packet(nfqueue_element):
     try:
         ip_packet = dpkt.ip.IP(nfqueue_element.get_payload())
+        if NO_PROCESSING_MAGICAL_TTL == ip_packet.ttl:
+            nfqueue_element.accept()
+            return
         if dpkt.tcp.TH_RST & ip_packet.tcp.flags:
             should_accept = handle_rst(ip_packet)
+        elif dpkt.tcp.TH_PUSH & ip_packet.tcp.flags:
+            should_accept = handle_psh_ack(ip_packet)
         else:
             should_accept = handle_syn_ack(ip_packet)
         if should_accept:
@@ -112,39 +130,57 @@ def handle_packet(nfqueue_element):
 
 
 def handle_rst(rst):
-    LOGGER.debug('received RST: %s' % format_ip_packet(rst))
+    LOGGER.error('received RST: %s' % format_ip_packet(rst))
     rst.src_ip = socket.inet_ntoa(rst.src)
     rst.dst_ip = socket.inet_ntoa(rst.dst)
     recent_rst_packets.append(rst)
     return True # receiving RST we already screwed, dropping it will not help
 
 
+def handle_psh_ack(psh_ack):
+    pos = psh_ack.tcp.data.find('Host:')
+    if -1 == pos:
+        return True
+    pos += len('Host')
+    first_part = psh_ack.tcp.data[:pos]
+    second_part = psh_ack.tcp.data[pos:]
+    first_packet = dpkt.ip.IP(str(psh_ack))
+    first_packet.ttl = NO_PROCESSING_MAGICAL_TTL
+    first_packet.tcp.data = first_part
+    first_packet.sum = 0
+    first_packet.tcp.sum = 0
+    raw_socket.sendto(str(first_packet), (socket.inet_ntoa(first_packet.dst), 0))
+    second_packet = psh_ack
+    second_packet.ttl = NO_PROCESSING_MAGICAL_TTL
+    second_packet.tcp.seq += len(first_part)
+    second_packet.tcp.data = second_part
+    second_packet.sum = 0
+    second_packet.tcp.sum = 0
+    raw_socket.sendto(str(second_packet), (socket.inet_ntoa(second_packet.dst), 0))
+    return False
+
+
 def handle_syn_ack(syn_ack):
-    if 255 == syn_ack.ttl:
-        # syn_ack injected back
+    uncertain_ip = socket.inet_ntoa(syn_ack.src)
+    if uncertain_ip in international_zone:
+        inject_poison_ack_to_fill_gfw_buffer_with_garbage(syn_ack)
+        return True
+    elif uncertain_ip in domestic_zone:
         return True
     else:
-        # syn_ack intercepted
-        uncertain_ip = socket.inet_ntoa(syn_ack.src)
-        if uncertain_ip in international_zone:
-            inject_poison_ack_to_fill_gfw_buffer_with_garbage(syn_ack)
-            return True
-        elif uncertain_ip in domestic_zone:
-            return True
+        if uncertain_ip in pending_syn_ack:
+            pending_syn_ack.setdefault(uncertain_ip, (time.time(), {}))[1][syn_ack.tcp.dport] = syn_ack
+            if time.time() - pending_syn_ack[uncertain_ip][0] > SYN_ACK_TIMEOUT:
+                domestic_ip = uncertain_ip
+                LOGGER.info('treat the ip as domestic: %s' % domestic_ip)
+                domestic_zone.add(domestic_ip)
+                _, packets = pending_syn_ack.pop(domestic_ip)
+                for syn_ack in packets.values():
+                    inject_back_syn_ack(syn_ack)
         else:
-            if uncertain_ip in pending_syn_ack:
-                pending_syn_ack.setdefault(uncertain_ip, (time.time(), {}))[1][syn_ack.tcp.dport] = syn_ack
-                if time.time() - pending_syn_ack[uncertain_ip][0] > SYN_ACK_TIMEOUT:
-                    domestic_ip = uncertain_ip
-                    LOGGER.info('treat the ip as domestic: %s' % domestic_ip)
-                    domestic_zone.add(domestic_ip)
-                    _, packets = pending_syn_ack.pop(domestic_ip)
-                    for syn_ack in packets.values():
-                        inject_back_syn_ack(syn_ack)
-            else:
-                pending_syn_ack.setdefault(uncertain_ip, (time.time(), {}))[1][syn_ack.tcp.dport] = syn_ack
-                inject_dns_question_to_stimulate_gfw(uncertain_ip)
-            return False
+            pending_syn_ack.setdefault(uncertain_ip, (time.time(), {}))[1][syn_ack.tcp.dport] = syn_ack
+            inject_dns_question_to_stimulate_gfw(uncertain_ip)
+        return False
 
 
 def inject_dns_question_to_stimulate_gfw(uncertain_ip):
@@ -175,7 +211,7 @@ def handle_dns_wrong_answer(question):
 
 def inject_back_syn_ack(syn_ack):
     LOGGER.debug('inject back syn ack: %s' % format_ip_packet(syn_ack))
-    syn_ack.ttl = 255
+    syn_ack.ttl = NO_PROCESSING_MAGICAL_TTL
     syn_ack.sum = 0
     syn_ack.tcp.sum = 0
     raw_socket.sendto(str(syn_ack), (socket.inet_ntoa(syn_ack.dst), 0))

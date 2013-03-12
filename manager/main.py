@@ -34,7 +34,7 @@ application = tornado.web.Application([
 
 if '__main__' == __name__:
     logger = logging.getLogger()
-    logger.level = logging.DEBUG
+    logger.level = logging.INFO
     handler = logging.StreamHandler(os.fdopen(sys.stderr.fileno(), 'w', 0))
     handler.setFormatter(logging.Formatter(logging.BASIC_FORMAT))
     logger.addHandler(handler)
