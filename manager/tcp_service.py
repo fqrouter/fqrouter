@@ -31,7 +31,7 @@ def clean():
 #=== private ===
 
 NO_PROCESSING_MAGICAL_TTL = 255
-TTL_TO_GFW = 11 # based on black magic
+TTL_TO_GFW = 9 # based on black magic
 
 RULE_INPUT_SYN_ACK = (
     {'target': 'NFQUEUE', 'extra': 'tcp flags:0x3F/0x12 NFQUEUE num 2'},
@@ -117,7 +117,7 @@ def handle_nfqueue():
 def handle_packet(nfqueue_element):
     try:
         ip_packet = dpkt.ip.IP(nfqueue_element.get_payload())
-        if NO_PROCESSING_MAGICAL_TTL == ip_packet.ttl:
+        if ip_packet.ttl in (NO_PROCESSING_MAGICAL_TTL, TTL_TO_GFW):
             nfqueue_element.accept()
             return
         if dpkt.tcp.TH_RST & ip_packet.tcp.flags:
@@ -147,6 +147,7 @@ def handle_psh_ack(psh_ack):
     pos = psh_ack.tcp.data.find('Host:')
     if -1 == pos:
         return True
+    LOGGER.debug('found HTTP GET: %s' % format_ip_packet(psh_ack))
     pos += len('Host')
     first_part = psh_ack.tcp.data[:pos]
     second_part = psh_ack.tcp.data[pos:]
@@ -156,7 +157,20 @@ def handle_psh_ack(psh_ack):
     first_packet.sum = 0
     first_packet.tcp.sum = 0
     raw_socket.sendto(str(first_packet), (socket.inet_ntoa(first_packet.dst), 0))
-    second_packet = psh_ack
+    fake_second_packet = dpkt.ip.IP(str(psh_ack))
+    fake_second_packet.ttl = TTL_TO_GFW
+    fake_second_packet.tcp.seq += len(first_part)
+    fake_second_packet.tcp.data = ': baidu.com\r\n\r\n'
+    fake_second_packet.sum = 0
+    fake_second_packet.tcp.sum = 0
+    raw_socket.sendto(str(fake_second_packet), (socket.inet_ntoa(fake_second_packet.dst), 0))
+    fake_first_packet = dpkt.ip.IP(str(psh_ack))
+    fake_first_packet.ttl = TTL_TO_GFW
+    fake_first_packet.tcp.data = len(first_part) * '0'
+    fake_first_packet.sum = 0
+    fake_first_packet.tcp.sum = 0
+    raw_socket.sendto(str(fake_first_packet), (socket.inet_ntoa(fake_first_packet.dst), 0))
+    second_packet = dpkt.ip.IP(str(psh_ack))
     second_packet.ttl = NO_PROCESSING_MAGICAL_TTL
     second_packet.tcp.seq += len(first_part)
     second_packet.tcp.data = second_part
@@ -178,18 +192,22 @@ def handle_syn_ack(syn_ack):
             pending_syn_ack.setdefault(uncertain_ip, (time.time(), {}))[1][syn_ack.tcp.dport] = syn_ack
             if time.time() - pending_syn_ack[uncertain_ip][0] > SYN_ACK_TIMEOUT:
                 domestic_ip = uncertain_ip
-                LOGGER.info('treat the ip as domestic: %s' % domestic_ip)
-                domestic_zone.add(domestic_ip)
-                _, packets = pending_syn_ack.pop(domestic_ip)
-                for syn_ack in packets.values():
-                    inject_back_syn_ack(syn_ack)
+                LOGGER.info('treat the ip as domestic due to timeout: %s' % domestic_ip)
+                add_domestic_ip(domestic_ip)
         else:
             pending_syn_ack.setdefault(uncertain_ip, (time.time(), {}))[1][syn_ack.tcp.dport] = syn_ack
-            inject_dns_question_to_stimulate_gfw(uncertain_ip)
+            inject_offending_dns_question_to_probe_gfw(uncertain_ip)
         return False
 
 
-def inject_dns_question_to_stimulate_gfw(uncertain_ip):
+def add_domestic_ip(domestic_ip):
+    domestic_zone.add(domestic_ip)
+    _, packets = pending_syn_ack.pop(domestic_ip)
+    for syn_ack in packets.values():
+        inject_back_syn_ack(syn_ack)
+
+
+def inject_offending_dns_question_to_probe_gfw(uncertain_ip):
 # the router deployed with http rst is very likely to have dns hijacking deployed
 # if the ttl can reach a router with dns hijacking deployed
 # then we assume there is gfw device between us and the server
@@ -201,10 +219,8 @@ def inject_dns_question_to_stimulate_gfw(uncertain_ip):
         dst=socket.inet_aton(uncertain_ip), src=socket.inet_aton(PROBE_SRC),
         p=dpkt.ip.IP_PROTO_UDP, ttl=TTL_TO_GFW)
     ip_packet.data = str(udp_packet)
-    ip_packet.len += len(ip_packet.data)
     raw_socket.sendto(str(ip_packet), (socket.inet_ntoa(ip_packet.dst), 0))
-    LOGGER.debug('inject DNS question: %s' % repr(ip_packet))
-
+    LOGGER.debug('probe with DNS: %s' % repr(ip_packet))
 
 def handle_dns_wrong_answer(question):
     if not question.endswith('.twitter.com'):
