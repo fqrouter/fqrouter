@@ -10,6 +10,7 @@ import iptables
 import pending_connection
 import shutdown_hook
 import china_ip
+import network_interface
 
 
 LOGGER = logging.getLogger(__name__)
@@ -36,32 +37,28 @@ DEFAULT_TTL_TO_GFW = 9
 RANGE_OF_TTL_TO_GFW = range(MIN_TTL_TO_GFW, MAX_TTL_TO_GFW + 1)
 LIST_OF_NO_PROCESSING_TTL = set(list(RANGE_OF_TTL_TO_GFW) + [NO_PROCESSING_MAGICAL_TTL])
 
-RULE_INPUT_SYN_ACK = (
-    {'target': 'NFQUEUE', 'extra': 'tcp flags:0x3F/0x12 NFQUEUE num 2'},
-    ('filter', 'INPUT', '-i wlan0 -p tcp --tcp-flags ALL SYN,ACK -j NFQUEUE --queue-num 2')
-)
-
-RULE_INPUT_RST = (
-    {'target': 'NFQUEUE', 'extra': 'tcp flags:0x3F/0x04 NFQUEUE num 2'},
-    ('filter', 'INPUT', '-i wlan0 -p tcp --tcp-flags ALL RST -j NFQUEUE --queue-num 2')
-)
-
-RULE_INPUT_ICMP = (
-    {'target': 'NFQUEUE', 'extra': 'NFQUEUE num 2'},
-    ('filter', 'INPUT', '-i wlan0 -p icmp -j NFQUEUE --queue-num 2')
-)
-
-RULE_OUTPUT_PSH_ACK = (
-    {'target': 'NFQUEUE', 'extra': 'tcp flags:0x3F/0x18 NFQUEUE num 2'},
-    ('filter', 'OUTPUT', '-o wlan0 -p tcp --tcp-flags ALL PSH,ACK -j NFQUEUE --queue-num 2')
-)
-
-RULES = (
-    RULE_INPUT_SYN_ACK,
-    RULE_INPUT_RST,
-    RULE_INPUT_ICMP,
-    RULE_OUTPUT_PSH_ACK
-)
+RULES = []
+for iface in network_interface.list_data_network_interfaces():
+    RULE_INPUT_SYN_ACK = (
+        {'target': 'NFQUEUE', 'iface_in': iface, 'extra': 'tcp flags:0x3F/0x12 NFQUEUE num 2'},
+        ('filter', 'INPUT', '-i %s -p tcp --tcp-flags ALL SYN,ACK -j NFQUEUE --queue-num 2' % iface)
+    )
+    RULES.append(RULE_INPUT_SYN_ACK)
+    RULE_INPUT_RST = (
+        {'target': 'NFQUEUE', 'iface_in': iface, 'extra': 'tcp flags:0x3F/0x04 NFQUEUE num 2'},
+        ('filter', 'INPUT', '-i %s -p tcp --tcp-flags ALL RST -j NFQUEUE --queue-num 2' % iface)
+    )
+    RULES.append(RULE_INPUT_RST)
+    RULE_INPUT_ICMP = (
+        {'target': 'NFQUEUE', 'iface_in': iface, 'extra': 'NFQUEUE num 2'},
+        ('filter', 'INPUT', '-i %s -p icmp -j NFQUEUE --queue-num 2' % iface)
+    )
+    RULES.append(RULE_INPUT_ICMP)
+    RULE_OUTPUT_PSH_ACK = (
+        {'target': 'NFQUEUE', 'iface_out': iface, 'extra': 'tcp flags:0x3F/0x18 NFQUEUE num 2'},
+        ('filter', 'OUTPUT', '-o %s -p tcp --tcp-flags ALL PSH,ACK -j NFQUEUE --queue-num 2' % iface)
+    )
+    RULES.append(RULE_OUTPUT_PSH_ACK)
 
 raw_socket = socket.socket(socket.AF_INET, socket.SOCK_RAW, socket.IPPROTO_RAW)
 shutdown_hook.add(raw_socket.close)

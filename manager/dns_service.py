@@ -7,6 +7,7 @@ import dpkt
 
 import iptables
 import shutdown_hook
+import network_interface
 
 LOGGER = logging.getLogger(__name__)
 
@@ -27,19 +28,19 @@ def clean():
 
 CLEAN_DNS = '8.8.8.8'
 
-# this rule make sure we always query from the "CLEAN" dns
-RULE_REDIRECT_TO_CLEAN_DNS = (
-    {'target': 'DNAT', 'extra': 'udp dpt:53 to:%s:53' % CLEAN_DNS},
-    ('nat', 'OUTPUT', '-o wlan0 -p udp --dport 53 -j DNAT --to-destination %s:53' % CLEAN_DNS)
-)
-RULE_DROP_PACKET = (
-    {'target': 'NFQUEUE', 'extra': 'udp spt:53 NFQUEUE num 1'},
-    ('filter', 'INPUT', '-i wlan0 -p udp --sport 53 -j NFQUEUE --queue-num 1')
-)
-RULES = (
-    RULE_REDIRECT_TO_CLEAN_DNS,
-    RULE_DROP_PACKET
-)
+RULES = []
+for iface in network_interface.list_data_network_interfaces():
+    # this rule make sure we always query from the "CLEAN" dns
+    RULE_REDIRECT_TO_CLEAN_DNS = (
+        {'target': 'DNAT', 'iface_out': iface, 'extra': 'udp dpt:53 to:%s:53' % CLEAN_DNS},
+        ('nat', 'OUTPUT', '-o %s -p udp --dport 53 -j DNAT --to-destination %s:53' % (iface, CLEAN_DNS))
+    )
+    RULES.append(RULE_REDIRECT_TO_CLEAN_DNS)
+    RULE_DROP_PACKET = (
+        {'target': 'NFQUEUE', 'iface_in': iface, 'extra': 'udp spt:53 NFQUEUE num 1'},
+        ('filter', 'INPUT', '-i %s -p udp --sport 53 -j NFQUEUE --queue-num 1' % iface)
+    )
+    RULES.append(RULE_DROP_PACKET)
 
 # source http://zh.wikipedia.org/wiki/%E5%9F%9F%E5%90%8D%E6%9C%8D%E5%8A%A1%E5%99%A8%E7%BC%93%E5%AD%98%E6%B1%A1%E6%9F%93
 WRONG_ANSWERS = {
@@ -122,6 +123,6 @@ def contains_wrong_answer(dns_packet):
             if resolved_ip in WRONG_ANSWERS:
                 return True # to find wrong answer
             else:
-                LOGGER.debug('dns resolve: %s => %s' % (dns_packet.qd[0].name, resolved_ip))
+                LOGGER.info('dns resolve: %s => %s' % (dns_packet.qd[0].name, resolved_ip))
                 return False # if the blacklist is incomplete, we will think it is right answer
     return True # to find empty answer
