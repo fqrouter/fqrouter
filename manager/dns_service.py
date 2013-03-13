@@ -2,6 +2,8 @@ import logging
 from netfilterqueue import NetfilterQueue
 import socket
 import thread
+import time
+import traceback
 
 import dpkt
 
@@ -9,22 +11,44 @@ import iptables
 import shutdown_hook
 import network_interface
 
+
 LOGGER = logging.getLogger(__name__)
 
 
 def run():
-    insert_iptables_rules()
-    thread.start_new(handle_nfqueue, ())
+    try:
+        insert_iptables_rules()
+        thread.start_new(handle_nfqueue, ())
+    except:
+        LOGGER.exception('failed to start dns service')
+        dns_service_status.error = traceback.format_exc()
 
 
 def status():
-    return 'N/A'
+    return dns_service_status.get_status_description()
 
 
 def clean():
     delete_iptables_rules()
 
 # === private ===
+
+class DnsServiceStatus(object):
+    def __init__(self):
+        self.last_activity_at = None
+        self.error = None
+
+    def get_status_description(self):
+        if self.error:
+            return 'ERROR'
+        if not self.last_activity_at:
+            return 'NOT STARTED'
+        if time.time() - self.last_activity_at > 30:
+            return 'NO ACTIVITY'
+        return 'WORKING'
+
+
+dns_service_status = DnsServiceStatus()
 
 CLEAN_DNS = '8.8.8.8'
 
@@ -97,6 +121,7 @@ def handle_nfqueue():
         nfqueue.run()
     except:
         LOGGER.exception('stopped handling nfqueue')
+        dns_service_status.error = traceback.format_exc()
 
 
 def handle_packet(nfqueue_element):
@@ -109,6 +134,7 @@ def handle_packet(nfqueue_element):
             nfqueue_element.drop()
             return
         nfqueue_element.accept()
+        dns_service_status.last_activity_at = time.time()
     except:
         LOGGER.exception('failed to handle packet')
         nfqueue_element.accept()
