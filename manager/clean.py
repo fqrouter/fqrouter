@@ -5,6 +5,6 @@ import tcp_service
 
 
 if '__main__' == __name__:
-    logging.basicConfig(level=logging.DEBUG)
+    logging.basicConfig(level=logging.INFO)
     dns_service.clean()
     tcp_service.clean()

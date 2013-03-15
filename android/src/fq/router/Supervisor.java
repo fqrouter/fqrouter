@@ -50,7 +50,7 @@ public class Supervisor implements Runnable {
             if (shouldWait && !waitForManager()) {
                 return;
             }
-            statusUpdater.updateStatus("Ready! manage button activated");
+            statusUpdater.activateManageButton();
         } finally {
             statusUpdater.appendLog("supervisor thread stopped");
         }
@@ -58,6 +58,7 @@ public class Supervisor implements Runnable {
 
     private boolean launchManager() {
         if (ping()) {
+            statusUpdater.appendLog("manager is already running");
             return false;
         }
         try {

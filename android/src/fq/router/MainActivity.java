@@ -19,8 +19,6 @@ public class MainActivity extends Activity implements StatusUpdater {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.main);
         setupUI();
-        appendLog("starting supervisor thread");
-        new Thread(new Supervisor(getAssets(), this)).start();
     }
 
     private void setupUI() {
@@ -43,6 +41,14 @@ public class MainActivity extends Activity implements StatusUpdater {
                     Log.e("fqrouter", "failed to kill manager process", e);
                 }
                 finish();
+            }
+        });
+        Button startButton = (Button) findViewById(R.id.startButton);
+        startButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                appendLog("starting supervisor thread");
+                new Thread(new Supervisor(getAssets(), MainActivity.this)).start();
             }
         });
     }
@@ -68,5 +74,17 @@ public class MainActivity extends Activity implements StatusUpdater {
                 textView.setText(log + "\n" + textView.getText());
             }
         }, 0);
+    }
+
+    @Override
+    public void activateManageButton() {
+        handler.postDelayed(new Runnable() {
+            @Override
+            public void run() {
+                findViewById(R.id.startButton).setVisibility(View.GONE);
+                findViewById(R.id.manageButton).setVisibility(View.VISIBLE);
+            }
+        }, 0);
+        updateStatus("Ready! manage button activated");
     }
 }

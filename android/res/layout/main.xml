@@ -7,7 +7,7 @@
     <LinearLayout
             android:orientation="horizontal"
             android:layout_width="fill_parent"
-            android:layout_height="wrap_content" android:layout_gravity="right|center_vertical">
+            android:layout_height="60dp" android:layout_gravity="right|center_vertical">
         <Button
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
@@ -16,8 +16,13 @@
         <Button
                 android:layout_width="fill_parent"
                 android:layout_height="wrap_content"
+                android:text="Start"
+                android:id="@+id/startButton" android:layout_gravity="center"/>
+        <Button
+                android:layout_width="fill_parent"
+                android:layout_height="wrap_content"
                 android:text="Manage"
-                android:id="@+id/manageButton" android:layout_gravity="center_horizontal|bottom"/>
+                android:id="@+id/manageButton" android:layout_gravity="center" android:visibility="gone"/>
     </LinearLayout>
     <TextView
             android:layout_width="fill_parent"

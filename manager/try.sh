@@ -1,5 +1,5 @@
 adb shell su -c "killall python"
-#adb push delegated-apnic-latest.txt /sdcard/manager/delegated-apnic-latest.txt
+adb push delegated-apnic-latest.txt /sdcard/manager/delegated-apnic-latest.txt
 adb push network_interface.py /sdcard/manager/network_interface.py
 adb push pending_connection.py /sdcard/manager/pending_connection.py
 adb push china_ip.py /sdcard/manager/china_ip.py
