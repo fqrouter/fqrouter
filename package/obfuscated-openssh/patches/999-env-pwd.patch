@@ -1,0 +1,40 @@
+--- a/sshconnect2.c	2013-03-15 09:29:52.739205656 +0800
++++ b/sshconnect2.c	2013-03-15 09:43:25.123207237 +0800
+@@ -866,6 +866,7 @@
+ 	static int attempt = 0;
+ 	char prompt[150];
+ 	char *password;
++	char *env_pwd = getenv("OPENSSH_PASSWORD");
+ 	const char *host = options.host_key_alias ?  options.host_key_alias :
+ 	    authctxt->host;
+ 
+@@ -875,17 +876,23 @@
+ 	if (attempt != 1)
+ 		error("Permission denied, please try again.");
+ 
+-	snprintf(prompt, sizeof(prompt), "%.30s@%.128s's password: ",
+-	    authctxt->server_user, host);
+-	password = read_passphrase(prompt, 0);
++	if (env_pwd == NULL) {
++		snprintf(prompt, sizeof(prompt), "%.30s@%.128s's password: ",
++		    authctxt->server_user, host);
++		password = read_passphrase(prompt, 0);
++	}
+ 	packet_start(SSH2_MSG_USERAUTH_REQUEST);
+ 	packet_put_cstring(authctxt->server_user);
+ 	packet_put_cstring(authctxt->service);
+ 	packet_put_cstring(authctxt->method->name);
+ 	packet_put_char(0);
+-	packet_put_cstring(password);
+-	memset(password, 0, strlen(password));
+-	xfree(password);
++	if (env_pwd == NULL) {
++		packet_put_cstring(password);
++		memset(password, 0, strlen(password));
++		xfree(password);
++	} else {
++		packet_put_cstring(env_pwd);
++	}
+ 	packet_add_padding(64);
+ 	packet_send();
+ 
