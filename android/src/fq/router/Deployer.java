@@ -36,8 +36,7 @@ public class Deployer {
         try {
             foundPayloadUpdate = checkUpdate();
         } catch (Exception e) {
-            Log.e("fqrouter", "failed to check update", e);
-            statusUpdater.updateStatus("Error: failed to check update");
+            statusUpdater.reportError("failed to check update", e);
             return false;
         }
         if (foundPayloadUpdate) {
@@ -51,30 +50,26 @@ public class Deployer {
                 }
                 clearDataDirectory();
             } catch (Exception e) {
-                Log.e("fqrouter", "failed to clear data directory", e);
-                statusUpdater.updateStatus("Error: failed to clear data directory");
+                statusUpdater.reportError("failed to clear data directory", e);
                 return false;
             }
         }
         try {
             copyPayloadZip();
         } catch (Exception e) {
-            Log.e("fqrouter", "failed to copy payload.zip", e);
-            statusUpdater.updateStatus("Error: failed to copy payload.zip");
+            statusUpdater.reportError("failed to copy payload.zip", e);
             return false;
         }
         try {
             unzipPayloadZip();
         } catch (Exception e) {
-            Log.e("fqrouter", "failed to unzip payload.zip", e);
-            statusUpdater.updateStatus("Error: failed to unzip payload.zip");
+            statusUpdater.reportError("failed to unzip payload.zip", e);
             return false;
         }
         try {
             makePayloadExecutable();
         } catch (Exception e) {
-            Log.e("fqrouter", "failed to make payload executable", e);
-            statusUpdater.updateStatus("Error: failed to make payload executable");
+            statusUpdater.reportError("failed to make payload executable", e);
             return false;
         }
         statusUpdater.updateStatus("Deployed payload");

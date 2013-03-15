@@ -80,7 +80,7 @@ public class Supervisor implements Runnable {
                 return true;
             }
         }
-        statusUpdater.updateStatus("Error: launch manager timeout");
+        statusUpdater.reportError("Timed out", null);
         return false;
     }
 }

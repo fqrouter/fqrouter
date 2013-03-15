@@ -3,7 +3,7 @@
     <title>Router Dashboard</title>
     <style>
         .status li {
-            font-size: larger;
+            font-size: 2em;
         }
     </style>
 </head>
@@ -11,6 +11,7 @@
 <ul class="status">
     <li>DNS: {{ dns_service_status() }}</li>
     <li>TCP: {{ tcp_service_status() }}</li>
+    <li><a href="/logs">Logs</a></li>
 </ul>
 </body>
 </html>
