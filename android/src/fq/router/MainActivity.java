@@ -11,9 +11,11 @@ import android.text.method.ScrollingMovementMethod;
 import android.util.Log;
 import android.view.View;
 import android.widget.Button;
+import android.widget.LinearLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 import fq.router.utils.ShellUtils;
+
 
 public class MainActivity extends Activity implements StatusUpdater {
     private Handler handler = new Handler();
@@ -111,6 +113,7 @@ public class MainActivity extends Activity implements StatusUpdater {
             @Override
             public void run() {
                 findViewById(R.id.startButton).setVisibility(View.GONE);
+                findViewById(R.id.reportErrorButton).setVisibility(View.VISIBLE);
                 findViewById(R.id.manageButton).setVisibility(View.VISIBLE);
             }
         }, 0);
