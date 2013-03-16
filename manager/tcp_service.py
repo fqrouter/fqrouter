@@ -96,17 +96,6 @@ class TcpServiceStatus(object):
         return 'WORKING'
 
 
-def find_probe_src():
-    s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-    try:
-        s.connect(('8.8.8.8', 80))
-        return s.getsockname()[0]
-    finally:
-        s.close()
-
-
-PROBE_SRC = find_probe_src() # local routing table decision
-
 international_zone = {} # found by icmp time exceeded
 domestic_zone = set() # found by china_ip or icmp time exceeded or timeout
 tcp_service_status = TcpServiceStatus()
@@ -211,10 +200,17 @@ def handle_syn_ack(syn_ack):
 
 
 def inject_ping_requests_to_find_right_ttl(dst):
+    def find_probe_src():
+        s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+        try:
+            s.connect((dst, 80))
+            return s.getsockname()[0]
+        finally:
+            s.close()
     LOGGER.debug('inject ping request: %s' % dst)
     for ttl in RANGE_OF_TTL_TO_GFW:
         icmp_packet = dpkt.icmp.ICMP(type=dpkt.icmp.ICMP_ECHO, data=dpkt.icmp.ICMP.Echo(id=ttl, seq=1, data=''))
-        ip_packet = dpkt.ip.IP(src=socket.inet_aton(PROBE_SRC), dst=socket.inet_aton(dst), p=dpkt.ip.IP_PROTO_ICMP)
+        ip_packet = dpkt.ip.IP(src=socket.inet_aton(find_probe_src()), dst=socket.inet_aton(dst), p=dpkt.ip.IP_PROTO_ICMP)
         ip_packet.ttl = ttl
         ip_packet.data = icmp_packet
         raw_socket.sendto(str(ip_packet), (dst, 0))
