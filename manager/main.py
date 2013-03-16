@@ -8,6 +8,7 @@ import tornado.web
 
 import dns_service
 import tcp_service
+import self_check
 
 
 ROOT_DIR = os.path.dirname(__file__)
@@ -38,8 +39,10 @@ class LogsHandler(tornado.web.RequestHandler):
 
 
 application = tornado.web.Application([
+    (r'/static/(.*)', tornado.web.StaticFileHandler, {'path': os.path.join(ROOT_DIR, 'static')}),
     (r'/ping', PingHandler),
     (r'/logs', LogsHandler),
+    (r'/self-check', self_check.SelfCheckHandler),
     (r'/', MainHandler)
 ])
 

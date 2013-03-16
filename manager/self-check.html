@@ -1,0 +1,26 @@
+<html>
+<head>
+    <title>Self Check</title>
+</head>
+<body>
+<ol id="result">
+
+</ol>
+<script src="/static/jquery.js"></script>
+<script>
+    $(document).ready(function () {
+        $.get('/self-check?action=resolve-domain&domain=www.facebook.com', function (ip) {
+            $('#result').append('<li>www.facebook.com => ' + ip + '</li>');
+            $.get('/self-check?action=send-ping&ip=' + ip, function () {
+                $('#result').append('<li>ping ' + ip + '</li>');
+                setTimeout(function () {
+                    $.get('/self-check?action=receive-pong&ip=' + ip, function (received) {
+                        $('#result').append('<li>' + received + ' pong from ' + ip + '</li>');
+                    });
+                }, 2000);
+            })
+        });
+    });
+</script>
+</body>
+</html>
