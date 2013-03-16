@@ -11,10 +11,11 @@ import android.text.method.ScrollingMovementMethod;
 import android.util.Log;
 import android.view.View;
 import android.widget.Button;
-import android.widget.LinearLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 import fq.router.utils.ShellUtils;
+
+import java.io.File;
 
 
 public class MainActivity extends Activity implements StatusUpdater {
@@ -76,6 +77,14 @@ public class MainActivity extends Activity implements StatusUpdater {
                     body = "";
                 }
                 i.putExtra(Intent.EXTRA_TEXT, body);
+                try {
+                    File managerLogFile = new File("/sdcard/Android/data/fq.router/manager.log");
+                    if (managerLogFile.exists()) {
+                        i.putExtra(Intent.EXTRA_STREAM, Uri.fromFile(managerLogFile));
+                    }
+                } catch (Exception e) {
+                    Log.e("fqrouter", "failed to attach log", e);
+                }
                 try {
                     startActivity(Intent.createChooser(i, "Send mail..."));
                 } catch (android.content.ActivityNotFoundException ex) {

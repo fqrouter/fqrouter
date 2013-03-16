@@ -1,10 +1,9 @@
-import logging
-
 import dns_service
 import tcp_service
+import main
 
 
 if '__main__' == __name__:
-    logging.basicConfig(level=logging.INFO)
+    main.setup_logging()
     dns_service.clean()
     tcp_service.clean()
