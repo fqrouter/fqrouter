@@ -101,10 +101,16 @@ public class Deployer {
     private void clearDataDirectory() throws Exception {
         if (DATA_DIR.exists()) {
             statusUpdater.appendLog("clear data dir");
-            ShellUtils.execute("/system/bin/rm", "-r", DATA_DIR + "/python");
-            ShellUtils.execute("/system/bin/rm", "-r", DATA_DIR + "/wifi-tools");
-            ShellUtils.execute("/system/bin/rm", "-r", DATA_DIR + "/manager");
-            ShellUtils.execute("/system/bin/rm", DATA_DIR + "/busybox");
+            deleteDirectory(DATA_DIR + "/python");
+            deleteDirectory(DATA_DIR + "/wifi-tools");
+            deleteDirectory(DATA_DIR + "/manager");
+            deleteDirectory(DATA_DIR + "/busybox");
+        }
+    }
+
+    private void deleteDirectory(String path) throws Exception {
+        if (new File(path).exists()) {
+            ShellUtils.execute("/system/bin/rm", "-r", path);
         }
     }
 
