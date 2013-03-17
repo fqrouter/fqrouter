@@ -29,6 +29,7 @@ public class ShellUtils {
                 .start();
         OutputStreamWriter stdin = new OutputStreamWriter(process.getOutputStream());
         try {
+            stdin.write("echo going to run some command\n");
             for (String c : command) {
                 stdin.write(c);
                 stdin.write(" ");
@@ -61,19 +62,10 @@ public class ShellUtils {
             stdout.close();
         }
         process.waitFor();
-        if (0 != process.exitValue()) {
-            throw new Exception("failed to execute: " + command);
+        int exitValue = process.exitValue();
+        if (0 != exitValue) {
+            throw new Exception("failed to execute: " + command + ", exit value: " + exitValue);
         }
         return output.toString();
-    }
-
-    public static String getPath(String command) {
-        if (new File("/system/bin/" + command).exists()) {
-            return "/system/bin/" + command;
-        }
-        if (new File("/system/xbin/" + command).exists()) {
-            return "/system/xbin/" + command;
-        }
-        throw new RuntimeException("can not find path of command: " + command);
     }
 }

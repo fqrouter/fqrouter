@@ -12,7 +12,7 @@ import self_check
 
 
 ROOT_DIR = os.path.dirname(__file__)
-LOG_DIR = '/sdcard/Android/data/fq.router'
+LOG_DIR = '/data/data/fq.router'
 LOG_FILE = os.path.join(LOG_DIR, 'manager.log')
 template_loader = tornado.template.Loader(ROOT_DIR)
 
@@ -48,8 +48,6 @@ application = tornado.web.Application([
 
 
 def setup_logging():
-    if not os.path.exists(LOG_DIR):
-        os.makedirs(LOG_DIR)
     logging.basicConfig(level=logging.INFO)
     handler = logging.handlers.RotatingFileHandler(
         LOG_FILE, maxBytes=1024 * 50, backupCount=3)

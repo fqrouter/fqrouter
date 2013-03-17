@@ -78,7 +78,7 @@ public class MainActivity extends Activity implements StatusUpdater {
                 }
                 i.putExtra(Intent.EXTRA_TEXT, body);
                 try {
-                    File managerLogFile = new File("/sdcard/Android/data/fq.router/manager.log");
+                    File managerLogFile = new File("/data/data/fq.router/manager.log");
                     if (managerLogFile.exists()) {
                         i.putExtra(Intent.EXTRA_STREAM, Uri.fromFile(managerLogFile));
                     }

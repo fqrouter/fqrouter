@@ -13,6 +13,7 @@ import java.io.OutputStream;
 public class Deployer {
 
     public static File DATA_DIR = new File("/data/data/fq.router");
+    public static File BUSYBOX_FILE = new File(DATA_DIR, "busybox");
     public static File PAYLOAD_ZIP = new File(DATA_DIR, "payload.zip");
     public static File PAYLOAD_CHECKSUM = new File(DATA_DIR, "payload.checksum");
     public static File PYTHON_DIR = new File(DATA_DIR, "python");
@@ -56,6 +57,7 @@ public class Deployer {
         }
         try {
             copyPayloadZip();
+            copyBusybox();
         } catch (Exception e) {
             statusUpdater.reportError("failed to copy payload.zip", e);
             return false;
@@ -102,6 +104,7 @@ public class Deployer {
             ShellUtils.execute("/system/bin/rm", "-r", DATA_DIR + "/python");
             ShellUtils.execute("/system/bin/rm", "-r", DATA_DIR + "/wifi-tools");
             ShellUtils.execute("/system/bin/rm", "-r", DATA_DIR + "/manager");
+            ShellUtils.execute("/system/bin/rm", DATA_DIR + "/busybox");
         }
     }
 
@@ -130,6 +133,28 @@ public class Deployer {
         statusUpdater.appendLog("successfully copied payload.zip");
     }
 
+    private void copyBusybox() throws Exception {
+        if (BUSYBOX_FILE.exists()) {
+            statusUpdater.appendLog("skip copy busybox as it already exists");
+            return;
+        }
+        statusUpdater.appendLog("copying busybox to data directory");
+        InputStream inputStream = assetManager.open("busybox");
+        try {
+            OutputStream outputStream = new FileOutputStream(BUSYBOX_FILE);
+            try {
+                IOUtils.copy(inputStream, outputStream);
+            } finally {
+                outputStream.close();
+            }
+        } finally {
+            inputStream.close();
+        }
+        statusUpdater.appendLog("successfully copied busybox");
+        chmod("0700", BUSYBOX_FILE);
+        statusUpdater.appendLog("successfully made busybox executable");
+    }
+
     private void unzipPayloadZip() throws Exception {
         if (PYTHON_DIR.exists()) {
             statusUpdater.appendLog("skip unzip payload.zip as it has already been unzipped");
@@ -137,7 +162,7 @@ public class Deployer {
         }
         statusUpdater.appendLog("unzipping payload.zip");
         Process process = Runtime.getRuntime().exec(
-                ShellUtils.getPath("unzip") + " -q payload.zip", new String[0], new File("/data/data/fq.router"));
+                BUSYBOX_FILE + " unzip -q payload.zip", new String[0], new File("/data/data/fq.router"));
         ShellUtils.waitFor("unzip", process);
         if (!new File("/data/data/fq.router/payload.zip").delete()) {
             statusUpdater.appendLog("failed to delete payload.zip after unzip");

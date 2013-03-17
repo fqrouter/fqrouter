@@ -8,7 +8,7 @@ from pyquery import PyQuery as pq
 
 ROOT_DIR = os.path.dirname(os.path.abspath(__file__))
 PAYLOAD_DIR = os.path.join(ROOT_DIR, 'payload')
-ASSERTS_DIR = os.path.join(ROOT_DIR, 'assets')
+ASSETS_DIR = os.path.join(ROOT_DIR, 'assets')
 PYTHON_ZIP_FILE = os.path.join(PAYLOAD_DIR, 'python.zip')
 PYTHON_DIR = os.path.join(PAYLOAD_DIR, 'python')
 WIFI_TOOLS_ZIP_FILE = os.path.join(PAYLOAD_DIR, 'wifi-tools.zip')
@@ -19,12 +19,13 @@ TORNADO_PACKAGE_DIR = os.path.join(TORNADO_DIR, 'tornado')
 DPKT_TAR_GZ_FILE = os.path.join(PAYLOAD_DIR, 'dpkt-1.7.tar.gz')
 DPKT_DIR = os.path.join(PAYLOAD_DIR, 'dpkt-1.7')
 DPKT_PACKAGE_DIR = os.path.join(DPKT_DIR, 'dpkt')
+BUSYBOX_FILE = os.path.join(ASSETS_DIR, 'busybox')
 MANAGER_DIR = os.path.join(ROOT_DIR, '../manager')
 
 
 def main():
-    if not os.path.exists(ASSERTS_DIR):
-        os.mkdir(ASSERTS_DIR)
+    if not os.path.exists(ASSETS_DIR):
+        os.mkdir(ASSETS_DIR)
     if not os.path.exists(PAYLOAD_DIR):
         os.mkdir(PAYLOAD_DIR)
     download_python27()
@@ -35,6 +36,7 @@ def main():
     unzip_tornado()
     download_dpkt()
     untargz_dpkt()
+    download_busybox()
     zip_payload()
 
 
@@ -96,8 +98,14 @@ def untargz_dpkt():
         sys.exit(1)
 
 
+def download_busybox():
+    if os.path.exists(BUSYBOX_FILE):
+        return
+    urllib.urlretrieve('http://www.busybox.net/downloads/binaries/latest/busybox-armv6l', BUSYBOX_FILE)
+
+
 def zip_payload():
-    payload_zip_path = os.path.join(ASSERTS_DIR, 'payload.zip')
+    payload_zip_path = os.path.join(ASSETS_DIR, 'payload.zip')
     if os.path.exists(payload_zip_path):
         os.remove(payload_zip_path)
     payload_zip = zipfile.ZipFile(payload_zip_path, 'w', compression=zipfile.ZIP_DEFLATED)
