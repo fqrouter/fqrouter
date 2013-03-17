@@ -2,17 +2,32 @@
 <head>
     <title>Router Dashboard</title>
     <style>
-        .status li {
+        body {
             font-size: 2em;
+        }
+
+        input, button, select, option, textarea {
+            font-size: 100%;
         }
     </style>
 </head>
 <body>
+<button id="start-wifi-hotspot">Start Wifi Hotspot</button>
 <ul class="status">
     <li>DNS: {{ dns_service_status() }}</li>
     <li>TCP: {{ tcp_service_status() }}</li>
     <li><a href="/logs">Logs</a></li>
     <li><a href="/self-check">Self Check</a></li>
 </ul>
+<script type="text/javascript" src="/static/jquery.js"></script>
+<script type="text/javascript">
+    $(document).ready(function () {
+        $('#start-wifi-hotspot').click(function () {
+            $.post('/wifi?action=start-hotspot', function () {
+                alert('started');
+            });
+        });
+    });
+</script>
 </body>
 </html>

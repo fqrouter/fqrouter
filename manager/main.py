@@ -9,6 +9,7 @@ import tornado.web
 import dns_service
 import tcp_service
 import self_check
+import wifi
 
 
 ROOT_DIR = os.path.dirname(__file__)
@@ -43,6 +44,7 @@ application = tornado.web.Application([
     (r'/ping', PingHandler),
     (r'/logs', LogsHandler),
     (r'/self-check', self_check.SelfCheckHandler),
+    (r'/wifi', wifi.WifiHandler),
     (r'/', MainHandler)
 ])
 
