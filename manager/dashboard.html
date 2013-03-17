@@ -24,7 +24,6 @@
     $(document).ready(function () {
         $('#start-wifi-hotspot').click(function () {
             $.post('/wifi?action=start-hotspot', function () {
-                alert('started');
             });
         });
     });
