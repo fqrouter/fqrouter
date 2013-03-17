@@ -152,7 +152,6 @@ public class Deployer {
         }
         statusUpdater.appendLog("successfully copied busybox");
         chmod("0700", BUSYBOX_FILE);
-        statusUpdater.appendLog("successfully made busybox executable");
     }
 
     private void unzipPayloadZip() throws Exception {
