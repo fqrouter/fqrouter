@@ -27,6 +27,15 @@ public class MainActivity extends Activity implements StatusUpdater {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.main);
         setupUI();
+        new Thread(new Runnable() {
+            @Override
+            public void run() {
+                if (Supervisor.ping()) {
+                    appendLog("found manager is already running");
+                    activateManageButton();
+                }
+            }
+        }).start();
     }
 
     private void setupUI() {

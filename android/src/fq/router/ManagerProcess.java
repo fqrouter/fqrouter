@@ -23,16 +23,23 @@ public class ManagerProcess {
 
     private static int findProcessId() {
         File PROC = new File("/proc");
+        int targetProcessId = 0;
         for (File file : PROC.listFiles()) {
             String commandline = getCommandline(file);
             if (null != commandline && commandline.contains("manager/main.py")) {
                 int processId = Integer.parseInt(file.getName());
-                Log.i("fqrouter", "found manager process: " + processId);
-                return processId;
+                if (processId > targetProcessId) {
+                    targetProcessId = processId;
+                }
             }
         }
-        Log.i("fqrouter", "manager process not found");
-        return 0;
+        if (0 == targetProcessId) {
+            Log.i("fqrouter", "manager process not found");
+            return 0;
+        } else {
+            Log.i("fqrouter", "found manager process: " + targetProcessId);
+            return targetProcessId;
+        }
     }
 
     private static String getCommandline(File file) {
