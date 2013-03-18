@@ -30,10 +30,49 @@ class WifiHandler(tornado.web.RequestHandler):
         action = self.get_argument('action')
         if 'start-hotspot' == action:
             try:
-                start_hotspot()
-            except Exception, e:
+                working_hotspot_iface = get_working_hotspot_iface()
+                if working_hotspot_iface:
+                    self.write('hotspot is already working, start skipped')
+                else:
+                    start_hotspot()
+                    self.write('hotspot started successfully')
+            except:
                 LOGGER.exception('failed to start hotspot')
-                self.write(e.message)
+                self.write('failed to start hotspot')
+        elif 'stop-hotspot' == action:
+            try:
+                working_hotspot_iface = get_working_hotspot_iface()
+                if working_hotspot_iface:
+                    stop_hotspot(working_hotspot_iface)
+                    self.write('hotspot stopped successfully')
+                else:
+                    self.write('hotspot has not been started yet')
+            except:
+                LOGGER.exception('failed to stop hotspot')
+                self.write('failed to stop hotspot')
+
+
+def get_working_hotspot_iface():
+    current_iface = None
+    for line in shell_execute('iw dev').splitlines(False):
+        line = line.strip()
+        if not line:
+            continue
+        if line.startswith('Interface '):
+            current_iface = line.replace('Interface ', '')
+            continue
+        if 'type AP' in line or 'type P2P-GO' in line:
+            return current_iface
+    return None
+
+
+def stop_hotspot(iface):
+    iptables.delete_rules(RULES)
+    netd_execute('tether stop')
+    stop_p2p_persistent_network(get_wpa_supplicant_control_socket_dir(), iface)
+    netd_execute('softap fwreload wlan0 STA')
+    shell_execute('netcfg wlan0 down')
+    shell_execute('netcfg wlan0 up')
 
 
 def start_hotspot():
@@ -47,11 +86,7 @@ def start_hotspot():
     shell_execute('netcfg wlan0 down')
     shell_execute('netcfg wlan0 up')
     time.sleep(1)
-    try:
-        control_socket_dir = get_wpa_supplicant_control_socket_dir()
-    except:
-        LOGGER.exception('failed to get wpa_supplicant control socket dir')
-        control_socket_dir = '/data/misc/wifi/wpa_supplicant'
+    control_socket_dir = get_wpa_supplicant_control_socket_dir()
     delete_existing_p2p_persistent_networks(control_socket_dir)
     p2p_persistent_iface = start_p2p_persistent_network(control_socket_dir)
     netd_execute('interface setcfg %s 192.168.49.1 24' % p2p_persistent_iface)
@@ -87,6 +122,11 @@ def start_p2p_persistent_network(control_socket_dir):
     raise Exception('can not find just started p2p persistent network interface')
 
 
+def stop_p2p_persistent_network(control_socket_dir, iface):
+    shell_execute('%s -p %s -i wlan0 p2p_group_remove %s' % (P2P_CLI_PATH, control_socket_dir, iface))
+    time.sleep(1)
+
+
 def delete_existing_p2p_persistent_networks(control_socket_dir):
     LOGGER.info('delete existing p2p persistent networks')
     existing_networks = list_existing_networks(control_socket_dir)
@@ -115,21 +155,25 @@ def list_existing_networks(control_socket_dir):
 
 
 def get_wpa_supplicant_control_socket_dir():
-    if not os.path.exists(WPA_SUPPLICANT_CONF_PATH):
-        raise Exception('can not find wpa_supplicant.conf')
-    with open(WPA_SUPPLICANT_CONF_PATH) as f:
-        lines = f.readlines()
-    for line in lines:
-        line = line.strip()
-        if not line:
-            continue
-        if line.startswith('ctrl_interface='):
-            line = line.replace('ctrl_interface=', '')
-            parts = line.split(' ')
-            for part in parts:
-                if part.startswith('DIR='):
-                    return part.replace('DIR=', '')
-    raise Exception('can not find ctrl_interface dir from wpa_supplicant.conf')
+    try:
+        if not os.path.exists(WPA_SUPPLICANT_CONF_PATH):
+            raise Exception('can not find wpa_supplicant.conf')
+        with open(WPA_SUPPLICANT_CONF_PATH) as f:
+            lines = f.readlines()
+        for line in lines:
+            line = line.strip()
+            if not line:
+                continue
+            if line.startswith('ctrl_interface='):
+                line = line.replace('ctrl_interface=', '')
+                parts = line.split(' ')
+                for part in parts:
+                    if part.startswith('DIR='):
+                        return part.replace('DIR=', '')
+        raise Exception('can not find ctrl_interface dir from wpa_supplicant.conf')
+    except:
+        LOGGER.exception('failed to get wpa_supplicant control socket dir')
+        return '/data/misc/wifi/wpa_supplicant'
 
 
 def netd_execute(command):

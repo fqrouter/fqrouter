@@ -13,6 +13,7 @@
 </head>
 <body>
 <button id="start-wifi-hotspot">Start Wifi Hotspot</button>
+<button id="stop-wifi-hotspot">Stop Wifi Hotspot</button>
 <ul class="status">
     <li>DNS: {{ dns_service_status() }}</li>
     <li>TCP: {{ tcp_service_status() }}</li>
@@ -23,7 +24,13 @@
 <script type="text/javascript">
     $(document).ready(function () {
         $('#start-wifi-hotspot').click(function () {
-            $.post('/wifi?action=start-hotspot', function () {
+            $.post('/wifi?action=start-hotspot', function (msg) {
+                alert(msg);
+            });
+        });
+        $('#stop-wifi-hotspot').click(function () {
+            $.post('/wifi?action=stop-hotspot', function (msg) {
+                alert(msg);
             });
         });
     });
