@@ -25,6 +25,12 @@ for iface in network_interface.list_data_network_interfaces():
     ))
 
 
+def clean():
+    working_hotspot_iface = get_working_hotspot_iface()
+    if working_hotspot_iface:
+        stop_hotspot(working_hotspot_iface)
+
+
 class WifiHandler(tornado.web.RequestHandler):
     def post(self):
         action = self.get_argument('action')
