@@ -9,6 +9,7 @@ from pyquery import PyQuery as pq
 ROOT_DIR = os.path.dirname(os.path.abspath(__file__))
 PAYLOAD_DIR = os.path.join(ROOT_DIR, 'payload')
 ASSETS_DIR = os.path.join(ROOT_DIR, 'assets')
+SRC_DIR = os.path.join(ROOT_DIR, 'src')
 PYTHON_ZIP_FILE = os.path.join(PAYLOAD_DIR, 'python.zip')
 PYTHON_DIR = os.path.join(PAYLOAD_DIR, 'python')
 WIFI_TOOLS_ZIP_FILE = os.path.join(PAYLOAD_DIR, 'wifi-tools.zip')
@@ -20,6 +21,8 @@ DPKT_TAR_GZ_FILE = os.path.join(PAYLOAD_DIR, 'dpkt-1.7.tar.gz')
 DPKT_DIR = os.path.join(PAYLOAD_DIR, 'dpkt-1.7')
 DPKT_PACKAGE_DIR = os.path.join(DPKT_DIR, 'dpkt')
 BUSYBOX_FILE = os.path.join(ASSETS_DIR, 'busybox')
+CAPTURE_LOG_SH = os.path.join(ASSETS_DIR, 'capture-log.sh')
+CAPTURE_LOG_SH_SRC = os.path.join(SRC_DIR, 'capture-log.sh')
 MANAGER_DIR = os.path.join(ROOT_DIR, '../manager')
 
 
@@ -37,6 +40,7 @@ def main():
     download_dpkt()
     untargz_dpkt()
     download_busybox()
+    copy_capture_log_sh()
     zip_payload()
 
 
@@ -102,6 +106,10 @@ def download_busybox():
     if os.path.exists(BUSYBOX_FILE):
         return
     urllib.urlretrieve('http://www.busybox.net/downloads/binaries/latest/busybox-armv6l', BUSYBOX_FILE)
+
+
+def copy_capture_log_sh():
+    subprocess.check_call('cp %s %s' % (CAPTURE_LOG_SH_SRC, CAPTURE_LOG_SH), shell=True)
 
 
 def zip_payload():

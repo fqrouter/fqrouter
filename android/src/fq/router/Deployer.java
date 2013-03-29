@@ -33,7 +33,7 @@ public class Deployer {
 
     public boolean deploy() {
         statusUpdater.updateStatus("Deploying payload");
-        boolean foundPayloadUpdate = false;
+        boolean foundPayloadUpdate;
         try {
             foundPayloadUpdate = checkUpdate();
         } catch (Exception e) {
@@ -56,8 +56,8 @@ public class Deployer {
             }
         }
         try {
-            copyPayloadZip();
             copyBusybox();
+            copyPayloadZip();
         } catch (Exception e) {
             statusUpdater.reportError("failed to copy payload.zip", e);
             return false;

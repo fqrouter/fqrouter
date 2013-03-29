@@ -13,14 +13,18 @@ import android.view.View;
 import android.widget.Button;
 import android.widget.TextView;
 import android.widget.Toast;
+import fq.router.utils.IOUtils;
 import fq.router.utils.ShellUtils;
 
 import java.io.File;
+import java.io.FileOutputStream;
+import java.io.InputStream;
+import java.io.OutputStream;
+import java.util.ArrayList;
 
 
 public class MainActivity extends Activity implements StatusUpdater {
     private Handler handler = new Handler();
-    private boolean logs;
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
@@ -74,26 +78,13 @@ public class MainActivity extends Activity implements StatusUpdater {
         reportErrorButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                Intent i = new Intent(Intent.ACTION_SEND);
-                i.setType("message/rfc822");
+                Intent i = new Intent(Intent.ACTION_SEND_MULTIPLE);
+                i.setType("text/plain");
                 i.putExtra(Intent.EXTRA_EMAIL, new String[]{"fqrouter@gmail.com"});
                 i.putExtra(Intent.EXTRA_SUBJECT, "android fqrouter error report for version " + getMyVersion());
-                String body;
-                try {
-                    body = getErrorMailBody();
-                } catch (Exception e) {
-                    Log.e("fqrouter", "failed to get error mail body", e);
-                    body = "";
-                }
-                i.putExtra(Intent.EXTRA_TEXT, body);
-                try {
-                    File managerLogFile = new File("/data/data/fq.router/manager.log");
-                    if (managerLogFile.exists()) {
-                        i.putExtra(Intent.EXTRA_STREAM, Uri.fromFile(managerLogFile));
-                    }
-                } catch (Exception e) {
-                    Log.e("fqrouter", "failed to attach log", e);
-                }
+                i.putExtra(Intent.EXTRA_TEXT, getErrorMailBody());
+                createLogFiles();
+                attachLogFiles(i, "/sdcard/manager.log", "/sdcard/logcat.log", "/sdcard/getprop.log");
                 try {
                     startActivity(Intent.createChooser(i, "Send mail..."));
                 } catch (android.content.ActivityNotFoundException ex) {
@@ -155,23 +146,69 @@ public class MainActivity extends Activity implements StatusUpdater {
         updateStatus("Error: " + msg);
     }
 
-    public String getErrorMailBody() throws Exception {
+    private String getErrorMailBody() {
         StringBuilder body = new StringBuilder();
         body.append("phone model: " + Build.MODEL + "\n");
         body.append("android version: " + Build.VERSION.RELEASE + "\n");
         body.append("kernel version: " + System.getProperty("os.version") + "\n");
         body.append("fqrouter version: " + getMyVersion() + "\n");
-        body.append(ShellUtils.sudo(false, "/system/bin/logcat", "-d", "-v", "time", "-s", "fqrouter:V"));
         return body.toString();
     }
 
-    public String getMyVersion() {
+    private String getMyVersion() {
         try {
             PackageInfo packageInfo = getPackageManager().getPackageInfo(getPackageName(), 0);
             return packageInfo.versionName;
         } catch (Exception e) {
             Log.e("fqrouter", "failed to get package info", e);
             return "Unknown";
+        }
+    }
+
+    private void createLogFiles() {
+        try {
+            deployCaptureLogSh();
+            ShellUtils.sudo("/system/bin/sh", "/data/data/fq.router/capture-log.sh");
+        } catch (Exception e) {
+            Log.e("fqrouter", "failed to execute capture-log.sh", e);
+            try {
+                ShellUtils.sudo(false, "/system/bin/logcat", "-d", "-v", "time", "-s", "fqrouter:V", ">", "/sdcard/logcat.log");
+            } catch (Exception e2) {
+                Log.e("fqrouter", "failed to execute logcat", e2);
+            }
+        }
+    }
+
+    private void deployCaptureLogSh() {
+        try {
+            InputStream inputStream = getAssets().open("capture-log.sh");
+            try {
+                OutputStream outputStream = new FileOutputStream("/data/data/fq.router/capture-log.sh");
+                try {
+                    IOUtils.copy(inputStream, outputStream);
+                } finally {
+                    outputStream.close();
+                }
+            } finally {
+                inputStream.close();
+            }
+        } catch (Exception e) {
+            Log.e("fqrouter", "failed to deploy capture-log.sh", e);
+        }
+    }
+
+    private void attachLogFiles(Intent i, String... logFilePaths) {
+        ArrayList<Uri> logFiles = new ArrayList<Uri>();
+        for (String logFilePath : logFilePaths) {
+            File logFile = new File(logFilePath);
+            if (logFile.exists()) {
+                logFiles.add(Uri.fromFile(logFile));
+            }
+        }
+        try {
+            i.putParcelableArrayListExtra(Intent.EXTRA_STREAM, logFiles);
+        } catch (Exception e) {
+            Log.e("fqrouter", "failed to attach log", e);
         }
     }
 }
