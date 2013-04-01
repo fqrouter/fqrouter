@@ -86,23 +86,39 @@ def start_hotspot():
         raise Exception('wifi chipset unknown: path to sdio device not found')
     with open(SDIO_DEVICE_PATH) as f:
         wifi_chipset = f.read().strip()
-        if '0x4330' != wifi_chipset:
-            raise Exception('wifi chipset is not supported: %s' % wifi_chipset)
-    netd_execute('softap fwreload wlan0 P2P')
-    shell_execute('netcfg wlan0 down')
-    shell_execute('netcfg wlan0 up')
-    time.sleep(1)
-    control_socket_dir = get_wpa_supplicant_control_socket_dir()
-    delete_existing_p2p_persistent_networks(control_socket_dir)
-    p2p_persistent_iface = start_p2p_persistent_network(control_socket_dir)
-    netd_execute('interface setcfg %s 192.168.49.1 24' % p2p_persistent_iface)
-    netd_execute('tether stop')
-    netd_execute('tether interface add %s' % p2p_persistent_iface)
-    netd_execute('tether start 192.168.49.2 192.168.49.254')
-    netd_execute('tether dns set 8.8.8.8')
-    enable_ipv4_forward()
-    shell_execute('iptables -P FORWARD ACCEPT')
-    iptables.insert_rules(RULES)
+    if '0x4330' == wifi_chipset:
+        netd_execute('softap fwreload wlan0 P2P')
+        shell_execute('netcfg wlan0 down')
+        shell_execute('netcfg wlan0 up')
+        time.sleep(1)
+        control_socket_dir = get_wpa_supplicant_control_socket_dir()
+        delete_existing_p2p_persistent_networks('wlan0', control_socket_dir)
+        start_p2p_persistent_network('wlan0', control_socket_dir)
+        p2p_persistent_iface = get_p2p_persistent_iface()
+        netd_execute('interface setcfg %s 192.168.49.1 24' % p2p_persistent_iface)
+        netd_execute('tether stop')
+        netd_execute('tether interface add %s' % p2p_persistent_iface)
+        netd_execute('tether start 192.168.49.2 192.168.49.254')
+        netd_execute('tether dns set 8.8.8.8')
+        enable_ipv4_forward()
+        shell_execute('iptables -P FORWARD ACCEPT')
+        iptables.insert_rules(RULES)
+    elif '0x6628' == wifi_chipset:
+        netd_execute('1 softap fwreload wlan0 AP')
+        time.sleep(1)
+        control_socket_dir = get_wpa_supplicant_control_socket_dir()
+        delete_existing_p2p_persistent_networks('ap0', control_socket_dir)
+        start_p2p_persistent_network('ap0', control_socket_dir)
+        netd_execute('2 interface setcfg ap0 192.168.49.1 24')
+        netd_execute('3 tether stop')
+        netd_execute('4 tether interface add ap0')
+        netd_execute('5 tether start 192.168.49.2 192.168.49.254')
+        netd_execute('6 tether dns set 8.8.8.8')
+        enable_ipv4_forward()
+        shell_execute('iptables -P FORWARD ACCEPT')
+        iptables.insert_rules(RULES)
+    else:
+        raise Exception('wifi chipset is not supported: %s' % wifi_chipset)
 
 
 def enable_ipv4_forward():
@@ -111,17 +127,20 @@ def enable_ipv4_forward():
         f.write('1')
 
 
-def start_p2p_persistent_network(control_socket_dir):
-    index = shell_execute('%s -p %s -i wlan0 add_network' % (P2P_CLI_PATH, control_socket_dir)).strip()
-    shell_execute('%s -p %s -i wlan0 set_network %s mode 3' % (P2P_CLI_PATH, control_socket_dir, index))
-    shell_execute('%s -p %s -i wlan0 set_network %s disabled 2' % (P2P_CLI_PATH, control_socket_dir, index))
-    shell_execute('%s -p %s -i wlan0 set_network %s ssid \'"spike"\'' % (P2P_CLI_PATH, control_socket_dir, index))
-    shell_execute('%s -p %s -i wlan0 set_network %s key_mgmt WPA-PSK' % (P2P_CLI_PATH, control_socket_dir, index))
-    shell_execute('%s -p %s -i wlan0 set_network %s proto RSN' % (P2P_CLI_PATH, control_socket_dir, index))
-    shell_execute('%s -p %s -i wlan0 set_network %s pairwise CCMP' % (P2P_CLI_PATH, control_socket_dir, index))
-    shell_execute('%s -p %s -i wlan0 set_network %s psk \'"12345678"\'' % (P2P_CLI_PATH, control_socket_dir, index))
-    shell_execute('%s -p %s -i wlan0 p2p_group_add persistent=%s' % (P2P_CLI_PATH, control_socket_dir, index))
+def start_p2p_persistent_network(iface, control_socket_dir):
+    index = shell_execute('%s -p %s -i %s add_network' % (P2P_CLI_PATH, control_socket_dir, iface)).strip()
+    shell_execute('%s -p %s -i %s set_network %s mode 3' % (P2P_CLI_PATH, control_socket_dir, iface, index))
+    shell_execute('%s -p %s -i %s set_network %s disabled 2' % (P2P_CLI_PATH, control_socket_dir, iface, index))
+    shell_execute('%s -p %s -i %s set_network %s ssid \'"spike"\'' % (P2P_CLI_PATH, control_socket_dir, iface, index))
+    shell_execute('%s -p %s -i %s set_network %s key_mgmt WPA-PSK' % (P2P_CLI_PATH, control_socket_dir, iface, index))
+    shell_execute('%s -p %s -i %s set_network %s proto RSN' % (P2P_CLI_PATH, control_socket_dir, iface, index))
+    shell_execute('%s -p %s -i %s set_network %s pairwise CCMP' % (P2P_CLI_PATH, control_socket_dir, iface, index))
+    shell_execute('%s -p %s -i %s set_network %s psk \'"12345678"\'' % (P2P_CLI_PATH, control_socket_dir, iface, index))
+    shell_execute('%s -p %s -i %s p2p_group_add persistent=%s' % (P2P_CLI_PATH, control_socket_dir, iface, index))
     time.sleep(1)
+
+
+def get_p2p_persistent_iface():
     for line in shell_execute('netcfg').splitlines(False):
         if line.startswith('p2p-wlan0'):
             return line.split(' ')[0]
@@ -133,9 +152,9 @@ def stop_p2p_persistent_network(control_socket_dir, iface):
     time.sleep(1)
 
 
-def delete_existing_p2p_persistent_networks(control_socket_dir):
+def delete_existing_p2p_persistent_networks(iface, control_socket_dir):
     LOGGER.info('delete existing p2p persistent networks')
-    existing_networks = list_existing_networks(control_socket_dir)
+    existing_networks = list_existing_networks(iface, control_socket_dir)
     for i in sorted(existing_networks.keys(), reverse=True):
         network = existing_networks[i]
         if 'P2P-PERSISTENT' in network['status']:
@@ -146,8 +165,8 @@ def delete_network(control_socket_dir, index):
     shell_execute('%s -p %s -i wlan0 remove_network %s' % (P2P_CLI_PATH, control_socket_dir, index))
 
 
-def list_existing_networks(control_socket_dir):
-    output = shell_execute('%s -p %s -i wlan0 list_network' % (P2P_CLI_PATH, control_socket_dir))
+def list_existing_networks(iface, control_socket_dir):
+    output = shell_execute('%s -p %s -i %s list_network' % (P2P_CLI_PATH, control_socket_dir, iface))
     LOGGER.info('existing networks: %s' % output)
     existing_networks = {}
     for line in output.splitlines(False)[1:]:
@@ -174,8 +193,9 @@ def get_wpa_supplicant_control_socket_dir():
                 line = line.replace('ctrl_interface=', '')
                 parts = line.split(' ')
                 for part in parts:
-                    if part.startswith('DIR='):
+                    if part.startswith('DIR='): # if there is DIR=
                         return part.replace('DIR=', '')
+                return line # otherwise just return the ctrl_interface=
         raise Exception('can not find ctrl_interface dir from wpa_supplicant.conf')
     except:
         LOGGER.exception('failed to get wpa_supplicant control socket dir')
