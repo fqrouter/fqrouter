@@ -15,6 +15,8 @@ LOGGER = logging.getLogger(__name__)
 MODALIAS_PATH = '/sys/class/net/%s/device/modalias' % network_interface.WIFI_INTERFACE
 WPA_SUPPLICANT_CONF_PATH = '/data/misc/wifi/wpa_supplicant.conf'
 P2P_CLI_PATH = '/data/data/fq.router/wifi-tools/p2p_cli'
+IW_PATH = '/data/data/fq.router/wifi-tools/iw'
+IWLIST_PATH = '/data/data/fq.router/wifi-tools/iwlist'
 netd_socket = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
 netd_socket.connect('/dev/socket/netd')
 netd_sequence_number = None # turn off by default
@@ -71,7 +73,7 @@ def get_working_hotspot_iface():
 def list_wifi_ifaces():
     ifaces = {}
     current_iface = None
-    for line in shell_execute('iw dev').splitlines(False):
+    for line in shell_execute('%s dev' % IW_PATH).splitlines(False):
         line = line.strip()
         if not line:
             continue
@@ -92,7 +94,7 @@ def stop_hotspot(iface):
     except:
         LOGGER.exception('failed to stop p2p persistent network')
     try:
-        shell_execute('iw dev %s del' % iface)
+        shell_execute('%s dev %s del' % (IW_PATH, iface))
     except:
         LOGGER.exception('failed to delete wifi interface')
     netd_execute('softap fwreload wlan0 STA')
@@ -170,7 +172,7 @@ def start_hotspot_on_wl12xx():
 
 
 def get_upstream_channel():
-    output = shell_execute('/data/data/fq.router/wifi-tools/iwlist wlan0 channel')
+    output = shell_execute('%s wlan0 channel' % IWLIST_PATH)
     for line in output.splitlines():
         line = line.strip()
         if not line:
