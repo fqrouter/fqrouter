@@ -8,10 +8,11 @@ import time
 import tornado.web
 import iptables
 import network_interface
+import hostapd_template
 
 
 LOGGER = logging.getLogger(__name__)
-SDIO_DEVICE_PATH = '/sys/bus/sdio/devices/mmc2:0001:1/device'
+MODALIAS_PATH = '/sys/class/net/%s/device/modalias' % network_interface.WIFI_INTERFACE
 WPA_SUPPLICANT_CONF_PATH = '/data/misc/wifi/wpa_supplicant.conf'
 P2P_CLI_PATH = '/data/data/fq.router/wifi-tools/p2p_cli'
 netd_socket = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
@@ -59,6 +60,15 @@ class WifiHandler(tornado.web.RequestHandler):
 
 
 def get_working_hotspot_iface():
+    ifaces = list_wifi_ifaces()
+    for iface, is_hotspot in ifaces.items():
+        if is_hotspot:
+            return iface
+    return None
+
+
+def list_wifi_ifaces():
+    ifaces = {}
     current_iface = None
     for line in shell_execute('iw dev').splitlines(False):
         line = line.strip()
@@ -66,10 +76,11 @@ def get_working_hotspot_iface():
             continue
         if line.startswith('Interface '):
             current_iface = line.replace('Interface ', '')
+            ifaces[current_iface] = False
             continue
         if 'type AP' in line or 'type P2P-GO' in line:
-            return current_iface
-    return None
+            ifaces[current_iface] = True
+    return ifaces
 
 
 def stop_hotspot(iface):
@@ -79,46 +90,78 @@ def stop_hotspot(iface):
     netd_execute('softap fwreload wlan0 STA')
     shell_execute('netcfg wlan0 down')
     shell_execute('netcfg wlan0 up')
+    shell_execute('killall hostapd')
 
 
 def start_hotspot():
-    if not os.path.exists(SDIO_DEVICE_PATH):
-        raise Exception('wifi chipset unknown: path to sdio device not found')
-    with open(SDIO_DEVICE_PATH) as f:
+    if not os.path.exists(MODALIAS_PATH):
+        raise Exception('wifi chipset unknown: %s not found' % MODALIAS_PATH)
+    with open(MODALIAS_PATH) as f:
         wifi_chipset = f.read().strip()
     if '0x4330' == wifi_chipset:
-        netd_execute('softap fwreload wlan0 P2P')
-        shell_execute('netcfg wlan0 down')
-        shell_execute('netcfg wlan0 up')
-        time.sleep(1)
-        control_socket_dir = get_wpa_supplicant_control_socket_dir()
-        delete_existing_p2p_persistent_networks('wlan0', control_socket_dir)
-        start_p2p_persistent_network('wlan0', control_socket_dir)
-        p2p_persistent_iface = get_p2p_persistent_iface()
-        netd_execute('interface setcfg %s 192.168.49.1 24' % p2p_persistent_iface)
-        netd_execute('tether stop')
-        netd_execute('tether interface add %s' % p2p_persistent_iface)
-        netd_execute('tether start 192.168.49.2 192.168.49.254')
-        netd_execute('tether dns set 8.8.8.8')
-        enable_ipv4_forward()
-        shell_execute('iptables -P FORWARD ACCEPT')
-        iptables.insert_rules(RULES)
+        start_hotspot_on_bcm()
     elif '0x6628' == wifi_chipset:
-        netd_execute('1 softap fwreload wlan0 AP')
-        time.sleep(1)
-        control_socket_dir = get_wpa_supplicant_control_socket_dir()
-        delete_existing_p2p_persistent_networks('ap0', control_socket_dir)
-        start_p2p_persistent_network('ap0', control_socket_dir)
-        netd_execute('2 interface setcfg ap0 192.168.49.1 24')
-        netd_execute('3 tether stop')
-        netd_execute('4 tether interface add ap0')
-        netd_execute('5 tether start 192.168.49.2 192.168.49.254')
-        netd_execute('6 tether dns set 8.8.8.8')
-        enable_ipv4_forward()
-        shell_execute('iptables -P FORWARD ACCEPT')
-        iptables.insert_rules(RULES)
+        start_hotspot_on_mtk()
+    elif 'platform:wl12xx' == wifi_chipset:
+        start_hotspot_on_wl12xx()
     else:
         raise Exception('wifi chipset is not supported: %s' % wifi_chipset)
+    if not get_working_hotspot_iface():
+        raise Exception('working hotspot iface not found after start')
+
+
+def start_hotspot_on_bcm():
+    netd_execute('softap fwreload wlan0 P2P')
+    shell_execute('netcfg wlan0 down')
+    shell_execute('netcfg wlan0 up')
+    time.sleep(1)
+    control_socket_dir = get_wpa_supplicant_control_socket_dir()
+    delete_existing_p2p_persistent_networks('wlan0', control_socket_dir)
+    start_p2p_persistent_network('wlan0', control_socket_dir)
+    p2p_persistent_iface = get_p2p_persistent_iface()
+    netd_execute('interface setcfg %s 192.168.49.1 24' % p2p_persistent_iface)
+    netd_execute('tether stop')
+    netd_execute('tether interface add %s' % p2p_persistent_iface)
+    netd_execute('tether start 192.168.49.2 192.168.49.254')
+    netd_execute('tether dns set 8.8.8.8')
+    enable_ipv4_forward()
+    shell_execute('iptables -P FORWARD ACCEPT')
+    iptables.insert_rules(RULES)
+
+
+def start_hotspot_on_mtk():
+    netd_execute('1 softap fwreload wlan0 AP') # TODO: netd might expect sequence number or not
+    time.sleep(1)
+    control_socket_dir = get_wpa_supplicant_control_socket_dir()
+    delete_existing_p2p_persistent_networks('ap0', control_socket_dir)
+    start_p2p_persistent_network('ap0', control_socket_dir)
+    netd_execute('2 interface setcfg ap0 192.168.49.1 24')
+    netd_execute('3 tether stop')
+    netd_execute('4 tether interface add ap0')
+    netd_execute('5 tether start 192.168.49.2 192.168.49.254')
+    netd_execute('6 tether dns set 8.8.8.8')
+    enable_ipv4_forward()
+    shell_execute('iptables -P FORWARD ACCEPT')
+    iptables.insert_rules(RULES)
+
+
+def start_hotspot_on_wl12xx():
+    if 'ap0' not in list_wifi_ifaces():
+        shell_execute('iw wlan0 interface add ap0 type managed')
+    assert 'ap0' in list_wifi_ifaces()
+    with open('/data/misc/wifi/fqrouter.conf', 'w') as f:
+        f.write(hostapd_template.render(channel=1)) # TODO: get channel from iwlist
+    LOGGER.info('start hostapd')
+    proc = subprocess.Popen(
+        ['hostapd', '/data/misc/wifi/fqrouter.conf'],
+        cwd='/data/misc/wifi', stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
+    time.sleep(2)
+    if proc.poll():
+        LOGGER.error('hostapd failed')
+        LOGGER.error(proc.stdout.read())
+        raise Exception('hostapd failed')
+    else:
+        LOGGER.info('hostapd seems like started successfully')
 
 
 def enable_ipv4_forward():

@@ -2,7 +2,7 @@ import subprocess
 import traceback
 
 try:
-    WIFI_INTERFACE = subprocess.check_output(['/system/bin/getprop', 'wifi.interface'])
+    WIFI_INTERFACE = subprocess.check_output(['/system/bin/getprop', 'wifi.interface']).strip()
 except:
     traceback.print_exc()
     WIFI_INTERFACE = 'wlan0'
