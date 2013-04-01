@@ -17,6 +17,7 @@ WPA_SUPPLICANT_CONF_PATH = '/data/misc/wifi/wpa_supplicant.conf'
 P2P_CLI_PATH = '/data/data/fq.router/wifi-tools/p2p_cli'
 netd_socket = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
 netd_socket.connect('/dev/socket/netd')
+netd_sequence_number = None # turn off by default
 
 RULES = []
 for iface in network_interface.list_data_network_interfaces():
@@ -87,6 +88,7 @@ def stop_hotspot(iface):
     iptables.delete_rules(RULES)
     netd_execute('tether stop')
     stop_p2p_persistent_network(get_wpa_supplicant_control_socket_dir(), iface)
+    shell_execute('iw dev %s del' % iface)
     netd_execute('softap fwreload wlan0 STA')
     shell_execute('netcfg wlan0 down')
     shell_execute('netcfg wlan0 up')
@@ -99,15 +101,16 @@ def start_hotspot():
     with open(MODALIAS_PATH) as f:
         wifi_chipset = f.read().strip()
     if '0x4330' == wifi_chipset:
-        start_hotspot_on_bcm()
+        hotspot_interface = start_hotspot_on_bcm()
     elif '0x6628' == wifi_chipset:
-        start_hotspot_on_mtk()
+        hotspot_interface = start_hotspot_on_mtk()
     elif 'platform:wl12xx' == wifi_chipset:
-        start_hotspot_on_wl12xx()
+        hotspot_interface = start_hotspot_on_wl12xx()
     else:
         raise Exception('wifi chipset is not supported: %s' % wifi_chipset)
     if not get_working_hotspot_iface():
         raise Exception('working hotspot iface not found after start')
+    setup_networking(hotspot_interface)
 
 
 def start_hotspot_on_bcm():
@@ -118,31 +121,16 @@ def start_hotspot_on_bcm():
     control_socket_dir = get_wpa_supplicant_control_socket_dir()
     delete_existing_p2p_persistent_networks('wlan0', control_socket_dir)
     start_p2p_persistent_network('wlan0', control_socket_dir)
-    p2p_persistent_iface = get_p2p_persistent_iface()
-    netd_execute('interface setcfg %s 192.168.49.1 24' % p2p_persistent_iface)
-    netd_execute('tether stop')
-    netd_execute('tether interface add %s' % p2p_persistent_iface)
-    netd_execute('tether start 192.168.49.2 192.168.49.254')
-    netd_execute('tether dns set 8.8.8.8')
-    enable_ipv4_forward()
-    shell_execute('iptables -P FORWARD ACCEPT')
-    iptables.insert_rules(RULES)
+    return get_p2p_persistent_iface()
 
 
 def start_hotspot_on_mtk():
-    netd_execute('1 softap fwreload wlan0 AP') # TODO: netd might expect sequence number or not
+    netd_execute('softap fwreload wlan0 AP')
     time.sleep(1)
     control_socket_dir = get_wpa_supplicant_control_socket_dir()
     delete_existing_p2p_persistent_networks('ap0', control_socket_dir)
     start_p2p_persistent_network('ap0', control_socket_dir)
-    netd_execute('2 interface setcfg ap0 192.168.49.1 24')
-    netd_execute('3 tether stop')
-    netd_execute('4 tether interface add ap0')
-    netd_execute('5 tether start 192.168.49.2 192.168.49.254')
-    netd_execute('6 tether dns set 8.8.8.8')
-    enable_ipv4_forward()
-    shell_execute('iptables -P FORWARD ACCEPT')
-    iptables.insert_rules(RULES)
+    return 'ap0'
 
 
 def start_hotspot_on_wl12xx():
@@ -150,7 +138,7 @@ def start_hotspot_on_wl12xx():
         shell_execute('iw wlan0 interface add ap0 type managed')
     assert 'ap0' in list_wifi_ifaces()
     with open('/data/misc/wifi/fqrouter.conf', 'w') as f:
-        f.write(hostapd_template.render(channel=1)) # TODO: get channel from iwlist
+        f.write(hostapd_template.render(channel=get_upstream_channel() or 1))
     LOGGER.info('start hostapd')
     proc = subprocess.Popen(
         ['hostapd', '/data/misc/wifi/fqrouter.conf'],
@@ -162,6 +150,29 @@ def start_hotspot_on_wl12xx():
         raise Exception('hostapd failed')
     else:
         LOGGER.info('hostapd seems like started successfully')
+    return 'ap0'
+
+
+def get_upstream_channel():
+    output = shell_execute('/data/data/fq.router/wifi-tools/iwlist wlan0 channel')
+    for line in output.splitlines():
+        line = line.strip()
+        if not line:
+            continue
+        if line.startswith('Current Frequency:'):
+            return line.split(' ')[-1][:-1]
+    return None
+
+
+def setup_networking(hotspot_interface):
+    netd_execute('interface setcfg %s 192.168.49.1 24' % hotspot_interface)
+    netd_execute('tether stop')
+    netd_execute('tether interface add %s' % hotspot_interface)
+    netd_execute('tether start 192.168.49.2 192.168.49.254')
+    netd_execute('tether dns set 8.8.8.8')
+    enable_ipv4_forward()
+    shell_execute('iptables -P FORWARD ACCEPT')
+    iptables.insert_rules(RULES)
 
 
 def enable_ipv4_forward():
@@ -246,10 +257,19 @@ def get_wpa_supplicant_control_socket_dir():
 
 
 def netd_execute(command):
+    global netd_sequence_number
     LOGGER.info('send: %s' % command)
-    netd_socket.send(command + '\0')
+    if netd_sequence_number:
+        netd_sequence_number += 1
+        netd_socket.send('%s %s\0' % (netd_sequence_number, command))
+    else:
+        netd_socket.send('%s\0' % command)
     output = netd_socket.recv(1024)
     LOGGER.info('received: %s' % output)
+    if not netd_sequence_number and 'Invalid sequence number' in output:
+        LOGGER.info('resend command to netd with sequence number')
+        netd_sequence_number = 1
+        netd_execute(command)
 
 
 def shell_execute(command):
