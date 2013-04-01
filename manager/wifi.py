@@ -114,7 +114,9 @@ def start_hotspot():
     # only tested on sdio:c00v02D0d4330
     # support of bcm4334 is a wild guess
         hotspot_interface = start_hotspot_on_bcm()
-    elif '0x6628' == wifi_chipset:
+    elif wifi_chipset.endswith('6620') or wifi_chipset.endswith('6628'):
+    # only tested on sdio:c00v037Ad6628
+    # support of mt6620 is a wild gues
         hotspot_interface = start_hotspot_on_mtk()
     elif 'platform:wl12xx' == wifi_chipset:
         hotspot_interface = start_hotspot_on_wl12xx()
@@ -137,8 +139,10 @@ def start_hotspot_on_bcm():
 
 
 def start_hotspot_on_mtk():
-    netd_execute('softap fwreload wlan0 AP')
-    time.sleep(1)
+    if 'ap0' not in list_wifi_ifaces():
+        netd_execute('softap fwreload wlan0 AP')
+        time.sleep(1)
+    assert 'ap0' in list_wifi_ifaces()
     control_socket_dir = get_wpa_supplicant_control_socket_dir()
     delete_existing_p2p_persistent_networks('ap0', control_socket_dir)
     start_p2p_persistent_network('ap0', control_socket_dir)
