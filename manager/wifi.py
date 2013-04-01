@@ -87,12 +87,21 @@ def list_wifi_ifaces():
 def stop_hotspot(iface):
     iptables.delete_rules(RULES)
     netd_execute('tether stop')
-    stop_p2p_persistent_network(get_wpa_supplicant_control_socket_dir(), iface)
-    shell_execute('iw dev %s del' % iface)
+    try:
+        stop_p2p_persistent_network(get_wpa_supplicant_control_socket_dir(), iface)
+    except:
+        LOGGER.exception('failed to stop p2p persistent network')
+    try:
+        shell_execute('iw dev %s del' % iface)
+    except:
+        LOGGER.exception('failed to delete wifi interface')
     netd_execute('softap fwreload wlan0 STA')
     shell_execute('netcfg wlan0 down')
     shell_execute('netcfg wlan0 up')
-    shell_execute('killall hostapd')
+    try:
+        shell_execute('killall hostapd')
+    except:
+        LOGGER.exception('failed to killall hostapd')
 
 
 def start_hotspot():
@@ -100,7 +109,10 @@ def start_hotspot():
         raise Exception('wifi chipset unknown: %s not found' % MODALIAS_PATH)
     with open(MODALIAS_PATH) as f:
         wifi_chipset = f.read().strip()
-    if '0x4330' == wifi_chipset:
+        LOGGER.info('wifi chipset: %s' % wifi_chipset)
+    if wifi_chipset.endswith('4330') or wifi_chipset.endswith('4334'):
+    # only tested on sdio:c00v02D0d4330
+    # support of bcm4334 is a wild guess
         hotspot_interface = start_hotspot_on_bcm()
     elif '0x6628' == wifi_chipset:
         hotspot_interface = start_hotspot_on_mtk()
