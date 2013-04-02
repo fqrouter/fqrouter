@@ -84,7 +84,8 @@ public class MainActivity extends Activity implements StatusUpdater {
                 i.putExtra(Intent.EXTRA_SUBJECT, "android fqrouter error report for version " + getMyVersion());
                 i.putExtra(Intent.EXTRA_TEXT, getErrorMailBody());
                 createLogFiles();
-                attachLogFiles(i, "/sdcard/manager.log", "/sdcard/logcat.log", "/sdcard/getprop.log");
+                attachLogFiles(i, "/sdcard/manager.log", "/sdcard/logcat.log",
+                        "/sdcard/getprop.log", "/sdcard/dmesg.log");
                 try {
                     startActivity(Intent.createChooser(i, "Send mail..."));
                 } catch (android.content.ActivityNotFoundException ex) {
