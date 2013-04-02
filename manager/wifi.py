@@ -49,6 +49,13 @@ class WifiHandler(tornado.web.RequestHandler):
             except:
                 LOGGER.exception('failed to start hotspot')
                 self.write('failed to start hotspot')
+                working_hotspot_iface = get_working_hotspot_iface()
+                if working_hotspot_iface:
+                    stop_hotspot(working_hotspot_iface)
+                else:
+                    netd_execute('softap fwreload wlan0 STA')
+                    shell_execute('netcfg wlan0 down')
+                    shell_execute('netcfg wlan0 up')
         elif 'stop-hotspot' == action:
             try:
                 working_hotspot_iface = get_working_hotspot_iface()
