@@ -151,7 +151,10 @@ def start_hotspot_on_bcm():
 def start_hotspot_on_mtk():
     if 'ap0' not in list_wifi_ifaces():
         netd_execute('softap fwreload wlan0 AP')
-        time.sleep(1)
+        for i in range(3):
+            time.sleep(1)
+            if 'ap0' in list_wifi_ifaces():
+                break
     assert 'ap0' in list_wifi_ifaces()
     control_socket_dir = get_wpa_supplicant_control_socket_dir()
     delete_existing_p2p_persistent_networks('ap0', control_socket_dir)
@@ -284,11 +287,12 @@ def get_wpa_supplicant_control_socket_dir():
 
 def netd_execute(command):
     global netd_sequence_number
-    LOGGER.info('send: %s' % command)
     if netd_sequence_number:
         netd_sequence_number += 1
+        LOGGER.info('send: %s %s' % (netd_sequence_number, command))
         netd_socket.send('%s %s\0' % (netd_sequence_number, command))
     else:
+        LOGGER.info('send: %s' % command)
         netd_socket.send('%s\0' % command)
     output = netd_socket.recv(1024)
     LOGGER.info('received: %s' % output)
