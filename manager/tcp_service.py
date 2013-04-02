@@ -70,6 +70,12 @@ def add_rules(iface, is_forward):
          '-o %s -p tcp --tcp-flags ALL PSH,ACK -j NFQUEUE --queue-num 2' % iface)
     )
     RULES.append(RULE_OUTPUT_PSH_ACK)
+    RULE_OUTPUT_SYN = (
+        {'target': 'NFQUEUE', 'iface_out': iface, 'extra': 'tcp flags:0x3F/0x18 NFQUEUE num 2'},
+        ('filter', 'FORWARD' if is_forward else 'OUTPUT',
+         '-o %s -p tcp --tcp-flags ALL SYN -j NFQUEUE --queue-num 2' % iface)
+    )
+    RULES.append(RULE_OUTPUT_SYN)
 
 
 for iface in network_interface.list_data_network_interfaces():
@@ -100,6 +106,7 @@ international_zone = {} # found by icmp time exceeded
 domestic_zone = set() # found by china_ip or icmp time exceeded or timeout
 tcp_service_status = TcpServiceStatus()
 syn_ack_ttl = {} # ttl observed from syn ack packet
+pending_syn = {} # ip => time
 
 
 def insert_iptables_rules():
@@ -133,8 +140,13 @@ def handle_packet(nfqueue_element):
                 should_accept = handle_rst(ip_packet)
             elif dpkt.tcp.TH_PUSH & ip_packet.tcp.flags:
                 should_accept = handle_psh_ack(ip_packet)
-            else:
+            elif dpkt.tcp.TH_SYN & ip_packet.tcp.flags and dpkt.tcp.TH_ACK & ip_packet.tcp.flags:
                 should_accept = handle_syn_ack(ip_packet)
+            elif dpkt.tcp.TH_SYN == ip_packet.tcp.flags:
+                should_accept = handle_syn(ip_packet)
+            else:
+                LOGGER.info('unexpected packet: %s' % format_ip_packet(ip_packet))
+                should_accept = True
         elif hasattr(ip_packet, 'icmp'):
             icmp_packet = ip_packet.data
             if dpkt.icmp.ICMP_TIMEXCEED == icmp_packet.type and dpkt.icmp.ICMP_TIMEXCEED_INTRANS == icmp_packet.code:
@@ -157,13 +169,26 @@ def handle_rst(rst):
     src = socket.inet_ntoa(rst.src)
     expected_ttl = syn_ack_ttl.get(src) or 0
     if expected_ttl and abs(rst.ttl - expected_ttl) > 2:
-        jamming_event.record('%s: %s tcp rst spoofing' % (dns_service.get_domain(src) or 'unknown.com', src))
+        record_jamming_event(src, 'tcp rst spoofing')
         LOGGER.error(
             'received RST from GFW: expected ttl is %s, actually is %s, the packet %s' %
             (expected_ttl, rst.ttl, format_ip_packet(rst)))
     else:
         LOGGER.info('received RST: %s' % format_ip_packet(rst))
     return True # receiving RST we already screwed, dropping it will not help
+
+
+def handle_syn(syn):
+    dst = socket.inet_ntoa(syn.dst)
+    if dst not in pending_syn and dst not in domestic_zone and dst not in international_zone \
+        and not pending_connection.is_ip_pending(dst):
+        pending_syn[dst] = time.time()
+    for ip, sent_at in pending_syn.items():
+        elapsed_seconds = time.time() - sent_at
+        if elapsed_seconds > 5:
+            record_jamming_event(ip, 'syn packet drop')
+            del pending_syn[ip]
+    return True
 
 
 def handle_psh_ack(psh_ack):
@@ -180,10 +205,11 @@ def handle_psh_ack(psh_ack):
 
 def handle_syn_ack(syn_ack):
     uncertain_ip = socket.inet_ntoa(syn_ack.src)
+    if uncertain_ip in pending_syn:
+        del pending_syn[uncertain_ip]
     expected_ttl = syn_ack_ttl.get(uncertain_ip) or 0
     if expected_ttl and abs(syn_ack.ttl - expected_ttl) > 2:
-        jamming_event.record(
-            '%s: %s tcp syn ack spoofing' % (dns_service.get_domain(uncertain_ip) or 'unknown.com', uncertain_ip))
+        record_jamming_event(uncertain_ip, 'tcp syn ack spoofing')
         LOGGER.error(
             'received spoofed SYN ACK: expected ttl is %s, actually is %s, the packet %s' %
             (expected_ttl, syn_ack.ttl, format_ip_packet(syn_ack)))
@@ -210,6 +236,12 @@ def handle_syn_ack(syn_ack):
         pending_connection.record_syn_ack(syn_ack)
         inject_ping_requests_to_find_right_ttl(uncertain_ip)
         return False
+
+
+def record_jamming_event(ip, event):
+    event = '%s: %s %s' % (dns_service.get_domain(ip) or 'unknown.com', ip, event)
+    LOGGER.error('jamming event: %s' % event)
+    jamming_event.record(event)
 
 
 def inject_ping_requests_to_find_right_ttl(dst):
