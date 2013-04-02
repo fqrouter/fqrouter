@@ -73,4 +73,5 @@ if '__main__' == __name__:
     dns_service.run()
     tcp_service.run()
     application.listen(8888, '127.0.0.1')
+    application.listen(8888, '192.168.49.1')
     tornado.ioloop.IOLoop.instance().start()
