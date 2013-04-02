@@ -2,7 +2,6 @@ import logging
 import thread
 from netfilterqueue import NetfilterQueue
 import socket
-import collections
 import time
 import traceback
 
@@ -13,7 +12,8 @@ import pending_connection
 import shutdown_hook
 import china_ip
 import network_interface
-
+import dns_service
+import jamming_event
 
 LOGGER = logging.getLogger(__name__)
 
@@ -99,7 +99,7 @@ class TcpServiceStatus(object):
 international_zone = {} # found by icmp time exceeded
 domestic_zone = set() # found by china_ip or icmp time exceeded or timeout
 tcp_service_status = TcpServiceStatus()
-recent_rst_packets = collections.deque(maxlen=30)
+syn_ack_ttl = {} # ttl observed from syn ack packet
 
 
 def insert_iptables_rules():
@@ -154,10 +154,15 @@ def handle_packet(nfqueue_element):
 
 
 def handle_rst(rst):
-    LOGGER.error('received RST: %s' % format_ip_packet(rst))
-    rst.src_ip = socket.inet_ntoa(rst.src)
-    rst.dst_ip = socket.inet_ntoa(rst.dst)
-    recent_rst_packets.append(rst)
+    src = socket.inet_ntoa(rst.src)
+    expected_ttl = syn_ack_ttl.get(src) or 0
+    if expected_ttl and abs(rst.ttl - expected_ttl) > 2:
+        jamming_event.record('%s: %s tcp rst spoofing' % (dns_service.get_domain(src) or 'unknown.com', src))
+        LOGGER.error(
+            'received RST from GFW: expected ttl is %s, actually is %s, the packet %s' %
+            (expected_ttl, rst.ttl, format_ip_packet(rst)))
+    else:
+        LOGGER.info('received RST: %s' % format_ip_packet(rst))
     return True # receiving RST we already screwed, dropping it will not help
 
 
@@ -175,6 +180,14 @@ def handle_psh_ack(psh_ack):
 
 def handle_syn_ack(syn_ack):
     uncertain_ip = socket.inet_ntoa(syn_ack.src)
+    expected_ttl = syn_ack_ttl.get(uncertain_ip) or 0
+    if expected_ttl and abs(syn_ack.ttl - expected_ttl) > 2:
+        jamming_event.record(
+            '%s: %s tcp syn ack spoofing' % (dns_service.get_domain(uncertain_ip) or 'unknown.com', uncertain_ip))
+        LOGGER.error(
+            'received spoofed SYN ACK: expected ttl is %s, actually is %s, the packet %s' %
+            (expected_ttl, syn_ack.ttl, format_ip_packet(syn_ack)))
+    syn_ack_ttl[uncertain_ip] = syn_ack.ttl # later one should be the correct one as GFW is closer to us
     if uncertain_ip in international_zone:
         inject_poison_ack_to_fill_gfw_buffer_with_garbage(syn_ack, international_zone[uncertain_ip])
         return True
@@ -207,10 +220,12 @@ def inject_ping_requests_to_find_right_ttl(dst):
             return s.getsockname()[0]
         finally:
             s.close()
+
     LOGGER.debug('inject ping request: %s' % dst)
     for ttl in RANGE_OF_TTL_TO_GFW:
         icmp_packet = dpkt.icmp.ICMP(type=dpkt.icmp.ICMP_ECHO, data=dpkt.icmp.ICMP.Echo(id=ttl, seq=1, data=''))
-        ip_packet = dpkt.ip.IP(src=socket.inet_aton(find_probe_src()), dst=socket.inet_aton(dst), p=dpkt.ip.IP_PROTO_ICMP)
+        ip_packet = dpkt.ip.IP(src=socket.inet_aton(find_probe_src()), dst=socket.inet_aton(dst),
+                               p=dpkt.ip.IP_PROTO_ICMP)
         ip_packet.ttl = ttl
         ip_packet.data = icmp_packet
         raw_socket.sendto(str(ip_packet), (dst, 0))

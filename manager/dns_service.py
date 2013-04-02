@@ -50,6 +50,7 @@ class DnsServiceStatus(object):
 
 
 dns_service_status = DnsServiceStatus()
+domains = {} # ip => domain
 
 CLEAN_DNS = '8.8.8.8'
 
@@ -129,11 +130,12 @@ def handle_packet(nfqueue_element):
     try:
         ip_packet = dpkt.ip.IP(nfqueue_element.get_payload())
         dns_packet = dpkt.dns.DNS(ip_packet.udp.data)
+        questions = [question for question in dns_packet.qd if question.type == dpkt.dns.DNS_A]
+        dns_packet.domain = questions[0].name if questions else None
         if contains_wrong_answer(dns_packet):
         # after the fake packet dropped, the real answer can be accepted by the client
             LOGGER.debug('drop fake dns packet: %s' % repr(dns_packet))
-            domain = [question for question in dns_packet.qd if question.type == dpkt.dns.DNS_A][0].name
-            jamming_event.record('%s: dns hijacking' % domain)
+            jamming_event.record('%s: dns hijacking' % dns_packet.domain)
             nfqueue_element.drop()
             return
         nfqueue_element.accept()
@@ -152,6 +154,11 @@ def contains_wrong_answer(dns_packet):
             if resolved_ip in WRONG_ANSWERS:
                 return True # to find wrong answer
             else:
-                LOGGER.info('dns resolve: %s => %s' % (dns_packet.qd[0].name, resolved_ip))
+                domains[resolved_ip] = dns_packet.domain
+                LOGGER.info('dns resolve: %s => %s' % (dns_packet.domain, resolved_ip))
                 return False # if the blacklist is incomplete, we will think it is right answer
     return True # to find empty answer
+
+
+def get_domain(ip):
+    return domains.get(ip)
