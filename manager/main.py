@@ -10,6 +10,7 @@ import dns_service
 import tcp_service
 import self_check
 import wifi
+import jamming_event
 
 
 ROOT_DIR = os.path.dirname(__file__)
@@ -39,10 +40,20 @@ class LogsHandler(tornado.web.RequestHandler):
         self.write('</pre></body></html>')
 
 
+class JammingEventsHandler(tornado.web.RequestHandler):
+    def get(self):
+        self.write('<html><body><pre>')
+        for event in jamming_event.list_all():
+            self.write(event)
+            self.write('\n')
+        self.write('</pre></body></html>')
+
+
 application = tornado.web.Application([
     (r'/static/(.*)', tornado.web.StaticFileHandler, {'path': os.path.join(ROOT_DIR, 'static')}),
     (r'/ping', PingHandler),
     (r'/logs', LogsHandler),
+    (r'/jamming-events', JammingEventsHandler),
     (r'/self-check', self_check.SelfCheckHandler),
     (r'/wifi', wifi.WifiHandler),
     (r'/', MainHandler)

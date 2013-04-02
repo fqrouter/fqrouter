@@ -10,6 +10,7 @@ import dpkt
 import iptables
 import shutdown_hook
 import network_interface
+import jamming_event
 
 
 LOGGER = logging.getLogger(__name__)
@@ -131,6 +132,8 @@ def handle_packet(nfqueue_element):
         if contains_wrong_answer(dns_packet):
         # after the fake packet dropped, the real answer can be accepted by the client
             LOGGER.debug('drop fake dns packet: %s' % repr(dns_packet))
+            domain = [question for question in dns_packet.qd if question.type == dpkt.dns.DNS_A][0].name
+            jamming_event.record('%s: dns hijacking' % domain)
             nfqueue_element.drop()
             return
         nfqueue_element.accept()

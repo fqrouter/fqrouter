@@ -14,4 +14,5 @@ adb push self-check.html /sdcard/manager/self-check.html
 adb push self_check.py /sdcard/manager/self_check.py
 adb push wifi.py /sdcard/manager/wifi.py
 adb push hostapd_template.py /sdcard/manager/hostapd_template.py
+adb push jamming_event.py /sdcard/manager/jamming_event.py
 adb shell su -c "PYTHONHOME=/data/data/fq.router/python python /sdcard/manager/main.py"
