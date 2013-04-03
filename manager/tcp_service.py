@@ -388,32 +388,36 @@ def inject_scrambled_http_get_to_let_gfw_type2_miss_keyword(psh_ack, pos, ttl_to
     LOGGER.debug('inject scrambled ack: %s' % dst)
     first_part = psh_ack.tcp.data[:pos]
     second_part = psh_ack.tcp.data[pos:]
-    first_packet = dpkt.ip.IP(str(psh_ack))
-    first_packet.ttl = NO_PROCESSING_MAGICAL_TTL
-    first_packet.tcp.data = first_part
-    first_packet.sum = 0
-    first_packet.tcp.sum = 0
-    raw_socket.sendto(str(first_packet), (dst, 0))
-    fake_second_packet = dpkt.ip.IP(str(psh_ack))
-    fake_second_packet.ttl = ttl_to_gfw
-    fake_second_packet.tcp.seq += len(first_part)
-    fake_second_packet.tcp.data = ': baidu.com\r\n\r\n'
-    fake_second_packet.sum = 0
-    fake_second_packet.tcp.sum = 0
-    raw_socket.sendto(str(fake_second_packet), (dst, 0))
-    fake_first_packet = dpkt.ip.IP(str(psh_ack))
-    fake_first_packet.ttl = ttl_to_gfw
-    fake_first_packet.tcp.data = len(first_part) * '0'
-    fake_first_packet.sum = 0
-    fake_first_packet.tcp.sum = 0
-    raw_socket.sendto(str(fake_first_packet), (dst, 0))
+
     second_packet = dpkt.ip.IP(str(psh_ack))
-    second_packet.ttl = NO_PROCESSING_MAGICAL_TTL
+    second_packet.ttl = 255
     second_packet.tcp.seq += len(first_part)
     second_packet.tcp.data = second_part
     second_packet.sum = 0
     second_packet.tcp.sum = 0
     raw_socket.sendto(str(second_packet), (dst, 0))
+
+    fake_first_packet = dpkt.ip.IP(str(psh_ack))
+    fake_first_packet.ttl = 13
+    fake_first_packet.tcp.data = (len(first_part) + 10) * '0'
+    fake_first_packet.sum = 0
+    fake_first_packet.tcp.sum = 0
+    raw_socket.sendto(str(fake_first_packet), (dst, 0))
+
+    fake_second_packet = dpkt.ip.IP(str(psh_ack))
+    fake_second_packet.ttl = 13
+    fake_second_packet.tcp.seq += len(first_part) + 10
+    fake_second_packet.tcp.data = ': baidu.com\r\n\r\n'
+    fake_second_packet.sum = 0
+    fake_second_packet.tcp.sum = 0
+    raw_socket.sendto(str(fake_second_packet), (dst, 0))
+
+    first_packet = dpkt.ip.IP(str(psh_ack))
+    first_packet.ttl = 255
+    first_packet.tcp.data = first_part
+    first_packet.sum = 0
+    first_packet.tcp.sum = 0
+    raw_socket.sendto(str(first_packet), (dst, 0))
 
 
 def inject_poison_ack_to_fill_gfw_buffer_with_garbage(syn_ack, ttl_to_gfw):
