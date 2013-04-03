@@ -119,10 +119,9 @@ def start_hotspot():
     with open(MODALIAS_PATH) as f:
         wifi_chipset = f.read().strip()
         LOGGER.info('wifi chipset: %s' % wifi_chipset)
-    if wifi_chipset.endswith('4330') or wifi_chipset.endswith('4334') or wifi_chipset.endswith('4329'):
+    if wifi_chipset.endswith('4330') or wifi_chipset.endswith('4334'):
     # only tested on sdio:c00v02D0d4330
     # support of bcm4334 is a wild guess
-    # bcm4329 was tested not working on Google Nexus One, however, still worth trying
         hotspot_interface = start_hotspot_on_bcm()
     elif wifi_chipset.endswith('6620') or wifi_chipset.endswith('6628'):
     # only tested on sdio:c00v037Ad6628
@@ -151,7 +150,7 @@ def start_hotspot_on_bcm():
 def start_hotspot_on_mtk():
     if 'ap0' not in list_wifi_ifaces():
         netd_execute('softap fwreload wlan0 AP')
-        for i in range(3):
+        for i in range(5):
             time.sleep(1)
             if 'ap0' in list_wifi_ifaces():
                 break
