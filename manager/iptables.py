@@ -9,8 +9,12 @@ RE_SPACE = re.compile(r'\s+')
 
 
 def insert_rules(rules):
+    created_chains = set()
     for signature, rule_args in reversed(rules): # insert the last one first
         table, chain, _ = rule_args
+        if chain not in ['OUTPUT', 'INPUT', 'FORWARD', 'PREROUTING', 'POSTROUTING'] and chain not in created_chains:
+            subprocess.call(shlex.split('iptables -t %s -N %s' % (table, chain)))
+            created_chains.add(chain)
         if contains_rule(table, chain, signature):
             LOGGER.info('skip insert rule: -t %s -I %s %s' % rule_args)
         else:
@@ -38,6 +42,17 @@ def delete_nfqueue_rules(queue_number):
                 index = len(chain_rules) - i
                 if signature in rule['extra']:
                     delete_rule(table, chain, str(index))
+
+
+def delete_chain(target):
+    for table in ('filter', 'nat'):
+        rules = dump_table(table)
+        for chain, chain_rules in rules.items():
+            for i, rule in enumerate(reversed(chain_rules)):
+                index = len(chain_rules) - i
+                if target == rule['target']:
+                    delete_rule(table, chain, str(index))
+        subprocess.call(shlex.split('iptables -t %s -X %s' % (table, target)))
 
 
 def insert_rule(table, chain, rule_text):

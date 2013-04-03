@@ -49,36 +49,87 @@ RULES = []
 def add_rules(iface, is_forward):
     RULE_INPUT_SYN_ACK = (
         {'target': 'NFQUEUE', 'iface_in': iface, 'extra': 'tcp flags:0x3F/0x12 NFQUEUE num 2'},
-        ('filter', 'FORWARD' if is_forward else 'INPUT',
+        ('filter', 'fq_FORWARD' if is_forward else 'fq_INPUT',
          '-i %s -p tcp --tcp-flags ALL SYN,ACK -j NFQUEUE --queue-num 2' % iface)
     )
     RULES.append(RULE_INPUT_SYN_ACK)
     RULE_INPUT_RST = (
         {'target': 'NFQUEUE', 'iface_in': iface, 'extra': 'tcp flags:0x3F/0x04 NFQUEUE num 2'},
-        ('filter', 'FORWARD' if is_forward else 'INPUT',
+        ('filter', 'fq_FORWARD' if is_forward else 'fq_INPUT',
          '-i %s -p tcp --tcp-flags ALL RST -j NFQUEUE --queue-num 2' % iface)
     )
     RULES.append(RULE_INPUT_RST)
     RULE_INPUT_ICMP = (
         {'target': 'NFQUEUE', 'iface_in': iface, 'extra': 'NFQUEUE num 2'},
-        ('filter', 'FORWARD' if is_forward else 'INPUT', '-i %s -p icmp -j NFQUEUE --queue-num 2' % iface)
+        ('filter', 'fq_FORWARD' if is_forward else 'fq_INPUT', '-i %s -p icmp -j NFQUEUE --queue-num 2' % iface)
     )
     RULES.append(RULE_INPUT_ICMP)
     RULE_OUTPUT_PSH_ACK = (
         {'target': 'NFQUEUE', 'iface_out': iface, 'extra': 'tcp flags:0x3F/0x18 NFQUEUE num 2'},
-        ('filter', 'FORWARD' if is_forward else 'OUTPUT',
+        ('filter', 'fq_FORWARD' if is_forward else 'fq_OUTPUT',
          '-o %s -p tcp --tcp-flags ALL PSH,ACK -j NFQUEUE --queue-num 2' % iface)
     )
     RULES.append(RULE_OUTPUT_PSH_ACK)
     RULE_OUTPUT_SYN = (
         {'target': 'NFQUEUE', 'iface_out': iface, 'extra': 'tcp flags:0x3F/0x18 NFQUEUE num 2'},
-        ('filter', 'FORWARD' if is_forward else 'OUTPUT',
+        ('filter', 'fq_FORWARD' if is_forward else 'fq_OUTPUT',
          '-o %s -p tcp --tcp-flags ALL SYN -j NFQUEUE --queue-num 2' % iface)
     )
     RULES.append(RULE_OUTPUT_SYN)
 
 
+def add_output_chain(iface):
+    RULES.append((
+        {'target': 'fq_OUTPUT', 'iface_out': iface},
+        ('filter', 'OUTPUT', '-o %s -j fq_OUTPUT')
+    ))
+    for lan_ip_range in [
+        '0.0.0.0/8', '10.0.0.0/8', '127.0.0.0/8', '169.254.0.0/16',
+        '172.16.0.0/12', '192.168.0.0/16', '224.0.0.0/4', '240.0.0.0/4']:
+        RULES.append((
+            {'target': 'RETURN', 'destination': lan_ip_range, 'iface_out': iface},
+            ('filter', 'fq_OUTPUT', '-o %s -d %s -j RETURN' % (iface, lan_ip_range))
+        ))
+
+def add_input_chain(iface):
+    RULES.append((
+        {'target': 'fq_INPUT', 'iface_in': iface},
+        ('filter', 'INPUT', '-i %s -j fq_INPUT' % iface)
+    ))
+    for lan_ip_range in [
+        '0.0.0.0/8', '10.0.0.0/8', '127.0.0.0/8', '169.254.0.0/16',
+        '172.16.0.0/12', '192.168.0.0/16', '224.0.0.0/4', '240.0.0.0/4']:
+        RULES.append((
+            {'target': 'RETURN', 'source': lan_ip_range, 'iface_in': iface},
+            ('filter', 'fq_INPUT', '-i %s -s %s -j RETURN' % (iface, lan_ip_range))
+        ))
+
+def add_forward_chain(iface):
+    RULES.append((
+        {'target': 'fq_FORWARD', 'iface_in': iface},
+        ('filter', 'FORWARD', '-i %s -j fq_FORWARD' % iface)
+    ))
+    RULES.append((
+        {'target': 'fq_FORWARD', 'iface_out': iface},
+        ('filter', 'FORWARD', '-o %s -j fq_FORWARD' % iface)
+    ))
+    for lan_ip_range in [
+        '0.0.0.0/8', '10.0.0.0/8', '127.0.0.0/8', '169.254.0.0/16',
+        '172.16.0.0/12', '192.168.0.0/16', '224.0.0.0/4', '240.0.0.0/4']:
+        RULES.append((
+            {'target': 'RETURN', 'destination': lan_ip_range, 'iface_out': iface},
+            ('filter', 'fq_FORWARD', '-o %s -d %s -j RETURN' % (iface, lan_ip_range))
+        ))
+        RULES.append((
+            {'target': 'RETURN', 'source': lan_ip_range, 'iface_in': iface},
+            ('filter', 'fq_FORWARD', '-i %s -s %s -j RETURN' % (iface, lan_ip_range))
+        ))
+
+
 for iface in network_interface.list_data_network_interfaces():
+    add_input_chain(iface)
+    add_output_chain(iface)
+    add_forward_chain(iface)
     add_rules(iface, is_forward=False)
     add_rules(iface, is_forward=True)
 
@@ -117,6 +168,9 @@ def insert_iptables_rules():
 def delete_iptables_rules():
     iptables.delete_nfqueue_rules(2)
     iptables.delete_rules(RULES)
+    iptables.delete_chain('fq_INPUT')
+    iptables.delete_chain('fq_OUTPUT')
+    iptables.delete_chain('fq_FORWARD')
 
 
 def handle_nfqueue():
