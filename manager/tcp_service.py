@@ -221,7 +221,7 @@ def handle_packet(nfqueue_element):
 
 def handle_rst(rst):
     src = socket.inet_ntoa(rst.src)
-    expected_ttl = syn_ack_ttl.get(src) or 0
+    expected_ttl = syn_ack_ttl.get((src, rst.tcp.sport)) or 0
     if expected_ttl and abs(rst.ttl - expected_ttl) > 2:
         record_jamming_event(src, 'tcp rst spoofing')
         LOGGER.error(
@@ -261,13 +261,13 @@ def handle_syn_ack(syn_ack):
     uncertain_ip = socket.inet_ntoa(syn_ack.src)
     if uncertain_ip in pending_syn:
         del pending_syn[uncertain_ip]
-    expected_ttl = syn_ack_ttl.get(uncertain_ip) or 0
+    expected_ttl = syn_ack_ttl.get((uncertain_ip, syn_ack.tcp.sport)) or 0
     if expected_ttl and abs(syn_ack.ttl - expected_ttl) > 2:
         record_jamming_event(uncertain_ip, 'tcp syn ack spoofing')
         LOGGER.error(
             'received spoofed SYN ACK: expected ttl is %s, actually is %s, the packet %s' %
             (expected_ttl, syn_ack.ttl, format_ip_packet(syn_ack)))
-    syn_ack_ttl[uncertain_ip] = syn_ack.ttl # later one should be the correct one as GFW is closer to us
+    syn_ack_ttl[(uncertain_ip, syn_ack.tcp.sport)] = syn_ack.ttl # later one should be the correct one as GFW is closer to us
     if uncertain_ip in international_zone:
         inject_poison_ack_to_fill_gfw_buffer_with_garbage(syn_ack, international_zone[uncertain_ip])
         return True
