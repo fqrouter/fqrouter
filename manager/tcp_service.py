@@ -36,12 +36,10 @@ def clean():
 
 #=== private ===
 
-NO_PROCESSING_MAGICAL_TTL = 255
 MIN_TTL_TO_GFW = 8
 MAX_TTL_TO_GFW = 12
 DEFAULT_TTL_TO_GFW = 9
 RANGE_OF_TTL_TO_GFW = range(MIN_TTL_TO_GFW, MAX_TTL_TO_GFW + 1)
-LIST_OF_NO_PROCESSING_TTL = set(list(RANGE_OF_TTL_TO_GFW) + [NO_PROCESSING_MAGICAL_TTL])
 
 RULES = []
 
@@ -81,7 +79,11 @@ def add_rules(iface, is_forward):
 def add_output_chain(iface):
     RULES.append((
         {'target': 'fq_OUTPUT', 'iface_out': iface},
-        ('filter', 'OUTPUT', '-o %s -j fq_OUTPUT')
+        ('filter', 'OUTPUT', '-o %s -j fq_OUTPUT' % iface)
+    ))
+    RULES.append((
+        {'target': 'RETURN', 'extra': 'mark match 0xcafe', 'iface_out': iface},
+        ('filter', 'fq_OUTPUT', '-o %s -m mark --mark 0xcafe -j RETURN' % iface)
     ))
     for lan_ip_range in [
         '0.0.0.0/8', '10.0.0.0/8', '127.0.0.0/8', '169.254.0.0/16',
@@ -113,6 +115,10 @@ def add_forward_chain(iface):
         {'target': 'fq_FORWARD', 'iface_out': iface},
         ('filter', 'FORWARD', '-o %s -j fq_FORWARD' % iface)
     ))
+    RULES.append((
+        {'target': 'RETURN', 'extra': 'mark match 0xcafe', 'iface_out': iface},
+        ('filter', 'fq_FORWARD', '-o %s -m mark --mark 0xcafe -j RETURN' % iface)
+    ))
     for lan_ip_range in [
         '0.0.0.0/8', '10.0.0.0/8', '127.0.0.0/8', '169.254.0.0/16',
         '172.16.0.0/12', '192.168.0.0/16', '224.0.0.0/4', '240.0.0.0/4']:
@@ -136,7 +142,8 @@ for iface in network_interface.list_data_network_interfaces():
 raw_socket = socket.socket(socket.AF_INET, socket.SOCK_RAW, socket.IPPROTO_RAW)
 shutdown_hook.add(raw_socket.close)
 raw_socket.setsockopt(socket.SOL_IP, socket.IP_HDRINCL, 1)
-
+SO_MARK = 36
+raw_socket.setsockopt(socket.SOL_SOCKET, SO_MARK, 0xcafe)
 
 class TcpServiceStatus(object):
     def __init__(self):
@@ -187,9 +194,6 @@ def handle_packet(nfqueue_element):
     try:
         ip_packet = dpkt.ip.IP(nfqueue_element.get_payload())
         if hasattr(ip_packet, 'tcp'):
-            if ip_packet.ttl in LIST_OF_NO_PROCESSING_TTL:
-                nfqueue_element.accept()
-                return
             if dpkt.tcp.TH_RST & ip_packet.tcp.flags:
                 should_accept = handle_rst(ip_packet)
             elif dpkt.tcp.TH_PUSH & ip_packet.tcp.flags:
@@ -365,9 +369,6 @@ def add_domestic_ip(domestic_ip):
 
 
 def inject_back_syn_ack(syn_ack):
-    syn_ack.ttl = NO_PROCESSING_MAGICAL_TTL
-    syn_ack.sum = 0
-    syn_ack.tcp.sum = 0
     raw_socket.sendto(str(syn_ack), (socket.inet_ntoa(syn_ack.dst), 0))
 
 

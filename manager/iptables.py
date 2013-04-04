@@ -52,6 +52,7 @@ def delete_chain(target):
                 index = len(chain_rules) - i
                 if target == rule['target']:
                     delete_rule(table, chain, str(index))
+        subprocess.call(shlex.split('iptables -t %s --flush %s' % (table, target)))
         subprocess.call(shlex.split('iptables -t %s -X %s' % (table, target)))
 
 
