@@ -156,8 +156,12 @@ def start_hotspot_on_mtk():
                 break
     assert 'ap0' in list_wifi_ifaces()
     control_socket_dir = get_wpa_supplicant_control_socket_dir()
+    shell_execute('%s -p %s -i ap0 reconfigure' % (P2P_CLI_PATH, control_socket_dir))
     delete_existing_p2p_persistent_networks('ap0', control_socket_dir)
-    start_p2p_persistent_network('ap0', control_socket_dir)
+    network_index = start_p2p_persistent_network('ap0', control_socket_dir)
+    # restart p2p persistent group otherwise the ssid is not usable
+    shell_execute('%s -p %s -i ap0 p2p_group_remove ap0' % (P2P_CLI_PATH, control_socket_dir))
+    shell_execute('%s -p %s -i ap0 p2p_group_add persistent=%s' % (P2P_CLI_PATH, control_socket_dir, network_index))
     return 'ap0'
 
 
@@ -211,16 +215,19 @@ def enable_ipv4_forward():
 
 def start_p2p_persistent_network(iface, control_socket_dir):
     index = shell_execute('%s -p %s -i %s add_network' % (P2P_CLI_PATH, control_socket_dir, iface)).strip()
-    shell_execute('%s -p %s -i %s set_network %s mode 3' % (P2P_CLI_PATH, control_socket_dir, iface, index))
-    shell_execute('%s -p %s -i %s set_network %s disabled 2' % (P2P_CLI_PATH, control_socket_dir, iface, index))
-    shell_execute('%s -p %s -i %s set_network %s ssid \'"spike"\'' % (P2P_CLI_PATH, control_socket_dir, iface, index))
-    shell_execute('%s -p %s -i %s set_network %s key_mgmt WPA-PSK' % (P2P_CLI_PATH, control_socket_dir, iface, index))
-    shell_execute('%s -p %s -i %s set_network %s proto RSN' % (P2P_CLI_PATH, control_socket_dir, iface, index))
-    shell_execute('%s -p %s -i %s set_network %s pairwise CCMP' % (P2P_CLI_PATH, control_socket_dir, iface, index))
-    shell_execute('%s -p %s -i %s set_network %s psk \'"12345678"\'' % (P2P_CLI_PATH, control_socket_dir, iface, index))
+    def set_network(param):
+        shell_execute('%s -p %s -i %s set_network %s %s' % (P2P_CLI_PATH, control_socket_dir, iface, index, param))
+
+    set_network('mode 3')
+    set_network('disabled 2')
+    set_network('ssid \'"spike"\'')
+    set_network('key_mgmt WPA-PSK')
+    set_network('proto RSN')
+    set_network('pairwise CCMP')
+    set_network('psk \'"12345678"\'')
     shell_execute('%s -p %s -i %s p2p_group_add persistent=%s' % (P2P_CLI_PATH, control_socket_dir, iface, index))
     time.sleep(1)
-
+    return index
 
 def get_p2p_persistent_iface():
     for line in shell_execute('netcfg').splitlines(False):
