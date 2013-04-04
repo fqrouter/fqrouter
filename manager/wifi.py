@@ -178,7 +178,6 @@ def start_hotspot():
 
 
 def start_hotspot_on_bcm():
-    raise Exception('')
     netd_execute('softap fwreload wlan0 P2P')
     shell_execute('netcfg wlan0 down')
     shell_execute('netcfg wlan0 up')
