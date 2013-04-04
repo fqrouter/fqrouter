@@ -49,13 +49,16 @@ class WifiHandler(tornado.web.RequestHandler):
             except:
                 LOGGER.exception('failed to start hotspot')
                 self.write('failed to start hotspot')
-                working_hotspot_iface = get_working_hotspot_iface()
-                if working_hotspot_iface:
-                    stop_hotspot(working_hotspot_iface)
-                else:
-                    netd_execute('softap fwreload wlan0 STA')
-                    shell_execute('netcfg wlan0 down')
-                    shell_execute('netcfg wlan0 up')
+                try:
+                    dump_wifi_status()
+                finally:
+                    working_hotspot_iface = get_working_hotspot_iface()
+                    if working_hotspot_iface:
+                        stop_hotspot(working_hotspot_iface)
+                    else:
+                        netd_execute('softap fwreload wlan0 STA')
+                        shell_execute('netcfg wlan0 down')
+                        shell_execute('netcfg wlan0 up')
         elif 'stop-hotspot' == action:
             try:
                 working_hotspot_iface = get_working_hotspot_iface()
@@ -67,6 +70,43 @@ class WifiHandler(tornado.web.RequestHandler):
             except:
                 LOGGER.exception('failed to stop hotspot')
                 self.write('failed to stop hotspot')
+
+
+def dump_wifi_status():
+    shell_execute('netcfg')
+    shell_execute('%s phy' % IW_PATH)
+    for iface in list_wifi_ifaces():
+        try:
+            shell_execute('%s %s channel' % (IWLIST_PATH, iface))
+        except:
+            LOGGER.exception('failed to log iwlist channel')
+        try:
+            control_socket_dir = get_wpa_supplicant_control_socket_dir()
+            shell_execute('%s -p %s -i %s status' % (P2P_CLI_PATH, control_socket_dir, iface))
+            shell_execute('%s -p %s -i %s list_network' % (P2P_CLI_PATH, control_socket_dir, iface))
+        except:
+            LOGGER.exception('failed to log wpa_cli status')
+    for pid in os.listdir('/proc'):
+        cmdline_path = '/proc/%s/cmdline' % pid
+        if os.path.exists(cmdline_path):
+            with open(cmdline_path) as f:
+                cmdline = f.read()
+                if 'supplicant' in cmdline:
+                    LOGGER.info('pid %s: %s' % (pid, cmdline))
+                    dump_wpa_supplicant(cmdline)
+
+
+def dump_wpa_supplicant(cmdline):
+    pos_start = cmdline.find('-c')
+    pos_end = cmdline.find('-', pos_start + 2)
+    if -1 != pos_start and -1 != pos_end:
+        cfg_path = cmdline[pos_start + 2: pos_end].replace('\0', '')
+        cfg_path_exists = os.path.exists(cfg_path) if cfg_path else False
+        LOGGER.info('cfg path: %s [%s]' % (cfg_path, cfg_path_exists))
+        if cfg_path_exists:
+            with open(cfg_path) as f:
+                LOGGER.info(f.read())
+        dump_wpa_supplicant(cmdline[pos_end:])
 
 
 def get_working_hotspot_iface():
@@ -137,6 +177,7 @@ def start_hotspot():
 
 
 def start_hotspot_on_bcm():
+    raise Exception('')
     netd_execute('softap fwreload wlan0 P2P')
     shell_execute('netcfg wlan0 down')
     shell_execute('netcfg wlan0 up')
@@ -215,6 +256,7 @@ def enable_ipv4_forward():
 
 def start_p2p_persistent_network(iface, control_socket_dir):
     index = shell_execute('%s -p %s -i %s add_network' % (P2P_CLI_PATH, control_socket_dir, iface)).strip()
+
     def set_network(param):
         shell_execute('%s -p %s -i %s set_network %s %s' % (P2P_CLI_PATH, control_socket_dir, iface, index, param))
 
@@ -228,6 +270,7 @@ def start_p2p_persistent_network(iface, control_socket_dir):
     shell_execute('%s -p %s -i %s p2p_group_add persistent=%s' % (P2P_CLI_PATH, control_socket_dir, iface, index))
     time.sleep(1)
     return index
+
 
 def get_p2p_persistent_iface():
     for line in shell_execute('netcfg').splitlines(False):
