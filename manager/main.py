@@ -63,7 +63,7 @@ application = tornado.web.Application([
 def setup_logging():
     logging.basicConfig(level=logging.INFO)
     handler = logging.handlers.RotatingFileHandler(
-        LOG_FILE, maxBytes=1024 * 50, backupCount=3)
+        LOG_FILE, maxBytes=1024 * 1024, backupCount=1)
     handler.setFormatter(logging.Formatter(logging.BASIC_FORMAT))
     logging.getLogger().addHandler(handler)
 
