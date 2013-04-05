@@ -30,9 +30,17 @@ for iface in network_interface.list_data_network_interfaces():
 
 
 def clean():
-    working_hotspot_iface = get_working_hotspot_iface()
-    if working_hotspot_iface:
-        stop_hotspot(working_hotspot_iface)
+    try:
+        working_hotspot_iface = get_working_hotspot_iface()
+        if working_hotspot_iface:
+            stop_hotspot(working_hotspot_iface)
+    except:
+        LOGGER.exception('failed to stop hotspot')
+    try:
+        control_socket_dir = get_wpa_supplicant_control_socket_dir()
+        delete_existing_p2p_persistent_networks(network_interface.WIFI_INTERFACE, control_socket_dir)
+    except:
+        LOGGER.exception('failed to delete existing p2p persistent networks')
 
 
 class WifiHandler(tornado.web.RequestHandler):
