@@ -44,12 +44,18 @@ class WifiHandler(tornado.web.RequestHandler):
                 if working_hotspot_iface:
                     self.write('hotspot is already working, start skipped')
                 else:
+                    LOGGER.info('=== Before Starting Hotspot ===')
+                    dump_wifi_status()
+                    LOGGER.info('=== Start Hotspot ===')
                     start_hotspot()
+                    LOGGER.info('=== Started Hotspot ===')
+                    dump_wifi_status()
                     self.write('hotspot started successfully')
             except:
                 LOGGER.exception('failed to start hotspot')
                 self.write('failed to start hotspot')
                 try:
+                    LOGGER.error('=== Failed to Start Hotspot ===')
                     dump_wifi_status()
                 finally:
                     working_hotspot_iface = get_working_hotspot_iface()
@@ -76,6 +82,10 @@ def dump_wifi_status():
     shell_execute('netcfg')
     shell_execute('%s phy' % IW_PATH)
     for iface in list_wifi_ifaces():
+        try:
+            shell_execute('%s dev %s scan' % (IW_PATH, iface))
+        except:
+            LOGGER.exception('failed to log iw scan')
         try:
             shell_execute('%s %s channel' % (IWLIST_PATH, iface))
         except:
