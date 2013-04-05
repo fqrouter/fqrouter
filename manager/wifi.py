@@ -385,6 +385,10 @@ def netd_execute(command):
 
 def shell_execute(command):
     LOGGER.info('execute: %s' % command)
-    output = subprocess.check_output(shlex.split(command), stderr=subprocess.STDOUT)
-    LOGGER.info('output: %s' % output)
+    try:
+        output = subprocess.check_output(shlex.split(command), stderr=subprocess.STDOUT)
+        LOGGER.info('succeed, output: %s' % output)
+    except subprocess.CalledProcessError, e:
+        LOGGER.error('failed, output: %s' % e.output)
+        raise
     return output
