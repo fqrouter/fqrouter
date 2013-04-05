@@ -23,6 +23,8 @@ DPKT_PACKAGE_DIR = os.path.join(DPKT_DIR, 'dpkt')
 BUSYBOX_FILE = os.path.join(ASSETS_DIR, 'busybox')
 CAPTURE_LOG_SH = os.path.join(ASSETS_DIR, 'capture-log.sh')
 CAPTURE_LOG_SH_SRC = os.path.join(SRC_DIR, 'capture-log.sh')
+PROXY_TOOLS_DIR = os.path.join(PAYLOAD_DIR, 'proxy-tools')
+REDSOCKS_FILE = os.path.join(PROXY_TOOLS_DIR, 'redsocks')
 MANAGER_DIR = os.path.join(ROOT_DIR, '../manager')
 
 
@@ -31,6 +33,8 @@ def main():
         os.mkdir(ASSETS_DIR)
     if not os.path.exists(PAYLOAD_DIR):
         os.mkdir(PAYLOAD_DIR)
+    if not os.path.exists(PROXY_TOOLS_DIR):
+        os.mkdir(PROXY_TOOLS_DIR)
     download_python27()
     unzip_python27()
     download_wifi_tools()
@@ -41,6 +45,7 @@ def main():
     untargz_dpkt()
     download_busybox()
     copy_capture_log_sh()
+    download_redsocks()
     zip_payload()
 
 
@@ -112,6 +117,12 @@ def copy_capture_log_sh():
     subprocess.check_call('cp %s %s' % (CAPTURE_LOG_SH_SRC, CAPTURE_LOG_SH), shell=True)
 
 
+def download_redsocks():
+    if os.path.exists(REDSOCKS_FILE):
+        return
+    urllib.urlretrieve('https://github.com/madeye/proxydroid/blob/master/assets/redsocks?raw=true', REDSOCKS_FILE)
+
+
 def zip_payload():
     payload_zip_path = os.path.join(ASSETS_DIR, 'payload.zip')
     if os.path.exists(payload_zip_path):
@@ -129,6 +140,7 @@ def zip_payload():
 
     include_directory(PYTHON_DIR, PAYLOAD_DIR)
     include_directory(WIFI_TOOLS_DIR, PAYLOAD_DIR)
+    include_directory(PROXY_TOOLS_DIR, PAYLOAD_DIR)
     include_directory(MANAGER_DIR, os.path.dirname(MANAGER_DIR))
     include_directory(TORNADO_PACKAGE_DIR, TORNADO_DIR, 'python/lib/python2.7/site-packages')
     include_directory(DPKT_PACKAGE_DIR, DPKT_DIR, 'python/lib/python2.7/site-packages')
