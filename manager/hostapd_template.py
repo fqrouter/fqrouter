@@ -1,3 +1,5 @@
+import network_interface
+
 TEMPLATE = """
 #
 # hostapd.conf
@@ -25,7 +27,7 @@ logger_syslog_level=2
 logger_stdout=-1
 logger_stdout_level=2
 dump_file=/data/misc/wifi/hostapd.dump
-ctrl_interface=wlan0
+ctrl_interface=%s
 hw_mode=g
 channel=%s
 beacon_int=100
@@ -111,4 +113,4 @@ device_type=0-00000000-0
 
 
 def render(channel):
-    return TEMPLATE % channel
+    return TEMPLATE % (network_interface.WIFI_INTERFACE, channel)

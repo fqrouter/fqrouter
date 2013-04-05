@@ -56,9 +56,9 @@ class WifiHandler(tornado.web.RequestHandler):
                     if working_hotspot_iface:
                         stop_hotspot(working_hotspot_iface)
                     else:
-                        netd_execute('softap fwreload wlan0 STA')
-                        shell_execute('netcfg wlan0 down')
-                        shell_execute('netcfg wlan0 up')
+                        netd_execute('softap fwreload %s STA' % network_interface.WIFI_INTERFACE)
+                        shell_execute('netcfg %s down' % network_interface.WIFI_INTERFACE)
+                        shell_execute('netcfg %s up' % network_interface.WIFI_INTERFACE)
         elif 'stop-hotspot' == action:
             try:
                 working_hotspot_iface = get_working_hotspot_iface()
@@ -144,9 +144,9 @@ def stop_hotspot(iface):
         shell_execute('%s dev %s del' % (IW_PATH, iface))
     except:
         LOGGER.exception('failed to delete wifi interface')
-    netd_execute('softap fwreload wlan0 STA')
-    shell_execute('netcfg wlan0 down')
-    shell_execute('netcfg wlan0 up')
+    netd_execute('softap fwreload %s STA' % network_interface.WIFI_INTERFACE)
+    shell_execute('netcfg %s down' % network_interface.WIFI_INTERFACE)
+    shell_execute('netcfg %s up' % network_interface.WIFI_INTERFACE)
     try:
         shell_execute('killall hostapd')
     except:
@@ -180,19 +180,19 @@ def start_hotspot():
 
 
 def start_hotspot_on_bcm():
-    netd_execute('softap fwreload wlan0 P2P')
-    shell_execute('netcfg wlan0 down')
-    shell_execute('netcfg wlan0 up')
+    netd_execute('softap fwreload %s P2P' % network_interface.WIFI_INTERFACE)
+    shell_execute('netcfg %s down' % network_interface.WIFI_INTERFACE)
+    shell_execute('netcfg %s up' % network_interface.WIFI_INTERFACE)
     time.sleep(1)
     control_socket_dir = get_wpa_supplicant_control_socket_dir()
-    delete_existing_p2p_persistent_networks('wlan0', control_socket_dir)
-    start_p2p_persistent_network('wlan0', control_socket_dir)
+    delete_existing_p2p_persistent_networks(network_interface.WIFI_INTERFACE, control_socket_dir)
+    start_p2p_persistent_network(network_interface.WIFI_INTERFACE, control_socket_dir)
     return get_p2p_persistent_iface()
 
 
 def start_hotspot_on_mtk():
     if 'ap0' not in list_wifi_ifaces():
-        netd_execute('softap fwreload wlan0 AP')
+        netd_execute('softap fwreload %s AP' % network_interface.WIFI_INTERFACE)
         for i in range(5):
             time.sleep(1)
             if 'ap0' in list_wifi_ifaces():
@@ -210,7 +210,7 @@ def start_hotspot_on_mtk():
 
 def start_hotspot_on_wl12xx():
     if 'ap0' not in list_wifi_ifaces():
-        shell_execute('iw wlan0 interface add ap0 type managed')
+        shell_execute('iw %s interface add ap0 type managed' % network_interface.WIFI_INTERFACE)
     assert 'ap0' in list_wifi_ifaces()
     with open('/data/misc/wifi/fqrouter.conf', 'w') as f:
         f.write(hostapd_template.render(channel=get_upstream_channel() or 1))
@@ -229,7 +229,7 @@ def start_hotspot_on_wl12xx():
 
 
 def get_upstream_channel():
-    output = shell_execute('%s wlan0 channel' % IWLIST_PATH)
+    output = shell_execute('%s %s channel' % (IWLIST_PATH, network_interface.WIFI_INTERFACE))
     for line in output.splitlines():
         line = line.strip()
         if not line:
@@ -276,13 +276,15 @@ def start_p2p_persistent_network(iface, control_socket_dir):
 
 def get_p2p_persistent_iface():
     for line in shell_execute('netcfg').splitlines(False):
-        if line.startswith('p2p-wlan0'):
+        if line.startswith('p2p-%s' % network_interface.WIFI_INTERFACE):
             return line.split(' ')[0]
     raise Exception('can not find just started p2p persistent network interface')
 
 
 def stop_p2p_persistent_network(control_socket_dir, iface):
-    shell_execute('%s -p %s -i wlan0 p2p_group_remove %s' % (P2P_CLI_PATH, control_socket_dir, iface))
+    shell_execute(
+        '%s -p %s -i %s p2p_group_remove %s' %
+        (P2P_CLI_PATH, control_socket_dir, network_interface.WIFI_INTERFACE, iface))
     time.sleep(1)
 
 
@@ -296,7 +298,9 @@ def delete_existing_p2p_persistent_networks(iface, control_socket_dir):
 
 
 def delete_network(control_socket_dir, index):
-    shell_execute('%s -p %s -i wlan0 remove_network %s' % (P2P_CLI_PATH, control_socket_dir, index))
+    shell_execute(
+        '%s -p %s -i %s remove_network %s' %
+        (P2P_CLI_PATH, control_socket_dir, network_interface.WIFI_INTERFACE, index))
 
 
 def list_existing_networks(iface, control_socket_dir):
