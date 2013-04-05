@@ -14,6 +14,7 @@ import hostapd_template
 LOGGER = logging.getLogger(__name__)
 MODALIAS_PATH = '/sys/class/net/%s/device/modalias' % network_interface.WIFI_INTERFACE
 WPA_SUPPLICANT_CONF_PATH = '/data/misc/wifi/wpa_supplicant.conf'
+P2P_SUPPLICANT_CONF_PATH = '/data/misc/wifi/p2p_supplicant.conf'
 P2P_CLI_PATH = '/data/data/fq.router/wifi-tools/p2p_cli'
 IW_PATH = '/data/data/fq.router/wifi-tools/iw'
 IWLIST_PATH = '/data/data/fq.router/wifi-tools/iwlist'
@@ -91,15 +92,14 @@ def dump_wifi_status():
     shell_execute('%s phy' % IW_PATH)
     for iface in list_wifi_ifaces():
         try:
-            shell_execute('%s dev %s scan' % (IW_PATH, iface))
-        except:
-            LOGGER.exception('failed to log iw scan')
-        try:
             shell_execute('%s %s channel' % (IWLIST_PATH, iface))
         except:
             LOGGER.exception('failed to log iwlist channel')
         try:
-            control_socket_dir = get_wpa_supplicant_control_socket_dir()
+            if 'p2p' in iface or 'ap0' == iface:
+                control_socket_dir = get_p2p_supplicant_control_socket_dir()
+            else:
+                control_socket_dir = get_wpa_supplicant_control_socket_dir()
             shell_execute('%s -p %s -i %s status' % (P2P_CLI_PATH, control_socket_dir, iface))
             shell_execute('%s -p %s -i %s list_network' % (P2P_CLI_PATH, control_socket_dir, iface))
         except:
@@ -351,11 +351,19 @@ def list_existing_networks(iface, control_socket_dir):
     return existing_networks
 
 
-def get_wpa_supplicant_control_socket_dir():
+def get_p2p_supplicant_control_socket_dir():
     try:
-        if not os.path.exists(WPA_SUPPLICANT_CONF_PATH):
+        return get_wpa_supplicant_control_socket_dir(P2P_SUPPLICANT_CONF_PATH)
+    except:
+        LOGGER.exception('failed to get p2p supplicant control socket dir')
+        return get_wpa_supplicant_control_socket_dir()
+
+
+def get_wpa_supplicant_control_socket_dir(conf_path=WPA_SUPPLICANT_CONF_PATH):
+    try:
+        if not os.path.exists(conf_path):
             raise Exception('can not find wpa_supplicant.conf')
-        with open(WPA_SUPPLICANT_CONF_PATH) as f:
+        with open(conf_path) as f:
             lines = f.readlines()
         for line in lines:
             line = line.strip()
