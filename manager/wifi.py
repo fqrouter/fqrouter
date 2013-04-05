@@ -190,17 +190,23 @@ def start_hotspot():
 
 
 def start_hotspot_on_bcm():
+    control_socket_dir = get_wpa_supplicant_control_socket_dir()
+    log_upstream_wifi_status('before load p2p firmware', control_socket_dir)
     netd_execute('softap fwreload %s P2P' % network_interface.WIFI_INTERFACE)
     shell_execute('netcfg %s down' % network_interface.WIFI_INTERFACE)
     shell_execute('netcfg %s up' % network_interface.WIFI_INTERFACE)
     time.sleep(1)
-    control_socket_dir = get_wpa_supplicant_control_socket_dir()
+    log_upstream_wifi_status('after loaded p2p firmware', control_socket_dir)
     delete_existing_p2p_persistent_networks(network_interface.WIFI_INTERFACE, control_socket_dir)
     start_p2p_persistent_network(network_interface.WIFI_INTERFACE, control_socket_dir)
-    return get_p2p_persistent_iface()
+    p2p_persistent_iface = get_p2p_persistent_iface()
+    log_upstream_wifi_status('after p2p persistent group created', control_socket_dir)
+    return p2p_persistent_iface
 
 
 def start_hotspot_on_mtk():
+    control_socket_dir = get_wpa_supplicant_control_socket_dir()
+    log_upstream_wifi_status('before load ap firmware', control_socket_dir)
     if 'ap0' not in list_wifi_ifaces():
         netd_execute('softap fwreload %s AP' % network_interface.WIFI_INTERFACE)
         for i in range(5):
@@ -208,13 +214,14 @@ def start_hotspot_on_mtk():
             if 'ap0' in list_wifi_ifaces():
                 break
     assert 'ap0' in list_wifi_ifaces()
-    control_socket_dir = get_wpa_supplicant_control_socket_dir()
+    log_upstream_wifi_status('after loaded ap firmware', control_socket_dir)
     shell_execute('%s -p %s -i ap0 reconfigure' % (P2P_CLI_PATH, control_socket_dir))
     delete_existing_p2p_persistent_networks('ap0', control_socket_dir)
     network_index = start_p2p_persistent_network('ap0', control_socket_dir)
     # restart p2p persistent group otherwise the ssid is not usable
     shell_execute('%s -p %s -i ap0 p2p_group_remove ap0' % (P2P_CLI_PATH, control_socket_dir))
     shell_execute('%s -p %s -i ap0 p2p_group_add persistent=%s' % (P2P_CLI_PATH, control_socket_dir, network_index))
+    log_upstream_wifi_status('after p2p persistent group created', control_socket_dir)
     return 'ap0'
 
 
@@ -250,20 +257,29 @@ def get_upstream_channel():
 
 
 def setup_networking(hotspot_interface):
+    control_socket_dir = get_wpa_supplicant_control_socket_dir()
     netd_execute('interface setcfg %s 192.168.49.1 24' % hotspot_interface)
     netd_execute('tether stop')
     netd_execute('tether interface add %s' % hotspot_interface)
     netd_execute('tether start 192.168.49.2 192.168.49.254')
+    log_upstream_wifi_status('after tether started', control_socket_dir)
     netd_execute('tether dns set 8.8.8.8')
     enable_ipv4_forward()
     shell_execute('iptables -P FORWARD ACCEPT')
     iptables.insert_rules(RULES)
+    log_upstream_wifi_status('after setup networking', control_socket_dir)
 
 
 def enable_ipv4_forward():
     LOGGER.info('enable ipv4 forward')
     with open('/proc/sys/net/ipv4/ip_forward', 'w') as f:
         f.write('1')
+
+
+def log_upstream_wifi_status(log, control_socket_dir):
+    LOGGER.info('=== %s ===' % log)
+    shell_execute('%s -p %s -i %s status' % (P2P_CLI_PATH, control_socket_dir, network_interface.WIFI_INTERFACE))
+    shell_execute('netcfg')
 
 
 def start_p2p_persistent_network(iface, control_socket_dir):
