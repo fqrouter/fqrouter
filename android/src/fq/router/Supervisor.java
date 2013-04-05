@@ -34,7 +34,7 @@ public class Supervisor implements Runnable {
                 return false;
             }
         } catch (Exception e) {
-            Log.e("fqrouter", "ping failed", e);
+            Log.e("fqrouter", "ping failed");
             return false;
         }
     }
@@ -74,7 +74,7 @@ public class Supervisor implements Runnable {
     }
 
     private boolean waitForManager() {
-        for (int i = 0; i < 10; i++) {
+        for (int i = 0; i < 30; i++) {
             sleepOneSecond();
             if (ping()) {
                 return true;
