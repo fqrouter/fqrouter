@@ -8,6 +8,7 @@ import tornado.web
 
 import dns_service
 import tcp_service
+import full_proxy_service
 import self_check
 import wifi
 import jamming_event
@@ -72,5 +73,6 @@ if '__main__' == __name__:
     setup_logging()
     dns_service.run()
     tcp_service.run()
+    full_proxy_service.run()
     application.listen(8888, '127.0.0.1')
     tornado.ioloop.IOLoop.instance().start()
