@@ -37,7 +37,7 @@ def clean():
 #=== private ===
 
 MIN_TTL_TO_GFW = 8
-MAX_TTL_TO_GFW = 12
+MAX_TTL_TO_GFW = 14
 DEFAULT_TTL_TO_GFW = 9
 RANGE_OF_TTL_TO_GFW = range(MIN_TTL_TO_GFW, MAX_TTL_TO_GFW + 1)
 
