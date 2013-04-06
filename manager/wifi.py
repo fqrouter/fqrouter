@@ -360,13 +360,13 @@ def delete_existing_p2p_persistent_networks(iface, control_socket_dir):
     for i in sorted(existing_networks.keys(), reverse=True):
         network = existing_networks[i]
         if 'P2P-PERSISTENT' in network['status']:
-            delete_network(control_socket_dir, i)
+            delete_network(iface, control_socket_dir, i)
 
 
-def delete_network(control_socket_dir, index):
+def delete_network(iface, control_socket_dir, index):
     shell_execute(
         '%s -p %s -i %s remove_network %s' %
-        (P2P_CLI_PATH, control_socket_dir, network_interface.WIFI_INTERFACE, index))
+        (P2P_CLI_PATH, control_socket_dir, iface, index))
 
 
 def list_existing_networks(iface, control_socket_dir):
