@@ -12,6 +12,8 @@ def get_mobile_data_interface():
     output = subprocess.check_output(['netcfg'])
     if 'ccmni0' in output:
         return 'ccmni0'
+    if 'rmnet_usb0' in output:
+        return 'rmnet_usb0'
     if 'rmnet0' in output:
         return 'rmnet0'
     if 'pdp0' in output:
