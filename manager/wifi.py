@@ -177,11 +177,10 @@ def start_hotspot():
     with open(MODALIAS_PATH) as f:
         wifi_chipset = f.read().strip()
         LOGGER.info('wifi chipset: %s' % wifi_chipset)
-    if 'platform:wcnss_wlan' == wifi_chipset or wifi_chipset.endswith('4330') or wifi_chipset.endswith('4334') \
-        or wifi_chipset.endswith('4324'):
+    if wifi_chipset.endswith('4330') or wifi_chipset.endswith('4334') or wifi_chipset.endswith('4324'):
     # only tested on sdio:c00v02D0d4330
-    # support of bcm43241 is a wild guess
-    # support of bcm4334 is a wild guess
+    # support of bcm43241(4324) is a wild guess
+    # support of bcm4334(4334) is a wild guess
         hotspot_interface = start_hotspot_on_bcm()
     elif 'platform:wcnss_wlan' == wifi_chipset:
         hotspot_interface = start_hotspot_on_wcnss()
