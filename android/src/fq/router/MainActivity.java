@@ -173,6 +173,16 @@ public class MainActivity extends Activity implements StatusUpdater {
         } catch (Exception e) {
             Log.e("fqrouter", "failed to execute capture-log.sh", e);
             try {
+                ShellUtils.sudo(false, "/system/bin/getprop", ">", "/sdcard/getprop.log");
+            } catch (Exception e2) {
+                Log.e("fqrouter", "failed to execute getprop", e2);
+            }
+            try {
+                ShellUtils.sudo(false, "/system/bin/dmesg", ">", "/sdcard/dmesg.log");
+            } catch (Exception e2) {
+                Log.e("fqrouter", "failed to execute dmesg", e2);
+            }
+            try {
                 ShellUtils.sudo(false, "/system/bin/logcat", "-d", "-v", "time", "-s", "fqrouter:V", ">", "/sdcard/logcat.log");
             } catch (Exception e2) {
                 Log.e("fqrouter", "failed to execute logcat", e2);
