@@ -182,8 +182,9 @@ def start_hotspot():
     # only tested on sdio:c00v02D0d4330
     # support of bcm43241 is a wild guess
     # support of bcm4334 is a wild guess
-    # support of wcnss_wlan is a wild guess
         hotspot_interface = start_hotspot_on_bcm()
+    elif 'platform:wcnss_wlan' == wifi_chipset:
+        hotspot_interface = start_hotspot_on_wcnss()
     elif wifi_chipset.endswith('6620') or wifi_chipset.endswith('6628'):
     # only tested on sdio:c00v037Ad6628
     # support of mt6620 is a wild gues
@@ -198,6 +199,30 @@ def start_hotspot():
 
 
 def start_hotspot_on_bcm():
+    control_socket_dir = get_wpa_supplicant_control_socket_dir()
+    log_upstream_wifi_status('before load p2p firmware', control_socket_dir)
+    netd_execute('softap fwreload %s P2P' % network_interface.WIFI_INTERFACE)
+    shell_execute('netcfg %s down' % network_interface.WIFI_INTERFACE)
+    shell_execute('netcfg %s up' % network_interface.WIFI_INTERFACE)
+    time.sleep(1)
+    log_upstream_wifi_status('after loaded p2p firmware', control_socket_dir)
+    if 'p2p0' in list_wifi_ifaces():
+    # bcmdhd can optionally have p2p0 interface
+        p2p_control_socket_dir = get_p2p_supplicant_control_socket_dir()
+        delete_existing_p2p_persistent_networks('p2p0', p2p_control_socket_dir)
+        start_p2p_persistent_network('p2p0', p2p_control_socket_dir)
+        p2p_persistent_iface = get_p2p_persistent_iface()
+        log_upstream_wifi_status('after p2p persistent group created', control_socket_dir)
+        return p2p_persistent_iface
+    else:
+        delete_existing_p2p_persistent_networks(network_interface.WIFI_INTERFACE, control_socket_dir)
+        start_p2p_persistent_network(network_interface.WIFI_INTERFACE, control_socket_dir)
+        p2p_persistent_iface = get_p2p_persistent_iface()
+        log_upstream_wifi_status('after p2p persistent group created', control_socket_dir)
+        return p2p_persistent_iface
+
+
+def start_hotspot_on_wcnss():
     control_socket_dir = get_wpa_supplicant_control_socket_dir()
     log_upstream_wifi_status('before load p2p firmware', control_socket_dir)
     netd_execute('softap fwreload %s P2P' % network_interface.WIFI_INTERFACE)
@@ -310,7 +335,7 @@ def start_p2p_persistent_network(iface, control_socket_dir):
 
 def get_p2p_persistent_iface():
     for line in shell_execute('netcfg').splitlines(False):
-        if line.startswith('p2p-%s' % network_interface.WIFI_INTERFACE):
+        if line.startswith('p2p-'):
             return line.split(' ')[0]
     raise Exception('can not find just started p2p persistent network interface')
 
