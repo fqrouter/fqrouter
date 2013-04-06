@@ -89,6 +89,7 @@ class WifiHandler(tornado.web.RequestHandler):
 
 def dump_wifi_status():
     shell_execute('netcfg')
+    get_wifi_chipset()
     shell_execute('%s phy' % IW_PATH)
     for iface in list_wifi_ifaces():
         try:
@@ -172,11 +173,7 @@ def stop_hotspot(iface):
 
 
 def start_hotspot():
-    if not os.path.exists(MODALIAS_PATH):
-        raise Exception('wifi chipset unknown: %s not found' % MODALIAS_PATH)
-    with open(MODALIAS_PATH) as f:
-        wifi_chipset = f.read().strip()
-        LOGGER.info('wifi chipset: %s' % wifi_chipset)
+    wifi_chipset = get_wifi_chipset()
     if wifi_chipset.endswith('4330') or wifi_chipset.endswith('4334') or wifi_chipset.endswith('4324'):
     # only tested on sdio:c00v02D0d4330
     # support of bcm43241(4324) is a wild guess
@@ -195,6 +192,15 @@ def start_hotspot():
     if not get_working_hotspot_iface():
         raise Exception('working hotspot iface not found after start')
     setup_networking(hotspot_interface)
+
+
+def get_wifi_chipset():
+    if not os.path.exists(MODALIAS_PATH):
+        raise Exception('wifi chipset unknown: %s not found' % MODALIAS_PATH)
+    with open(MODALIAS_PATH) as f:
+        wifi_chipset = f.read().strip()
+        LOGGER.info('wifi chipset: %s' % wifi_chipset)
+        return wifi_chipset
 
 
 def start_hotspot_on_bcm():
