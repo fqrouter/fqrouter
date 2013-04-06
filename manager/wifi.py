@@ -208,6 +208,7 @@ def start_hotspot_on_bcm():
     log_upstream_wifi_status('after loaded p2p firmware', control_socket_dir)
     if 'p2p0' in list_wifi_ifaces():
     # bcmdhd can optionally have p2p0 interface
+        LOGGER.info('start p2p persistent group using p2p0')
         p2p_control_socket_dir = get_p2p_supplicant_control_socket_dir()
         delete_existing_p2p_persistent_networks('p2p0', p2p_control_socket_dir)
         start_p2p_persistent_network('p2p0', p2p_control_socket_dir)
@@ -215,6 +216,7 @@ def start_hotspot_on_bcm():
         log_upstream_wifi_status('after p2p persistent group created', control_socket_dir)
         return p2p_persistent_iface
     else:
+        LOGGER.info('start p2p persistent group using %s' % network_interface.WIFI_INTERFACE)
         delete_existing_p2p_persistent_networks(network_interface.WIFI_INTERFACE, control_socket_dir)
         start_p2p_persistent_network(network_interface.WIFI_INTERFACE, control_socket_dir)
         p2p_persistent_iface = get_p2p_persistent_iface()
