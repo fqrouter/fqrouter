@@ -317,9 +317,12 @@ def enable_ipv4_forward():
 
 
 def log_upstream_wifi_status(log, control_socket_dir):
-    LOGGER.info('=== %s ===' % log)
-    shell_execute('%s -p %s -i %s status' % (P2P_CLI_PATH, control_socket_dir, network_interface.WIFI_INTERFACE))
-    shell_execute('netcfg')
+    try:
+        LOGGER.info('=== %s ===' % log)
+        shell_execute('%s -p %s -i %s status' % (P2P_CLI_PATH, control_socket_dir, network_interface.WIFI_INTERFACE))
+        shell_execute('netcfg')
+    except:
+        LOGGER.exception('failed to log upstream wifi status')
 
 
 def start_p2p_persistent_network(iface, control_socket_dir):
