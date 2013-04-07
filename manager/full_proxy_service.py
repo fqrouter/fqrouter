@@ -4,6 +4,7 @@ from netfilterqueue import NetfilterQueue
 import socket
 import subprocess
 import time
+import random
 
 import dpkt
 
@@ -12,7 +13,6 @@ import iptables
 import network_interface
 import redsocks_template
 import china_ip
-import random
 
 
 LOGGER = logging.getLogger(__name__)
@@ -89,9 +89,10 @@ def delete_iptables_rules():
 def start_full_proxy():
     global redsocks_process
     cfg_path = '/data/data/fq.router/redsocks.conf'
+    proxy_type, proxy_ip, proxy_port = resolve_proxy()
     with open(cfg_path, 'w') as f:
-        white_list.add('x.x.x.x')
-        f.write(redsocks_template.render('socks5', 'x.x.x.x', '1080'))
+        white_list.add(proxy_ip)
+        f.write(redsocks_template.render(proxy_type, proxy_ip, proxy_port))
     kill_redsocks()
     time.sleep(1)
     redsocks_process = subprocess.Popen(
@@ -102,6 +103,17 @@ def start_full_proxy():
     if not redsocks_process.poll():
         LOGGER.info('redsocks seems started: %s' % pid)
     handle_nfqueue()
+
+
+def resolve_proxy():
+    sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM) # UDP
+    request = dpkt.dns.DNS(qd=[dpkt.dns.DNS.Q(name='proxy1.fqrouter.com', type=dpkt.dns.DNS_TXT)])
+    sock.sendto(str(request), ('8.8.8.8', 53))
+    data, addr = sock.recvfrom(1024)
+    response = dpkt.dns.DNS(data)
+    answer = response.an[0]
+    proxy_info = ''.join(e for e in answer.rdata if e.isalnum() or ':' == e)
+    return proxy_info.split(':') # proxy_type:ip:port
 
 
 def kill_redsocks():

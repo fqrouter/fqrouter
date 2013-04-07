@@ -217,6 +217,7 @@ def start_hotspot_on_bcm():
     if 'p2p0' in list_wifi_ifaces():
     # bcmdhd can optionally have p2p0 interface
         LOGGER.info('start p2p persistent group using p2p0')
+        shell_execute('netcfg p2p0 up')
         p2p_control_socket_dir = get_p2p_supplicant_control_socket_dir()
         delete_existing_p2p_persistent_networks('p2p0', p2p_control_socket_dir)
         start_p2p_persistent_network('p2p0', p2p_control_socket_dir)
