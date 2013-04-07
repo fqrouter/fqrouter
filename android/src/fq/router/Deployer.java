@@ -85,6 +85,10 @@ public class Deployer {
         if (!PAYLOAD_CHECKSUM.exists()) {
             return false;
         }
+        if (!MANAGER_MAIN_PY.exists()) {
+            statusUpdater.appendLog("payload is corrupted");
+            return true;
+        }
         String oldChecksum = IOUtils.readFromFile(PAYLOAD_CHECKSUM);
         InputStream inputStream = assetManager.open("payload.zip");
         try {
@@ -114,6 +118,9 @@ public class Deployer {
     private void deleteDirectory(String path) throws Exception {
         if (new File(path).exists()) {
             ShellUtils.execute("/system/bin/rm", "-r", path);
+        }
+        if (new File(path).exists()) {
+            Log.e("fqrouter", "failed to delete " + path);
         }
     }
 
@@ -185,7 +192,7 @@ public class Deployer {
         }
         statusUpdater.appendLog("unzipping payload.zip");
         Process process = Runtime.getRuntime().exec(
-                BUSYBOX_FILE + " unzip -q payload.zip", new String[0], new File("/data/data/fq.router"));
+                BUSYBOX_FILE + " unzip -o -q payload.zip", new String[0], new File("/data/data/fq.router"));
         ShellUtils.waitFor("unzip", process);
         if (!new File("/data/data/fq.router/payload.zip").delete()) {
             statusUpdater.appendLog("failed to delete payload.zip after unzip");
