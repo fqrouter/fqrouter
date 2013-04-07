@@ -1,6 +1,9 @@
 import logging
 import thread
 from netfilterqueue import NetfilterQueue
+import socket
+
+import dpkt
 
 import shutdown_hook
 import iptables
@@ -30,6 +33,7 @@ def clean():
 
 
 RULES = []
+targets = set()
 
 for iface in network_interface.list_data_network_interfaces():
     RULES.append((
@@ -79,7 +83,16 @@ def handle_nfqueue():
 
 def handle_packet(nfqueue_element):
     try:
-        nfqueue_element.accept()
+        ip_packet = dpkt.ip.IP(nfqueue_element.get_payload())
+        if socket.inet_ntoa(ip_packet.dst) in targets:
+            nfqueue_element.set_mark(0xbabe)
+            nfqueue_element.repeat()
+        else:
+            nfqueue_element.accept()
     except:
         LOGGER.exception('failed to handle packet')
         nfqueue_element.accept()
+
+
+def add_target(ip):
+    targets.add(ip)
