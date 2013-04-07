@@ -233,7 +233,7 @@ def handle_rst(rst):
             (expected_ttl, rst.ttl, format_ip_packet(rst)))
     else:
         LOGGER.info('received RST: %s' % format_ip_packet(rst))
-    return True # receiving RST we already screwed, dropping it will not help
+    return False # might help when HTTP REDIRECT being detected by GFW
 
 
 def handle_syn(syn):

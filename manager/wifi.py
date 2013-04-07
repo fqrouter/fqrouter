@@ -249,7 +249,7 @@ def start_hotspot_on_mtk():
     log_upstream_wifi_status('before load ap firmware', control_socket_dir)
     if 'ap0' not in list_wifi_ifaces():
         netd_execute('softap fwreload %s AP' % network_interface.WIFI_INTERFACE)
-        for i in range(5):
+        for i in range(15):
             time.sleep(1)
             if 'ap0' in list_wifi_ifaces():
                 break
