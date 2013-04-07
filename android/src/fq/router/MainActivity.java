@@ -1,9 +1,11 @@
 package fq.router;
 
 import android.app.Activity;
+import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageInfo;
 import android.net.Uri;
+import android.net.wifi.WifiManager;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
@@ -70,6 +72,7 @@ public class MainActivity extends Activity implements StatusUpdater {
             public void onClick(View view) {
                 startButton.setText("Starting...");
                 startButton.setEnabled(false);
+                enableWifi();
                 appendLog("starting supervisor thread");
                 new Thread(new Supervisor(getAssets(), MainActivity.this)).start();
             }
@@ -93,6 +96,15 @@ public class MainActivity extends Activity implements StatusUpdater {
                 }
             }
         });
+    }
+
+    private void enableWifi() {
+        try {
+            WifiManager wifi = (WifiManager) getSystemService(Context.WIFI_SERVICE);
+            wifi.setWifiEnabled(true);
+        } catch (Exception e) {
+            Log.e("fqrouter", "failed to enable wifi", e);
+        }
     }
 
     public void updateStatus(final String status) {

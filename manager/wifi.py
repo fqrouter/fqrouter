@@ -88,31 +88,34 @@ class WifiHandler(tornado.web.RequestHandler):
 
 
 def dump_wifi_status():
-    shell_execute('netcfg')
-    get_wifi_chipset()
-    shell_execute('%s phy' % IW_PATH)
-    for iface in list_wifi_ifaces():
-        try:
-            shell_execute('%s %s channel' % (IWLIST_PATH, iface))
-        except:
-            LOGGER.exception('failed to log iwlist channel')
-        try:
-            if 'p2p' in iface or 'ap0' == iface:
-                control_socket_dir = get_p2p_supplicant_control_socket_dir()
-            else:
-                control_socket_dir = get_wpa_supplicant_control_socket_dir()
-            shell_execute('%s -p %s -i %s status' % (P2P_CLI_PATH, control_socket_dir, iface))
-            shell_execute('%s -p %s -i %s list_network' % (P2P_CLI_PATH, control_socket_dir, iface))
-        except:
-            LOGGER.exception('failed to log wpa_cli status')
-    for pid in os.listdir('/proc'):
-        cmdline_path = '/proc/%s/cmdline' % pid
-        if os.path.exists(cmdline_path):
-            with open(cmdline_path) as f:
-                cmdline = f.read()
-                if 'supplicant' in cmdline:
-                    LOGGER.info('pid %s: %s' % (pid, cmdline))
-                    dump_wpa_supplicant(cmdline)
+    try:
+        shell_execute('netcfg')
+        get_wifi_chipset()
+        shell_execute('%s phy' % IW_PATH)
+        for iface in list_wifi_ifaces():
+            try:
+                shell_execute('%s %s channel' % (IWLIST_PATH, iface))
+            except:
+                LOGGER.exception('failed to log iwlist channel')
+            try:
+                if 'p2p' in iface or 'ap0' == iface:
+                    control_socket_dir = get_p2p_supplicant_control_socket_dir()
+                else:
+                    control_socket_dir = get_wpa_supplicant_control_socket_dir()
+                shell_execute('%s -p %s -i %s status' % (P2P_CLI_PATH, control_socket_dir, iface))
+                shell_execute('%s -p %s -i %s list_network' % (P2P_CLI_PATH, control_socket_dir, iface))
+            except:
+                LOGGER.exception('failed to log wpa_cli status')
+        for pid in os.listdir('/proc'):
+            cmdline_path = '/proc/%s/cmdline' % pid
+            if os.path.exists(cmdline_path):
+                with open(cmdline_path) as f:
+                    cmdline = f.read()
+                    if 'supplicant' in cmdline:
+                        LOGGER.info('pid %s: %s' % (pid, cmdline))
+                        dump_wpa_supplicant(cmdline)
+    except:
+        LOGGER.exception('failed to dump wifi status')
 
 
 def dump_wpa_supplicant(cmdline):
