@@ -57,6 +57,7 @@ public class Deployer {
         }
         try {
             copyBusybox();
+            chmod("0700", BUSYBOX_FILE);
             copyPayloadZip();
         } catch (Exception e) {
             statusUpdater.reportError("failed to copy payload.zip", e);
@@ -157,7 +158,6 @@ public class Deployer {
             inputStream.close();
         }
         statusUpdater.appendLog("successfully copied busybox");
-        chmod("0700", BUSYBOX_FILE);
     }
 
     private void unzipPayloadZip() throws Exception {
@@ -196,9 +196,6 @@ public class Deployer {
     }
 
     private void chmod(String mode, File file) throws Exception {
-        if (file.canExecute()) {
-            return;
-        }
         ShellUtils.execute("/system/bin/chmod", mode, file.getAbsolutePath());
         statusUpdater.appendLog("successfully made " + file.getName() + " executable");
     }
