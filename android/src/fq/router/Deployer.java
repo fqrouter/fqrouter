@@ -59,7 +59,7 @@ public class Deployer {
         }
         try {
             copyBusybox();
-            chmod("0700", BUSYBOX_FILE);
+            makeExecutable(BUSYBOX_FILE);
             linkShToBusybox();
             copyPayloadZip();
         } catch (Exception e) {
@@ -208,7 +208,7 @@ public class Deployer {
             throw new Exception(new File(PYTHON_DIR, "bin") + " not found");
         } else {
             for (File file : files) {
-                chmod("0700", file);
+                makeExecutable(file);
             }
         }
         files = WIFI_TOOLS_DIR.listFiles();
@@ -216,7 +216,7 @@ public class Deployer {
             throw new Exception(WIFI_TOOLS_DIR + " not found");
         } else {
             for (File file : files) {
-                chmod("0700", file);
+                makeExecutable(file);
             }
         }
         files = PROXY_TOOLS_DIR.listFiles();
@@ -224,13 +224,19 @@ public class Deployer {
             throw new Exception(PROXY_TOOLS_DIR + " not found");
         } else {
             for (File file : files) {
-                chmod("0700", file);
+                makeExecutable(file);
             }
         }
     }
 
-    private void chmod(String mode, File file) throws Exception {
-        ShellUtils.execute("/system/bin/chmod", mode, file.getAbsolutePath());
-        statusUpdater.appendLog("successfully made " + file.getName() + " executable");
+    private void makeExecutable(File file) throws Exception {
+        if (file.canExecute()) {
+            return;
+        }
+        if (file.setExecutable(true, true)) {
+            statusUpdater.appendLog("successfully made " + file.getName() + " executable");
+        } else {
+            statusUpdater.appendLog("failed to make " + file.getName() + " executable");
+        }
     }
 }

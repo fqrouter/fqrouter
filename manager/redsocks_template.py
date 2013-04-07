@@ -67,12 +67,13 @@ redsocks {
 	// address of multihomed host will be used.
 	ip = %s;
 	port = %s;
-
-	// login = "foobar";
-	// password = "baz";
+	%s
+	%s
 }
 """
 
 
-def render(proxy_type, ip, port):
-    return '%s%s' % (CONF_BASE, CONF_REDSOCKS % (proxy_type, ip, port))
+def render(proxy_type, ip, port, username, password):
+    username = 'login = "%s";' % username if username else ''
+    password = 'password = "%s";' % password if password else ''
+    return '%s%s' % (CONF_BASE, CONF_REDSOCKS % (proxy_type, ip, port, username, password))

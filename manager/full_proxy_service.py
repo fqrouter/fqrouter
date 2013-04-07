@@ -66,12 +66,12 @@ for iface in network_interface.list_data_network_interfaces():
         ('nat', 'fp_OUTPUT', '-o %s -p tcp -m mark --mark 0xcafe -j RETURN' % iface)
     ))
     RULES.append((
-        {'target': 'NFQUEUE', 'iface_out': iface, 'extra': 'mark match ! 0xbabe NFQUEUE num 3'},
-        ('nat', 'fp_OUTPUT', '-o %s -p tcp -m mark ! --mark 0xbabe -j NFQUEUE --queue-num 3' % iface)
+        {'target': 'NFQUEUE', 'iface_out': iface, 'extra': 'mark match ! 0xbabe/0xffff NFQUEUE num 3'},
+        ('nat', 'fp_OUTPUT', '-o %s -p tcp -m mark ! --mark 0xbabe/0xffff -j NFQUEUE --queue-num 3' % iface)
     ))
     RULES.append((
-        {'target': 'REDIRECT', 'iface_out': iface, 'extra': 'mark match 0xbabe redir ports 12345'},
-        ('nat', 'fp_OUTPUT', '-o %s -p tcp -m mark --mark 0xbabe -j REDIRECT --to-ports 12345' % iface)
+        {'target': 'REDIRECT', 'iface_out': iface, 'extra': 'mark match 0x1babe redir ports 12345'},
+        ('nat', 'fp_OUTPUT', '-o %s -p tcp -m mark --mark 0x1babe -j REDIRECT --to-ports 12345' % iface)
     ))
 
 
@@ -89,10 +89,10 @@ def delete_iptables_rules():
 def start_full_proxy():
     global redsocks_process
     cfg_path = '/data/data/fq.router/redsocks.conf'
-    proxy_type, proxy_ip, proxy_port = resolve_proxy()
+    proxy_type, proxy_ip, proxy_port, proxy_username, proxy_password = resolve_proxy()
     with open(cfg_path, 'w') as f:
         white_list.add(proxy_ip)
-        f.write(redsocks_template.render(proxy_type, proxy_ip, proxy_port))
+        f.write(redsocks_template.render(proxy_type, proxy_ip, proxy_port, proxy_username, proxy_password))
     kill_redsocks()
     time.sleep(1)
     redsocks_process = subprocess.Popen(
@@ -112,8 +112,8 @@ def resolve_proxy():
     data, addr = sock.recvfrom(1024)
     response = dpkt.dns.DNS(data)
     answer = response.an[0]
-    proxy_info = ''.join(e for e in answer.rdata if e.isalnum() or ':' == e)
-    return proxy_info.split(':') # proxy_type:ip:port
+    proxy_info = ''.join(e for e in answer.rdata if e.isalnum() or e in [':', '.'])
+    return proxy_info.split(':') # proxy_type:ip:port:username:password
 
 
 def kill_redsocks():
@@ -139,7 +139,7 @@ def handle_packet(nfqueue_element):
         if ip in white_list:
             nfqueue_element.accept()
         elif ip in black_list:
-            nfqueue_element.set_mark(0xbabe)
+            nfqueue_element.set_mark(0x1babe)
             nfqueue_element.repeat()
         else:
             if ip in pending_list:
@@ -152,7 +152,7 @@ def handle_packet(nfqueue_element):
             ip_packet.tcp.sum = 0
             ip_packet.sum = 0
             raw_socket.sendto(str(ip_packet), (ip, 0)) # try direct
-            nfqueue_element.set_mark(0xbabe)
+            nfqueue_element.set_mark(0x1babe)
             nfqueue_element.repeat()
     except:
         LOGGER.exception('failed to handle packet')
