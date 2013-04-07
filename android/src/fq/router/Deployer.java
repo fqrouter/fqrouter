@@ -14,6 +14,7 @@ public class Deployer {
 
     public static File DATA_DIR = new File("/data/data/fq.router");
     public static File BUSYBOX_FILE = new File(DATA_DIR, "busybox");
+    public static File SH_FILE = new File(DATA_DIR, "sh");
     public static File PAYLOAD_ZIP = new File(DATA_DIR, "payload.zip");
     public static File PAYLOAD_CHECKSUM = new File(DATA_DIR, "payload.checksum");
     public static File PYTHON_DIR = new File(DATA_DIR, "python");
@@ -58,6 +59,7 @@ public class Deployer {
         try {
             copyBusybox();
             chmod("0700", BUSYBOX_FILE);
+            linkShToBusybox();
             copyPayloadZip();
         } catch (Exception e) {
             statusUpdater.reportError("failed to copy payload.zip", e);
@@ -158,6 +160,22 @@ public class Deployer {
             inputStream.close();
         }
         statusUpdater.appendLog("successfully copied busybox");
+    }
+
+    private void linkShToBusybox() throws Exception {
+        if (SH_FILE.exists()) {
+            statusUpdater.appendLog("skip link sh as it already exists");
+            return;
+        }
+        statusUpdater.appendLog("link sh to busybox");
+        try {
+
+            ShellUtils.execute("/system/bin/ln", BUSYBOX_FILE.getAbsolutePath(), SH_FILE.getAbsolutePath());
+            statusUpdater.appendLog("successfully linked sh to busybox");
+        } catch (Exception e) {
+            Log.e("fqrouter", "failed to link sh to busybox", e);
+            statusUpdater.appendLog("failed to link sh to busybox");
+        }
     }
 
     private void unzipPayloadZip() throws Exception {
