@@ -20,6 +20,7 @@ public class Deployer {
     public static File PYTHON_DIR = new File(DATA_DIR, "python");
     public static File PYTHON_LAUNCHER = new File(PYTHON_DIR, "bin/python-launcher.sh");
     public static File WIFI_TOOLS_DIR = new File(DATA_DIR, "wifi-tools");
+    public static File PROXY_TOOLS_DIR = new File(DATA_DIR, "proxy-tools");
     public static File MANAGER_DIR = new File(DATA_DIR, "manager");
     public static File MANAGER_MAIN_PY = new File(MANAGER_DIR, "main.py");
     public static File MANAGER_CLEAN_PY = new File(MANAGER_DIR, "clean.py");
@@ -213,6 +214,14 @@ public class Deployer {
         files = WIFI_TOOLS_DIR.listFiles();
         if (files == null) {
             throw new Exception(WIFI_TOOLS_DIR + " not found");
+        } else {
+            for (File file : files) {
+                chmod("0700", file);
+            }
+        }
+        files = PROXY_TOOLS_DIR.listFiles();
+        if (files == null) {
+            throw new Exception(PROXY_TOOLS_DIR + " not found");
         } else {
             for (File file : files) {
                 chmod("0700", file);

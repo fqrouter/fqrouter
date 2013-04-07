@@ -14,6 +14,7 @@ import wifi
 import jamming_event
 
 
+LOGGER = logging.getLogger(__name__)
 ROOT_DIR = os.path.dirname(__file__)
 LOG_DIR = '/data/data/fq.router'
 LOG_FILE = os.path.join(LOG_DIR, 'manager.log')
@@ -74,5 +75,6 @@ if '__main__' == __name__:
     dns_service.run()
     tcp_service.run()
     full_proxy_service.run()
+    LOGGER.info('services started')
     application.listen(8888, '127.0.0.1')
     tornado.ioloop.IOLoop.instance().start()

@@ -2,12 +2,17 @@ import logging
 import thread
 from netfilterqueue import NetfilterQueue
 import socket
+import subprocess
+import time
 
 import dpkt
 
 import shutdown_hook
 import iptables
 import network_interface
+import redsocks_template
+import china_ip
+import random
 
 
 LOGGER = logging.getLogger(__name__)
@@ -27,13 +32,22 @@ def status():
 
 def clean():
     delete_iptables_rules()
+    kill_redsocks()
 
 
 #=== private ===
 
+raw_socket = socket.socket(socket.AF_INET, socket.SOCK_RAW, socket.IPPROTO_RAW)
+shutdown_hook.add(raw_socket.close)
+raw_socket.setsockopt(socket.SOL_IP, socket.IP_HDRINCL, 1)
+SO_MARK = 36
+raw_socket.setsockopt(socket.SOL_SOCKET, SO_MARK, 0xcafe)
 
 RULES = []
-targets = set()
+white_list = set()
+black_list = set()
+pending_list = {} # ip => started_at
+redsocks_process = None
 
 for iface in network_interface.list_data_network_interfaces():
     RULES.append((
@@ -47,6 +61,10 @@ for iface in network_interface.list_data_network_interfaces():
             {'target': 'RETURN', 'destination': lan_ip_range, 'iface_out': iface},
             ('nat', 'fp_OUTPUT', '-o %s -d %s -j RETURN' % (iface, lan_ip_range))
         ))
+    RULES.append((
+        {'target': 'RETURN', 'iface_out': iface, 'extra': 'mark match 0xcafe'},
+        ('nat', 'fp_OUTPUT', '-o %s -p tcp -m mark --mark 0xcafe -j RETURN' % iface)
+    ))
     RULES.append((
         {'target': 'NFQUEUE', 'iface_out': iface, 'extra': 'mark match ! 0xbabe NFQUEUE num 3'},
         ('nat', 'fp_OUTPUT', '-o %s -p tcp -m mark ! --mark 0xbabe -j NFQUEUE --queue-num 3' % iface)
@@ -69,7 +87,25 @@ def delete_iptables_rules():
 
 
 def start_full_proxy():
+    global redsocks_process
+    cfg_path = '/data/data/fq.router/redsocks.conf'
+    with open(cfg_path, 'w') as f:
+        white_list.add('x.x.x.x')
+        f.write(redsocks_template.render('socks5', 'x.x.x.x', '1080'))
+    kill_redsocks()
+    time.sleep(1)
+    redsocks_process = subprocess.Popen(
+        ['/data/data/fq.router/proxy-tools/redsocks', '-c', cfg_path], stderr=subprocess.STDOUT)
+    shutdown_hook.add(kill_redsocks)
+    time.sleep(1)
+    pid = redsocks_process.pid
+    if not redsocks_process.poll():
+        LOGGER.info('redsocks seems started: %s' % pid)
     handle_nfqueue()
+
+
+def kill_redsocks():
+    subprocess.call(['/data/data/fq.router/busybox', 'killall', 'redsocks'])
 
 
 def handle_nfqueue():
@@ -84,15 +120,42 @@ def handle_nfqueue():
 def handle_packet(nfqueue_element):
     try:
         ip_packet = dpkt.ip.IP(nfqueue_element.get_payload())
-        if socket.inet_ntoa(ip_packet.dst) in targets:
+        ip = socket.inet_ntoa(ip_packet.dst)
+        if china_ip.is_china_ip(ip):
+            nfqueue_element.accept()
+            return
+        if ip in white_list:
+            nfqueue_element.accept()
+        elif ip in black_list:
             nfqueue_element.set_mark(0xbabe)
             nfqueue_element.repeat()
         else:
-            nfqueue_element.accept()
+            if ip in pending_list:
+                if time.time() - pending_list[ip] > 10:
+                    add_to_black_list(ip)
+            else:
+                LOGGER.info('probe connectivity: %s' % ip)
+                pending_list[ip] = time.time()
+            ip_packet.tcp.sport = random.randint(1024, 65535)
+            ip_packet.tcp.sum = 0
+            ip_packet.sum = 0
+            raw_socket.sendto(str(ip_packet), (ip, 0)) # try direct
+            nfqueue_element.set_mark(0xbabe)
+            nfqueue_element.repeat()
     except:
         LOGGER.exception('failed to handle packet')
         nfqueue_element.accept()
 
 
-def add_target(ip):
-    targets.add(ip)
+def add_to_black_list(ip):
+    if ip not in black_list:
+        LOGGER.info('add black list ip: %s' % ip)
+        black_list.add(ip)
+    pending_list.pop(ip, None)
+
+
+def add_to_white_list(ip):
+    if ip not in white_list and not china_ip.is_china_ip(ip):
+        LOGGER.info('add white list ip: %s' % ip)
+        white_list.add(ip)
+    pending_list.pop(ip, None)

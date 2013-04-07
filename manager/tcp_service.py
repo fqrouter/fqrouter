@@ -14,6 +14,7 @@ import china_ip
 import network_interface
 import dns_service
 import jamming_event
+import full_proxy_service
 
 LOGGER = logging.getLogger(__name__)
 
@@ -238,6 +239,8 @@ def handle_rst(rst):
 
 def handle_syn(syn):
     dst = socket.inet_ntoa(syn.dst)
+    if '127.0.0.1' == dst:
+        return
     if dst not in pending_syn and dst not in domestic_zone and dst not in international_zone \
         and not pending_connection.is_ip_pending(dst):
         pending_syn[dst] = time.time()
@@ -246,6 +249,8 @@ def handle_syn(syn):
         if elapsed_seconds > 5:
             record_jamming_event(ip, 'syn packet drop')
             del pending_syn[ip]
+            full_proxy_service.add_to_black_list(ip)
+            return False
     return True
 
 
@@ -263,6 +268,7 @@ def handle_psh_ack(psh_ack):
 
 def handle_syn_ack(syn_ack):
     uncertain_ip = socket.inet_ntoa(syn_ack.src)
+    full_proxy_service.add_to_white_list(uncertain_ip)
     if uncertain_ip in pending_syn:
         del pending_syn[uncertain_ip]
     expected_ttl = syn_ack_ttl.get((uncertain_ip, syn_ack.tcp.sport)) or 0

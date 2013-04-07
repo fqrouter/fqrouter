@@ -52,7 +52,7 @@ class DnsServiceStatus(object):
 dns_service_status = DnsServiceStatus()
 domains = {} # ip => domain
 
-CLEAN_DNS = '8.8.8.8'
+CLEAN_DNS = '209.244.0.3'
 
 RULES = []
 for iface in network_interface.list_data_network_interfaces():
