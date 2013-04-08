@@ -184,7 +184,6 @@ def resolve_proxy(mark, name):
         'clients': set(), # set((ip, port))
         'connection_info': connection_info
     }
-    add_to_white_list(connection_info[1])
 
 
 def kill_redsocks():
@@ -209,11 +208,11 @@ def handle_packet(nfqueue_element):
             nfqueue_element.accept()
         elif china_ip.is_china_ip(ip):
             nfqueue_element.accept()
-        elif ip in white_list:
-            nfqueue_element.accept()
         elif ip in black_list:
             nfqueue_element.set_mark(mark)
             nfqueue_element.repeat()
+        elif ip in white_list:
+            nfqueue_element.accept()
         else:
             if ip in pending_list:
                 if time.time() - pending_list[ip] > 10:
@@ -240,12 +239,13 @@ def pick_proxy():
 
 def add_to_black_list(ip):
     if ip not in black_list:
-        LOGGER.info('add black list ip: %s' % ip)
-        black_list.add(ip)
         for mark, proxy in proxies.items():
             if ip == proxy['connection_info'][1]:
                 LOGGER.error('proxy died: %s' % ip)
                 del proxies[mark]
+                return
+        LOGGER.info('add black list ip: %s' % ip)
+        black_list.add(ip)
     pending_list.pop(ip, None)
 
 
