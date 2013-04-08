@@ -5,6 +5,9 @@ import socket
 import subprocess
 import time
 import random
+import os
+import signal
+import threading
 
 import dpkt
 
@@ -47,8 +50,9 @@ RULES = []
 white_list = set()
 black_list = set()
 pending_list = {} # ip => started_at
-proxy_marks = []
+proxies = {} # mark => last_used_at
 redsocks_process = None
+redsocks_dumped_at = None
 
 for iface in network_interface.list_data_network_interfaces():
     RULES.append((
@@ -98,31 +102,65 @@ def start_full_proxy():
 def start_redsocks():
     global redsocks_process
     cfg_path = '/data/data/fq.router/redsocks.conf'
-    proxy_type, proxy_ip, proxy_port, proxy_username, proxy_password = resolve_proxy()
+    resolve_proxy(0x1babe, 'proxy1.fqrouter.com')
     with open(cfg_path, 'w') as f:
-        white_list.add(proxy_ip)
-        f.write(redsocks_template.render(proxy_type, proxy_ip, proxy_port, proxy_username, proxy_password))
+        f.write(redsocks_template.render(proxies.values()))
     kill_redsocks()
     time.sleep(1)
     redsocks_process = subprocess.Popen(
-        ['/data/data/fq.router/proxy-tools/redsocks', '-c', cfg_path], stderr=subprocess.STDOUT)
+        ['/data/data/fq.router/proxy-tools/redsocks', '-c', cfg_path],
+        stderr=subprocess.STDOUT, stdout=subprocess.PIPE, bufsize=1, close_fds=True)
     shutdown_hook.add(kill_redsocks)
     time.sleep(1)
-    pid = redsocks_process.pid
-    if not redsocks_process.poll():
-        LOGGER.info('redsocks seems started: %s' % pid)
-        proxy_marks.append(0x1babe)
+    if redsocks_process.poll() is None:
+        LOGGER.info('redsocks seems started: %s' % redsocks_process.pid)
+        t = threading.Thread(target=poll_redsocks_output)
+        t.daemon = True
+        t.start()
+    else:
+        LOGGER.error('redsocks output:')
+        LOGGER.error(redsocks_process.stdout.read())
+        raise Exception('failed to start redsocks')
 
 
-def resolve_proxy():
+def poll_redsocks_output():
+    should_log = False
+    for line in iter(redsocks_process.stdout.readline, b''):
+        if 'Dumping client list' in line:
+            should_log = True
+        if should_log:
+            LOGGER.info(line.strip())
+        if 'End of client list' in line:
+            should_log = False
+        dump_redsocks_client_list()
+    redsocks_process.stdout.close()
+    proxies.clear()
+
+
+def dump_redsocks_client_list():
+    global redsocks_dumped_at
+    if redsocks_dumped_at is None:
+        redsocks_dumped_at = time.time()
+    elif time.time() - redsocks_dumped_at > 60:
+        LOGGER.info('dump redsocks client list')
+        os.kill(redsocks_process.pid, signal.SIGUSR1)
+        redsocks_dumped_at = time.time()
+
+
+def resolve_proxy(mark, name):
     sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM) # UDP
-    request = dpkt.dns.DNS(qd=[dpkt.dns.DNS.Q(name='proxy1.fqrouter.com', type=dpkt.dns.DNS_TXT)])
+    request = dpkt.dns.DNS(qd=[dpkt.dns.DNS.Q(name=name, type=dpkt.dns.DNS_TXT)])
     sock.sendto(str(request), ('8.8.8.8', 53))
     data, addr = sock.recvfrom(1024)
     response = dpkt.dns.DNS(data)
     answer = response.an[0]
-    proxy_info = ''.join(e for e in answer.rdata if e.isalnum() or e in [':', '.'])
-    return proxy_info.split(':') # proxy_type:ip:port:username:password
+    connection_info = ''.join(e for e in answer.rdata if e.isalnum() or e in [':', '.'])
+    connection_info = connection_info.split(':') # proxy_type:ip:port:username:password
+    proxies[mark] = {
+        'clients': set(), # set((ip, port))
+        'connection_info': connection_info
+    }
+    add_to_white_list(connection_info[1])
 
 
 def kill_redsocks():
@@ -142,14 +180,14 @@ def handle_packet(nfqueue_element):
     try:
         ip_packet = dpkt.ip.IP(nfqueue_element.get_payload())
         ip = socket.inet_ntoa(ip_packet.dst)
-        if not proxy_marks:
+        mark = pick_proxy()
+        if not mark:
             nfqueue_element.accept()
         elif china_ip.is_china_ip(ip):
             nfqueue_element.accept()
         elif ip in white_list:
             nfqueue_element.accept()
         elif ip in black_list:
-            mark = random.choice(proxy_marks)
             nfqueue_element.set_mark(mark)
             nfqueue_element.repeat()
         else:
@@ -163,7 +201,6 @@ def handle_packet(nfqueue_element):
             ip_packet.tcp.sum = 0
             ip_packet.sum = 0
             raw_socket.sendto(str(ip_packet), (ip, 0)) # send probe, SYN ACK will received by tcp service
-            mark = random.choice(proxy_marks)
             nfqueue_element.set_mark(mark)
             nfqueue_element.repeat()
     except:
@@ -171,10 +208,20 @@ def handle_packet(nfqueue_element):
         nfqueue_element.accept()
 
 
+def pick_proxy():
+    if not proxies:
+        return None
+    return random.choice(proxies.keys())
+
+
 def add_to_black_list(ip):
     if ip not in black_list:
         LOGGER.info('add black list ip: %s' % ip)
         black_list.add(ip)
+        for mark, proxy in proxies.items():
+            if ip == proxy['connection_info'][1]:
+                LOGGER.error('proxy died: %s' % ip)
+                del proxies[mark]
     pending_list.pop(ip, None)
 
 

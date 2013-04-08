@@ -11,12 +11,12 @@ base {
 	 *   "file:/path/to/file"
 	 *   syslog:FACILITY  facility is any of "daemon", "local0"..."local7"
 	 */
-	log = "syslog:daemon";
+	log = "stderr";
 	// log = "file:/path/to/file";
 	// log = "syslog:local7";
 
 	// detach from console
-	daemon = on;
+	daemon = off;
 
 	/* Change uid, gid and root directory, these options require root
 	 * privilegies on startup.
@@ -73,7 +73,11 @@ redsocks {
 """
 
 
-def render(proxy_type, ip, port, username, password):
-    username = 'login = "%s";' % username if username else ''
-    password = 'password = "%s";' % password if password else ''
-    return '%s%s' % (CONF_BASE, CONF_REDSOCKS % (proxy_type, ip, port, username, password))
+def render(proxies):
+    sections = [CONF_BASE]
+    for proxy in proxies:
+        proxy_type, ip, port, username, password = proxy['connection_info']
+        username = 'login = "%s";' % username if username else ''
+        password = 'password = "%s";' % password if password else ''
+        sections.append(CONF_REDSOCKS % (proxy_type, ip, port, username, password))
+    return ''.join(sections)
