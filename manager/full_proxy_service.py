@@ -16,6 +16,7 @@ import iptables
 import network_interface
 import redsocks_template
 import china_ip
+import re
 
 
 LOGGER = logging.getLogger(__name__)
@@ -46,6 +47,7 @@ raw_socket.setsockopt(socket.SOL_IP, socket.IP_HDRINCL, 1)
 SO_MARK = 36
 raw_socket.setsockopt(socket.SOL_SOCKET, SO_MARK, 0xcafe)
 
+RE_REDSOCKS_CLIENT = re.compile(r'(\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}):(\d+)->')
 RULES = []
 white_list = set()
 black_list = set()
@@ -152,8 +154,11 @@ def poll_redsocks_output():
     for line in iter(redsocks_process.stdout.readline, b''):
         if 'Dumping client list' in line:
             should_log = True
-            # if should_log:
-        LOGGER.info(line.strip())
+        if should_log:
+            match = RE_REDSOCKS_CLIENT.search(line)
+            if match:
+                print(match.group(1), match.group(2))
+            LOGGER.info(line.strip())
         if 'End of client list' in line:
             should_log = False
         dump_redsocks_client_list()

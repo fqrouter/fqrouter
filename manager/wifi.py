@@ -114,13 +114,21 @@ def dump_wifi_status():
                     if 'supplicant' in cmdline:
                         LOGGER.info('pid %s: %s' % (pid, cmdline))
                         dump_wpa_supplicant(cmdline)
+        if os.path.exists(P2P_SUPPLICANT_CONF_PATH):
+            LOGGER.info('content of %s: ' % P2P_SUPPLICANT_CONF_PATH)
+            with open(P2P_SUPPLICANT_CONF_PATH) as f:
+                LOGGER.info(f.read())
+        if os.path.exists(WPA_SUPPLICANT_CONF_PATH):
+            LOGGER.info('content of %s: ' % WPA_SUPPLICANT_CONF_PATH)
+            with open(WPA_SUPPLICANT_CONF_PATH) as f:
+                LOGGER.info(f.read())
     except:
         LOGGER.exception('failed to dump wifi status')
 
 
 def dump_wpa_supplicant(cmdline):
     pos_start = cmdline.find('-c')
-    pos_end = cmdline.find('-', pos_start + 2)
+    pos_end = cmdline.find('\0', pos_start + 2)
     if -1 != pos_start and -1 != pos_end:
         cfg_path = cmdline[pos_start + 2: pos_end].replace('\0', '')
         cfg_path_exists = os.path.exists(cfg_path) if cfg_path else False
