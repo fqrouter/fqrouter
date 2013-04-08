@@ -47,6 +47,7 @@ RULES = []
 white_list = set()
 black_list = set()
 pending_list = {} # ip => started_at
+proxy_marks = []
 redsocks_process = None
 
 for iface in network_interface.list_data_network_interfaces():
@@ -87,6 +88,14 @@ def delete_iptables_rules():
 
 
 def start_full_proxy():
+    try:
+        start_redsocks()
+    except:
+        LOGGER.exception('failed to start redsocks')
+    handle_nfqueue()
+
+
+def start_redsocks():
     global redsocks_process
     cfg_path = '/data/data/fq.router/redsocks.conf'
     proxy_type, proxy_ip, proxy_port, proxy_username, proxy_password = resolve_proxy()
@@ -102,7 +111,7 @@ def start_full_proxy():
     pid = redsocks_process.pid
     if not redsocks_process.poll():
         LOGGER.info('redsocks seems started: %s' % pid)
-    handle_nfqueue()
+        proxy_marks.append(0x1babe)
 
 
 def resolve_proxy():
@@ -133,13 +142,15 @@ def handle_packet(nfqueue_element):
     try:
         ip_packet = dpkt.ip.IP(nfqueue_element.get_payload())
         ip = socket.inet_ntoa(ip_packet.dst)
-        if china_ip.is_china_ip(ip):
+        if not proxy_marks:
             nfqueue_element.accept()
-            return
-        if ip in white_list:
+        elif china_ip.is_china_ip(ip):
+            nfqueue_element.accept()
+        elif ip in white_list:
             nfqueue_element.accept()
         elif ip in black_list:
-            nfqueue_element.set_mark(0x1babe)
+            mark = random.choice(proxy_marks)
+            nfqueue_element.set_mark(mark)
             nfqueue_element.repeat()
         else:
             if ip in pending_list:
@@ -151,8 +162,9 @@ def handle_packet(nfqueue_element):
             ip_packet.tcp.sport = random.randint(1024, 65535)
             ip_packet.tcp.sum = 0
             ip_packet.sum = 0
-            raw_socket.sendto(str(ip_packet), (ip, 0)) # try direct
-            nfqueue_element.set_mark(0x1babe)
+            raw_socket.sendto(str(ip_packet), (ip, 0)) # send probe, SYN ACK will received by tcp service
+            mark = random.choice(proxy_marks)
+            nfqueue_element.set_mark(mark)
             nfqueue_element.repeat()
     except:
         LOGGER.exception('failed to handle packet')
