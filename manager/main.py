@@ -76,5 +76,5 @@ if '__main__' == __name__:
     tcp_service.run()
     full_proxy_service.run()
     LOGGER.info('services started')
-    application.listen(8888, '127.0.0.1')
+    application.listen(8318, '127.0.0.1')
     tornado.ioloop.IOLoop.instance().start()

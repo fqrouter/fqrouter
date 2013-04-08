@@ -51,7 +51,7 @@ public class MainActivity extends Activity implements StatusUpdater {
         manageButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                startActivity(new Intent(Intent.ACTION_VIEW, Uri.parse("http://127.0.0.1:8888")));
+                startActivity(new Intent(Intent.ACTION_VIEW, Uri.parse("http://127.0.0.1:8318")));
             }
         });
         Button exitButton = (Button) findViewById(R.id.exitButton);

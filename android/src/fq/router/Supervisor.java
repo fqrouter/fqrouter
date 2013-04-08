@@ -26,7 +26,7 @@ public class Supervisor implements Runnable {
 
     public static boolean ping() {
         try {
-            String content = IOUtils.readAll(new URL("http://127.0.0.1:8888/ping").openStream());
+            String content = IOUtils.readAll(new URL("http://127.0.0.1:8318/ping").openStream());
             if ("PONG".equals(content)) {
                 return true;
             } else {
