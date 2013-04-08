@@ -56,28 +56,54 @@ redsocks_dumped_at = None
 
 for iface in network_interface.list_data_network_interfaces():
     RULES.append((
-        {'target': 'fp_OUTPUT', 'iface_out': iface},
-        ('nat', 'OUTPUT', '-o %s -j fp_OUTPUT' % iface)
+        {'target': 'fp_OUTPUT', 'iface_out': iface, 'extra': 'tcp dpt:80'},
+        ('nat', 'OUTPUT', '-o %s -p tcp --dport 80 -j fp_OUTPUT' % iface)
     ))
+    RULES.append((
+        {'target': 'fp_OUTPUT', 'iface_out': iface, 'extra': 'tcp dpt:443'},
+        ('nat', 'OUTPUT', '-o %s -p tcp --dport 443 -j fp_OUTPUT' % iface)
+    ))
+RULES.append((
+    {'target': 'fp_PREROUTING', 'extra': 'tcp dpt:80'},
+    ('nat', 'PREROUTING', '-p tcp -s 192.168.49.0/24 --dport 80 -j fp_PREROUTING')
+))
+RULES.append((
+    {'target': 'fp_PREROUTING', 'extra': 'tcp dpt:443'},
+    ('nat', 'PREROUTING', '-p tcp -s 192.168.49.0/24 --dport 443 -j fp_PREROUTING')
+))
+
+
+def add_full_proxy_chain(is_prerouting):
+    chain_name = 'fp_PREROUTING' if is_prerouting else 'fp_OUTPUT'
     for lan_ip_range in [
         '0.0.0.0/8', '10.0.0.0/8', '127.0.0.0/8', '169.254.0.0/16',
         '172.16.0.0/12', '192.168.0.0/16', '224.0.0.0/4', '240.0.0.0/4']:
         RULES.append((
-            {'target': 'RETURN', 'destination': lan_ip_range, 'iface_out': iface},
-            ('nat', 'fp_OUTPUT', '-o %s -d %s -j RETURN' % (iface, lan_ip_range))
+            {'target': 'RETURN', 'destination': lan_ip_range},
+            ('nat', chain_name, '-d %s -j RETURN' % lan_ip_range)
         ))
     RULES.append((
-        {'target': 'RETURN', 'iface_out': iface, 'extra': 'mark match 0xcafe'},
-        ('nat', 'fp_OUTPUT', '-o %s -p tcp -m mark --mark 0xcafe -j RETURN' % iface)
+        {'target': 'RETURN', 'extra': 'mark match 0xcafe'},
+        ('nat', chain_name, '-p tcp -m mark --mark 0xcafe -j RETURN')
     ))
     RULES.append((
-        {'target': 'NFQUEUE', 'iface_out': iface, 'extra': 'mark match ! 0xbabe/0xffff NFQUEUE num 3'},
-        ('nat', 'fp_OUTPUT', '-o %s -p tcp -m mark ! --mark 0xbabe/0xffff -j NFQUEUE --queue-num 3' % iface)
+        {'target': 'NFQUEUE', 'extra': 'mark match ! 0xbabe/0xffff NFQUEUE num 3'},
+        ('nat', chain_name, '-p tcp -m mark ! --mark 0xbabe/0xffff -j NFQUEUE --queue-num 3')
     ))
-    RULES.append((
-        {'target': 'REDIRECT', 'iface_out': iface, 'extra': 'mark match 0x1babe redir ports 12345'},
-        ('nat', 'fp_OUTPUT', '-o %s -p tcp -m mark --mark 0x1babe -j REDIRECT --to-ports 12345' % iface)
-    ))
+    if is_prerouting:
+        RULES.append((
+            {'target': 'DNAT', 'extra': 'mark match 0x1babe to:192.168.49.1:12345'},
+            ('nat', chain_name, '-p tcp -m mark --mark 0x1babe -j DNAT --to-destination 192.168.49.1:12345')
+        ))
+    else:
+        RULES.append((
+            {'target': 'REDIRECT', 'extra': 'mark match 0x1babe redir ports 12345'},
+            ('nat', chain_name, '-p tcp -m mark --mark 0x1babe -j REDIRECT --to-ports 12345')
+        ))
+
+
+add_full_proxy_chain(is_prerouting=False)
+add_full_proxy_chain(is_prerouting=True)
 
 
 def insert_iptables_rules():
@@ -87,8 +113,8 @@ def insert_iptables_rules():
 
 def delete_iptables_rules():
     iptables.delete_rules(RULES)
+    iptables.delete_chain('fp_PREROUTING')
     iptables.delete_chain('fp_OUTPUT')
-    iptables.delete_chain('fp_FORWARD')
 
 
 def start_full_proxy():
@@ -105,13 +131,11 @@ def start_redsocks():
     resolve_proxy(0x1babe, 'proxy1.fqrouter.com')
     with open(cfg_path, 'w') as f:
         f.write(redsocks_template.render(proxies.values()))
-    kill_redsocks()
-    time.sleep(1)
     redsocks_process = subprocess.Popen(
         ['/data/data/fq.router/proxy-tools/redsocks', '-c', cfg_path],
         stderr=subprocess.STDOUT, stdout=subprocess.PIPE, bufsize=1, close_fds=True)
     shutdown_hook.add(kill_redsocks)
-    time.sleep(1)
+    time.sleep(0.5)
     if redsocks_process.poll() is None:
         LOGGER.info('redsocks seems started: %s' % redsocks_process.pid)
         t = threading.Thread(target=poll_redsocks_output)
@@ -128,8 +152,8 @@ def poll_redsocks_output():
     for line in iter(redsocks_process.stdout.readline, b''):
         if 'Dumping client list' in line:
             should_log = True
-        if should_log:
-            LOGGER.info(line.strip())
+            # if should_log:
+        LOGGER.info(line.strip())
         if 'End of client list' in line:
             should_log = False
         dump_redsocks_client_list()
