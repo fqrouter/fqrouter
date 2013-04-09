@@ -52,16 +52,31 @@ class DnsServiceStatus(object):
 dns_service_status = DnsServiceStatus()
 domains = {} # ip => domain
 
-CLEAN_DNS = '209.244.0.3'
+PRIMARY_DNS = '8.8.8.8'
+PRIMARY_DNS_MARK = 0x1feed
+FOR_STUPID_GOOGLE_DNS = '199.91.73.222' # v2ex dns resolves google.com and youtube.com better
+FOR_STUPID_GOOGLE_DNS_MARK = 0x2feed
 
 RULES = []
 for iface in network_interface.list_data_network_interfaces():
-    # this rule make sure we always query from the "CLEAN" dns
-    RULE_REDIRECT_TO_CLEAN_DNS = (
-        {'target': 'DNAT', 'iface_out': iface, 'extra': 'udp dpt:53 to:%s:53' % CLEAN_DNS},
-        ('nat', 'OUTPUT', '-o %s -p udp --dport 53 -j DNAT --to-destination %s:53' % (iface, CLEAN_DNS))
+    RULES.append((
+        {'target': 'NFQUEUE', 'iface_out': iface, 'extra': 'udp dpt:53 mark match ! 0xfeed/0xffff NFQUEUE num 1'},
+        ('nat', 'OUTPUT', '-o %s -p udp --dport 53 -m mark ! --mark 0xfeed/0xffff -j NFQUEUE --queue-num 1' % iface)
+    ))
+    RULE_REDIRECT_TO_PRIMARY_DNS = (
+        {'target': 'DNAT', 'iface_out': iface, 'extra':
+            'udp dpt:53 mark match 0x1feed to:%s:53' % PRIMARY_DNS},
+        ('nat', 'OUTPUT', '-o %s -p udp --dport 53 -m mark --mark 0x1feed '
+                          '-j DNAT --to-destination %s:53' % (iface, PRIMARY_DNS))
     )
-    RULES.append(RULE_REDIRECT_TO_CLEAN_DNS)
+    RULES.append(RULE_REDIRECT_TO_PRIMARY_DNS)
+    RULE_REDIRECT_TO_FOR_STUPID_GOOGLE_DNS = (
+        {'target': 'DNAT', 'iface_out': iface, 'extra':
+            'udp dpt:53 mark match 0x2feed to:%s:53' % FOR_STUPID_GOOGLE_DNS},
+        ('nat', 'OUTPUT', '-o %s -p udp --dport 53 -m mark --mark 0x2feed '
+                          '-j DNAT --to-destination %s:53' % (iface, FOR_STUPID_GOOGLE_DNS))
+    )
+    RULES.append(RULE_REDIRECT_TO_FOR_STUPID_GOOGLE_DNS)
     RULE_DROP_PACKET = (
         {'target': 'NFQUEUE', 'iface_in': iface, 'extra': 'udp spt:53 NFQUEUE num 1'},
         ('filter', 'INPUT', '-i %s -p udp --sport 53 -j NFQUEUE --queue-num 1' % iface)
@@ -132,14 +147,24 @@ def handle_packet(nfqueue_element):
         dns_packet = dpkt.dns.DNS(ip_packet.udp.data)
         questions = [question for question in dns_packet.qd if question.type == dpkt.dns.DNS_A]
         dns_packet.domain = questions[0].name if questions else None
-        if contains_wrong_answer(dns_packet):
-        # after the fake packet dropped, the real answer can be accepted by the client
-            LOGGER.debug('drop fake dns packet: %s' % repr(dns_packet))
-            jamming_event.record('%s: dns hijacking' % dns_packet.domain)
-            nfqueue_element.drop()
-            return
-        nfqueue_element.accept()
-        dns_service_status.last_activity_at = time.time()
+        if 53 == ip_packet.udp.dport:
+            if dns_packet.domain and ('google.com' in dns_packet.domain or 'youtube.com' in dns_packet.domain
+                                      or 'googleusercontent.com' in dns_packet.domain):
+                LOGGER.info('resolve stupid %s using: %s' % (dns_packet.domain, FOR_STUPID_GOOGLE_DNS))
+                nfqueue_element.set_mark(FOR_STUPID_GOOGLE_DNS_MARK)
+                nfqueue_element.repeat()
+            else:
+                nfqueue_element.set_mark(PRIMARY_DNS_MARK)
+                nfqueue_element.repeat()
+        else:
+            if contains_wrong_answer(dns_packet):
+            # after the fake packet dropped, the real answer can be accepted by the client
+                LOGGER.debug('drop fake dns packet: %s' % repr(dns_packet))
+                jamming_event.record('%s: dns hijacking' % dns_packet.domain)
+                nfqueue_element.drop()
+                return
+            nfqueue_element.accept()
+            dns_service_status.last_activity_at = time.time()
     except:
         LOGGER.exception('failed to handle packet')
         nfqueue_element.accept()

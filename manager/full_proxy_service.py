@@ -186,10 +186,10 @@ def poll_redsocks_output():
                     port = int(match.group(2))
                     for proxy in proxies.values():
                         if (ip, port) in proxy['clients']:
-                            LOGGER.info(line.strip())
-                            LOGGER.info('add penalty: %s' % str(proxy['connection_info']))
+                            LOGGER.error(line.strip())
+                            LOGGER.error('add penalty: %s' % str(proxy['connection_info']))
                             proxy['rank'] += 256 # 128, 64, 32, 16
-                            proxy['pre_rank'] += 256
+                            proxy['pre_rank'] += 256 # 128, 64, 32, 16
         if 'End of client list' in line:
             update_proxy_status(current_instance, current_clients)
             current_instance = None
@@ -199,11 +199,16 @@ def poll_redsocks_output():
 
 
 def update_proxy_status(current_instance, current_clients):
-    for proxy in proxies.values():
+    for mark, proxy in proxies.items():
         if proxy['local_port'] == current_instance:
             penalty = int(proxy['pre_rank'] / 2)
             rank = len(current_clients) + penalty # factor in the previous performance
-            LOGGER.info('update proxy rank: [%s+%s] %s' % (proxy['pre_rank'], penalty, str(proxy['connection_info'])))
+            if rank > 500:
+                LOGGER.error('purge proxy 0x%x: rank is %s' % (mark, rank))
+                del proxies[mark]
+                return
+            LOGGER.info('update proxy 0x%x rank: [%s+%s] %s' %
+                        (mark, proxy['pre_rank'], penalty, str(proxy['connection_info'])))
             proxy['rank'] = rank
             proxy['pre_rank'] = rank
             proxy['clients'] = current_clients
@@ -215,7 +220,7 @@ def dump_redsocks_client_list():
     global redsocks_dumped_at
     if redsocks_dumped_at is None:
         redsocks_dumped_at = time.time()
-    elif time.time() - redsocks_dumped_at > 30:
+    elif time.time() - redsocks_dumped_at > 60:
         LOGGER.info('dump redsocks client list')
         os.kill(redsocks_process.pid, signal.SIGUSR1)
         redsocks_dumped_at = time.time()
@@ -261,30 +266,25 @@ def handle_packet(nfqueue_element):
     try:
         ip_packet = dpkt.ip.IP(nfqueue_element.get_payload())
         ip = socket.inet_ntoa(ip_packet.dst)
-        mark = pick_proxy(ip_packet)
-        if not mark:
-            nfqueue_element.accept()
-        elif china_ip.is_china_ip(ip):
+        if china_ip.is_china_ip(ip):
             nfqueue_element.accept()
         elif ip in black_list:
-            nfqueue_element.set_mark(mark)
-            nfqueue_element.repeat()
+            set_verdict_proxy(nfqueue_element, ip_packet)
         elif ip in white_list:
             nfqueue_element.accept()
         else:
-            if ip in pending_list:
-                if time.time() - pending_list[ip] > 10:
-                    add_to_black_list(ip)
-            else:
-                pending_list[ip] = time.time()
-            ip_packet.tcp.sport = random.randint(1024, 65535)
-            ip_packet.tcp.sum = 0
-            ip_packet.sum = 0
-            raw_socket.sendto(str(ip_packet), (ip, 0)) # send probe, SYN ACK will received by tcp service
-            nfqueue_element.set_mark(mark)
-            nfqueue_element.repeat()
+            nfqueue_element.accept()
     except:
         LOGGER.exception('failed to handle packet')
+        nfqueue_element.accept()
+
+
+def set_verdict_proxy(nfqueue_element, ip_packet):
+    mark = pick_proxy(ip_packet)
+    if mark:
+        nfqueue_element.set_mark(mark)
+        nfqueue_element.repeat()
+    else:
         nfqueue_element.accept()
 
 
@@ -300,7 +300,7 @@ def pick_proxy(ip_packet):
     proxy = proxies[mark]
     proxy['rank'] += 1
     proxy['clients'].add((ip, port))
-    LOGGER.debug('full proxy via 0x%x [%s] %s: %s:%s => %s:%s' % (
+    LOGGER.info('full proxy via 0x%x [%s] %s: %s:%s => %s:%s' % (
         mark, proxy['rank'], str(proxy['connection_info']),
         ip, port, socket.inet_ntoa(ip_packet.dst), ip_packet.tcp.dport))
     return mark

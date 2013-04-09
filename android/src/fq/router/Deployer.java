@@ -179,7 +179,7 @@ public class Deployer {
         statusUpdater.appendLog("link sh to busybox");
         try {
 
-            ShellUtils.execute(BUSYBOX_FILE.getAbsolutePath() + " ln -s ",
+            ShellUtils.execute(BUSYBOX_FILE.getAbsolutePath(), "ln", "-s",
                     BUSYBOX_FILE.getAbsolutePath(), SH_FILE.getAbsolutePath());
             statusUpdater.appendLog("successfully linked sh to busybox");
         } catch (Exception e) {
