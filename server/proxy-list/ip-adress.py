@@ -17,3 +17,4 @@ for td in d('td').items():
         ip = match.group(1)
         port = match.group(2)
         print('%s:%s' % (ip, port))
+print('')

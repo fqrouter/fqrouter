@@ -106,3 +106,4 @@ for i in range(10):
 
 for ip, port, elapsed in sorted(proxies, key=lambda proxy: proxy[2])[:10]:
     print('%s:%s' % (ip, port))
+print('')
