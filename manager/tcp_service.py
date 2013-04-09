@@ -40,6 +40,7 @@ def clean():
 MIN_TTL_TO_GFW = 8
 MAX_TTL_TO_GFW = 14
 DEFAULT_TTL_TO_GFW = 9
+SAFETY_DELTA = 0 # the ttl detected - safety delta will be the one used
 RANGE_OF_TTL_TO_GFW = range(MIN_TTL_TO_GFW, MAX_TTL_TO_GFW + 1)
 
 RULES = []
@@ -289,7 +290,8 @@ def handle_syn_ack(syn_ack):
         if timeouted:
             international_ip = uncertain_ip
             LOGGER.info('treat ip as international due to timeout: %s' % international_ip)
-            add_international_ip(international_ip, DEFAULT_TTL_TO_GFW)
+            ttl_to_gfw = pending_connection.get_ttl_to_gfw(international_ip, exact_match_only=False)
+            add_international_ip(international_ip, (ttl_to_gfw or DEFAULT_TTL_TO_GFW) - SAFETY_DELTA)
         return False
     elif china_ip.is_china_ip(uncertain_ip):
         domestic_ip = uncertain_ip
@@ -354,8 +356,8 @@ def handle_time_exceeded(ip_packet):
         pending_connection.record_router(dst_ip, ttl, is_china_router)
         ttl_to_gfw = pending_connection.get_ttl_to_gfw(dst_ip)
         if ttl_to_gfw:
-            LOGGER.info('found ttl to gfw: %s %s' % (dst_ip, ttl_to_gfw))
-            add_international_ip(dst_ip, ttl_to_gfw)
+            LOGGER.info('found ttl to gfw: %s %s' % (dst_ip, ttl_to_gfw - SAFETY_DELTA))
+            add_international_ip(dst_ip, ttl_to_gfw - SAFETY_DELTA)
 
 
 def add_international_ip(international_ip, ttl):
@@ -405,14 +407,14 @@ def inject_scrambled_http_get_to_let_gfw_type2_miss_keyword(psh_ack, pos, ttl_to
     raw_socket.sendto(str(second_packet), (dst, 0))
 
     fake_first_packet = dpkt.ip.IP(str(psh_ack))
-    fake_first_packet.ttl = 13
+    fake_first_packet.ttl = ttl_to_gfw
     fake_first_packet.tcp.data = (len(first_part) + 10) * '0'
     fake_first_packet.sum = 0
     fake_first_packet.tcp.sum = 0
     raw_socket.sendto(str(fake_first_packet), (dst, 0))
 
     fake_second_packet = dpkt.ip.IP(str(psh_ack))
-    fake_second_packet.ttl = 13
+    fake_second_packet.ttl = ttl_to_gfw
     fake_second_packet.tcp.seq += len(first_part) + 10
     fake_second_packet.tcp.data = ': baidu.com\r\n\r\n'
     fake_second_packet.sum = 0

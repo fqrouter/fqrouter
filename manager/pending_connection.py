@@ -46,17 +46,25 @@ def pop_syn_ack_packets(ip):
     return packets
 
 
-def get_ttl_to_gfw(ip):
+def get_ttl_to_gfw(ip, exact_match_only=True):
     connection = pending.get(ip)
     if connection is None:
         return None
     routers = connection.routers
+    max_china_ttl = None
     for ttl in sorted(routers.keys()):
         next = routers.get(ttl + 1)
         if next is None:
             continue
         # ttl 8 is china, ttl 9 is not
         # then we think 8 is the ttl to gfw
-        if routers[ttl] and not next:
-            return ttl
-    return None
+        if routers[ttl]:
+            max_china_ttl = ttl
+            if next or next is None:
+                continue
+            else:
+                return ttl
+    if exact_match_only:
+        return None
+    else:
+        return max_china_ttl

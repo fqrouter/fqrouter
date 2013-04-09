@@ -33,7 +33,7 @@ def add_proxy(line):
     if manager.china_ip.is_china_ip(ip):
         log('skip china ip: %s' % ip)
     else:
-        proxies.add((ip, port)) # ip:port
+        proxies.add((ip, port, 0))
 
 
 if args.proxy:
@@ -53,16 +53,17 @@ if args.proxy_list:
 
 
 class Checker(object):
-    def __init__(self, ip, port):
+    def __init__(self, ip, port, elapsed):
         self.ip = ip
         self.port = port
+        self.elapsed = elapsed
         self.proc = subprocess.Popen(
-            shlex.split('curl --proxy %s:%s -k https://www.paypal.com' % (ip, port)),
+            shlex.split('curl --proxy %s:%s -k https://www.amazon.com/404' % (ip, port)),
             stderr=subprocess.STDOUT, stdout=subprocess.PIPE)
         self.started_at = time.time()
 
     def is_ok(self):
-        if 0 == self.proc.poll():
+        if 0 == self.proc.poll() and 'Amazon.com' in self.proc.stdout.read():
             return round(time.time() - self.started_at, 2)
         return 0
 
@@ -77,28 +78,31 @@ class Checker(object):
 
 
 checkers = []
-ok_proxies = {} # time => (ip, port)
-while len(proxies) + len(checkers):
-    for checker in list(checkers):
-        ok = checker.is_ok()
-        if ok:
-            log('OK[%s] %s:%s' % (ok, checker.ip, checker.port))
-            ok_proxies[ok] = (checker.ip, checker.port)
-            checkers.remove(checker)
-        elif checker.is_failed():
-            log('FAILED %s:%s' % (checker.ip, checker.port))
-            checkers.remove(checker)
-        elif checker.is_timed_out():
-            log('TIMEOUT %s:%s' % (checker.ip, checker.port))
-            checkers.remove(checker)
-            checker.kill()
-    new_checkers_count = 4 - len(checkers)
-    for i in range(new_checkers_count):
-        if proxies:
-            ip, port = proxies.pop()
-            checkers.append(Checker(ip, port))
-    time.sleep(0.2)
+checked_proxies = []
+for i in range(10):
+    log('PASS %s' % (i + 1))
+    while len(proxies) + len(checkers):
+        for checker in list(checkers):
+            ok = checker.is_ok()
+            if ok:
+                log('OK[%s] %s:%s' % (ok, checker.ip, checker.port))
+                checked_proxies.append((checker.ip, checker.port, checker.elapsed + ok))
+                checkers.remove(checker)
+            elif checker.is_failed():
+                log('FAILED %s:%s' % (checker.ip, checker.port))
+                checkers.remove(checker)
+            elif checker.is_timed_out():
+                log('TIMEOUT %s:%s' % (checker.ip, checker.port))
+                checkers.remove(checker)
+                checker.kill()
+        new_checkers_count = 4 - len(checkers)
+        for i in range(new_checkers_count):
+            if proxies:
+                ip, port, elapsed = proxies.pop()
+                checkers.append(Checker(ip, port, elapsed))
+        time.sleep(0.2)
+    proxies = checked_proxies
+    checked_proxies = []
 
-for key in sorted(ok_proxies.keys())[:3]:
-    ip, port = ok_proxies[key]
+for ip, port, elapsed in sorted(proxies, key=lambda proxy: proxy[2])[:10]:
     print('%s:%s' % (ip, port))

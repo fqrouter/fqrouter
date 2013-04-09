@@ -2,7 +2,6 @@
 import urllib2
 import re
 import sys
-import os
 
 import lxml.html
 from pyquery.pyquery import PyQuery
@@ -11,7 +10,6 @@ if len(sys.argv) > 1:
     page = sys.argv[1]
 else:
     page = 1
-sys.path.append(os.path.join(os.path.dirname(__file__), '../../'))
 
 RE_PROXY = re.compile(r'(\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}) document.write\(":"(.*)\)')
 DICT = {

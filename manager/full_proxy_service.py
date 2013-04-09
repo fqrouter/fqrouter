@@ -94,7 +94,7 @@ def add_full_proxy_chain(is_prerouting):
         {'target': 'NFQUEUE', 'extra': 'mark match ! 0xbabe/0xffff NFQUEUE num 3'},
         ('nat', chain_name, '-p tcp -m mark ! --mark 0xbabe/0xffff -j NFQUEUE --queue-num 3')
     ))
-    for i in [1, 2, 3]:
+    for i in [1, 2, 3, 4, 5, 6, 7, 8, 9]:
         if is_prerouting:
             RULES.append((
                 {'target': 'DNAT', 'extra': 'mark match 0x%sbabe to:192.168.49.1:1983%s' % (i, i)},
@@ -138,6 +138,12 @@ def start_redsocks():
     resolve_proxy(0x1babe, 19831, 'proxy2.fqrouter.com')
     resolve_proxy(0x2babe, 19832, 'proxy3.fqrouter.com')
     resolve_proxy(0x3babe, 19833, 'proxy4.fqrouter.com')
+    resolve_proxy(0x4babe, 19834, 'proxy5.fqrouter.com')
+    resolve_proxy(0x5babe, 19835, 'proxy6.fqrouter.com')
+    resolve_proxy(0x6babe, 19836, 'proxy7.fqrouter.com')
+    resolve_proxy(0x7babe, 19837, 'proxy8.fqrouter.com')
+    resolve_proxy(0x8babe, 19838, 'proxy9.fqrouter.com')
+    resolve_proxy(0x9babe, 19839, 'proxy10.fqrouter.com')
     with open(cfg_path, 'w') as f:
         f.write(redsocks_template.render(proxies.values()))
     redsocks_process = subprocess.Popen(
@@ -172,22 +178,35 @@ def poll_redsocks_output():
                 port = int(match.group(2))
                 current_clients.add((ip, port))
                 LOGGER.debug('client %s:%s' % (ip, port))
+        else:
+            if 'http-connect.c:149' in line:
+                match = RE_REDSOCKS_CLIENT.search(line)
+                if match:
+                    ip = match.group(1)
+                    port = int(match.group(2))
+                    for proxy in proxies.values():
+                        if (ip, port) in proxy['clients']:
+                            LOGGER.info(line.strip())
+                            LOGGER.info('add penalty: %s' % str(proxy['connection_info']))
+                            proxy['rank'] += 256 # 128, 64, 32, 16
+                            proxy['pre_rank'] += 256
         if 'End of client list' in line:
-            update_proxy_rank(current_instance, len(current_clients))
+            update_proxy_status(current_instance, current_clients)
             current_instance = None
         dump_redsocks_client_list()
     redsocks_process.stdout.close()
     proxies.clear()
 
 
-def update_proxy_rank(current_instance, current_clients_count):
+def update_proxy_status(current_instance, current_clients):
     for proxy in proxies.values():
         if proxy['local_port'] == current_instance:
             penalty = int(proxy['pre_rank'] / 2)
-            rank = current_clients_count + penalty # factor in the previous performance
+            rank = len(current_clients) + penalty # factor in the previous performance
             LOGGER.info('update proxy rank: [%s+%s] %s' % (proxy['pre_rank'], penalty, str(proxy['connection_info'])))
             proxy['rank'] = rank
             proxy['pre_rank'] = rank
+            proxy['clients'] = current_clients
             return
     LOGGER.debug('this redsocks instance has been removed from proxy list')
 
@@ -214,13 +233,15 @@ def resolve_proxy(mark, local_port, name):
         connection_info = ''.join(e for e in answer.rdata if e.isalnum() or e in [':', '.', '-'])
         connection_info = connection_info.split(':') # proxy_type:ip:port:username:password
         proxies[mark] = {
+            'clients': set(),
             'rank': 0, # lower is better
             'pre_rank': 0, # lower is better
             'connection_info': connection_info,
             'local_port': local_port
         }
+        LOGGER.info('resolved proxy 0x%x: %s' % (mark, proxies[mark]))
     except:
-        LOGGER.exception('failed to resolve proxy: %s %s %s' % (mark, local_port, name))
+        LOGGER.exception('failed to resolve proxy 0x%x: %s %s' % (mark, local_port, name))
 
 
 def kill_redsocks():
@@ -278,6 +299,7 @@ def pick_proxy(ip_packet):
     port = ip_packet.tcp.sport
     proxy = proxies[mark]
     proxy['rank'] += 1
+    proxy['clients'].add((ip, port))
     LOGGER.debug('full proxy via 0x%x [%s] %s: %s:%s => %s:%s' % (
         mark, proxy['rank'], str(proxy['connection_info']),
         ip, port, socket.inet_ntoa(ip_packet.dst), ip_packet.tcp.dport))
