@@ -184,6 +184,10 @@ def stop_hotspot(iface):
 
 
 def start_hotspot():
+    try:
+        shell_execute('start p2p_supplicant')
+    except:
+        LOGGER.exception('failed to start p2p_supplicant')
     wifi_chipset = get_wifi_chipset()
     if wifi_chipset.endswith('4330') or wifi_chipset.endswith('4334') or wifi_chipset.endswith('4324'):
     # only tested on sdio:c00v02D0d4330
