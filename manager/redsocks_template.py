@@ -44,7 +44,7 @@ redsocks {
 	 * `local_*' are used as port to redirect to.
 	 */
 	local_ip = 0.0.0.0;
-	local_port = 12345;
+	local_port = %s;
 
 	// listen() queue length. Default value is SOMAXCONN and it should be
 	// good enough for most of us.
@@ -79,5 +79,5 @@ def render(proxies):
         proxy_type, ip, port, username, password = proxy['connection_info']
         username = 'login = "%s";' % username if username else ''
         password = 'password = "%s";' % password if password else ''
-        sections.append(CONF_REDSOCKS % (proxy_type, ip, port, username, password))
+        sections.append(CONF_REDSOCKS % (proxy['local_port'], proxy_type, ip, port, username, password))
     return ''.join(sections)

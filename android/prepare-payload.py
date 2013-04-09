@@ -25,6 +25,7 @@ CAPTURE_LOG_SH = os.path.join(ASSETS_DIR, 'capture-log.sh')
 CAPTURE_LOG_SH_SRC = os.path.join(SRC_DIR, 'capture-log.sh')
 PROXY_TOOLS_DIR = os.path.join(PAYLOAD_DIR, 'proxy-tools')
 REDSOCKS_FILE = os.path.join(PROXY_TOOLS_DIR, 'redsocks')
+REDSOCKS_FILE_SRC = os.path.join(ROOT_DIR, 'libs', 'armeabi', 'redsocks')
 MANAGER_DIR = os.path.join(ROOT_DIR, '../manager')
 
 
@@ -45,7 +46,7 @@ def main():
     untargz_dpkt()
     download_busybox()
     copy_capture_log_sh()
-    download_redsocks()
+    copy_redsocks()
     zip_payload()
 
 
@@ -117,10 +118,10 @@ def copy_capture_log_sh():
     subprocess.check_call('cp %s %s' % (CAPTURE_LOG_SH_SRC, CAPTURE_LOG_SH), shell=True)
 
 
-def download_redsocks():
+def copy_redsocks():
     if os.path.exists(REDSOCKS_FILE):
         return
-    urllib.urlretrieve('https://github.com/madeye/proxydroid/blob/master/assets/redsocks?raw=true', REDSOCKS_FILE)
+    subprocess.check_call('cp %s %s' % (REDSOCKS_FILE_SRC, REDSOCKS_FILE), shell=True)
 
 
 def zip_payload():

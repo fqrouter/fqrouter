@@ -6,3 +6,9 @@ android/payload
 android/assets
 android/gen
 android/out
+android/jni/libevent
+android/jni/*.tar.gz
+android/jni/openssl
+android/jni/redsocks
+android/libs
+android/obj

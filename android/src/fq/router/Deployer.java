@@ -111,6 +111,7 @@ public class Deployer {
             statusUpdater.appendLog("clear data dir");
             deleteDirectory(DATA_DIR + "/python");
             deleteDirectory(DATA_DIR + "/wifi-tools");
+            deleteDirectory(DATA_DIR + "/proxy-tools");
             deleteDirectory(DATA_DIR + "/manager");
             deleteDirectory(DATA_DIR + "/busybox");
         }
@@ -178,7 +179,8 @@ public class Deployer {
         statusUpdater.appendLog("link sh to busybox");
         try {
 
-            ShellUtils.execute("/system/bin/ln", BUSYBOX_FILE.getAbsolutePath(), SH_FILE.getAbsolutePath());
+            ShellUtils.execute(BUSYBOX_FILE.getAbsolutePath() + " ln -s ",
+                    BUSYBOX_FILE.getAbsolutePath(), SH_FILE.getAbsolutePath());
             statusUpdater.appendLog("successfully linked sh to busybox");
         } catch (Exception e) {
             Log.e("fqrouter", "failed to link sh to busybox", e);

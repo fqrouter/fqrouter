@@ -8,6 +8,7 @@ import random
 import os
 import signal
 import threading
+import re
 
 import dpkt
 
@@ -16,7 +17,6 @@ import iptables
 import network_interface
 import redsocks_template
 import china_ip
-import re
 
 
 LOGGER = logging.getLogger(__name__)
@@ -47,7 +47,9 @@ raw_socket.setsockopt(socket.SOL_IP, socket.IP_HDRINCL, 1)
 SO_MARK = 36
 raw_socket.setsockopt(socket.SOL_SOCKET, SO_MARK, 0xcafe)
 
-RE_REDSOCKS_CLIENT = re.compile(r'(\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}):(\d+)->')
+RE_IP_PORT = r'(\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}):(\d+)'
+RE_REDSOCKS_CLIENT = re.compile(RE_IP_PORT + '->')
+RE_REDSOCKS_INSTANCE = re.compile(r'Dumping client list for instance ' + RE_IP_PORT)
 RULES = []
 white_list = set()
 black_list = set()
@@ -92,16 +94,18 @@ def add_full_proxy_chain(is_prerouting):
         {'target': 'NFQUEUE', 'extra': 'mark match ! 0xbabe/0xffff NFQUEUE num 3'},
         ('nat', chain_name, '-p tcp -m mark ! --mark 0xbabe/0xffff -j NFQUEUE --queue-num 3')
     ))
-    if is_prerouting:
-        RULES.append((
-            {'target': 'DNAT', 'extra': 'mark match 0x1babe to:192.168.49.1:12345'},
-            ('nat', chain_name, '-p tcp -m mark --mark 0x1babe -j DNAT --to-destination 192.168.49.1:12345')
-        ))
-    else:
-        RULES.append((
-            {'target': 'REDIRECT', 'extra': 'mark match 0x1babe redir ports 12345'},
-            ('nat', chain_name, '-p tcp -m mark --mark 0x1babe -j REDIRECT --to-ports 12345')
-        ))
+    for i in [1, 2, 3]:
+        if is_prerouting:
+            RULES.append((
+                {'target': 'DNAT', 'extra': 'mark match 0x%sbabe to:192.168.49.1:1983%s' % (i, i)},
+                ('nat', chain_name, '-p tcp -m mark --mark 0x%sbabe -j DNAT'
+                                    ' --to-destination 192.168.49.1:1983%s' % (i, i))
+            ))
+        else:
+            RULES.append((
+                {'target': 'REDIRECT', 'extra': 'mark match 0x%sbabe redir ports 1983%s' % (i, i)},
+                ('nat', chain_name, '-p tcp -m mark --mark 0x%sbabe -j REDIRECT --to-ports 1983%s' % (i, i))
+            ))
 
 
 add_full_proxy_chain(is_prerouting=False)
@@ -124,13 +128,16 @@ def start_full_proxy():
         start_redsocks()
     except:
         LOGGER.exception('failed to start redsocks')
+        proxies.clear()
     handle_nfqueue()
 
 
 def start_redsocks():
     global redsocks_process
     cfg_path = '/data/data/fq.router/redsocks.conf'
-    resolve_proxy(0x1babe, 'proxy1.fqrouter.com')
+    resolve_proxy(0x1babe, 19831, 'proxy2.fqrouter.com')
+    resolve_proxy(0x2babe, 19832, 'proxy3.fqrouter.com')
+    resolve_proxy(0x3babe, 19833, 'proxy4.fqrouter.com')
     with open(cfg_path, 'w') as f:
         f.write(redsocks_template.render(proxies.values()))
     redsocks_process = subprocess.Popen(
@@ -150,45 +157,70 @@ def start_redsocks():
 
 
 def poll_redsocks_output():
-    should_log = False
+    current_instance = None
+    current_clients = set()
     for line in iter(redsocks_process.stdout.readline, b''):
-        if 'Dumping client list' in line:
-            should_log = True
-        if should_log:
+        match = RE_REDSOCKS_INSTANCE.search(line)
+        if match:
+            current_instance = int(match.group(2))
+            current_clients = set()
+            LOGGER.debug('dump redsocks instance %s' % current_instance)
+        if current_instance:
             match = RE_REDSOCKS_CLIENT.search(line)
             if match:
-                print(match.group(1), match.group(2))
-            LOGGER.info(line.strip())
+                ip = match.group(1)
+                port = int(match.group(2))
+                current_clients.add((ip, port))
+                LOGGER.debug('client %s:%s' % (ip, port))
         if 'End of client list' in line:
-            should_log = False
+            update_proxy_rank(current_instance, len(current_clients))
+            current_instance = None
         dump_redsocks_client_list()
     redsocks_process.stdout.close()
     proxies.clear()
+
+
+def update_proxy_rank(current_instance, current_clients_count):
+    for proxy in proxies.values():
+        if proxy['local_port'] == current_instance:
+            penalty = int(proxy['pre_rank'] / 2)
+            rank = current_clients_count + penalty # factor in the previous performance
+            LOGGER.info('update proxy rank: [%s+%s] %s' % (proxy['pre_rank'], penalty, str(proxy['connection_info'])))
+            proxy['rank'] = rank
+            proxy['pre_rank'] = rank
+            return
+    LOGGER.debug('this redsocks instance has been removed from proxy list')
 
 
 def dump_redsocks_client_list():
     global redsocks_dumped_at
     if redsocks_dumped_at is None:
         redsocks_dumped_at = time.time()
-    elif time.time() - redsocks_dumped_at > 60:
+    elif time.time() - redsocks_dumped_at > 30:
         LOGGER.info('dump redsocks client list')
         os.kill(redsocks_process.pid, signal.SIGUSR1)
         redsocks_dumped_at = time.time()
 
 
-def resolve_proxy(mark, name):
-    sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM) # UDP
-    request = dpkt.dns.DNS(qd=[dpkt.dns.DNS.Q(name=name, type=dpkt.dns.DNS_TXT)])
-    sock.sendto(str(request), ('8.8.8.8', 53))
-    data, addr = sock.recvfrom(1024)
-    response = dpkt.dns.DNS(data)
-    answer = response.an[0]
-    connection_info = ''.join(e for e in answer.rdata if e.isalnum() or e in [':', '.'])
-    connection_info = connection_info.split(':') # proxy_type:ip:port:username:password
-    proxies[mark] = {
-        'clients': set(), # set((ip, port))
-        'connection_info': connection_info
-    }
+def resolve_proxy(mark, local_port, name):
+    try:
+        sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM) # UDP
+        sock.settimeout(2)
+        request = dpkt.dns.DNS(qd=[dpkt.dns.DNS.Q(name=name, type=dpkt.dns.DNS_TXT)])
+        sock.sendto(str(request), ('8.8.8.8', 53))
+        data, addr = sock.recvfrom(1024)
+        response = dpkt.dns.DNS(data)
+        answer = response.an[0]
+        connection_info = ''.join(e for e in answer.rdata if e.isalnum() or e in [':', '.', '-'])
+        connection_info = connection_info.split(':') # proxy_type:ip:port:username:password
+        proxies[mark] = {
+            'rank': 0, # lower is better
+            'pre_rank': 0, # lower is better
+            'connection_info': connection_info,
+            'local_port': local_port
+        }
+    except:
+        LOGGER.exception('failed to resolve proxy: %s %s %s' % (mark, local_port, name))
 
 
 def kill_redsocks():
@@ -208,7 +240,7 @@ def handle_packet(nfqueue_element):
     try:
         ip_packet = dpkt.ip.IP(nfqueue_element.get_payload())
         ip = socket.inet_ntoa(ip_packet.dst)
-        mark = pick_proxy()
+        mark = pick_proxy(ip_packet)
         if not mark:
             nfqueue_element.accept()
         elif china_ip.is_china_ip(ip):
@@ -223,7 +255,6 @@ def handle_packet(nfqueue_element):
                 if time.time() - pending_list[ip] > 10:
                     add_to_black_list(ip)
             else:
-                LOGGER.info('probe connectivity: %s' % ip)
                 pending_list[ip] = time.time()
             ip_packet.tcp.sport = random.randint(1024, 65535)
             ip_packet.tcp.sum = 0
@@ -236,10 +267,21 @@ def handle_packet(nfqueue_element):
         nfqueue_element.accept()
 
 
-def pick_proxy():
+def pick_proxy(ip_packet):
     if not proxies:
         return None
-    return random.choice(proxies.keys())
+    marks = {}
+    for mark, proxy in proxies.items():
+        marks[proxy['rank']] = mark
+    mark = marks[sorted(marks.keys())[0]]
+    ip = socket.inet_ntoa(ip_packet.src)
+    port = ip_packet.tcp.sport
+    proxy = proxies[mark]
+    proxy['rank'] += 1
+    LOGGER.debug('full proxy via 0x%x [%s] %s: %s:%s => %s:%s' % (
+        mark, proxy['rank'], str(proxy['connection_info']),
+        ip, port, socket.inet_ntoa(ip_packet.dst), ip_packet.tcp.dport))
+    return mark
 
 
 def add_to_black_list(ip):
