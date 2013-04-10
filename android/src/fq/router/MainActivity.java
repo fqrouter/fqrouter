@@ -36,6 +36,7 @@ public class MainActivity extends Activity implements StatusUpdater {
         new Thread(new Runnable() {
             @Override
             public void run() {
+                appendLog("ver: " + getMyVersion());
                 if (Supervisor.ping()) {
                     appendLog("found manager is already running");
                     activateManageButton();

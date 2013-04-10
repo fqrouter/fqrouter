@@ -4,7 +4,6 @@ from netfilterqueue import NetfilterQueue
 import socket
 import subprocess
 import time
-import random
 import os
 import signal
 import threading
@@ -163,52 +162,63 @@ def start_redsocks():
 
 
 def poll_redsocks_output():
-    current_instance = None
-    current_clients = set()
-    for line in iter(redsocks_process.stdout.readline, b''):
-        match = RE_REDSOCKS_INSTANCE.search(line)
-        if match:
-            current_instance = int(match.group(2))
-            current_clients = set()
-            LOGGER.debug('dump redsocks instance %s' % current_instance)
-        if current_instance:
-            match = RE_REDSOCKS_CLIENT.search(line)
+    try:
+        current_instance = None
+        current_clients = set()
+        for line in iter(redsocks_process.stdout.readline, b''):
+            match = RE_REDSOCKS_INSTANCE.search(line)
             if match:
-                ip = match.group(1)
-                port = int(match.group(2))
-                current_clients.add((ip, port))
-                LOGGER.debug('client %s:%s' % (ip, port))
-        else:
-            if 'http-connect.c:149' in line:
+                current_instance = int(match.group(2))
+                current_clients = set()
+                LOGGER.debug('dump redsocks instance %s' % current_instance)
+            if current_instance:
                 match = RE_REDSOCKS_CLIENT.search(line)
                 if match:
                     ip = match.group(1)
                     port = int(match.group(2))
-                    for proxy in proxies.values():
-                        if (ip, port) in proxy['clients']:
-                            LOGGER.error(line.strip())
-                            LOGGER.error('add penalty: %s' % str(proxy['connection_info']))
-                            proxy['rank'] += 256 # 128, 64, 32, 16
-                            proxy['pre_rank'] += 256 # 128, 64, 32, 16
-        if 'End of client list' in line:
-            update_proxy_status(current_instance, current_clients)
-            current_instance = None
-        dump_redsocks_client_list()
-    redsocks_process.stdout.close()
-    proxies.clear()
+                    current_clients.add((ip, port))
+                    LOGGER.debug('client %s:%s' % (ip, port))
+            else:
+                if 'http-connect.c:149' in line:
+                    match = RE_REDSOCKS_CLIENT.search(line)
+                    if match:
+                        ip = match.group(1)
+                        port = int(match.group(2))
+                        for mark, proxy in proxies.items():
+                            if (ip, port) in proxy['clients']:
+                                LOGGER.error(line.strip())
+                                handle_proxy_error(mark, proxy)
+            if 'End of client list' in line:
+                update_proxy_status(current_instance, current_clients)
+                current_instance = None
+            dump_redsocks_client_list()
+        LOGGER.error('redsocks died, clear proxies')
+        redsocks_process.stdout.close()
+        proxies.clear()
+    except:
+        LOGGER.exception('failed to poll redsocks output')
+        proxies.clear()
+
+
+def handle_proxy_error(mark, proxy):
+    error_penalty = proxy['error_penalty']
+    if error_penalty > 256 * 2 * 2 * 2:
+        LOGGER.error('proxy 0x%x purged due to too many errors: %s' % (mark, str(proxy['connection_info'])))
+        del proxies[mark]
+    else:
+        LOGGER.error('add error penalty to proxy 0x%x: %s to %s' % (mark, error_penalty, str(proxy['connection_info'])))
+        proxy['rank'] += error_penalty
+        proxy['pre_rank'] += error_penalty
+        proxy['error_penalty'] *= 2
 
 
 def update_proxy_status(current_instance, current_clients):
     for mark, proxy in proxies.items():
         if proxy['local_port'] == current_instance:
-            penalty = int(proxy['pre_rank'] / 2)
-            rank = len(current_clients) + penalty # factor in the previous performance
-            if rank > 500:
-                LOGGER.error('purge proxy 0x%x: rank is %s' % (mark, rank))
-                del proxies[mark]
-                return
+            hangover_penalty = int(proxy['pre_rank'] / 2)
+            rank = len(current_clients) + hangover_penalty # factor in the previous performance
             LOGGER.info('update proxy 0x%x rank: [%s+%s] %s' %
-                        (mark, proxy['pre_rank'], penalty, str(proxy['connection_info'])))
+                        (mark, proxy['pre_rank'], hangover_penalty, str(proxy['connection_info'])))
             proxy['rank'] = rank
             proxy['pre_rank'] = rank
             proxy['clients'] = current_clients
@@ -241,6 +251,7 @@ def resolve_proxy(mark, local_port, name):
             'clients': set(),
             'rank': 0, # lower is better
             'pre_rank': 0, # lower is better
+            'error_penalty': 256, # if error is found, this will be added to rank
             'connection_info': connection_info,
             'local_port': local_port
         }

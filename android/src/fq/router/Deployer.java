@@ -84,7 +84,8 @@ public class Deployer {
 
     private boolean checkUpdate() throws Exception {
         if (!PAYLOAD_CHECKSUM.exists()) {
-            return false;
+            statusUpdater.appendLog("no checksum, assume it is old");
+            return true;
         }
         if (!MANAGER_MAIN_PY.exists()) {
             statusUpdater.appendLog("payload is corrupted");
