@@ -466,6 +466,9 @@ def get_p2p_supplicant_control_socket_dir():
 
 def get_wpa_supplicant_control_socket_dir(conf_path=WPA_SUPPLICANT_CONF_PATH):
     try:
+        if conf_path == WPA_SUPPLICANT_CONF_PATH \
+            and os.path.exists('/dev/socket/wpa_%s' % network_interface.WIFI_INTERFACE):
+            return 'anydir' # any valid dir will cause wpa_cli fail
         if not os.path.exists(conf_path):
             raise Exception('can not find wpa_supplicant.conf')
         with open(conf_path) as f:
