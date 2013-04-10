@@ -328,6 +328,7 @@ def inject_ping_requests_to_find_right_ttl(dst):
         ip_packet.ttl = ttl
         ip_packet.data = icmp_packet
         raw_socket.sendto(str(ip_packet), (dst, 0))
+        raw_socket.sendto(str(ip_packet), (dst, 0))
 
 
 def handle_time_exceeded(ip_packet):
