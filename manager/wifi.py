@@ -293,6 +293,7 @@ def start_hotspot_on_wcnss():
     time.sleep(1)
     log_upstream_wifi_status('after loaded p2p firmware', control_socket_dir)
     reset_p2p_channels(network_interface.WIFI_INTERFACE, control_socket_dir)
+    reset_p2p_channels('p2p0', get_p2p_supplicant_control_socket_dir())
     delete_existing_p2p_persistent_networks(network_interface.WIFI_INTERFACE, control_socket_dir)
     start_p2p_persistent_network(network_interface.WIFI_INTERFACE, control_socket_dir)
     p2p_persistent_iface = get_p2p_persistent_iface()
