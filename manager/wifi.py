@@ -122,6 +122,7 @@ def dump_wifi_status():
             LOGGER.info('content of %s: ' % WPA_SUPPLICANT_CONF_PATH)
             with open(WPA_SUPPLICANT_CONF_PATH) as f:
                 LOGGER.info(f.read())
+        dump_dir('/dev/socket')
     except:
         LOGGER.exception('failed to dump wifi status')
 
@@ -135,8 +136,19 @@ def dump_wpa_supplicant(cmdline):
         LOGGER.info('cfg path: %s [%s]' % (cfg_path, cfg_path_exists))
         if cfg_path_exists:
             with open(cfg_path) as f:
-                LOGGER.info(f.read())
+                content = f.read()
+                LOGGER.info(content)
+            control_socket_dir = parse_wpa_supplicant_conf(content)
+            LOGGER.info('parsed control socket dir: %s' % control_socket_dir)
+            dump_dir(control_socket_dir)
         dump_wpa_supplicant(cmdline[pos_end:])
+
+
+def dump_dir(dir):
+    if os.path.exists(dir):
+        LOGGER.info('dump %s: %s' % (dir, os.listdir(dir)))
+    else:
+        LOGGER.error('dir %s does not exist' % dir)
 
 
 def get_working_hotspot_iface():
@@ -428,22 +440,30 @@ def get_wpa_supplicant_control_socket_dir(conf_path=WPA_SUPPLICANT_CONF_PATH):
         if not os.path.exists(conf_path):
             raise Exception('can not find wpa_supplicant.conf')
         with open(conf_path) as f:
-            lines = f.readlines()
-        for line in lines:
-            line = line.strip()
-            if not line:
-                continue
-            if line.startswith('ctrl_interface='):
-                line = line.replace('ctrl_interface=', '')
-                parts = line.split(' ')
-                for part in parts:
-                    if part.startswith('DIR='): # if there is DIR=
-                        return part.replace('DIR=', '')
-                return line # otherwise just return the ctrl_interface=
-        raise Exception('can not find ctrl_interface dir from wpa_supplicant.conf')
+            content = f.read()
+        control_socket_dir = parse_wpa_supplicant_conf(content)
+        if control_socket_dir:
+            return control_socket_dir
+        else:
+            raise Exception('can not find ctrl_interface dir from wpa_supplicant.conf')
     except:
         LOGGER.exception('failed to get wpa_supplicant control socket dir')
         return '/data/misc/wifi/wpa_supplicant'
+
+
+def parse_wpa_supplicant_conf(content):
+    for line in content.splitlines():
+        line = line.strip()
+        if not line:
+            continue
+        if line.startswith('ctrl_interface='):
+            line = line.replace('ctrl_interface=', '')
+            parts = line.split(' ')
+            for part in parts:
+                if part.startswith('DIR='): # if there is DIR=
+                    return part.replace('DIR=', '')
+            return line # otherwise just return the ctrl_interface=
+    return None
 
 
 def netd_execute(command):
