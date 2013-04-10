@@ -83,18 +83,25 @@ for i in range(10):
     log('PASS %s' % (i + 1))
     while len(proxies) + len(checkers):
         for checker in list(checkers):
-            ok = checker.is_ok()
-            if ok:
-                log('OK[%s] %s:%s' % (ok, checker.ip, checker.port))
-                checked_proxies.append((checker.ip, checker.port, checker.elapsed + ok))
+            try:
+                ok = checker.is_ok()
+                if ok:
+                    log('OK[%s] %s:%s' % (ok, checker.ip, checker.port))
+                    checked_proxies.append((checker.ip, checker.port, checker.elapsed + ok))
+                    checkers.remove(checker)
+                elif checker.is_failed():
+                    log('FAILED %s:%s' % (checker.ip, checker.port))
+                    checkers.remove(checker)
+                elif checker.is_timed_out():
+                    log('TIMEOUT %s:%s' % (checker.ip, checker.port))
+                    checkers.remove(checker)
+                    try:
+                        checker.kill()
+                    except:
+                        pass
+            except:
+                log('FATAL %s:%s' % (checker.ip, checker.port))
                 checkers.remove(checker)
-            elif checker.is_failed():
-                log('FAILED %s:%s' % (checker.ip, checker.port))
-                checkers.remove(checker)
-            elif checker.is_timed_out():
-                log('TIMEOUT %s:%s' % (checker.ip, checker.port))
-                checkers.remove(checker)
-                checker.kill()
         new_checkers_count = 4 - len(checkers)
         for i in range(new_checkers_count):
             if proxies:
