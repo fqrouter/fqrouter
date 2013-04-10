@@ -55,6 +55,7 @@ black_list = set()
 pending_list = {} # ip => started_at
 proxies = {} # mark => last_used_at
 redsocks_process = None
+redsocks_started_at = 0
 redsocks_dumped_at = None
 
 for iface in network_interface.list_data_network_interfaces():
@@ -124,11 +125,39 @@ def delete_iptables_rules():
 
 def start_full_proxy():
     try:
-        start_redsocks()
+        thread.start_new(keep_proxies_fresh, ())
     except:
-        LOGGER.exception('failed to start redsocks')
+        LOGGER.exception('failed to start keep_proxies_fresh thread')
         proxies.clear()
     handle_nfqueue()
+
+
+def keep_proxies_fresh():
+    global redsocks_started_at
+    try:
+        while True:
+            if not proxies:
+                LOGGER.info('no proxies, start redsocks now')
+                try:
+                    if kill_redsocks():
+                        LOGGER.info('existing redsocks killed')
+                        time.sleep(2)
+                    start_redsocks()
+                except:
+                    LOGGER.exception('failed to start redsocks')
+                    kill_redsocks()
+                    return
+                if proxies:
+                    redsocks_started_at = time.time()
+                else:
+                    LOGGER.info('still no proxies after redsocks started, retry in 30 seconds')
+                    time.sleep(30)
+            if time.time() - redsocks_started_at > 60 * 30:
+                LOGGER.info('clear all proxies, refresh now')
+                proxies.clear()
+            time.sleep(1)
+    except:
+        LOGGER.exception('failed to keep proxies fresh')
 
 
 def start_redsocks():
@@ -261,7 +290,7 @@ def resolve_proxy(mark, local_port, name):
 
 
 def kill_redsocks():
-    subprocess.call(['/data/data/fq.router/busybox', 'killall', 'redsocks'])
+    return not subprocess.call(['/data/data/fq.router/busybox', 'killall', 'redsocks'])
 
 
 def handle_nfqueue():
