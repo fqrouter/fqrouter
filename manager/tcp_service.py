@@ -289,7 +289,8 @@ def handle_syn_ack(syn_ack):
         timeouted = pending_connection.is_ip_timeouted(uncertain_ip)
         if timeouted:
             international_ip = uncertain_ip
-            LOGGER.info('treat ip as international due to timeout: %s' % international_ip)
+            LOGGER.info('treat ip as international due to timeout: %s, %s' %
+                        (international_ip, pending_connection.get_detected_routers(international_ip)))
             ttl_to_gfw = pending_connection.get_ttl_to_gfw(international_ip, exact_match_only=False)
             add_international_ip(international_ip, (ttl_to_gfw or DEFAULT_TTL_TO_GFW) - SAFETY_DELTA)
         return False

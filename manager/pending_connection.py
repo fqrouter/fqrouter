@@ -68,3 +68,10 @@ def get_ttl_to_gfw(ip, exact_match_only=True):
         return None
     else:
         return max_china_ttl
+
+
+def get_detected_routers(ip):
+    connection = pending.get(ip)
+    if connection is None:
+        return None
+    return connection.routers
