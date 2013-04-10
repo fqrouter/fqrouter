@@ -123,6 +123,10 @@ def dump_wifi_status():
             with open(WPA_SUPPLICANT_CONF_PATH) as f:
                 LOGGER.info(f.read())
         dump_dir('/dev/socket')
+        try:
+            dump_unix_sockets()
+        except:
+            LOGGER.exception('failed to dump unix sockets')
     except:
         LOGGER.exception('failed to dump wifi status')
 
@@ -149,6 +153,18 @@ def dump_dir(dir):
         LOGGER.info('dump %s: %s' % (dir, os.listdir(dir)))
     else:
         LOGGER.error('dir %s does not exist' % dir)
+
+
+def dump_unix_sockets():
+    LOGGER.info('dump unix sockets')
+    with open('/proc/net/unix') as f:
+        lines = f.readlines()
+    for line in lines:
+        line = line.strip()
+        if not line:
+            continue
+        if '/' in line:
+            LOGGER.info(line)
 
 
 def get_working_hotspot_iface():
