@@ -292,6 +292,7 @@ def start_hotspot_on_wcnss():
     shell_execute('netcfg %s up' % network_interface.WIFI_INTERFACE)
     time.sleep(1)
     log_upstream_wifi_status('after loaded p2p firmware', control_socket_dir)
+    reset_p2p_channels(network_interface.WIFI_INTERFACE, control_socket_dir)
     delete_existing_p2p_persistent_networks(network_interface.WIFI_INTERFACE, control_socket_dir)
     start_p2p_persistent_network(network_interface.WIFI_INTERFACE, control_socket_dir)
     p2p_persistent_iface = get_p2p_persistent_iface()
@@ -412,6 +413,17 @@ def stop_p2p_persistent_network(control_socket_dir, control_iface, iface):
             (P2P_CLI_PATH, control_socket_dir, control_iface, iface))
     except:
         LOGGER.error('failed to stop p2p persistent network')
+
+
+def reset_p2p_channels(iface, control_socket_dir):
+    try:
+        shell_execute('%s -p %s -i %s set p2p_oper_channel 0' % (P2P_CLI_PATH, control_socket_dir, iface))
+        shell_execute('%s -p %s -i %s set p2p_oper_reg_class 0' % (P2P_CLI_PATH, control_socket_dir, iface))
+        shell_execute('%s -p %s -i %s set p2p_listen_channel 0' % (P2P_CLI_PATH, control_socket_dir, iface))
+        shell_execute('%s -p %s -i %s set p2p_listen_reg_class 0' % (P2P_CLI_PATH, control_socket_dir, iface))
+        shell_execute('%s -p %s -i %s save_config' % (P2P_CLI_PATH, control_socket_dir, iface))
+    except:
+        LOGGER.exception('failed to reset p2p channels')
 
 
 def delete_existing_p2p_persistent_networks(iface, control_socket_dir):
