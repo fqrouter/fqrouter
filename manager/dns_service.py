@@ -11,6 +11,7 @@ import iptables
 import shutdown_hook
 import network_interface
 import jamming_event
+import full_proxy_service
 
 
 LOGGER = logging.getLogger(__name__)
@@ -149,7 +150,8 @@ def handle_packet(nfqueue_element):
         dns_packet.domain = questions[0].name if questions else None
         if 53 == ip_packet.udp.dport:
             if dns_packet.domain and ('google.com' in dns_packet.domain or 'youtube.com' in dns_packet.domain
-                                      or 'googleusercontent.com' in dns_packet.domain):
+                                      or 'googleusercontent.com' in dns_packet.domain
+                                      or 'appspot.com' in dns_packet.domain):
                 LOGGER.info('resolve stupid %s using: %s' % (dns_packet.domain, FOR_STUPID_GOOGLE_DNS))
                 nfqueue_element.set_mark(FOR_STUPID_GOOGLE_DNS_MARK)
                 nfqueue_element.repeat()
@@ -181,6 +183,8 @@ def contains_wrong_answer(dns_packet):
             else:
                 domains[resolved_ip] = dns_packet.domain
                 LOGGER.info('dns resolve: %s => %s' % (dns_packet.domain, resolved_ip))
+                if 'twitter.com' in dns_packet.domain:
+                    full_proxy_service.add_to_black_list(resolved_ip)
                 return False # if the blacklist is incomplete, we will think it is right answer
     return True # to find empty answer
 

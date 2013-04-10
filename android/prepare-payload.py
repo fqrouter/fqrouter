@@ -4,6 +4,7 @@ import urllib
 import subprocess
 import zipfile
 import sys
+import time
 from pyquery import PyQuery as pq
 
 ROOT_DIR = os.path.dirname(os.path.abspath(__file__))
@@ -147,6 +148,7 @@ def zip_payload():
     include_directory(DPKT_PACKAGE_DIR, DPKT_DIR, 'python/lib/python2.7/site-packages')
 
     payload_zip.close()
+    time.sleep(1)
 
 
 def retrieve_from_baidu_pan(url, destination):
