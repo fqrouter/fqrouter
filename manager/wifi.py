@@ -167,9 +167,19 @@ def stop_hotspot(iface):
     iptables.delete_rules(RULES)
     netd_execute('tether stop')
     try:
-        stop_p2p_persistent_network(get_wpa_supplicant_control_socket_dir(), iface)
+        control_socket_dir = get_wpa_supplicant_control_socket_dir()
+        stop_p2p_persistent_network(
+            control_socket_dir, network_interface.WIFI_INTERFACE, network_interface.WIFI_INTERFACE)
+        stop_p2p_persistent_network(
+            control_socket_dir, network_interface.WIFI_INTERFACE, iface)
+        control_socket_dir = get_p2p_supplicant_control_socket_dir()
+        stop_p2p_persistent_network(
+            control_socket_dir, 'p2p0', 'p2p0')
+        stop_p2p_persistent_network(
+            control_socket_dir, 'p2p0', iface)
     except:
         LOGGER.exception('failed to stop p2p persistent network')
+    time.sleep(1)
     try:
         shell_execute('%s dev %s del' % (IW_PATH, iface))
     except:
@@ -367,11 +377,13 @@ def get_p2p_persistent_iface():
     raise Exception('can not find just started p2p persistent network interface')
 
 
-def stop_p2p_persistent_network(control_socket_dir, iface):
-    shell_execute(
-        '%s -p %s -i %s p2p_group_remove %s' %
-        (P2P_CLI_PATH, control_socket_dir, network_interface.WIFI_INTERFACE, iface))
-    time.sleep(1)
+def stop_p2p_persistent_network(control_socket_dir, control_iface, iface):
+    try:
+        shell_execute(
+            '%s -p %s -i %s p2p_group_remove %s' %
+            (P2P_CLI_PATH, control_socket_dir, control_iface, iface))
+    except:
+        LOGGER.error('failed to stop p2p persistent network')
 
 
 def delete_existing_p2p_persistent_networks(iface, control_socket_dir):
