@@ -232,7 +232,8 @@ def start_hotspot():
     # support of bcm43241(4324) is a wild guess
     # support of bcm4334(4334) is a wild guess
         hotspot_interface = start_hotspot_on_bcm()
-    elif 'platform:wcnss_wlan' == wifi_chipset:
+    elif 'platform:wcnss_wlan' == wifi_chipset or wifi_chipset.endswith('0301'):
+    # ar6003 is c00v0271d0301
         hotspot_interface = start_hotspot_on_wcnss()
     elif wifi_chipset.endswith('6620') or wifi_chipset.endswith('6628'):
     # only tested on sdio:c00v037Ad6628
