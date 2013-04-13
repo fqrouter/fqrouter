@@ -330,7 +330,7 @@ def start_hotspot_on_wl12xx():
         f.write(hostapd_template.render(channel=get_upstream_channel() or 1))
     LOGGER.info('start hostapd')
     proc = subprocess.Popen(
-        ['hostapd', '/data/misc/wifi/fqrouter.conf'],
+        ['/data/data/fq.router/wifi-tools/hostapd', '-dd', '/data/misc/wifi/fqrouter.conf'],
         cwd='/data/misc/wifi', stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
     time.sleep(2)
     if proc.poll():
