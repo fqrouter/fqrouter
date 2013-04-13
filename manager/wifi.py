@@ -306,7 +306,7 @@ def start_hotspot_on_mtk():
     log_upstream_wifi_status('before load ap firmware', control_socket_dir)
     if 'ap0' not in list_wifi_ifaces():
         netd_execute('softap fwreload %s AP' % network_interface.WIFI_INTERFACE)
-        for i in range(15):
+        for i in range(30):
             time.sleep(1)
             if 'ap0' in list_wifi_ifaces():
                 break
@@ -466,14 +466,12 @@ def get_p2p_supplicant_control_socket_dir():
 
 def get_wpa_supplicant_control_socket_dir(conf_path=WPA_SUPPLICANT_CONF_PATH):
     try:
-        if conf_path == WPA_SUPPLICANT_CONF_PATH \
-            and os.path.exists('/dev/socket/wpa_%s' % network_interface.WIFI_INTERFACE):
-            return 'anydir' # any valid dir will cause wpa_cli fail
         if not os.path.exists(conf_path):
             raise Exception('can not find wpa_supplicant.conf')
         with open(conf_path) as f:
             content = f.read()
         control_socket_dir = parse_wpa_supplicant_conf(content)
+        control_socket_dir = fix_wrong_control_socket_dir(control_socket_dir)
         if control_socket_dir:
             return control_socket_dir
         else:
@@ -481,6 +479,18 @@ def get_wpa_supplicant_control_socket_dir(conf_path=WPA_SUPPLICANT_CONF_PATH):
     except:
         LOGGER.exception('failed to get wpa_supplicant control socket dir')
         return '/data/misc/wifi/wpa_supplicant'
+
+
+def fix_wrong_control_socket_dir(control_socket_dir):
+    if control_socket_dir:
+        control_socket_not_exists = not os.path.exists(
+            os.path.join(control_socket_dir, network_interface.WIFI_INTERFACE))
+    else:
+        control_socket_not_exists = True
+    dev_socket_exists = os.path.exists('/dev/socket/wpa_%s' % network_interface.WIFI_INTERFACE)
+    if dev_socket_exists and control_socket_not_exists:
+        return 'anydir' # any valid dir will cause wpa_cli fail
+    return control_socket_dir
 
 
 def parse_wpa_supplicant_conf(content):
