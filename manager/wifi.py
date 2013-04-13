@@ -251,7 +251,7 @@ def start_hotspot():
 def get_wifi_chipset():
     mediatek_wifi_chipset = get_mediatek_wifi_chipset()
     if mediatek_wifi_chipset:
-        return mediatek_wifi_chipset.strip()
+        return mediatek_wifi_chipset
     if not os.path.exists(MODALIAS_PATH):
         raise Exception('wifi chipset unknown: %s not found' % MODALIAS_PATH)
     with open(MODALIAS_PATH) as f:
@@ -262,7 +262,7 @@ def get_wifi_chipset():
 
 def get_mediatek_wifi_chipset():
     try:
-        return shell_execute('getprop mediatek.wlan.chip')
+        return shell_execute('getprop mediatek.wlan.chip').strip()
     except:
         LOGGER.exception('failed to get mediatek wifi chipset')
         return None
