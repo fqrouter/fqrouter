@@ -234,10 +234,9 @@ def start_hotspot():
         hotspot_interface = start_hotspot_on_bcm()
     elif 'platform:wcnss_wlan' == wifi_chipset:
         hotspot_interface = start_hotspot_on_wcnss()
-    elif wifi_chipset.endswith('6620') or wifi_chipset.endswith('6628') or wifi_chipset.endswith('020A'):
+    elif wifi_chipset.endswith('6620') or wifi_chipset.endswith('6628'):
     # only tested on sdio:c00v037Ad6628
     # support of mt6620 is a wild gues
-    # amoi N820 is using c00v037Ad020A
         hotspot_interface = start_hotspot_on_mtk()
     elif 'platform:wl12xx' == wifi_chipset:
         hotspot_interface = start_hotspot_on_wl12xx()
@@ -249,12 +248,23 @@ def start_hotspot():
 
 
 def get_wifi_chipset():
+    mediatek_wifi_chipset = get_mediatek_wifi_chipset()
+    if mediatek_wifi_chipset:
+        return mediatek_wifi_chipset
     if not os.path.exists(MODALIAS_PATH):
         raise Exception('wifi chipset unknown: %s not found' % MODALIAS_PATH)
     with open(MODALIAS_PATH) as f:
         wifi_chipset = f.read().strip()
         LOGGER.info('wifi chipset: %s' % wifi_chipset)
         return wifi_chipset
+
+
+def get_mediatek_wifi_chipset():
+    try:
+        return shell_execute('getprop mediatek.wlan.chip')
+    except:
+        LOGGER.exception('failed to get mediatek wifi chipset')
+        return None
 
 
 def start_hotspot_on_bcm():
