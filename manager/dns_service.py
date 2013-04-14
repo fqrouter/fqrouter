@@ -121,6 +121,14 @@ WRONG_ANSWERS = {
     '243.185.187.39'
 }
 
+GOOGLE_PLUS_WRONG_ANSWERS = {
+    '74.125.127.102',
+    '74.125.155.102',
+    '74.125.39.113',
+    '74.125.39.102',
+    '209.85.229.138'
+}
+
 
 def insert_iptables_rules():
     shutdown_hook.add(delete_iptables_rules)
@@ -179,7 +187,9 @@ def contains_wrong_answer(dns_packet):
         if dpkt.dns.DNS_A == answer.type:
             resolved_ip = socket.inet_ntoa(answer['rdata'])
             if resolved_ip in WRONG_ANSWERS:
-                return True # to find wrong answer
+                return True
+            if 'plus.google.com' in dns_packet.domain and resolved_ip in GOOGLE_PLUS_WRONG_ANSWERS:
+                return True
             else:
                 domains[resolved_ip] = dns_packet.domain
                 LOGGER.info('dns resolve: %s => %s' % (dns_packet.domain, resolved_ip))
