@@ -70,6 +70,15 @@ def setup_logging():
     logging.getLogger().addHandler(handler)
 
 
+application.listening_to_hotspot_lan = False
+
+
+def listen_to_hotspot_lan():
+    if not application.listening_to_hotspot_lan:
+        application.listening_to_hotspot_lan = True
+        application.listen(80, '192.168.49.1')
+
+
 if '__main__' == __name__:
     setup_logging()
     dns_service.run()
@@ -77,4 +86,5 @@ if '__main__' == __name__:
     full_proxy_service.run()
     LOGGER.info('services started')
     application.listen(8318, '127.0.0.1')
+    wifi.on_wifi_hotspot_started = listen_to_hotspot_lan
     tornado.ioloop.IOLoop.instance().start()

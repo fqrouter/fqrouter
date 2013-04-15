@@ -25,6 +25,7 @@ import java.util.ArrayList;
 
 public class MainActivity extends Activity implements StatusUpdater {
     private Handler handler = new Handler();
+    private boolean doubleBackToExitPressedOnce = false;
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
@@ -38,6 +39,9 @@ public class MainActivity extends Activity implements StatusUpdater {
                 if (Supervisor.ping()) {
                     appendLog("found manager is already running");
                     activateManageButton();
+                } else {
+                    appendLog("starting supervisor thread");
+                    new Thread(new Supervisor(getAssets(), MainActivity.this)).start();
                 }
             }
         }).start();
@@ -65,16 +69,6 @@ public class MainActivity extends Activity implements StatusUpdater {
                 finish();
             }
         });
-        final Button startButton = (Button) findViewById(R.id.startButton);
-        startButton.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                startButton.setText("Starting...");
-                startButton.setEnabled(false);
-                appendLog("starting supervisor thread");
-                new Thread(new Supervisor(getAssets(), MainActivity.this)).start();
-            }
-        });
         final Button reportErrorButton = (Button) findViewById(R.id.reportErrorButton);
         reportErrorButton.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -94,6 +88,27 @@ public class MainActivity extends Activity implements StatusUpdater {
                 }
             }
         });
+    }
+
+    @Override
+    public void onBackPressed() {
+        if (doubleBackToExitPressedOnce) {
+            super.onBackPressed();
+            try {
+                ManagerProcess.kill();
+            } catch (Exception e) {
+                Log.e("fqrouter", "failed to kill manager process", e);
+            }
+            return;
+        }
+        this.doubleBackToExitPressedOnce = true;
+        Toast.makeText(this, "Please click BACK again to exit", Toast.LENGTH_SHORT).show();
+        new Handler().postDelayed(new Runnable() {
+            @Override
+            public void run() {
+                doubleBackToExitPressedOnce = false;
+            }
+        }, 2000);
     }
 
     public void updateStatus(final String status) {
@@ -122,7 +137,6 @@ public class MainActivity extends Activity implements StatusUpdater {
         handler.postDelayed(new Runnable() {
             @Override
             public void run() {
-                findViewById(R.id.startButton).setVisibility(View.GONE);
                 findViewById(R.id.manageButton).setVisibility(View.VISIBLE);
             }
         }, 0);
@@ -147,12 +161,6 @@ public class MainActivity extends Activity implements StatusUpdater {
         } else {
             Log.e("fqrouter", msg, e);
         }
-        handler.postDelayed(new Runnable() {
-            @Override
-            public void run() {
-                findViewById(R.id.startButton).setVisibility(View.GONE);
-            }
-        }, 0);
         updateStatus("Error: " + msg);
     }
 

@@ -1,0 +1,1 @@
+adb push dashboard.html /sdcard/manager/dashboard.html

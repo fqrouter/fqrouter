@@ -6,11 +6,6 @@
     <Button
             android:layout_width="160dp"
             android:layout_height="wrap_content"
-            android:text="Start"
-            android:id="@+id/startButton" android:layout_gravity="center" android:textSize="32px"/>
-    <Button
-            android:layout_width="160dp"
-            android:layout_height="wrap_content"
             android:text="Manage"
             android:id="@+id/manageButton" android:layout_gravity="center" android:textSize="32px"
             android:visibility="invisible"/>

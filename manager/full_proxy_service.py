@@ -169,15 +169,15 @@ def keep_proxies_fresh():
                     return
                 if proxies:
                     redsocks_started_at = time.time()
+                    if not can_access_twitter():
+                        LOGGER.info('still can not access twitter, retry in 30 seconds')
+                        proxies.clear()
+                        time.sleep(30)
                 else:
                     LOGGER.info('still no proxies after redsocks started, retry in 30 seconds')
                     time.sleep(30)
-                if not can_access_twitter():
-                    LOGGER.info('still can not access twitter, retry in 30 seconds')
-                    proxies.clear()
-                    time.sleep(30)
             if time.time() - redsocks_started_at > 60 * 30:
-                LOGGER.info('clear all proxies, refresh now')
+                LOGGER.info('refresh now, clear all proxies')
                 proxies.clear()
             time.sleep(1)
             dump_redsocks_client_list()

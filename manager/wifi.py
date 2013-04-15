@@ -21,6 +21,7 @@ IWLIST_PATH = '/data/data/fq.router/wifi-tools/iwlist'
 netd_socket = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
 netd_socket.connect('/dev/socket/netd')
 netd_sequence_number = None # turn off by default
+on_wifi_hotspot_started = None
 
 RULES = []
 for iface in network_interface.list_data_network_interfaces():
@@ -59,6 +60,8 @@ class WifiHandler(tornado.web.RequestHandler):
                     start_hotspot()
                     LOGGER.info('=== Started Hotspot ===')
                     dump_wifi_status()
+                    if on_wifi_hotspot_started:
+                        on_wifi_hotspot_started()
                     self.write('hotspot started successfully')
             except:
                 LOGGER.exception('failed to start hotspot')
