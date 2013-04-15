@@ -9,8 +9,10 @@ import signal
 import threading
 import re
 import urllib2
+import struct
 
 import dpkt
+from pynetfilter_conntrack import Conntrack
 
 import shutdown_hook
 import iptables
@@ -54,7 +56,7 @@ RULES = []
 white_list = set()
 black_list = set()
 pending_list = {} # ip => started_at
-proxies = {} # mark => last_used_at
+proxies = {} # mark => proxy
 redsocks_process = None
 redsocks_started_at = 0
 redsocks_dumped_at = None
@@ -98,11 +100,27 @@ def add_full_proxy_chain(is_prerouting):
     for i in [1, 2, 3, 4, 5, 6, 7, 8, 9]:
         if is_prerouting:
             RULES.append((
+                {'target': 'CONNMARK', 'extra': 'mark match 0x%sbabe CONNMARK set 0x%sbabe' % (i, i)},
+                ('nat', chain_name, '-p tcp -m mark --mark 0x%sbabe -j CONNMARK --set-mark 0x%sbabe' % (i, i))
+            ))
+            RULES.append((
+                {'target': 'CONNMARK', 'extra': 'mark match 0x%sbabe CONNMARK save' % i},
+                ('nat', chain_name, '-p tcp -m mark --mark 0x%sbabe -j CONNMARK --save-mark' % i)
+            ))
+            RULES.append((
                 {'target': 'DNAT', 'extra': 'mark match 0x%sbabe to:192.168.49.1:1983%s' % (i, i)},
                 ('nat', chain_name, '-p tcp -m mark --mark 0x%sbabe -j DNAT'
                                     ' --to-destination 192.168.49.1:1983%s' % (i, i))
             ))
         else:
+            RULES.append((
+                {'target': 'CONNMARK', 'extra': 'mark match 0x%sbabe CONNMARK set 0x%sbabe' % (i, i)},
+                ('nat', chain_name, '-p tcp -m mark --mark 0x%sbabe -j CONNMARK --set-mark 0x%sbabe' % (i, i))
+            ))
+            RULES.append((
+                {'target': 'CONNMARK', 'extra': 'mark match 0x%sbabe CONNMARK save' % i},
+                ('nat', chain_name, '-p tcp -m mark --mark 0x%sbabe -j CONNMARK --save-mark' % i)
+            ))
             RULES.append((
                 {'target': 'REDIRECT', 'extra': 'mark match 0x%sbabe redir ports 1983%s' % (i, i)},
                 ('nat', chain_name, '-p tcp -m mark --mark 0x%sbabe -j REDIRECT --to-ports 1983%s' % (i, i))
@@ -135,6 +153,7 @@ def start_full_proxy():
 
 def keep_proxies_fresh():
     global redsocks_started_at
+    shutdown_hook.add(kill_redsocks)
     try:
         while True:
             if not proxies:
@@ -181,21 +200,20 @@ def can_access_twitter():
 def start_redsocks():
     global redsocks_process
     cfg_path = '/data/data/fq.router/redsocks.conf'
-    resolve_proxy(0x1babe, 19831, 'proxy2.fqrouter.com')
-    resolve_proxy(0x2babe, 19832, 'proxy3.fqrouter.com')
-    resolve_proxy(0x3babe, 19833, 'proxy4.fqrouter.com')
-    resolve_proxy(0x4babe, 19834, 'proxy5.fqrouter.com')
-    resolve_proxy(0x5babe, 19835, 'proxy6.fqrouter.com')
-    resolve_proxy(0x6babe, 19836, 'proxy7.fqrouter.com')
-    resolve_proxy(0x7babe, 19837, 'proxy8.fqrouter.com')
-    resolve_proxy(0x8babe, 19838, 'proxy9.fqrouter.com')
-    resolve_proxy(0x9babe, 19839, 'proxy10.fqrouter.com')
+    resolve_proxy(0x1babe, 19831, 'proxy1.fqrouter.com')
+    resolve_proxy(0x2babe, 19832, 'proxy2.fqrouter.com')
+    resolve_proxy(0x3babe, 19833, 'proxy3.fqrouter.com')
+    resolve_proxy(0x4babe, 19834, 'proxy4.fqrouter.com')
+    resolve_proxy(0x5babe, 19835, 'proxy5.fqrouter.com')
+    resolve_proxy(0x6babe, 19836, 'proxy6.fqrouter.com')
+    resolve_proxy(0x7babe, 19837, 'proxy7.fqrouter.com')
+    resolve_proxy(0x8babe, 19838, 'proxy8.fqrouter.com')
+    resolve_proxy(0x9babe, 19839, 'proxy9.fqrouter.com')
     with open(cfg_path, 'w') as f:
         f.write(redsocks_template.render(proxies.values()))
     redsocks_process = subprocess.Popen(
         ['/data/data/fq.router/proxy-tools/redsocks', '-c', cfg_path],
         stderr=subprocess.STDOUT, stdout=subprocess.PIPE, bufsize=1, close_fds=True)
-    shutdown_hook.add(kill_redsocks)
     time.sleep(0.5)
     if redsocks_process.poll() is None:
         LOGGER.info('redsocks seems started: %s' % redsocks_process.pid)
@@ -372,7 +390,20 @@ def add_to_black_list(ip, syn=None):
                 return
         LOGGER.info('add black list ip: %s' % ip)
         black_list.add(ip)
+        if syn:
+            delete_existing_conntrack_entry(ip)
+            LOGGER.info('resend syn')
+            raw_socket.sendto(str(syn), (socket.inet_ntoa(syn.dst), 0))
     pending_list.pop(ip, None)
+
+
+def delete_existing_conntrack_entry(ip):
+    conntrack = Conntrack()
+    for entry in conntrack.dump_table():
+        dst = socket.inet_ntoa(struct.pack('!I', entry.orig_ipv4_dst))
+        if 0 == entry.mark and ip == dst:
+            print('delete %s' % entry)
+            conntrack.destroy_conntrack(entry)
 
 
 def add_to_white_list(ip):
