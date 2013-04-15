@@ -303,7 +303,7 @@ def dump_redsocks_client_list():
 def resolve_proxy(mark, local_port, name):
     try:
         sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM) # UDP
-        sock.settimeout(2)
+        sock.settimeout(3)
         request = dpkt.dns.DNS(qd=[dpkt.dns.DNS.Q(name=name, type=dpkt.dns.DNS_TXT)])
         sock.sendto(str(request), ('8.8.8.8', 53))
         data, addr = sock.recvfrom(1024)
