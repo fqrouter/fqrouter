@@ -1,3 +1,7 @@
+if [[ -z "$PASSWORD" ]] ; then
+    echo '$PASSWORD undefined'
+    exit
+fi
 while true
 do
     ./check-proxies.py \
@@ -11,8 +15,7 @@ do
     	--proxy-list "./cnproxy.py 7" \
     	--proxy-list "./cnproxy.py 8" \
     	--proxy-list "./cnproxy.py 9" \
-    	--proxy-list "./cnproxy.py 10" | ./update-dns.py
-    echo "DONE!"
-    date
+    	--proxy-list "./cnproxy.py 10" > /tmp/proxies.txt
+    ./update-dns.py < /tmp/proxies.txt && echo "DONE! `date`"
     sleep 3600
 done

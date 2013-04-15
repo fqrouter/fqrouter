@@ -21,7 +21,7 @@ while True:
     if not line:
         break
     ip, port = line.split(':')
-    proxies['proxy%s.test.fqrouter.com' % current_index] = 'http-connect:%s:%s::' % (ip, port)
+    proxies['proxy%s.fqrouter.com' % current_index] = 'http-connect:%s:%s::' % (ip, port)
     current_index += 1
 
 cj = cookielib.CookieJar()
