@@ -10,7 +10,6 @@ import dpkt
 import iptables
 import shutdown_hook
 import network_interface
-import jamming_event
 import full_proxy_service
 
 
@@ -169,8 +168,7 @@ def handle_packet(nfqueue_element):
         else:
             if contains_wrong_answer(dns_packet):
             # after the fake packet dropped, the real answer can be accepted by the client
-                LOGGER.debug('drop fake dns packet: %s' % repr(dns_packet))
-                jamming_event.record('%s: dns hijacking' % dns_packet.domain)
+                LOGGER.debug('drop fake dns packet: %s' % dns_packet.domain)
                 nfqueue_element.drop()
                 return
             nfqueue_element.accept()

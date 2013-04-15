@@ -13,7 +13,6 @@ import shutdown_hook
 import china_ip
 import network_interface
 import dns_service
-import jamming_event
 import full_proxy_service
 
 LOGGER = logging.getLogger(__name__)
@@ -229,7 +228,7 @@ def handle_rst(rst):
     src = socket.inet_ntoa(rst.src)
     expected_ttl = syn_ack_ttl.get((src, rst.tcp.sport)) or 0
     if expected_ttl and abs(rst.ttl - expected_ttl) > 2:
-        record_jamming_event(src, 'tcp rst spoofing')
+        log_jamming_event(src, 'tcp rst spoofing')
         LOGGER.error(
             'received RST from GFW: expected ttl is %s, actually is %s, the packet %s' %
             (expected_ttl, rst.ttl, format_ip_packet(rst)))
@@ -248,7 +247,7 @@ def handle_syn(syn):
     for ip, sent_at in pending_syn.items():
         elapsed_seconds = time.time() - sent_at
         if elapsed_seconds > 3:
-            record_jamming_event(ip, 'syn packet drop')
+            log_jamming_event(ip, 'syn packet drop')
             del pending_syn[ip]
             full_proxy_service.add_to_black_list(ip, syn=syn)
             return False
@@ -274,7 +273,7 @@ def handle_syn_ack(syn_ack):
         del pending_syn[uncertain_ip]
     expected_ttl = syn_ack_ttl.get((uncertain_ip, syn_ack.tcp.sport)) or 0
     if expected_ttl and abs(syn_ack.ttl - expected_ttl) > 2:
-        record_jamming_event(uncertain_ip, 'tcp syn ack spoofing')
+        log_jamming_event(uncertain_ip, 'tcp syn ack spoofing')
         LOGGER.error(
             'received spoofed SYN ACK: expected ttl is %s, actually is %s, the packet %s' %
             (expected_ttl, syn_ack.ttl, format_ip_packet(syn_ack)))
@@ -305,10 +304,9 @@ def handle_syn_ack(syn_ack):
         return False
 
 
-def record_jamming_event(ip, event):
+def log_jamming_event(ip, event):
     event = '%s: %s %s' % (dns_service.get_domain(ip) or 'unknown.com', ip, event)
     LOGGER.error('jamming event: %s' % event)
-    jamming_event.record(event)
 
 
 def inject_ping_requests_to_find_right_ttl(dst):

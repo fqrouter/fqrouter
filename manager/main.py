@@ -9,9 +9,7 @@ import tornado.web
 import dns_service
 import tcp_service
 import full_proxy_service
-import self_check
 import wifi
-import jamming_event
 
 
 LOGGER = logging.getLogger(__name__)
@@ -37,17 +35,11 @@ class PingHandler(tornado.web.RequestHandler):
 class LogsHandler(tornado.web.RequestHandler):
     def get(self):
         self.write('<html><body><pre>')
+        lines = []
         with open(LOG_FILE) as f:
-            self.write(f.read())
-        self.write('</pre></body></html>')
-
-
-class JammingEventsHandler(tornado.web.RequestHandler):
-    def get(self):
-        self.write('<html><body><pre>')
-        for event in jamming_event.list_all():
-            self.write(event)
-            self.write('\n')
+            lines.append(f.read())
+        for line in reversed(lines):
+            self.write(line)
         self.write('</pre></body></html>')
 
 
@@ -55,8 +47,6 @@ application = tornado.web.Application([
     (r'/static/(.*)', tornado.web.StaticFileHandler, {'path': os.path.join(ROOT_DIR, 'static')}),
     (r'/ping', PingHandler),
     (r'/logs', LogsHandler),
-    (r'/jamming-events', JammingEventsHandler),
-    (r'/self-check', self_check.SelfCheckHandler),
     (r'/wifi', wifi.WifiHandler),
     (r'/', MainHandler)
 ])
