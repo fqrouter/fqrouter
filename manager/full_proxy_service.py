@@ -8,6 +8,7 @@ import os
 import signal
 import threading
 import re
+import urllib2
 
 import dpkt
 
@@ -152,12 +153,29 @@ def keep_proxies_fresh():
                 else:
                     LOGGER.info('still no proxies after redsocks started, retry in 30 seconds')
                     time.sleep(30)
+                if not can_access_twitter():
+                    LOGGER.info('still can not access twitter, retry in 30 seconds')
+                    proxies.clear()
+                    time.sleep(30)
             if time.time() - redsocks_started_at > 60 * 30:
                 LOGGER.info('clear all proxies, refresh now')
                 proxies.clear()
             time.sleep(1)
+            dump_redsocks_client_list()
     except:
         LOGGER.exception('failed to keep proxies fresh')
+
+
+def can_access_twitter():
+    success = 0
+    for i in range(10):
+        try:
+            urllib2.urlopen('https://www.twitter.com', timeout=5).read()
+            success += 1
+        except:
+            pass
+    LOGGER.info('twitter access success rate: %s/10' % success)
+    return success
 
 
 def start_redsocks():
@@ -220,7 +238,6 @@ def poll_redsocks_output():
             if 'End of client list' in line:
                 update_proxy_status(current_instance, current_clients)
                 current_instance = None
-            dump_redsocks_client_list()
         LOGGER.error('redsocks died, clear proxies')
         redsocks_process.stdout.close()
         proxies.clear()
@@ -346,7 +363,7 @@ def pick_proxy(ip_packet):
     return mark
 
 
-def add_to_black_list(ip):
+def add_to_black_list(ip, syn=None):
     if ip not in black_list:
         for mark, proxy in proxies.items():
             if ip == proxy['connection_info'][1]:

@@ -250,7 +250,7 @@ def handle_syn(syn):
         if elapsed_seconds > 3:
             record_jamming_event(ip, 'syn packet drop')
             del pending_syn[ip]
-            full_proxy_service.add_to_black_list(ip)
+            full_proxy_service.add_to_black_list(ip, syn=syn)
             return False
     return True
 
