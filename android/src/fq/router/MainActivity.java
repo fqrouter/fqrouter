@@ -1,11 +1,9 @@
 package fq.router;
 
 import android.app.Activity;
-import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageInfo;
 import android.net.Uri;
-import android.net.wifi.WifiManager;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
@@ -73,7 +71,6 @@ public class MainActivity extends Activity implements StatusUpdater {
             public void onClick(View view) {
                 startButton.setText("Starting...");
                 startButton.setEnabled(false);
-                enableWifi();
                 appendLog("starting supervisor thread");
                 new Thread(new Supervisor(getAssets(), MainActivity.this)).start();
             }
@@ -99,15 +96,6 @@ public class MainActivity extends Activity implements StatusUpdater {
         });
     }
 
-    private void enableWifi() {
-        try {
-            WifiManager wifi = (WifiManager) getSystemService(Context.WIFI_SERVICE);
-            wifi.setWifiEnabled(true);
-        } catch (Exception e) {
-            Log.e("fqrouter", "failed to enable wifi", e);
-        }
-    }
-
     public void updateStatus(final String status) {
         appendLog("status updated to: " + status);
         handler.postDelayed(new Runnable() {
@@ -130,17 +118,26 @@ public class MainActivity extends Activity implements StatusUpdater {
         }, 0);
     }
 
-    @Override
     public void activateManageButton() {
         handler.postDelayed(new Runnable() {
             @Override
             public void run() {
                 findViewById(R.id.startButton).setVisibility(View.GONE);
-                findViewById(R.id.reportErrorButton).setVisibility(View.VISIBLE);
                 findViewById(R.id.manageButton).setVisibility(View.VISIBLE);
             }
         }, 0);
-        updateStatus("Ready! manage button activated");
+        updateStatus("Press manage button to roll");
+    }
+
+    @Override
+    public void activateAndClickManageButton() {
+        activateManageButton();
+        handler.postDelayed(new Runnable() {
+            @Override
+            public void run() {
+                findViewById(R.id.manageButton).performClick();
+            }
+        }, 0);
     }
 
     @Override
@@ -154,7 +151,6 @@ public class MainActivity extends Activity implements StatusUpdater {
             @Override
             public void run() {
                 findViewById(R.id.startButton).setVisibility(View.GONE);
-                findViewById(R.id.reportErrorButton).setVisibility(View.VISIBLE);
             }
         }, 0);
         updateStatus("Error: " + msg);

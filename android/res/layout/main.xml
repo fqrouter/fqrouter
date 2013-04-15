@@ -1,44 +1,47 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
-              android:orientation="vertical"
-              android:layout_width="fill_parent"
-              android:layout_height="fill_parent"
-        >
-    <LinearLayout
-            android:orientation="horizontal"
+
+<FrameLayout
+        android:layout_width="fill_parent"
+        android:layout_height="fill_parent" xmlns:android="http://schemas.android.com/apk/res/android">
+    <Button
+            android:layout_width="160dp"
+            android:layout_height="wrap_content"
+            android:text="Start"
+            android:id="@+id/startButton" android:layout_gravity="center" android:textSize="32px"/>
+    <Button
+            android:layout_width="160dp"
+            android:layout_height="wrap_content"
+            android:text="Manage"
+            android:id="@+id/manageButton" android:layout_gravity="center" android:textSize="32px"
+            android:visibility="invisible"/>
+    <FrameLayout
             android:layout_width="fill_parent"
-            android:layout_height="60dp" android:layout_gravity="right|center_vertical">
+            android:layout_height="wrap_content" android:layout_gravity="center_horizontal|bottom">
         <Button
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="Exit"
-                android:id="@+id/exitButton" android:layout_gravity="center"/>
-        <Button
-                android:layout_width="fill_parent"
-                android:layout_height="wrap_content"
-                android:text="Start"
-                android:id="@+id/startButton" android:layout_gravity="center"/>
-        <Button
-                android:layout_width="wrap_content"
+                android:layout_width="128dp"
                 android:layout_height="wrap_content"
                 android:text="Report Error"
-                android:id="@+id/reportErrorButton" android:layout_gravity="center" android:visibility="gone"/>
+                android:id="@+id/reportErrorButton" android:layout_gravity="left|center_vertical"/>
         <Button
+                android:layout_width="128dp"
+                android:layout_height="wrap_content"
+                android:text="Exit"
+                android:id="@+id/exitButton" android:layout_gravity="right|center_vertical"/>
+    </FrameLayout>
+    <LinearLayout
+            android:orientation="vertical"
+            android:layout_width="fill_parent"
+            android:layout_height="fill_parent" android:layout_gravity="left|top">
+        <TextView
                 android:layout_width="fill_parent"
                 android:layout_height="wrap_content"
-                android:text="Manage"
-                android:id="@+id/manageButton" android:layout_gravity="center" android:visibility="gone"/>
+                android:text="Press start button to rock"
+                android:id="@+id/statusTextView" android:singleLine="true" android:textSize="12pt"
+                android:textColor="#ff0000"/>
+        <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="=== FQROUTER ==="
+                android:id="@+id/logTextView" android:layout_gravity="left|top"/>
     </LinearLayout>
-    <TextView
-            android:layout_width="fill_parent"
-            android:layout_height="wrap_content"
-            android:text="Not Started"
-            android:id="@+id/statusTextView" android:singleLine="true" android:textSize="12pt"
-            android:textColor="#ff0000"/>
-    <TextView
-            android:layout_width="fill_parent"
-            android:layout_height="fill_parent"
-            android:text="=== FQROUTER ==="
-            android:id="@+id/logTextView"/>
-</LinearLayout>
-
+</FrameLayout>
