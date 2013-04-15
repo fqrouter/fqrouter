@@ -1,7 +1,3 @@
-if [[ -z "$PASSWORD" ]] ; then
-    echo '$PASSWORD undefined'
-    exit
-fi
 while true
 do
     ./check-proxies.py \
