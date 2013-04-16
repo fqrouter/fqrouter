@@ -11,6 +11,7 @@ import iptables
 import shutdown_hook
 import network_interface
 import full_proxy_service
+import dns_server
 
 
 LOGGER = logging.getLogger(__name__)
@@ -52,31 +53,19 @@ class DnsServiceStatus(object):
 dns_service_status = DnsServiceStatus()
 domains = {} # ip => domain
 
-PRIMARY_DNS = '8.8.8.8'
-PRIMARY_DNS_MARK = 0x1feed
-FOR_STUPID_GOOGLE_DNS = '199.91.73.222' # v2ex dns resolves google.com and youtube.com better
-FOR_STUPID_GOOGLE_DNS_MARK = 0x2feed
-
 RULES = []
 for iface in network_interface.list_data_network_interfaces():
     RULES.append((
         {'target': 'NFQUEUE', 'iface_out': iface, 'extra': 'udp dpt:53 mark match ! 0xfeed/0xffff NFQUEUE num 1'},
         ('nat', 'OUTPUT', '-o %s -p udp --dport 53 -m mark ! --mark 0xfeed/0xffff -j NFQUEUE --queue-num 1' % iface)
     ))
-    RULE_REDIRECT_TO_PRIMARY_DNS = (
-        {'target': 'DNAT', 'iface_out': iface, 'extra':
-            'udp dpt:53 mark match 0x1feed to:%s:53' % PRIMARY_DNS},
-        ('nat', 'OUTPUT', '-o %s -p udp --dport 53 -m mark --mark 0x1feed '
-                          '-j DNAT --to-destination %s:53' % (iface, PRIMARY_DNS))
-    )
-    RULES.append(RULE_REDIRECT_TO_PRIMARY_DNS)
-    RULE_REDIRECT_TO_FOR_STUPID_GOOGLE_DNS = (
-        {'target': 'DNAT', 'iface_out': iface, 'extra':
-            'udp dpt:53 mark match 0x2feed to:%s:53' % FOR_STUPID_GOOGLE_DNS},
-        ('nat', 'OUTPUT', '-o %s -p udp --dport 53 -m mark --mark 0x2feed '
-                          '-j DNAT --to-destination %s:53' % (iface, FOR_STUPID_GOOGLE_DNS))
-    )
-    RULES.append(RULE_REDIRECT_TO_FOR_STUPID_GOOGLE_DNS)
+    for mark, ip in dns_server.list_dns_servers():
+        RULES.append((
+            {'target': 'DNAT', 'iface_out': iface, 'extra':
+                'udp dpt:53 mark match 0x%x to:%s:53' % (mark, ip)},
+            ('nat', 'OUTPUT', '-o %s -p udp --dport 53 -m mark --mark 0x%x '
+                              '-j DNAT --to-destination %s:53' % (iface, mark, ip))
+        ))
     RULE_DROP_PACKET = (
         {'target': 'NFQUEUE', 'iface_in': iface, 'extra': 'udp spt:53 NFQUEUE num 1'},
         ('filter', 'INPUT', '-i %s -p udp --sport 53 -j NFQUEUE --queue-num 1' % iface)
@@ -156,15 +145,10 @@ def handle_packet(nfqueue_element):
         questions = [question for question in dns_packet.qd if question.type == dpkt.dns.DNS_A]
         dns_packet.domain = questions[0].name if questions else None
         if 53 == ip_packet.udp.dport:
-            if dns_packet.domain and ('google.com' in dns_packet.domain or 'youtube.com' in dns_packet.domain
-                                      or 'googleusercontent.com' in dns_packet.domain
-                                      or 'appspot.com' in dns_packet.domain):
-                LOGGER.info('resolve stupid %s using: %s' % (dns_packet.domain, FOR_STUPID_GOOGLE_DNS))
-                nfqueue_element.set_mark(FOR_STUPID_GOOGLE_DNS_MARK)
-                nfqueue_element.repeat()
-            else:
-                nfqueue_element.set_mark(PRIMARY_DNS_MARK)
-                nfqueue_element.repeat()
+            server_name, mark = dns_server.select_dns_server(dns_packet.domain)
+            LOGGER.info('resolve %s using: %s' % (dns_packet.domain, server_name))
+            nfqueue_element.set_mark(mark)
+            nfqueue_element.repeat()
         else:
             if contains_wrong_answer(dns_packet):
             # after the fake packet dropped, the real answer can be accepted by the client
