@@ -82,12 +82,12 @@ class Checker(object):
         self.port = port
         self.elapsed = elapsed
         self.proc = subprocess.Popen(
-            shlex.split('curl --proxy %s:%s https://www.amazon.com/404' % (ip, port)),
+            shlex.split('curl --proxy %s:%s https://www.twitter.com' % (ip, port)),
             stderr=subprocess.STDOUT, stdout=subprocess.PIPE)
         self.started_at = time.time()
 
     def is_ok(self):
-        if 0 == self.proc.poll() and 'Amazon.com' in self.proc.stdout.read():
+        if 0 == self.proc.poll() and 'Welcome to Twitter' in self.proc.stdout.read():
             return round(time.time() - self.started_at, 2)
         return 0
 

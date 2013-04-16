@@ -1,6 +1,7 @@
 import os
 import socket
 import struct
+import math
 
 
 def load_ip_ranges():
@@ -19,7 +20,12 @@ def load_ip_ranges():
         _, _, _, start_ip, ip_count, _, _ = line.split('|')
         start_ip_as_int = ip_to_int(start_ip)
         end_ip_as_int = start_ip_as_int + int(ip_count)
-        yield (start_ip_as_int, end_ip_as_int)
+        yield start_ip_as_int, end_ip_as_int
+    yield translate_ip_range('111.0.0.0', 10) # china mobile
+
+
+def translate_ip_range(ip, netmask):
+    return ip_to_int(ip), ip_to_int(ip) + int(math.pow(2, 32 - netmask))
 
 
 def ip_to_int(ip):
