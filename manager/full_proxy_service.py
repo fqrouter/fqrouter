@@ -343,10 +343,10 @@ def handle_packet(nfqueue_element):
         ip = socket.inet_ntoa(ip_packet.dst)
         if china_ip.is_china_ip(ip):
             nfqueue_element.accept()
-        elif ip in black_list:
-            set_verdict_proxy(nfqueue_element, ip_packet)
         elif ip in white_list:
             nfqueue_element.accept()
+        elif ip in black_list:
+            set_verdict_proxy(nfqueue_element, ip_packet)
         else:
             nfqueue_element.accept()
     except:
@@ -382,7 +382,7 @@ def pick_proxy(ip_packet):
 
 
 def add_to_black_list(ip, syn=None):
-    if ip not in black_list:
+    if ip not in black_list and ip not in white_list:
         for mark, proxy in proxies.items():
             if ip == proxy['connection_info'][1]:
                 LOGGER.error('proxy died: %s' % ip)
@@ -408,6 +408,10 @@ def delete_existing_conntrack_entry(ip):
 
 def add_to_white_list(ip):
     if ip not in white_list and not china_ip.is_china_ip(ip):
-        LOGGER.info('add white list ip: %s' % ip)
+        if ip in black_list:
+            LOGGER.info('add white list ip from black list: %s' % ip)
+            black_list.remove(ip)
+        else:
+            LOGGER.info('add white list ip: %s' % ip)
         white_list.add(ip)
     pending_list.pop(ip, None)

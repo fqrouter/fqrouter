@@ -5,16 +5,16 @@ import subprocess
 import shlex
 import time
 import httplib
+import re
 
 import tornado.web
 
 import iptables
 import network_interface
 import hostapd_template
-import re
+
 
 RE_CURRENT_FREQUENCY = re.compile(r'Current Frequency:(\d+\.\d+) GHz \(Channel (\d+)\)')
-
 
 LOGGER = logging.getLogger(__name__)
 MODALIAS_PATH = '/sys/class/net/%s/device/modalias' % network_interface.WIFI_INTERFACE
@@ -332,15 +332,20 @@ def start_hotspot_on_wcnss():
     return p2p_persistent_iface
 
 
+def load_ap_firmware():
+    for i in range(3):
+        if 'ap0' not in list_wifi_ifaces():
+            netd_execute('softap fwreload %s AP' % network_interface.WIFI_INTERFACE)
+            for i in range(5):
+                time.sleep(1)
+                if 'ap0' in list_wifi_ifaces():
+                    return
+
+
 def start_hotspot_on_mtk():
     control_socket_dir = get_wpa_supplicant_control_socket_dir()
     log_upstream_wifi_status('before load ap firmware', control_socket_dir)
-    if 'ap0' not in list_wifi_ifaces():
-        netd_execute('softap fwreload %s AP' % network_interface.WIFI_INTERFACE)
-        for i in range(30):
-            time.sleep(1)
-            if 'ap0' in list_wifi_ifaces():
-                break
+    load_ap_firmware()
     assert 'ap0' in list_wifi_ifaces()
     log_upstream_wifi_status('after loaded ap firmware', control_socket_dir)
     shell_execute('%s -p %s -i ap0 reconfigure' % (P2P_CLI_PATH, control_socket_dir))
