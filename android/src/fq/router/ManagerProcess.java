@@ -14,6 +14,17 @@ public class ManagerProcess {
             if (processId > 0) {
                 Log.i("fqrouter", "kill manager process " + processId);
                 ShellUtils.sudo("/system/bin/kill " + processId);
+                for (int i = 0; i < 30; i++) {
+                    if (new File("/proc/" + processId).exists()) {
+                        Thread.sleep(1000);
+                    } else {
+                        Log.i("fqrouter", "manage process " + processId + " has been killed cleanly");
+                        return;
+                    }
+                }
+                ShellUtils.sudo("/system/bin/kill -9 " + processId);
+                Log.i("fqrouter", "manage process " + processId + " has been killed with blood");
+                kill();
             }
         } finally {
             ShellUtils.sudo("PYTHONHOME=" + Deployer.PYTHON_DIR + " " +
