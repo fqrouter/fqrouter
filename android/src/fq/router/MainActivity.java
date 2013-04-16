@@ -151,11 +151,11 @@ public class MainActivity extends Activity implements StatusUpdater {
     }
 
     private void onExitClicked() {
-        updateStatus("Exiting...");
         new Thread(new Runnable() {
             @Override
             public void run() {
                 stopWifiHotspot();
+                updateStatus("Exiting...");
                 try {
                     ManagerProcess.kill();
                 } catch (Exception e) {
