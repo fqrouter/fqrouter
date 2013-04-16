@@ -11,6 +11,9 @@ import tornado.web
 import iptables
 import network_interface
 import hostapd_template
+import re
+
+RE_CURRENT_FREQUENCY = re.compile(r'Current Frequency:(\d+\.\d+) GHz \(Channel (\d+)\)')
 
 
 LOGGER = logging.getLogger(__name__)
@@ -355,7 +358,8 @@ def start_hotspot_on_wl12xx():
         shell_execute('iw %s interface add ap0 type managed' % network_interface.WIFI_INTERFACE)
     assert 'ap0' in list_wifi_ifaces()
     with open('/data/misc/wifi/fqrouter.conf', 'w') as f:
-        f.write(hostapd_template.render(channel=get_upstream_channel() or 1))
+        frequency, channel = get_upstream_frequency_and_channel()
+        f.write(hostapd_template.render(channel=channel or 1))
     LOGGER.info('start hostapd')
     proc = subprocess.Popen(
         ['/data/data/fq.router/wifi-tools/hostapd', '-dd', '/data/misc/wifi/fqrouter.conf'],
@@ -370,15 +374,20 @@ def start_hotspot_on_wl12xx():
     return 'ap0'
 
 
-def get_upstream_channel():
-    output = shell_execute('%s %s channel' % (IWLIST_PATH, network_interface.WIFI_INTERFACE))
-    for line in output.splitlines():
-        line = line.strip()
-        if not line:
-            continue
-        if line.startswith('Current Frequency:'):
-            return line.split(' ')[-1][:-1]
-    return None
+def get_upstream_frequency_and_channel():
+    try:
+        output = shell_execute('%s %s channel' % (IWLIST_PATH, network_interface.WIFI_INTERFACE))
+        for line in output.splitlines():
+            line = line.strip()
+            if not line:
+                continue
+            match = RE_CURRENT_FREQUENCY.match(line)
+            if match:
+                return match.group(1), match.group(2)
+        return None, None
+    except:
+        LOGGER.exception('failed to get upstream frequency and channel')
+        return None, None
 
 
 def setup_networking(hotspot_interface):
@@ -423,7 +432,12 @@ def start_p2p_persistent_network(iface, control_socket_dir):
     set_network('proto RSN')
     set_network('pairwise CCMP')
     set_network('psk \'"12345678"\'')
-    shell_execute('%s -p %s -i %s p2p_group_add persistent=%s' % (P2P_CLI_PATH, control_socket_dir, iface, index))
+    frequency, channel = get_upstream_frequency_and_channel()
+    if frequency:
+        shell_execute('%s -p %s -i %s p2p_group_add freq=%s persistent=%s' %
+                      (P2P_CLI_PATH, control_socket_dir, iface, frequency.replace('.', ''), index))
+    else:
+        shell_execute('%s -p %s -i %s p2p_group_add persistent=%s' % (P2P_CLI_PATH, control_socket_dir, iface, index))
     time.sleep(1)
     return index
 
@@ -446,7 +460,8 @@ def stop_p2p_persistent_network(control_socket_dir, control_iface, iface):
 
 def reset_p2p_channels(iface, control_socket_dir):
     try:
-        channel = get_upstream_channel() or 6
+        frequency, channel = get_upstream_frequency_and_channel
+        channel = channel or 6
         shell_execute('%s -p %s -i %s set p2p_oper_channel %s' % (P2P_CLI_PATH, control_socket_dir, iface, channel))
         shell_execute('%s -p %s -i %s set p2p_oper_reg_class 81' % (P2P_CLI_PATH, control_socket_dir, iface))
         shell_execute('%s -p %s -i %s set p2p_listen_channel %s' % (P2P_CLI_PATH, control_socket_dir, iface, channel))

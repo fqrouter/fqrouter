@@ -10,7 +10,6 @@ adb push redsocks_template.py /sdcard/manager/redsocks_template.py
 adb push iptables.py /sdcard/manager/iptables.py
 adb push shutdown_hook.py /sdcard/manager/shutdown_hook.py
 adb push main.py /sdcard/manager/main.py
-adb push dashboard.html /sdcard/manager/dashboard.html
 adb push wifi.py /sdcard/manager/wifi.py
 adb push hostapd_template.py /sdcard/manager/hostapd_template.py
 adb shell su -c "PYTHONHOME=/data/data/fq.router/python python /sdcard/manager/main.py"
