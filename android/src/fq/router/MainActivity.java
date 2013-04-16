@@ -99,6 +99,8 @@ public class MainActivity extends Activity implements StatusUpdater {
             updateStatus("Starting wifi hotspot");
             HttpUtils.post("http://127.0.0.1:8318/wifi/start");
             updateStatus("Started wifi hotspot");
+            appendLog("SSID: spike");
+            appendLog("PASSWORD: 12345678");
             showWifiHotspotCheckbox(true);
         } catch (Exception e) {
             reportError("failed to start wifi hotspot", e);
