@@ -50,7 +50,7 @@ public class Supervisor implements Runnable {
             if (shouldWait && !waitForManager()) {
                 return;
             }
-            statusUpdater.activateAndClickManageButton();
+            statusUpdater.activateManageButton();
         } finally {
             statusUpdater.appendLog("supervisor thread stopped");
         }

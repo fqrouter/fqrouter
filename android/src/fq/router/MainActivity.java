@@ -9,6 +9,8 @@ import android.os.Bundle;
 import android.os.Handler;
 import android.text.method.ScrollingMovementMethod;
 import android.util.Log;
+import android.view.Menu;
+import android.view.MenuItem;
 import android.view.View;
 import android.widget.Button;
 import android.widget.TextView;
@@ -20,12 +22,16 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.lang.reflect.Method;
 import java.util.ArrayList;
 
 
 public class MainActivity extends Activity implements StatusUpdater {
+
+    private final static int SHOW_AS_ACTION_IF_ROOM = 1;
+    private final static int ITEM_ID_EXIT = 1;
+    private final static int ITEM_ID_REPORT_ERROR = 2;
     private Handler handler = new Handler();
-    private boolean doubleBackToExitPressedOnce = false;
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
@@ -57,58 +63,71 @@ public class MainActivity extends Activity implements StatusUpdater {
                 startActivity(new Intent(Intent.ACTION_VIEW, Uri.parse("http://127.0.0.1:8318")));
             }
         });
-        Button exitButton = (Button) findViewById(R.id.exitButton);
-        exitButton.setOnClickListener(new View.OnClickListener() {
+    }
+
+    @Override
+    public boolean onCreateOptionsMenu(Menu menu) {
+        addMenuItem(menu, ITEM_ID_REPORT_ERROR, "Report Error");
+        addMenuItem(menu, ITEM_ID_EXIT, "Exit");
+        return super.onCreateOptionsMenu(menu);
+    }
+
+    private void addMenuItem(Menu menu, int menuItemId, String caption) {
+        MenuItem exitMenuItem = menu.add(Menu.NONE, menuItemId, Menu.NONE, caption);
+        try {
+            Method method = MenuItem.class.getMethod("setShowAsAction", int.class);
+            try {
+                method.invoke(exitMenuItem, SHOW_AS_ACTION_IF_ROOM);
+            } catch (Exception e) {
+            }
+        } catch (NoSuchMethodException e) {
+        }
+    }
+
+    @Override
+    public boolean onMenuItemSelected(int featureId, MenuItem item) {
+        if (ITEM_ID_EXIT == item.getItemId()) {
+            onExitClicked();
+        } else if (ITEM_ID_REPORT_ERROR == item.getItemId()) {
+            onReportErrorClicked();
+        }
+        return super.onMenuItemSelected(featureId, item);
+    }
+
+    private void onExitClicked() {
+        updateStatus("Exiting...");
+        new Thread(new Runnable() {
             @Override
-            public void onClick(View view) {
+            public void run() {
                 try {
                     ManagerProcess.kill();
                 } catch (Exception e) {
                     Log.e("fqrouter", "failed to kill manager process", e);
                 }
-                finish();
+                handler.postDelayed(new Runnable() {
+                    @Override
+                    public void run() {
+                        finish();
+                    }
+                }, 0);
             }
-        });
-        final Button reportErrorButton = (Button) findViewById(R.id.reportErrorButton);
-        reportErrorButton.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                Intent i = new Intent(Intent.ACTION_SEND_MULTIPLE);
-                i.setType("text/plain");
-                i.putExtra(Intent.EXTRA_EMAIL, new String[]{"fqrouter@gmail.com"});
-                i.putExtra(Intent.EXTRA_SUBJECT, "android fqrouter error report for version " + getMyVersion());
-                i.putExtra(Intent.EXTRA_TEXT, getErrorMailBody());
-                createLogFiles();
-                attachLogFiles(i, "/sdcard/manager.log", "/sdcard/logcat.log",
-                        "/sdcard/getprop.log", "/sdcard/dmesg.log");
-                try {
-                    startActivity(Intent.createChooser(i, "Send mail..."));
-                } catch (android.content.ActivityNotFoundException ex) {
-                    Toast.makeText(MainActivity.this, "There are no email clients installed.", Toast.LENGTH_SHORT).show();
-                }
-            }
-        });
+        }).start();
     }
 
-    @Override
-    public void onBackPressed() {
-        if (doubleBackToExitPressedOnce) {
-            super.onBackPressed();
-            try {
-                ManagerProcess.kill();
-            } catch (Exception e) {
-                Log.e("fqrouter", "failed to kill manager process", e);
-            }
-            return;
+    private void onReportErrorClicked() {
+        Intent i = new Intent(Intent.ACTION_SEND_MULTIPLE);
+        i.setType("text/plain");
+        i.putExtra(Intent.EXTRA_EMAIL, new String[]{"fqrouter@gmail.com"});
+        i.putExtra(Intent.EXTRA_SUBJECT, "android fqrouter error report for version " + getMyVersion());
+        i.putExtra(Intent.EXTRA_TEXT, getErrorMailBody());
+        createLogFiles();
+        attachLogFiles(i, "/sdcard/manager.log", "/sdcard/logcat.log",
+                "/sdcard/getprop.log", "/sdcard/dmesg.log");
+        try {
+            startActivity(Intent.createChooser(i, "Send mail..."));
+        } catch (android.content.ActivityNotFoundException ex) {
+            Toast.makeText(MainActivity.this, "There are no email clients installed.", Toast.LENGTH_SHORT).show();
         }
-        this.doubleBackToExitPressedOnce = true;
-        Toast.makeText(this, "Please click BACK again to exit", Toast.LENGTH_SHORT).show();
-        new Handler().postDelayed(new Runnable() {
-            @Override
-            public void run() {
-                doubleBackToExitPressedOnce = false;
-            }
-        }, 2000);
     }
 
     public void updateStatus(final String status) {
@@ -133,6 +152,7 @@ public class MainActivity extends Activity implements StatusUpdater {
         }, 0);
     }
 
+    @Override
     public void activateManageButton() {
         handler.postDelayed(new Runnable() {
             @Override
@@ -141,17 +161,6 @@ public class MainActivity extends Activity implements StatusUpdater {
             }
         }, 0);
         updateStatus("Press manage button to roll");
-    }
-
-    @Override
-    public void activateAndClickManageButton() {
-        activateManageButton();
-        handler.postDelayed(new Runnable() {
-            @Override
-            public void run() {
-                findViewById(R.id.manageButton).performClick();
-            }
-        }, 0);
     }
 
     @Override
