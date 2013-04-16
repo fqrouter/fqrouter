@@ -82,7 +82,7 @@ class Checker(object):
         self.port = port
         self.elapsed = elapsed
         self.proc = subprocess.Popen(
-            shlex.split('curl --proxy %s:%s https://www.twitter.com' % (ip, port)),
+            shlex.split('curl --proxy %s:%s https://mobile.twitter.com/signup' % (ip, port)),
             stderr=subprocess.STDOUT, stdout=subprocess.PIPE)
         self.started_at = time.time()
 
