@@ -4,9 +4,11 @@ import android.app.Activity;
 import android.app.Notification;
 import android.app.NotificationManager;
 import android.app.PendingIntent;
+import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageInfo;
 import android.net.Uri;
+import android.net.wifi.WifiManager;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
@@ -19,6 +21,7 @@ import android.view.View;
 import android.widget.CheckBox;
 import android.widget.TextView;
 import android.widget.Toast;
+import fq.router.utils.HttpUtils;
 import fq.router.utils.IOUtils;
 import fq.router.utils.ShellUtils;
 
@@ -64,9 +67,58 @@ public class MainActivity extends Activity implements StatusUpdater {
         wifiHotspotCheckBox.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                Log.i("fqrouter", "is checked: " + wifiHotspotCheckBox.isChecked());
+                final boolean checked = wifiHotspotCheckBox.isChecked();
+                wifiHotspotCheckBox.setVisibility(View.INVISIBLE);
+                new Thread(new Runnable() {
+                    @Override
+                    public void run() {
+                        if (checked) {
+                            startWifiHotspot();
+                        } else {
+                            stopWifiHotspot();
+                        }
+                    }
+                }).start();
             }
         });
+    }
+
+    private void showWifiHotspotCheckbox(final boolean checked) {
+        handler.postDelayed(new Runnable() {
+            @Override
+            public void run() {
+                final CheckBox wifiHotspotCheckBox = (CheckBox) findViewById(R.id.wifiHotspotCheckBox);
+                wifiHotspotCheckBox.setChecked(checked);
+                wifiHotspotCheckBox.setVisibility(View.VISIBLE);
+            }
+        }, 0);
+    }
+
+    private void startWifiHotspot() {
+        try {
+            updateStatus("Starting wifi hotspot");
+            HttpUtils.post("http://127.0.0.1:8318/wifi/start");
+            updateStatus("Started wifi hotspot");
+            showWifiHotspotCheckbox(true);
+        } catch (Exception e) {
+            reportError("failed to start wifi hotspot", e);
+            stopWifiHotspot();
+            showWifiHotspotCheckbox(false);
+        }
+    }
+
+    private void stopWifiHotspot() {
+        try {
+            updateStatus("Stopping wifi hotspot");
+            HttpUtils.post("http://127.0.0.1:8318/wifi/stop");
+        } catch (Exception e) {
+            reportError("failed to stop wifi hotspot", e);
+        }
+        WifiManager wifiManager = (WifiManager) getBaseContext().getSystemService(Context.WIFI_SERVICE);
+        wifiManager.setWifiEnabled(false);
+        wifiManager.setWifiEnabled(true);
+        updateStatus("Stopped wifi hotspot");
+        showWifiHotspotCheckbox(false);
     }
 
     @Override
@@ -103,6 +155,7 @@ public class MainActivity extends Activity implements StatusUpdater {
         new Thread(new Runnable() {
             @Override
             public void run() {
+                stopWifiHotspot();
                 try {
                     ManagerProcess.kill();
                 } catch (Exception e) {
@@ -182,12 +235,14 @@ public class MainActivity extends Activity implements StatusUpdater {
 
     @Override
     public void onStarted() {
-        handler.postDelayed(new Runnable() {
-            @Override
-            public void run() {
-                findViewById(R.id.wifiHotspotCheckBox).setVisibility(View.VISIBLE);
-            }
-        }, 0);
+        updateStatus("Checking if wifi hotspot is started");
+        try {
+            boolean isStarted = "TRUE".equals(HttpUtils.get("http://127.0.0.1:8318/wifi/started"));
+            showWifiHotspotCheckbox(isStarted);
+        } catch (Exception e) {
+            Log.e("fqrouter", "failed to check if wifi hotspot is started", e);
+            showWifiHotspotCheckbox(false);
+        }
         updateStatus("Started, f**k censorship");
     }
 

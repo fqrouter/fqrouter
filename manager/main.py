@@ -19,14 +19,6 @@ LOG_FILE = os.path.join(LOG_DIR, 'manager.log')
 template_loader = tornado.template.Loader(ROOT_DIR)
 
 
-class MainHandler(tornado.web.RequestHandler):
-    def get(self):
-        template = template_loader.load('dashboard.html')
-        self.write(template.generate(
-            dns_service_status=dns_service.status,
-            tcp_service_status=tcp_service.status))
-
-
 class PingHandler(tornado.web.RequestHandler):
     def get(self):
         self.write('PONG')
@@ -44,11 +36,11 @@ class LogsHandler(tornado.web.RequestHandler):
 
 
 application = tornado.web.Application([
-    (r'/static/(.*)', tornado.web.StaticFileHandler, {'path': os.path.join(ROOT_DIR, 'static')}),
     (r'/ping', PingHandler),
     (r'/logs', LogsHandler),
-    (r'/wifi', wifi.WifiHandler),
-    (r'/', MainHandler)
+    (r'/wifi/start', wifi.WifiStartHandler),
+    (r'/wifi/stop', wifi.WifiStopHandler),
+    (r'/wifi/started', wifi.WifiIsStartedHandler)
 ])
 
 

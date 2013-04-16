@@ -115,6 +115,7 @@ public class Deployer {
             deleteDirectory(DATA_DIR + "/proxy-tools");
             deleteDirectory(DATA_DIR + "/manager");
             deleteDirectory(DATA_DIR + "/busybox");
+            deleteDirectory(DATA_DIR + "/payload.zip");
         }
     }
 

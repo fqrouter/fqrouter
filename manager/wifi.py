@@ -4,8 +4,10 @@ import socket
 import subprocess
 import shlex
 import time
+import httplib
 
 import tornado.web
+
 import iptables
 import network_interface
 import hostapd_template
@@ -32,62 +34,76 @@ for iface in network_interface.list_data_network_interfaces():
 
 
 def clean():
+    stop_hotspot()
+
+
+class WifiStartHandler(tornado.web.RequestHandler):
+    def post(self):
+        success, message = start_hotspot()
+        if not success:
+            self.set_status(httplib.INTERNAL_SERVER_ERROR)
+        self.write(message)
+
+
+class WifiStopHandler(tornado.web.RequestHandler):
+    def post(self):
+        self.write(stop_hotspot())
+
+
+class WifiIsStartedHandler(tornado.web.RequestHandler):
+    def get(self):
+        if get_working_hotspot_iface():
+            self.write('TRUE')
+        else:
+            self.write('FALSE')
+
+
+def stop_hotspot():
     try:
-        working_hotspot_iface = get_working_hotspot_iface()
-        if working_hotspot_iface:
-            stop_hotspot(working_hotspot_iface)
+        try:
+            working_hotspot_iface = get_working_hotspot_iface()
+            if working_hotspot_iface:
+                stop_hotspot_interface(working_hotspot_iface)
+                return 'hotspot stopped successfully'
+            else:
+                return 'hotspot has not been started yet'
+        finally:
+            try:
+                control_socket_dir = get_wpa_supplicant_control_socket_dir()
+                delete_existing_p2p_persistent_networks(network_interface.WIFI_INTERFACE, control_socket_dir)
+            except:
+                LOGGER.exception('failed to delete existing p2p persistent networks')
     except:
         LOGGER.exception('failed to stop hotspot')
+        return 'failed to stop hotspot'
+
+
+def start_hotspot():
     try:
-        control_socket_dir = get_wpa_supplicant_control_socket_dir()
-        delete_existing_p2p_persistent_networks(network_interface.WIFI_INTERFACE, control_socket_dir)
+        iptables.delete_rules(RULES)
+        working_hotspot_iface = get_working_hotspot_iface()
+        if working_hotspot_iface:
+            return True, 'hotspot is already working, start skipped'
+        else:
+            LOGGER.info('=== Before Starting Hotspot ===')
+            dump_wifi_status()
+            LOGGER.info('=== Start Hotspot ===')
+            wifi_chipset = get_wifi_chipset()
+            hotspot_interface = start_hotspot_interface(wifi_chipset)
+            setup_networking(hotspot_interface)
+            LOGGER.info('=== Started Hotspot ===')
+            dump_wifi_status()
+            if on_wifi_hotspot_started:
+                on_wifi_hotspot_started()
+            return True, 'hotspot started successfully'
     except:
-        LOGGER.exception('failed to delete existing p2p persistent networks')
-
-
-class WifiHandler(tornado.web.RequestHandler):
-    def post(self):
-        action = self.get_argument('action')
-        if 'start-hotspot' == action:
-            try:
-                working_hotspot_iface = get_working_hotspot_iface()
-                if working_hotspot_iface:
-                    self.write('hotspot is already working, start skipped')
-                else:
-                    LOGGER.info('=== Before Starting Hotspot ===')
-                    dump_wifi_status()
-                    LOGGER.info('=== Start Hotspot ===')
-                    start_hotspot()
-                    LOGGER.info('=== Started Hotspot ===')
-                    dump_wifi_status()
-                    if on_wifi_hotspot_started:
-                        on_wifi_hotspot_started()
-                    self.write('hotspot started successfully')
-            except:
-                LOGGER.exception('failed to start hotspot')
-                self.write('failed to start hotspot')
-                try:
-                    LOGGER.error('=== Failed to Start Hotspot ===')
-                    dump_wifi_status()
-                finally:
-                    working_hotspot_iface = get_working_hotspot_iface()
-                    if working_hotspot_iface:
-                        stop_hotspot(working_hotspot_iface)
-                    else:
-                        netd_execute('softap fwreload %s STA' % network_interface.WIFI_INTERFACE)
-                        shell_execute('netcfg %s down' % network_interface.WIFI_INTERFACE)
-                        shell_execute('netcfg %s up' % network_interface.WIFI_INTERFACE)
-        elif 'stop-hotspot' == action:
-            try:
-                working_hotspot_iface = get_working_hotspot_iface()
-                if working_hotspot_iface:
-                    stop_hotspot(working_hotspot_iface)
-                    self.write('hotspot stopped successfully')
-                else:
-                    self.write('hotspot has not been started yet')
-            except:
-                LOGGER.exception('failed to stop hotspot')
-                self.write('failed to stop hotspot')
+        LOGGER.exception('failed to start hotspot')
+        try:
+            LOGGER.error('=== Failed to Start Hotspot ===')
+            dump_wifi_status()
+        finally:
+            stop_hotspot()
+        return False, 'failed to start hotspot'
 
 
 def dump_wifi_status():
@@ -194,8 +210,7 @@ def list_wifi_ifaces():
     return ifaces
 
 
-def stop_hotspot(iface):
-    iptables.delete_rules(RULES)
+def stop_hotspot_interface(iface):
     netd_execute('tether stop')
     try:
         control_socket_dir = get_wpa_supplicant_control_socket_dir()
@@ -224,31 +239,30 @@ def stop_hotspot(iface):
         LOGGER.exception('failed to killall hostapd')
 
 
-def start_hotspot():
+def start_hotspot_interface(wifi_chipset):
     try:
         shell_execute('start p2p_supplicant')
     except:
         LOGGER.exception('failed to start p2p_supplicant')
-    wifi_chipset = get_wifi_chipset()
     if wifi_chipset.endswith('4330') or wifi_chipset.endswith('4334') or wifi_chipset.endswith('4324'):
     # only tested on sdio:c00v02D0d4330
     # support of bcm43241(4324) is a wild guess
     # support of bcm4334(4334) is a wild guess
         hotspot_interface = start_hotspot_on_bcm()
-    elif 'platform:wcnss_wlan' == wifi_chipset or wifi_chipset.endswith('0301'):
-    # ar6003 is c00v0271d0301
+    elif 'platform:wcnss_wlan' == wifi_chipset:
         hotspot_interface = start_hotspot_on_wcnss()
     elif wifi_chipset.endswith('6620') or wifi_chipset.endswith('6628'):
     # only tested on sdio:c00v037Ad6628
     # support of mt6620 is a wild gues
         hotspot_interface = start_hotspot_on_mtk()
-    elif 'platform:wl12xx' == wifi_chipset:
+    elif 'platform:wl12xx' == wifi_chipset or wifi_chipset.endswith('0301'):
+    # ar6003 is c00v0271d0301
         hotspot_interface = start_hotspot_on_wl12xx()
     else:
         raise Exception('wifi chipset is not supported: %s' % wifi_chipset)
     if not get_working_hotspot_iface():
         raise Exception('working hotspot iface not found after start')
-    setup_networking(hotspot_interface)
+    return hotspot_interface
 
 
 def get_wifi_chipset():
