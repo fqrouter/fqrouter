@@ -520,7 +520,8 @@ def get_wpa_supplicant_control_socket_dir(conf_path=WPA_SUPPLICANT_CONF_PATH):
         with open(conf_path) as f:
             content = f.read()
         control_socket_dir = parse_wpa_supplicant_conf(content)
-        control_socket_dir = fix_wrong_control_socket_dir(control_socket_dir)
+        if WPA_SUPPLICANT_CONF_PATH == conf_path:
+            control_socket_dir = fix_wrong_control_socket_dir(control_socket_dir)
         if control_socket_dir:
             return control_socket_dir
         else:
