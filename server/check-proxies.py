@@ -111,6 +111,6 @@ for i in range(10):
     proxies = checked_proxies
     checked_proxies = []
 
-for ip, port, elapsed in sorted(proxies, key=lambda proxy: proxy[2])[:10]:
+for ip, port, elapsed in sorted(proxies, key=lambda proxy: proxy[2])[:30]:
     print('%s:%s' % (ip, port))
 print('')
