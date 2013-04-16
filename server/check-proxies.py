@@ -58,7 +58,7 @@ class Checker(object):
         self.port = port
         self.elapsed = elapsed
         self.proc = subprocess.Popen(
-            shlex.split('curl --proxy %s:%s -k https://www.amazon.com/404' % (ip, port)),
+            shlex.split('curl --proxy %s:%s https://www.amazon.com/404' % (ip, port)),
             stderr=subprocess.STDOUT, stdout=subprocess.PIPE)
         self.started_at = time.time()
 
