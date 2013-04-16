@@ -23,6 +23,22 @@ def log(message):
 
 
 proxies = set()
+black_list = {
+    '198.154.114.118',
+    '173.213.113.111',
+    '66.35.68.145',
+    '91.193.75.101',
+    '5.135.81.16',
+    '122.38.94.49',
+    '95.140.119.40',
+    '95.140.123.78',
+    '109.195.54.231',
+    '95.140.118.193',
+    '178.33.105.59',
+    '92.46.119.60',
+    '201.73.200.82',
+    '201.73.200.82'
+}
 
 
 def add_proxy(line):
@@ -32,6 +48,8 @@ def add_proxy(line):
     ip, port = line.split(':')
     if manager.china_ip.is_china_ip(ip):
         log('skip china ip: %s' % ip)
+    if ip in black_list:
+        log('skip blacklisted ip: %s' % ip)
     else:
         proxies.add((ip, port, 0))
 
@@ -111,6 +129,6 @@ for i in range(10):
     proxies = checked_proxies
     checked_proxies = []
 
-for ip, port, elapsed in sorted(proxies, key=lambda proxy: proxy[2])[:30]:
+for ip, port, elapsed in sorted(proxies, key=lambda proxy: proxy[2])[:20]:
     print('%s:%s' % (ip, port))
 print('')

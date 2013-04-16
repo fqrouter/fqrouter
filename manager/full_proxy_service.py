@@ -49,6 +49,7 @@ raw_socket.setsockopt(socket.SOL_IP, socket.IP_HDRINCL, 1)
 SO_MARK = 36
 raw_socket.setsockopt(socket.SOL_SOCKET, SO_MARK, 0xcafe)
 
+PROXIES_COUNT = 20
 RE_IP_PORT = r'(\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}):(\d+)'
 RE_REDSOCKS_CLIENT = re.compile(RE_IP_PORT + '->')
 RE_REDSOCKS_INSTANCE = re.compile(r'Dumping client list for instance ' + RE_IP_PORT)
@@ -97,7 +98,7 @@ def add_full_proxy_chain(is_prerouting):
         {'target': 'NFQUEUE', 'extra': 'mark match ! 0xbabe/0xffff NFQUEUE num 3'},
         ('nat', chain_name, '-p tcp -m mark ! --mark 0xbabe/0xffff -j NFQUEUE --queue-num 3')
     ))
-    for i in [1, 2, 3, 4, 5, 6, 7, 8, 9]:
+    for i in range(1, 1 + PROXIES_COUNT):
         if is_prerouting:
             RULES.append((
                 {'target': 'CONNMARK', 'extra': 'mark match 0x%sbabe CONNMARK set 0x%sbabe' % (i, i)},
@@ -108,9 +109,9 @@ def add_full_proxy_chain(is_prerouting):
                 ('nat', chain_name, '-p tcp -m mark --mark 0x%sbabe -j CONNMARK --save-mark' % i)
             ))
             RULES.append((
-                {'target': 'DNAT', 'extra': 'mark match 0x%sbabe to:192.168.49.1:1983%s' % (i, i)},
+                {'target': 'DNAT', 'extra': 'mark match 0x%sbabe to:192.168.49.1:%s' % (i, 19830 + i)},
                 ('nat', chain_name, '-p tcp -m mark --mark 0x%sbabe -j DNAT'
-                                    ' --to-destination 192.168.49.1:1983%s' % (i, i))
+                                    ' --to-destination 192.168.49.1:%s' % (i, 19830 + i))
             ))
         else:
             RULES.append((
@@ -122,8 +123,8 @@ def add_full_proxy_chain(is_prerouting):
                 ('nat', chain_name, '-p tcp -m mark --mark 0x%sbabe -j CONNMARK --save-mark' % i)
             ))
             RULES.append((
-                {'target': 'REDIRECT', 'extra': 'mark match 0x%sbabe redir ports 1983%s' % (i, i)},
-                ('nat', chain_name, '-p tcp -m mark --mark 0x%sbabe -j REDIRECT --to-ports 1983%s' % (i, i))
+                {'target': 'REDIRECT', 'extra': 'mark match 0x%sbabe redir ports %s' % (i, 19830 + i)},
+                ('nat', chain_name, '-p tcp -m mark --mark 0x%sbabe -j REDIRECT --to-ports %s' % (i, 19830 + i))
             ))
 
 
@@ -187,28 +188,21 @@ def keep_proxies_fresh():
 
 def can_access_twitter():
     success = 0
-    for i in range(10):
+    for i in range(PROXIES_COUNT):
         try:
             urllib2.urlopen('https://www.twitter.com', timeout=5).read()
             success += 1
         except:
             pass
-    LOGGER.info('twitter access success rate: %s/10' % success)
+    LOGGER.info('twitter access success rate: %s/%s' % (success, PROXIES_COUNT))
     return success
 
 
 def start_redsocks():
     global redsocks_process
     cfg_path = '/data/data/fq.router/redsocks.conf'
-    resolve_proxy(0x1babe, 19831, 'proxy1.fqrouter.com')
-    resolve_proxy(0x2babe, 19832, 'proxy2.fqrouter.com')
-    resolve_proxy(0x3babe, 19833, 'proxy3.fqrouter.com')
-    resolve_proxy(0x4babe, 19834, 'proxy4.fqrouter.com')
-    resolve_proxy(0x5babe, 19835, 'proxy5.fqrouter.com')
-    resolve_proxy(0x6babe, 19836, 'proxy6.fqrouter.com')
-    resolve_proxy(0x7babe, 19837, 'proxy7.fqrouter.com')
-    resolve_proxy(0x8babe, 19838, 'proxy8.fqrouter.com')
-    resolve_proxy(0x9babe, 19839, 'proxy9.fqrouter.com')
+    for i in range(1, 1 + PROXIES_COUNT):
+        resolve_proxy(eval('0x%sbabe' % i), 19830 + i, 'proxy%s.fqrouter.com' % i)
     with open(cfg_path, 'w') as f:
         f.write(redsocks_template.render(proxies.values()))
     redsocks_process = subprocess.Popen(
