@@ -12,7 +12,7 @@ import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
-import android.widget.Button;
+import android.widget.CheckBox;
 import android.widget.TextView;
 import android.widget.Toast;
 import fq.router.utils.IOUtils;
@@ -44,7 +44,7 @@ public class MainActivity extends Activity implements StatusUpdater {
                 appendLog("ver: " + getMyVersion());
                 if (Supervisor.ping()) {
                     appendLog("found manager is already running");
-                    activateManageButton();
+                    onStarted();
                 } else {
                     appendLog("starting supervisor thread");
                     new Thread(new Supervisor(getAssets(), MainActivity.this)).start();
@@ -56,11 +56,11 @@ public class MainActivity extends Activity implements StatusUpdater {
     private void setupUI() {
         TextView textView = (TextView) findViewById(R.id.logTextView);
         textView.setMovementMethod(new ScrollingMovementMethod());
-        Button manageButton = (Button) findViewById(R.id.manageButton);
-        manageButton.setOnClickListener(new View.OnClickListener() {
+        final CheckBox wifiHotspotCheckBox = (CheckBox) findViewById(R.id.wifiHotspotCheckBox);
+        wifiHotspotCheckBox.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                startActivity(new Intent(Intent.ACTION_VIEW, Uri.parse("http://127.0.0.1:8318")));
+                Log.i("fqrouter", "is checked: " + wifiHotspotCheckBox.isChecked());
             }
         });
     }
@@ -153,14 +153,14 @@ public class MainActivity extends Activity implements StatusUpdater {
     }
 
     @Override
-    public void activateManageButton() {
+    public void onStarted() {
         handler.postDelayed(new Runnable() {
             @Override
             public void run() {
-                findViewById(R.id.manageButton).setVisibility(View.VISIBLE);
+                findViewById(R.id.wifiHotspotCheckBox).setVisibility(View.VISIBLE);
             }
         }, 0);
-        updateStatus("Press manage button to roll");
+        updateStatus("Started, f**k censorship");
     }
 
     @Override
