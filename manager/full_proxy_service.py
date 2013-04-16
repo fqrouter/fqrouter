@@ -396,7 +396,7 @@ def delete_existing_conntrack_entry(ip):
     for entry in conntrack.dump_table():
         dst = socket.inet_ntoa(struct.pack('!I', entry.orig_ipv4_dst))
         if 0 == entry.mark and ip == dst:
-            print('delete %s' % entry)
+            LOGGER.info('delete %s' % entry)
             conntrack.destroy_conntrack(entry)
 
 

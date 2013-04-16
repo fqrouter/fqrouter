@@ -59,12 +59,12 @@ for iface in network_interface.list_data_network_interfaces():
         {'target': 'NFQUEUE', 'iface_out': iface, 'extra': 'udp dpt:53 mark match ! 0xfeed/0xffff NFQUEUE num 1'},
         ('nat', 'OUTPUT', '-o %s -p udp --dport 53 -m mark ! --mark 0xfeed/0xffff -j NFQUEUE --queue-num 1' % iface)
     ))
-    for mark, ip in dns_server.list_dns_servers():
+    for mark, ip, port in dns_server.list_dns_servers():
         RULES.append((
             {'target': 'DNAT', 'iface_out': iface, 'extra':
-                'udp dpt:53 mark match 0x%x to:%s:53' % (mark, ip)},
+                'udp dpt:53 mark match 0x%x to:%s:%s' % (mark, ip, port)},
             ('nat', 'OUTPUT', '-o %s -p udp --dport 53 -m mark --mark 0x%x '
-                              '-j DNAT --to-destination %s:53' % (iface, mark, ip))
+                              '-j DNAT --to-destination %s:%s' % (iface, mark, ip, port))
         ))
     RULE_DROP_PACKET = (
         {'target': 'NFQUEUE', 'iface_in': iface, 'extra': 'udp spt:53 NFQUEUE num 1'},

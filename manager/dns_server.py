@@ -1,10 +1,19 @@
-import socket
-
-PRIMARY_DNS_IP = '8.8.8.8'
 PRIMARY_DNS_MARK = 0x1feed
+PRIMARY_DNS_IP = '8.8.8.8'
+PRIMARY_DNS_PORT = 53
 
+V2EX_DNS_MARK = 0x2feed
+V2EX_DNS_IP = '199.91.73.222'
+V2EX_DNS_PORT = 3389
+V2EX_DNS_DOMAIN = {
+    'google.com',
+    'google.com.hk',
+    'youtube.com'
+}
+
+CHINA_DNS_MARK = 0x3feed
 CHINA_DNS_IP = '114.114.114.114'
-CHINA_DNS_MARK = 0x2feed
+CHINA_DNS_PORT = 53
 CHINA_DNS_DOMAIN = [
     '07073.com',
     '10010.com',
@@ -464,33 +473,23 @@ CHINA_DNS_DOMAIN = [
     'zx915.com'
 ]
 
-EXACT_MATCH_DNS = [
-    ('google.com@route53', 0x3feed, socket.gethostbyname('ns-1052.awsdns-03.org'), {
-        'google.com',
-        'www.google.com'
-    }),
-    ('google.com.hk@route53', 0x4feed, socket.gethostbyname('ns-1521.awsdns-62.org'), {
-        'google.com.hk',
-        'www.google.com.hk'
-    })
-]
-
 
 def list_dns_servers():
-    yield PRIMARY_DNS_MARK, PRIMARY_DNS_IP
-    yield CHINA_DNS_MARK, CHINA_DNS_IP
-    for server_name, mark, ip, targets in EXACT_MATCH_DNS:
-        yield mark, ip
+    yield PRIMARY_DNS_MARK, PRIMARY_DNS_IP, PRIMARY_DNS_PORT
+    yield CHINA_DNS_MARK, CHINA_DNS_IP, CHINA_DNS_PORT
+    yield V2EX_DNS_MARK, V2EX_DNS_IP, V2EX_DNS_PORT
 
 
 def select_dns_server(domain):
     if not domain:
         return '8.8.8.8', PRIMARY_DNS_MARK
-    for server_name, mark, ip, targets in EXACT_MATCH_DNS:
-        if domain in targets:
-            return server_name, mark
     if domain.endswith('.cn'):
         return '114', CHINA_DNS_MARK
+    if domain.endswith('youtube.com') and '---' in domain:
+        return '8.8.8.8', PRIMARY_DNS_MARK
+    for v2ex_domain in V2EX_DNS_DOMAIN:
+        if domain.endswith(v2ex_domain):
+            return 'v2ex', V2EX_DNS_MARK
     for chain_domain in CHINA_DNS_DOMAIN:
         if domain.endswith(chain_domain):
             return '114', CHINA_DNS_MARK

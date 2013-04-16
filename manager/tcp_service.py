@@ -232,8 +232,6 @@ def handle_rst(rst):
         LOGGER.error(
             'received RST from GFW: expected ttl is %s, actually is %s, the packet %s' %
             (expected_ttl, rst.ttl, format_ip_packet(rst)))
-    else:
-        LOGGER.info('received RST: %s' % format_ip_packet(rst))
     return False # might help when HTTP REDIRECT being detected by GFW
 
 
