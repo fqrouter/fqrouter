@@ -73,16 +73,43 @@ public class Supervisor implements Runnable {
             String latestVersion = versionInfo.split("\\|")[0];
             String upgradeUrl = versionInfo.split("\\|")[1];
             statusUpdater.appendLog("upgrade url: " + upgradeUrl);
-            if (latestVersion.equals(statusUpdater.getMyVersion())) {
-                statusUpdater.appendLog("already running the latest version");
-            } else {
+            if (isNewer(latestVersion, statusUpdater.getMyVersion())) {
                 statusUpdater.notifyNewerVersion(latestVersion, upgradeUrl);
+            } else {
+                statusUpdater.appendLog("already running the latest version");
             }
             return true;
         } catch (Exception e) {
             Log.e("fqrouter", "check updates failed");
             return false;
         }
+    }
+
+    private boolean isNewer(String latestVersion, String currentVersion) {
+        int[] latestVersionParts = parseVersion(latestVersion);
+        int[] currentVersionParts = parseVersion(currentVersion);
+        if (latestVersionParts[0] > currentVersionParts[0]) {
+            return true;
+        }
+        if (latestVersionParts[0] < currentVersionParts[0]) {
+            return false;
+        }
+        if (latestVersionParts[1] > currentVersionParts[1]) {
+            return true;
+        }
+        if (latestVersionParts[1] < currentVersionParts[1]) {
+            return false;
+        }
+        return latestVersionParts[2] > currentVersionParts[2];
+    }
+
+    private int[] parseVersion(String version) {
+        String[] parts = version.split("\\.");
+        return new int[]{
+                Integer.parseInt(parts[0]),
+                Integer.parseInt(parts[1]),
+                Integer.parseInt(parts[2])
+        };
     }
 
     private boolean launchManager() {
