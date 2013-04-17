@@ -343,12 +343,9 @@ def handle_time_exceeded(ip_packet):
     router_ip = socket.inet_ntoa(ip_packet.src)
     is_china_router = china_ip.is_china_ip(router_ip)
     if is_china_router and MAX_TTL_TO_GFW == ttl:
-        LOGGER.info('treat ip as domestic as max ttl is still in china: %s' % dst_ip)
+        LOGGER.info('treat ip as domestic as max ttl is still in china: %s, %s' %
+                    (dst_ip, pending_connection.get_detected_routers(dst_ip)))
         add_domestic_ip(dst_ip)
-        return
-    elif not is_china_router and MIN_TTL_TO_GFW == ttl:
-        LOGGER.info('treat ip as international as min ttl is not in china: %s' % dst_ip)
-        add_international_ip(dst_ip, MIN_TTL_TO_GFW - SAFETY_DELTA - 1)
         return
     else:
         pending_connection.record_router(dst_ip, ttl, is_china_router)
