@@ -2,6 +2,7 @@ package fq.router;
 
 import android.content.res.AssetManager;
 import android.util.Log;
+import fq.router.utils.HttpUtils;
 import fq.router.utils.IOUtils;
 
 import java.net.URL;
@@ -58,9 +59,29 @@ public class Supervisor implements Runnable {
             if (shouldWait && !waitForManager()) {
                 return;
             }
+            statusUpdater.updateStatus("Checking updates");
+            checkUpdates();
             statusUpdater.onStarted();
         } finally {
             statusUpdater.appendLog("supervisor thread stopped");
+        }
+    }
+
+    private boolean checkUpdates() {
+        try {
+            String versionInfo = HttpUtils.get("http://127.0.0.1:8318/version/latest");
+            String latestVersion = versionInfo.split("\\|")[0];
+            String upgradeUrl = versionInfo.split("\\|")[1];
+            statusUpdater.appendLog("upgrade url: " + upgradeUrl);
+            if (latestVersion.equals(statusUpdater.getMyVersion())) {
+                statusUpdater.appendLog("already running the latest version");
+            } else {
+                statusUpdater.notifyNewerVersion(latestVersion, upgradeUrl);
+            }
+            return true;
+        } catch (Exception e) {
+            Log.e("fqrouter", "check updates failed");
+            return false;
         }
     }
 

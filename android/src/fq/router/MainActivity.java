@@ -1,13 +1,10 @@
 package fq.router;
 
-import android.app.Activity;
-import android.app.Notification;
-import android.app.NotificationManager;
-import android.app.PendingIntent;
+import android.app.*;
 import android.content.Context;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.pm.PackageInfo;
-import android.content.res.Configuration;
 import android.net.Uri;
 import android.net.wifi.WifiManager;
 import android.os.Build;
@@ -276,6 +273,30 @@ public class MainActivity extends Activity implements StatusUpdater {
             Log.e("fqrouter", "failed to get package info", e);
             return "Unknown";
         }
+    }
+
+    @Override
+    public void notifyNewerVersion(String latestVersion, final String upgradeUrl) {
+        appendLog("latest version is: " + latestVersion);
+        handler.postDelayed(new Runnable() {
+            @Override
+            public void run() {
+                new AlertDialog.Builder(MainActivity.this)
+                        .setIcon(android.R.drawable.ic_dialog_alert)
+                        .setTitle("There are newer version")
+                        .setMessage("Do you want to upgrade now?")
+                        .setPositiveButton("Yes", new DialogInterface.OnClickListener() {
+
+                            @Override
+                            public void onClick(DialogInterface dialog, int which) {
+                                startActivity(new Intent(Intent.ACTION_VIEW, Uri.parse(upgradeUrl)));
+                            }
+
+                        })
+                        .setNegativeButton("No", null)
+                        .show();
+            }
+        }, 0);
     }
 
     private void createLogFiles() {

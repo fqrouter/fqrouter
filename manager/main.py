@@ -16,6 +16,7 @@ import tcp_service
 import goagent_service
 import full_proxy_service
 import wifi
+import version
 
 
 LOGGER = logging.getLogger(__name__)
@@ -46,7 +47,8 @@ application = tornado.web.Application([
     (r'/logs', LogsHandler),
     (r'/wifi/start', wifi.WifiStartHandler),
     (r'/wifi/stop', wifi.WifiStopHandler),
-    (r'/wifi/started', wifi.WifiIsStartedHandler)
+    (r'/wifi/started', wifi.WifiIsStartedHandler),
+    (r'/version/latest', version.LatestVersionHandler)
 ])
 
 

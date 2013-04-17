@@ -6,4 +6,5 @@ public interface StatusUpdater {
     void onStarted();
     void reportError(String msg, Exception e);
     String getMyVersion();
+    void notifyNewerVersion(String latestVersion, String upgradeUrl);
 }

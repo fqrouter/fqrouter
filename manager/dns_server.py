@@ -1,8 +1,20 @@
+import socket
+import traceback
+
 PRIMARY_DNS_MARK = 0x1feed
 PRIMARY_DNS_IP = '8.8.8.8'
 PRIMARY_DNS_PORT = 53
 
-V2EX_DNS_MARK = 0x2feed
+AUTO_UPDATE_DNS_MARK = 0x2feed
+AUTO_UPDATE_DOMAIN = 'd2anp67vmqk4wc.cloudfront.net'
+try:
+    AUTO_UPDATE_DNS_IP = socket.gethostbyname('ns-51.awsdns-06.com')
+except:
+    traceback.print_exc()
+    AUTO_UPDATE_DNS_IP = '8.8.8.8'
+AUTO_UPDATE_DNS_PORT = 53
+
+V2EX_DNS_MARK = 0x3feed
 V2EX_DNS_IP = '199.91.73.222'
 V2EX_DNS_PORT = 3389
 V2EX_DNS_DOMAIN = {
@@ -11,7 +23,7 @@ V2EX_DNS_DOMAIN = {
     'youtube.com'
 }
 
-CHINA_DNS_MARK = 0x3feed
+CHINA_DNS_MARK = 0x4feed
 CHINA_DNS_IP = '114.114.114.114'
 CHINA_DNS_PORT = 53
 CHINA_DNS_DOMAIN = [
@@ -476,6 +488,7 @@ CHINA_DNS_DOMAIN = [
 
 def list_dns_servers():
     yield PRIMARY_DNS_MARK, PRIMARY_DNS_IP, PRIMARY_DNS_PORT
+    yield AUTO_UPDATE_DNS_MARK, AUTO_UPDATE_DNS_IP, AUTO_UPDATE_DNS_PORT
     yield CHINA_DNS_MARK, CHINA_DNS_IP, CHINA_DNS_PORT
     yield V2EX_DNS_MARK, V2EX_DNS_IP, V2EX_DNS_PORT
 
@@ -483,6 +496,8 @@ def list_dns_servers():
 def select_dns_server(domain):
     if not domain:
         return '8.8.8.8', PRIMARY_DNS_MARK
+    if AUTO_UPDATE_DOMAIN == domain:
+        return 'auto-update', AUTO_UPDATE_DNS_MARK
     if domain.endswith('.cn'):
         return '114', CHINA_DNS_MARK
     if domain.endswith('youtube.com') and '---' in domain:
