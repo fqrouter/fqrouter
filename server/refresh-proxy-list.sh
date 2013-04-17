@@ -22,6 +22,6 @@ do
     	--proxy-list "./hidemyass.py 8" \
     	--proxy-list "./hidemyass.py 9" \
     	--proxy-list "./hidemyass.py 10" > /tmp/proxies.txt
-    ./update-dns.py < /tmp/proxies.txt && echo "DONE! `date`"
+    ./update-proxy-dns.py < /tmp/proxies.txt && echo "DONE! `date`"
     sleep 3600
 done

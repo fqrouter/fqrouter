@@ -106,9 +106,17 @@ APP_IDS = ['freegoagent001', 'freegoagent002', 'freegoagent003', 'freegoagent004
 if len(sys.argv) > 1:
     APP_IDS = [sys.argv[1]]
 
+count = 0
 for app_id in APP_IDS:
     fetchserver = '%s://%s.appspot.com%s?' % \
                   (manager.goagent.common.GOOGLE_MODE, app_id, manager.goagent.common.GAE_PATH)
-    if 200 == manager.goagent.gae_urlfetch('GET', 'http://www.baidu.com', {}, None, fetchserver).app_status:
+    app_status = manager.goagent.gae_urlfetch('GET', 'http://www.baidu.com', {}, None, fetchserver).app_status
+    if 200 == app_status:
+        count += 1
+        sys.stderr.write('[OK] %s\n' % app_id)
         print(app_id)
+    else:
+        sys.stderr.write('[FAILED:%s] %s\n' % (app_status, app_id))
+    if count == 10:
+        break
 print('')
