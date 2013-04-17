@@ -19,6 +19,7 @@ import iptables
 import network_interface
 import redsocks_template
 import china_ip
+import goagent_service
 
 
 LOGGER = logging.getLogger(__name__)
@@ -61,6 +62,7 @@ proxies = {} # mark => proxy
 redsocks_process = None
 redsocks_started_at = 0
 redsocks_dumped_at = None
+uses_goagent = True
 
 for iface in network_interface.list_data_network_interfaces():
     RULES.append((
@@ -98,7 +100,7 @@ def add_full_proxy_chain(is_prerouting):
         {'target': 'NFQUEUE', 'extra': 'mark match ! 0xbabe/0xffff NFQUEUE num 3'},
         ('nat', chain_name, '-p tcp -m mark ! --mark 0xbabe/0xffff -j NFQUEUE --queue-num 3')
     ))
-    for i in range(1, 1 + PROXIES_COUNT):
+    for i in range(1, 1 + PROXIES_COUNT + 1): # the final one is for goagent
         if is_prerouting:
             RULES.append((
                 {'target': 'CONNMARK', 'extra': 'mark match 0x%sbabe CONNMARK set 0x%sbabe' % (i, i)},
@@ -154,6 +156,7 @@ def start_full_proxy():
 
 def keep_proxies_fresh():
     global redsocks_started_at
+    global uses_goagent
     shutdown_hook.add(kill_redsocks)
     try:
         while True:
@@ -178,7 +181,11 @@ def keep_proxies_fresh():
                     LOGGER.info('still no proxies after redsocks started, retry in 30 seconds')
                     time.sleep(30)
             if time.time() - redsocks_started_at > 60 * 30:
-                LOGGER.info('refresh now, clear all proxies')
+                LOGGER.info('refresh now, restart redsocks')
+                proxies.clear()
+            if uses_goagent and not goagent_service.enabled:
+                LOGGER.info('goagent service disabled, restart redsocks')
+                uses_goagent = False
                 proxies.clear()
             time.sleep(1)
             dump_redsocks_client_list()
@@ -203,6 +210,15 @@ def start_redsocks():
     cfg_path = '/data/data/fq.router/redsocks.conf'
     for i in range(1, 1 + PROXIES_COUNT):
         resolve_proxy(eval('0x%sbabe' % i), 19830 + i, 'proxy%s.fqrouter.com' % i)
+    if uses_goagent:
+        proxies[eval('0x%sbabe' % (PROXIES_COUNT + 1))] = {
+            'clients': set(),
+            'rank': 0, # lower is better
+            'pre_rank': 0, # lower is better
+            'error_penalty': 256, # if error is found, this will be added to rank
+            'connection_info': ('http-relay', '127.0.0.1', '8319', '', ''),
+            'local_port': 19830 + PROXIES_COUNT + 1
+        }
     with open(cfg_path, 'w') as f:
         f.write(redsocks_template.render(proxies.values()))
     redsocks_process = subprocess.Popen(
@@ -362,6 +378,10 @@ def pick_proxy(ip_packet):
         return None
     marks = {}
     for mark, proxy in proxies.items():
+        if 'http-relay' == proxy['connection_info'][0]:
+            if 80 == ip_packet.tcp.dport:
+                marks[proxy['rank'] - 5] = mark
+            continue
         marks[proxy['rank']] = mark
     mark = marks[sorted(marks.keys())[0]]
     ip = socket.inet_ntoa(ip_packet.src)
@@ -386,7 +406,6 @@ def add_to_black_list(ip, syn=None):
         black_list.add(ip)
         if syn:
             delete_existing_conntrack_entry(ip)
-            LOGGER.info('resend syn')
             raw_socket.sendto(str(syn), (socket.inet_ntoa(syn.dst), 0))
     pending_list.pop(ip, None)
 

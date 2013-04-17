@@ -146,7 +146,8 @@ def handle_packet(nfqueue_element):
         dns_packet.domain = questions[0].name if questions else None
         if 53 == ip_packet.udp.dport:
             server_name, mark = dns_server.select_dns_server(dns_packet.domain)
-            LOGGER.info('resolve %s using: %s' % (dns_packet.domain, server_name))
+            if dns_packet.domain:
+                LOGGER.info('resolve %s using: %s' % (dns_packet.domain, server_name))
             nfqueue_element.set_mark(mark)
             nfqueue_element.repeat()
         else:

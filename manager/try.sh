@@ -13,4 +13,8 @@ adb push shutdown_hook.py /sdcard/manager/shutdown_hook.py
 adb push main.py /sdcard/manager/main.py
 adb push wifi.py /sdcard/manager/wifi.py
 adb push hostapd_template.py /sdcard/manager/hostapd_template.py
+adb push goagent_service.py /sdcard/manager/goagent_service.py
+adb push goagent.py /sdcard/manager/goagent.py
+adb push goagent.ini /sdcard/manager/goagent.ini
+adb shell su -c "rm /sdcard/manager/*.pyc"
 adb shell su -c "PYTHONHOME=/data/data/fq.router/python python /sdcard/manager/main.py"

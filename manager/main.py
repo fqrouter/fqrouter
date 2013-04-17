@@ -1,3 +1,8 @@
+__import__('goagent')
+import sys
+
+del sys.modules['logging'] # reset the logging module injected by goagent
+
 import os
 import logging
 import logging.handlers
@@ -8,6 +13,7 @@ import tornado.web
 
 import dns_service
 import tcp_service
+import goagent_service
 import full_proxy_service
 import wifi
 
@@ -66,6 +72,7 @@ if '__main__' == __name__:
     LOGGER.info('environment: %s' % os.environ.items())
     dns_service.run()
     tcp_service.run()
+    goagent_service.run()
     full_proxy_service.run()
     LOGGER.info('services started')
     application.listen(8318, '127.0.0.1')

@@ -7,6 +7,7 @@ import android.app.PendingIntent;
 import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageInfo;
+import android.content.res.Configuration;
 import android.net.Uri;
 import android.net.wifi.WifiManager;
 import android.os.Build;
@@ -45,6 +46,7 @@ public class MainActivity extends Activity implements StatusUpdater {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.main);
         setupUI();
+        Log.i("fqrouter", "restart!!!!");
         new Thread(new Runnable() {
             @Override
             public void run() {
