@@ -5,4 +5,5 @@ public interface StatusUpdater {
     void appendLog(String log);
     void onStarted();
     void reportError(String msg, Exception e);
+    String getMyVersion();
 }

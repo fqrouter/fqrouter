@@ -487,6 +487,8 @@ def select_dns_server(domain):
         return '114', CHINA_DNS_MARK
     if domain.endswith('youtube.com') and '---' in domain:
         return '8.8.8.8', PRIMARY_DNS_MARK
+    if domain.endswith('plus.google.com'):
+        return '8.8.8.8', PRIMARY_DNS_MARK
     for v2ex_domain in V2EX_DNS_DOMAIN:
         if domain.endswith(v2ex_domain):
             return 'v2ex', V2EX_DNS_MARK

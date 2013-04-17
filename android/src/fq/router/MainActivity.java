@@ -267,7 +267,7 @@ public class MainActivity extends Activity implements StatusUpdater {
         return body.toString();
     }
 
-    private String getMyVersion() {
+    public String getMyVersion() {
         try {
             PackageInfo packageInfo = getPackageManager().getPackageInfo(getPackageName(), 0);
             return packageInfo.versionName;

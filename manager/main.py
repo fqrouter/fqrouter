@@ -63,6 +63,7 @@ def listen_to_hotspot_lan():
 
 if '__main__' == __name__:
     setup_logging()
+    LOGGER.info('environment: %s' % os.environ.items())
     dns_service.run()
     tcp_service.run()
     full_proxy_service.run()
