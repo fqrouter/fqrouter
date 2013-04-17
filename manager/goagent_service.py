@@ -8,7 +8,7 @@ import goagent
 
 
 LOGGER = logging.getLogger(__name__)
-APPIDS_COUNT = 1
+APPIDS_COUNT = 10
 enabled = True
 failures_count = 0
 

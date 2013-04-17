@@ -46,7 +46,6 @@ public class MainActivity extends Activity implements StatusUpdater {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.main);
         setupUI();
-        Log.i("fqrouter", "restart!!!!");
         new Thread(new Runnable() {
             @Override
             public void run() {
