@@ -35,6 +35,13 @@ public class Deployer {
 
     public boolean deploy() {
         statusUpdater.updateStatus("Deploying payload");
+        try {
+            copyBusybox();
+            makeExecutable(BUSYBOX_FILE);
+        } catch (Exception e) {
+            statusUpdater.reportError("failed to copy busybox", e);
+            return false;
+        }
         boolean foundPayloadUpdate;
         try {
             foundPayloadUpdate = checkUpdate();
@@ -114,14 +121,14 @@ public class Deployer {
             deleteDirectory(DATA_DIR + "/wifi-tools");
             deleteDirectory(DATA_DIR + "/proxy-tools");
             deleteDirectory(DATA_DIR + "/manager");
-            deleteDirectory(DATA_DIR + "/busybox");
             deleteDirectory(DATA_DIR + "/payload.zip");
+            new File("/data/data/fq.router/busybox").delete();
         }
     }
 
     private void deleteDirectory(String path) throws Exception {
         if (new File(path).exists()) {
-            ShellUtils.execute("/system/bin/rm", "-r", path);
+            ShellUtils.execute("/data/data/fq.router/busybox", "rm", "-rf", path);
         }
         if (new File(path).exists()) {
             Log.e("fqrouter", "failed to delete " + path);
