@@ -439,8 +439,8 @@ def start_p2p_persistent_network(iface, control_socket_dir):
     set_network('psk \'"12345678"\'')
     frequency, channel = get_upstream_frequency_and_channel()
     if frequency:
-        shell_execute('%s -p %s -i %s p2p_group_add freq=%s persistent=%s' %
-                      (P2P_CLI_PATH, control_socket_dir, iface, frequency.replace('.', ''), index))
+        shell_execute('%s -p %s -i %s p2p_group_add persistent=%s freq=%s ' %
+                      (P2P_CLI_PATH, control_socket_dir, iface, index, frequency.replace('.', '')))
     else:
         shell_execute('%s -p %s -i %s p2p_group_add persistent=%s' % (P2P_CLI_PATH, control_socket_dir, iface, index))
     time.sleep(1)
@@ -465,7 +465,7 @@ def stop_p2p_persistent_network(control_socket_dir, control_iface, iface):
 
 def reset_p2p_channels(iface, control_socket_dir):
     try:
-        frequency, channel = get_upstream_frequency_and_channel
+        frequency, channel = get_upstream_frequency_and_channel()
         channel = channel or 6
         shell_execute('%s -p %s -i %s set p2p_oper_channel %s' % (P2P_CLI_PATH, control_socket_dir, iface, channel))
         shell_execute('%s -p %s -i %s set p2p_oper_reg_class 81' % (P2P_CLI_PATH, control_socket_dir, iface))
@@ -532,6 +532,8 @@ def get_wpa_supplicant_control_socket_dir(conf_path=WPA_SUPPLICANT_CONF_PATH):
 
 
 def fix_wrong_control_socket_dir(control_socket_dir):
+    if control_socket_dir == network_interface.WIFI_INTERFACE:
+        return 'anydir'
     if control_socket_dir:
         control_socket_not_exists = not os.path.exists(
             os.path.join(control_socket_dir, network_interface.WIFI_INTERFACE))
