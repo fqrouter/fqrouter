@@ -72,7 +72,6 @@ public class Supervisor implements Runnable {
             String versionInfo = HttpUtils.get("http://127.0.0.1:8318/version/latest");
             String latestVersion = versionInfo.split("\\|")[0];
             String upgradeUrl = versionInfo.split("\\|")[1];
-            statusUpdater.appendLog("upgrade url: " + upgradeUrl);
             if (isNewer(latestVersion, statusUpdater.getMyVersion())) {
                 statusUpdater.notifyNewerVersion(latestVersion, upgradeUrl);
             } else {

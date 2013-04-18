@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 import sys
 import os
+import random
 
 sys.path.append(os.path.join(os.path.dirname(__file__), '..'))
 import manager.goagent
@@ -105,6 +106,8 @@ APP_IDS = ['freegoagent001', 'freegoagent002', 'freegoagent003', 'freegoagent004
 
 if len(sys.argv) > 1:
     APP_IDS = [sys.argv[1]]
+
+random.shuffle(APP_IDS)
 
 count = 0
 for app_id in APP_IDS:
