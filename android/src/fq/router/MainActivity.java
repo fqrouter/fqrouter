@@ -161,6 +161,13 @@ public class MainActivity extends Activity implements StatusUpdater {
     }
 
     private void onExitClicked() {
+        try {
+            Intent intent = new Intent(Intent.ACTION_MAIN);
+            intent.addCategory(Intent.CATEGORY_HOME);
+            startActivity(intent);
+        } catch (Exception e) {
+            Log.e("fqrouter", "failed to go back home screen", e);
+        }
         new Thread(new Runnable() {
             @Override
             public void run() {
@@ -178,9 +185,9 @@ public class MainActivity extends Activity implements StatusUpdater {
                     }
 
                 }, 0);
+                finish();
             }
         }).start();
-        finish();
     }
 
     private void showNotification(String text) {
