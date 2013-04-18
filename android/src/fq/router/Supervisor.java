@@ -60,55 +60,11 @@ public class Supervisor implements Runnable {
                 return;
             }
             statusUpdater.updateStatus("Checking updates");
-            checkUpdates();
+            checkUpdates(statusUpdater);
             statusUpdater.onStarted();
         } finally {
             statusUpdater.appendLog("supervisor thread stopped");
         }
-    }
-
-    private boolean checkUpdates() {
-        try {
-            String versionInfo = HttpUtils.get("http://127.0.0.1:8318/version/latest");
-            String latestVersion = versionInfo.split("\\|")[0];
-            String upgradeUrl = versionInfo.split("\\|")[1];
-            if (isNewer(latestVersion, statusUpdater.getMyVersion())) {
-                statusUpdater.notifyNewerVersion(latestVersion, upgradeUrl);
-            } else {
-                statusUpdater.appendLog("already running the latest version");
-            }
-            return true;
-        } catch (Exception e) {
-            Log.e("fqrouter", "check updates failed");
-            return false;
-        }
-    }
-
-    private boolean isNewer(String latestVersion, String currentVersion) {
-        int[] latestVersionParts = parseVersion(latestVersion);
-        int[] currentVersionParts = parseVersion(currentVersion);
-        if (latestVersionParts[0] > currentVersionParts[0]) {
-            return true;
-        }
-        if (latestVersionParts[0] < currentVersionParts[0]) {
-            return false;
-        }
-        if (latestVersionParts[1] > currentVersionParts[1]) {
-            return true;
-        }
-        if (latestVersionParts[1] < currentVersionParts[1]) {
-            return false;
-        }
-        return latestVersionParts[2] > currentVersionParts[2];
-    }
-
-    private int[] parseVersion(String version) {
-        String[] parts = version.split("\\.");
-        return new int[]{
-                Integer.parseInt(parts[0]),
-                Integer.parseInt(parts[1]),
-                Integer.parseInt(parts[2])
-        };
     }
 
     private boolean launchManager() {
@@ -130,5 +86,51 @@ public class Supervisor implements Runnable {
         }
         statusUpdater.reportError("Timed out", null);
         return false;
+    }
+
+    public static boolean checkUpdates(StatusUpdater statusUpdater) {
+        try {
+            String versionInfo = HttpUtils.get("http://127.0.0.1:8318/version/latest");
+            String latestVersion = versionInfo.split("\\|")[0];
+            String upgradeUrl = versionInfo.split("\\|")[1];
+            if (isNewer(latestVersion, statusUpdater.getMyVersion())) {
+                statusUpdater.notifyNewerVersion(latestVersion, upgradeUrl);
+            } else {
+                statusUpdater.appendLog("already running the latest version");
+            }
+            return true;
+        } catch (Exception e) {
+            statusUpdater.appendLog("check updates failed");
+            Log.e("fqrouter", "check updates failed", e);
+            return false;
+        }
+    }
+
+
+    private static boolean isNewer(String latestVersion, String currentVersion) {
+        int[] latestVersionParts = parseVersion(latestVersion);
+        int[] currentVersionParts = parseVersion(currentVersion);
+        if (latestVersionParts[0] > currentVersionParts[0]) {
+            return true;
+        }
+        if (latestVersionParts[0] < currentVersionParts[0]) {
+            return false;
+        }
+        if (latestVersionParts[1] > currentVersionParts[1]) {
+            return true;
+        }
+        if (latestVersionParts[1] < currentVersionParts[1]) {
+            return false;
+        }
+        return latestVersionParts[2] > currentVersionParts[2];
+    }
+
+    private static int[] parseVersion(String version) {
+        String[] parts = version.split("\\.");
+        return new int[]{
+                Integer.parseInt(parts[0]),
+                Integer.parseInt(parts[1]),
+                Integer.parseInt(parts[2])
+        };
     }
 }

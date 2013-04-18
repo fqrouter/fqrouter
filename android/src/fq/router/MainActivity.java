@@ -36,6 +36,7 @@ public class MainActivity extends Activity implements StatusUpdater {
     private final static int SHOW_AS_ACTION_IF_ROOM = 1;
     private final static int ITEM_ID_EXIT = 1;
     private final static int ITEM_ID_REPORT_ERROR = 2;
+    private final static int ITEM_ITEM_CHECK_UPDATES = 3;
     private Handler handler = new Handler();
 
     @Override
@@ -123,17 +124,18 @@ public class MainActivity extends Activity implements StatusUpdater {
 
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
+        menu.add(Menu.NONE, ITEM_ITEM_CHECK_UPDATES, Menu.NONE, "Check Updates");
         addMenuItem(menu, ITEM_ID_REPORT_ERROR, "Report Error");
         addMenuItem(menu, ITEM_ID_EXIT, "Exit");
         return super.onCreateOptionsMenu(menu);
     }
 
     private void addMenuItem(Menu menu, int menuItemId, String caption) {
-        MenuItem exitMenuItem = menu.add(Menu.NONE, menuItemId, Menu.NONE, caption);
+        MenuItem menuItem = menu.add(Menu.NONE, menuItemId, Menu.NONE, caption);
         try {
             Method method = MenuItem.class.getMethod("setShowAsAction", int.class);
             try {
-                method.invoke(exitMenuItem, SHOW_AS_ACTION_IF_ROOM);
+                method.invoke(menuItem, SHOW_AS_ACTION_IF_ROOM);
             } catch (Exception e) {
             }
         } catch (NoSuchMethodException e) {
@@ -146,6 +148,14 @@ public class MainActivity extends Activity implements StatusUpdater {
             onExitClicked();
         } else if (ITEM_ID_REPORT_ERROR == item.getItemId()) {
             onReportErrorClicked();
+        } else if (ITEM_ITEM_CHECK_UPDATES == item.getItemId()) {
+            new Thread(new Runnable() {
+                @Override
+                public void run() {
+                    appendLog("checking updates");
+                    Supervisor.checkUpdates(MainActivity.this);
+                }
+            }).start();
         }
         return super.onMenuItemSelected(featureId, item);
     }
