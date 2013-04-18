@@ -28,7 +28,7 @@ public class ManagerProcess {
             }
         } finally {
             ShellUtils.sudo("PYTHONHOME=" + Deployer.PYTHON_DIR + " " +
-                    Deployer.PYTHON_LAUNCHER + " " + Deployer.MANAGER_CLEAN_PY);
+                    Deployer.BUSYBOX_FILE + " sh " + Deployer.PYTHON_LAUNCHER + " " + Deployer.MANAGER_CLEAN_PY);
         }
     }
 
