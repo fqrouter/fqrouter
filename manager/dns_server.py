@@ -14,18 +14,33 @@ except:
     AUTO_UPDATE_DNS_IP = '8.8.8.8'
 AUTO_UPDATE_DNS_PORT = 53
 
-V2EX_DNS_MARK = 0x3feed
-V2EX_DNS_IP = '199.91.73.222'
-V2EX_DNS_PORT = 3389
-V2EX_DNS_DOMAIN = {
-    'google.com',
-    'google.com.hk',
-    'youtube.com'
+GOOGLE_COM_DNS_MARK = 0x3feed
+GOOGLE_COM_DOMAIN = {
+    'google.com', 'www.google.com',
+    'mail.google.com', 'chatenabled.mail.google.com',
+    'filetransferenabled.mail.google.com', 'apis.google.com',
+    'mobile-gtalk.google.com', 'mtalk.google.com'
 }
+try:
+    GOOGLE_COM_DNS_IP = socket.gethostbyname('ns-285.awsdns-35.com')
+except:
+    traceback.print_exc()
+    GOOGLE_COM_DNS_IP = PRIMARY_DNS_IP
+GOOGLE_COM_DNS_PORT = 53
 
-CHINA_DNS_MARK = 0x4feed
+GOOGLE_COM_HK_DNS_MARK = 0x4feed
+GOOGLE_COM_HK_DOMAIN = {'google.com.hk', 'www.google.com.hk'}
+try:
+    GOOGLE_COM_HK_DNS_IP = socket.gethostbyname('ns-320.awsdns-40.com')
+except:
+    traceback.print_exc()
+    GOOGLE_COM_HK_DNS_IP = PRIMARY_DNS_IP
+GOOGLE_COM_HK_DNS_PORT = 53
+
+CHINA_DNS_MARK = 0x5feed
 CHINA_DNS_IP = '114.114.114.114'
 CHINA_DNS_PORT = 53
+GOOGLE_DNS_DOMAIN = []
 CHINA_DNS_DOMAIN = [
     '07073.com',
     '10010.com',
@@ -489,8 +504,9 @@ CHINA_DNS_DOMAIN = [
 def list_dns_servers():
     yield PRIMARY_DNS_MARK, PRIMARY_DNS_IP, PRIMARY_DNS_PORT
     yield AUTO_UPDATE_DNS_MARK, AUTO_UPDATE_DNS_IP, AUTO_UPDATE_DNS_PORT
+    yield GOOGLE_COM_DNS_MARK, GOOGLE_COM_DNS_IP, GOOGLE_COM_DNS_PORT
+    yield GOOGLE_COM_HK_DNS_MARK, GOOGLE_COM_HK_DNS_IP, GOOGLE_COM_HK_DNS_PORT
     yield CHINA_DNS_MARK, CHINA_DNS_IP, CHINA_DNS_PORT
-    yield V2EX_DNS_MARK, V2EX_DNS_IP, V2EX_DNS_PORT
 
 
 def select_dns_server(domain):
@@ -498,15 +514,12 @@ def select_dns_server(domain):
         return '8.8.8.8', PRIMARY_DNS_MARK
     if AUTO_UPDATE_DOMAIN == domain:
         return 'auto-update', AUTO_UPDATE_DNS_MARK
+    if domain in GOOGLE_COM_DOMAIN:
+        return 'google-com', GOOGLE_COM_DNS_MARK
+    if domain in GOOGLE_COM_HK_DOMAIN:
+        return 'google-com-hk', GOOGLE_COM_HK_DNS_MARK
     if domain.endswith('.cn'):
         return '114', CHINA_DNS_MARK
-    if domain.endswith('youtube.com') and '---' in domain:
-        return '8.8.8.8', PRIMARY_DNS_MARK
-    if domain.endswith('plus.google.com'):
-        return '8.8.8.8', PRIMARY_DNS_MARK
-    for v2ex_domain in V2EX_DNS_DOMAIN:
-        if domain.endswith(v2ex_domain):
-            return 'v2ex', V2EX_DNS_MARK
     for chain_domain in CHINA_DNS_DOMAIN:
         if domain.endswith(chain_domain):
             return '114', CHINA_DNS_MARK
