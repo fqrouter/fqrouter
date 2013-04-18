@@ -216,20 +216,6 @@ def list_wifi_ifaces():
 def stop_hotspot_interface(iface):
     netd_execute('tether stop')
     try:
-        control_socket_dir = get_wpa_supplicant_control_socket_dir()
-        stop_p2p_persistent_network(
-            control_socket_dir, network_interface.WIFI_INTERFACE, network_interface.WIFI_INTERFACE)
-        stop_p2p_persistent_network(
-            control_socket_dir, network_interface.WIFI_INTERFACE, iface)
-        control_socket_dir = get_p2p_supplicant_control_socket_dir()
-        stop_p2p_persistent_network(
-            control_socket_dir, 'p2p0', 'p2p0')
-        stop_p2p_persistent_network(
-            control_socket_dir, 'p2p0', iface)
-    except:
-        LOGGER.exception('failed to stop p2p persistent network')
-    time.sleep(1)
-    try:
         shell_execute('%s dev %s del' % (IW_PATH, iface))
     except:
         LOGGER.exception('failed to delete wifi interface')

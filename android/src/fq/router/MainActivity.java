@@ -175,12 +175,12 @@ public class MainActivity extends Activity implements StatusUpdater {
                     @Override
                     public void run() {
                         clearNotification();
-                        finish();
                     }
 
                 }, 0);
             }
         }).start();
+        finish();
     }
 
     private void showNotification(String text) {
