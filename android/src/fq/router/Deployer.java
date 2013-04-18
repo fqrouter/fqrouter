@@ -42,6 +42,11 @@ public class Deployer {
             statusUpdater.reportError("failed to copy busybox", e);
             return false;
         }
+        if (!isRooted()) {
+            statusUpdater.reportError("[ROOT] is required", null);
+            statusUpdater.appendLog("What is [ROOT]: http://en.wikipedia.org/wiki/Android_rooting");
+            return false;
+        }
         boolean foundPayloadUpdate;
         try {
             foundPayloadUpdate = checkUpdate();
@@ -87,6 +92,15 @@ public class Deployer {
         }
         statusUpdater.updateStatus("Deployed payload");
         return true;
+    }
+
+    private boolean isRooted() {
+        try {
+            ShellUtils.execute(BUSYBOX_FILE.getCanonicalPath(), "which", "su");
+            return true;
+        } catch (Exception e) {
+            return false;
+        }
     }
 
     private boolean checkUpdate() throws Exception {
