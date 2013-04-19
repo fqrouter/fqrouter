@@ -214,6 +214,7 @@ def list_wifi_ifaces():
 
 
 def stop_hotspot_interface(iface):
+    iptables.delete_rules(RULES)
     netd_execute('tether stop')
     try:
         shell_execute('%s dev %s del' % (IW_PATH, iface))
@@ -346,7 +347,7 @@ def start_hotspot_on_mtk():
 
 def start_hotspot_on_wl12xx():
     if 'ap0' not in list_wifi_ifaces():
-        shell_execute('iw %s interface add ap0 type managed' % network_interface.WIFI_INTERFACE)
+        shell_execute('/data/data/fq.router/wifi-tools/iw %s interface add ap0 type managed' % network_interface.WIFI_INTERFACE)
     assert 'ap0' in list_wifi_ifaces()
     with open('/data/misc/wifi/fqrouter.conf', 'w') as f:
         frequency, channel = get_upstream_frequency_and_channel()
@@ -359,6 +360,7 @@ def start_hotspot_on_wl12xx():
     if proc.poll():
         LOGGER.error('hostapd failed')
         LOGGER.error(proc.stdout.read())
+        shell_execute('logcat -d -v time -s hostapd:V')
         raise Exception('hostapd failed')
     else:
         LOGGER.info('hostapd seems like started successfully')

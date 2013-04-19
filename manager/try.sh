@@ -18,4 +18,4 @@ adb push goagent.py /sdcard/manager/goagent.py
 adb push goagent.ini /sdcard/manager/goagent.ini
 adb push version.py /sdcard/manager/version.py
 adb shell su -c "rm /sdcard/manager/*.pyc"
-adb shell su -c "PYTHONHOME=/data/data/fq.router/python python /sdcard/manager/main.py"
+adb shell su -c "PYTHONHOME=/data/data/fq.router/python /data/data/fq.router/busybox sh /data/data/fq.router/python/bin/python-launcher.sh /sdcard/manager/main.py"
