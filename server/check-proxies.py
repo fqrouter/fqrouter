@@ -82,7 +82,7 @@ class Checker(object):
         self.port = port
         self.elapsed = elapsed
         self.proc = subprocess.Popen(
-            shlex.split('curl --proxy %s:%s https://mobile.twitter.com/signup' % (ip, port)),
+            shlex.split('socksify curl --proxy %s:%s https://www.amazon.com/404' % (ip, port)),
             stderr=subprocess.STDOUT, stdout=subprocess.PIPE)
         self.started_at = time.time()
 
@@ -95,7 +95,7 @@ class Checker(object):
         return self.proc.poll()
 
     def is_timed_out(self):
-        return time.time() - self.started_at > 5
+        return time.time() - self.started_at > 10
 
     def kill(self):
         self.proc.kill()
