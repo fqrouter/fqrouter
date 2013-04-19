@@ -87,7 +87,7 @@ class Checker(object):
         self.started_at = time.time()
 
     def is_ok(self):
-        if 0 == self.proc.poll() and 'Welcome to Twitter' in self.proc.stdout.read():
+        if 0 == self.proc.poll() and 'Amazon.com' in self.proc.stdout.read():
             return round(time.time() - self.started_at, 2)
         return 0
 
