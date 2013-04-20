@@ -171,8 +171,10 @@ public class MainActivity extends Activity implements StatusUpdater {
         new Thread(new Runnable() {
             @Override
             public void run() {
-                stopWifiHotspot();
-                updateStatus("Exiting...");
+                if (isWifiHotspotStarted()) {
+                    stopWifiHotspot();
+                }
+                updateStatus("Exiting...", false);
                 try {
                     ManagerProcess.kill();
                 } catch (Exception e) {
@@ -190,19 +192,22 @@ public class MainActivity extends Activity implements StatusUpdater {
         }).start();
     }
 
-    private void showNotification(String text) {
+    private void showNotification(String text, boolean hasIntent) {
         Intent intent = new Intent(this, MainActivity.class);
         PendingIntent pIntent = PendingIntent.getActivity(this, 0, intent, 0);
-        Notification noti = new NotificationCompat.Builder(this)
+        NotificationCompat.Builder notificationBuilder = new NotificationCompat.Builder(this)
                 .setSmallIcon(R.drawable.wall_green)
                 .setContentTitle("fqrouter is running")
-                .setContentText(text)
-                .setContentIntent(pIntent)
-                .build();
+                .setContentText(text);
+        if (hasIntent) {
+            notificationBuilder = notificationBuilder
+                    .setContentIntent(pIntent);
+        }
+        Notification notification = notificationBuilder.build();
         NotificationManager notificationManager =
                 (NotificationManager) getSystemService(NOTIFICATION_SERVICE);
-        noti.flags |= Notification.FLAG_ONGOING_EVENT;
-        notificationManager.notify(0, noti);
+        notification.flags |= Notification.FLAG_ONGOING_EVENT;
+        notificationManager.notify(0, notification);
     }
 
     private void clearNotification() {
@@ -228,13 +233,17 @@ public class MainActivity extends Activity implements StatusUpdater {
     }
 
     public void updateStatus(final String status) {
+        updateStatus(status, true);
+    }
+
+    public void updateStatus(final String status, final boolean hasIntent) {
         appendLog("status updated to: " + status);
         handler.postDelayed(new Runnable() {
             @Override
             public void run() {
                 TextView textView = (TextView) findViewById(R.id.statusTextView);
                 textView.setText(status);
-                showNotification(status);
+                showNotification(status, hasIntent);
             }
         }, 0);
     }
@@ -253,14 +262,19 @@ public class MainActivity extends Activity implements StatusUpdater {
     @Override
     public void onStarted() {
         updateStatus("Checking if wifi hotspot is started");
-        try {
-            boolean isStarted = "TRUE".equals(HttpUtils.get("http://127.0.0.1:8318/wifi/started"));
-            showWifiHotspotCheckbox(isStarted);
-        } catch (Exception e) {
-            Log.e("fqrouter", "failed to check if wifi hotspot is started", e);
-            showWifiHotspotCheckbox(false);
-        }
+        boolean isStarted = isWifiHotspotStarted();
+        showWifiHotspotCheckbox(isStarted);
         updateStatus("Started, f**k censorship");
+    }
+
+    private boolean isWifiHotspotStarted() {
+        try {
+            return "TRUE".equals(HttpUtils.get("http://127.0.0.1:8318/wifi/started"));
+
+        } catch (Exception e) {
+            Log.e("fqrouter", "failed to check wifi hotspot is started", e);
+            return false;
+        }
     }
 
     @Override
