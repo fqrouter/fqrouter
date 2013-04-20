@@ -5,7 +5,6 @@ import subprocess
 import zipfile
 import sys
 import time
-from pyquery import PyQuery as pq
 
 ROOT_DIR = os.path.dirname(os.path.abspath(__file__))
 PAYLOAD_DIR = os.path.join(ROOT_DIR, 'payload')
@@ -54,7 +53,7 @@ def main():
 def download_python27():
     if os.path.exists(PYTHON_ZIP_FILE):
         return
-    retrieve_from_baidu_pan('http://fqrouter.tumblr.com/android-python27', PYTHON_ZIP_FILE)
+    urllib.urlretrieve('http://cdn.fqrouter.com/python.zip', PYTHON_ZIP_FILE)
 
 
 def unzip_python27():
@@ -69,7 +68,7 @@ def unzip_python27():
 def download_wifi_tools():
     if os.path.exists(WIFI_TOOLS_ZIP_FILE):
         return
-    retrieve_from_baidu_pan('http://fqrouter.tumblr.com/android-wifi-tools', WIFI_TOOLS_ZIP_FILE)
+    urllib.urlretrieve('http://cdn.fqrouter.com/wifi-tools.zip', WIFI_TOOLS_ZIP_FILE)
 
 
 def unzip_wifi_tools():
@@ -149,13 +148,6 @@ def zip_payload():
 
     payload_zip.close()
     time.sleep(1)
-
-
-def retrieve_from_baidu_pan(url, destination):
-    d = pq(url=url)
-    link = d('#downFileButtom').attr('href')
-    urllib.urlretrieve(link, destination)
-
 
 if '__main__' == __name__:
     main()
