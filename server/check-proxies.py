@@ -76,7 +76,7 @@ if args.proxy_list:
             log(e.output)
 
 
-class Checker(object):
+class DomesticChecker(object):
     def __init__(self, ip, port, elapsed):
         self.ip = ip
         self.port = port
@@ -88,6 +88,31 @@ class Checker(object):
 
     def is_ok(self):
         if 0 == self.proc.poll() and 'Amazon.com' in self.proc.stdout.read():
+            return round(time.time() - self.started_at, 2)
+        return 0
+
+    def is_failed(self):
+        return self.proc.poll()
+
+    def is_timed_out(self):
+        return time.time() - self.started_at > 10
+
+    def kill(self):
+        self.proc.kill()
+
+
+class InternationalChecker(object):
+    def __init__(self, ip, port, elapsed):
+        self.ip = ip
+        self.port = port
+        self.elapsed = elapsed
+        self.proc = subprocess.Popen(
+            shlex.split('curl --proxy %s:%s https://mobile.twitter.com/signup' % (ip, port)),
+            stderr=subprocess.STDOUT, stdout=subprocess.PIPE)
+        self.started_at = time.time()
+
+    def is_ok(self):
+        if 0 == self.proc.poll() and 'Welcome to Twitter' in self.proc.stdout.read():
             return round(time.time() - self.started_at, 2)
         return 0
 
@@ -130,7 +155,10 @@ for i in range(10):
         for i in range(new_checkers_count):
             if proxies:
                 ip, port, elapsed = proxies.pop()
-                checkers.append(Checker(ip, port, elapsed))
+                if i % 2 == 0:
+                    checkers.append(DomesticChecker(ip, port, elapsed))
+                else:
+                    checkers.append(InternationalChecker(ip, port, elapsed))
         time.sleep(0.2)
     proxies = checked_proxies
     checked_proxies = []
