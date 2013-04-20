@@ -1,7 +1,7 @@
 import socket
 import time
 # used to track syn ack we are holding before we know a proper TTL to inject
-SYN_ACK_TIMEOUT = 2
+SYN_ACK_TIMEOUT = 3
 pending = {}
 
 
