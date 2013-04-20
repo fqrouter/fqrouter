@@ -55,7 +55,7 @@ public class Supervisor implements Runnable {
             if (!deployer.deploy()) {
                 return;
             }
-            boolean shouldWait = launchManager();
+            boolean shouldWait = launchManager(deployer);
             if (shouldWait && !waitForManager()) {
                 return;
             }
@@ -67,13 +67,13 @@ public class Supervisor implements Runnable {
         }
     }
 
-    private boolean launchManager() {
+    private boolean launchManager(Deployer deployer) {
         if (ping()) {
             statusUpdater.appendLog("manager is already running");
             return false;
         }
         statusUpdater.appendLog("starting launcher thread");
-        new Thread(new Launcher(statusUpdater)).start();
+        new Thread(new Launcher(statusUpdater, deployer)).start();
         return true;
     }
 

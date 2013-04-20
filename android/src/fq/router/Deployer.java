@@ -14,7 +14,6 @@ public class Deployer {
 
     public static File DATA_DIR = new File("/data/data/fq.router");
     public static File BUSYBOX_FILE = new File(DATA_DIR, "busybox");
-    public static File SH_FILE = new File(DATA_DIR, "sh");
     public static File PAYLOAD_ZIP = new File(DATA_DIR, "payload.zip");
     public static File PAYLOAD_CHECKSUM = new File(DATA_DIR, "payload.checksum");
     public static File PYTHON_DIR = new File(DATA_DIR, "python");
@@ -72,7 +71,6 @@ public class Deployer {
         try {
             copyBusybox();
             makeExecutable(BUSYBOX_FILE);
-            linkShToBusybox();
             copyPayloadZip();
         } catch (Exception e) {
             statusUpdater.reportError("failed to copy payload.zip", e);
@@ -194,23 +192,6 @@ public class Deployer {
         statusUpdater.appendLog("successfully copied busybox");
     }
 
-    private void linkShToBusybox() throws Exception {
-        if (SH_FILE.exists()) {
-            statusUpdater.appendLog("skip link sh as it already exists");
-            return;
-        }
-        statusUpdater.appendLog("link sh to busybox");
-        try {
-
-            ShellUtils.execute(BUSYBOX_FILE.getAbsolutePath(), "ln", "-s",
-                    BUSYBOX_FILE.getAbsolutePath(), SH_FILE.getAbsolutePath());
-            statusUpdater.appendLog("successfully linked sh to busybox");
-        } catch (Exception e) {
-            Log.e("fqrouter", "failed to link sh to busybox", e);
-            statusUpdater.appendLog("failed to link sh to busybox");
-        }
-    }
-
     private void unzipPayloadZip() throws Exception {
         if (PYTHON_DIR.exists()) {
             statusUpdater.appendLog("skip unzip payload.zip as it has already been unzipped");
@@ -262,6 +243,31 @@ public class Deployer {
             statusUpdater.appendLog("successfully made " + file.getName() + " executable");
         } else {
             statusUpdater.appendLog("failed to make " + file.getName() + " executable");
+        }
+    }
+
+    public void linkLibs() throws Exception {
+        try {
+            ShellUtils.sudo(BUSYBOX_FILE.getCanonicalPath(), "mount", "-o", "rw,remount", "/system");
+            File[] files = new File(PYTHON_DIR, "lib").listFiles();
+            for (File file : files) {
+                if (file.getName().endsWith(".so")) {
+                    linkFile(file, "/system/lib/" + file.getName());
+                }
+            }
+        } finally {
+            ShellUtils.sudo(BUSYBOX_FILE.getCanonicalPath(), "mount", "-o", "ro,remount", "/system");
+        }
+    }
+
+    private void linkFile(File src, String dst) throws Exception {
+        if (new File(dst).exists()) {
+            return;
+        }
+        try {
+            ShellUtils.sudo(BUSYBOX_FILE.getAbsolutePath(), "ln", "-s", src.getCanonicalPath(), dst);
+        } catch (Exception e) {
+            Log.e("fqrouter", "failed to link " + src.getName(), e);
         }
     }
 }
