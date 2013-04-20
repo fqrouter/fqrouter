@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
           package="fq.router"
-          android:versionCode="41"
-          android:versionName="1.6.4">
+          android:versionCode="42"
+          android:versionName="1.6.5">
     <uses-sdk android:minSdkVersion="9" android:targetSdkVersion="14"/>
     <uses-permission android:name="android.permission.ACCESS_WIFI_STATE"/>
     <uses-permission android:name="android.permission.INTERNET"/>

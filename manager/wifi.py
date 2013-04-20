@@ -245,7 +245,7 @@ def start_hotspot_interface(wifi_chipset):
     # only tested on sdio:c00v037Ad6628
     # support of mt6620 is a wild gues
         hotspot_interface = start_hotspot_on_mtk()
-    elif 'platform:wl12xx' == wifi_chipset or wifi_chipset.endswith('0301'):
+    elif 'platform:wl12xx' == wifi_chipset:
     # ar6003 is c00v0271d0301
         hotspot_interface = start_hotspot_on_wl12xx()
     else:
