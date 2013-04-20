@@ -15,6 +15,7 @@ import hostapd_template
 
 
 RE_CURRENT_FREQUENCY = re.compile(r'Current Frequency:(\d+\.\d+) GHz \(Channel (\d+)\)')
+RE_FREQ = re.compile(r'freq: (\d+)')
 
 LOGGER = logging.getLogger(__name__)
 MODALIAS_PATH = '/sys/class/net/%s/device/modalias' % network_interface.WIFI_INTERFACE
@@ -23,6 +24,14 @@ P2P_SUPPLICANT_CONF_PATH = '/data/misc/wifi/p2p_supplicant.conf'
 P2P_CLI_PATH = '/data/data/fq.router/wifi-tools/p2p_cli'
 IW_PATH = '/data/data/fq.router/wifi-tools/iw'
 IWLIST_PATH = '/data/data/fq.router/wifi-tools/iwlist'
+CHANNELS = {
+    '2412': 1, '2417': 2, '2422': 3, '2427': 4, '2432': 5, '2437': 6, '2442': 7,
+    '2447': 8, '2452': 9, '2457': 10, '2462': 11, '2467': 12, '2472': 13, '2484': 14,
+    '5180': 36, '5200': 40, '5220': 44, '5240': 48, '5260': 52, '5280': 56, '5300': 60,
+    '5320': 64, '5500': 100, '5520': 104, '5540': 108, '5560': 112, '5580': 116,
+    '5600': 120, '5620': 124, '5640': 128, '5660': 132, '5680': 136, '5700': 140,
+    '5745': 149, '5765': 153, '5785': 157, '5805': 161, '5825': 165
+}
 netd_socket = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
 netd_socket.connect('/dev/socket/netd')
 netd_sequence_number = None # turn off by default
@@ -310,8 +319,6 @@ def start_hotspot_on_wcnss():
     shell_execute('netcfg %s up' % network_interface.WIFI_INTERFACE)
     time.sleep(1)
     log_upstream_wifi_status('after loaded p2p firmware', control_socket_dir)
-    reset_p2p_channels(network_interface.WIFI_INTERFACE, control_socket_dir)
-    reset_p2p_channels('p2p0', get_p2p_supplicant_control_socket_dir())
     delete_existing_p2p_persistent_networks(network_interface.WIFI_INTERFACE, control_socket_dir)
     start_p2p_persistent_network(network_interface.WIFI_INTERFACE, control_socket_dir)
     p2p_persistent_iface = get_p2p_persistent_iface()
@@ -347,7 +354,8 @@ def start_hotspot_on_mtk():
 
 def start_hotspot_on_wl12xx():
     if 'ap0' not in list_wifi_ifaces():
-        shell_execute('/data/data/fq.router/wifi-tools/iw %s interface add ap0 type managed' % network_interface.WIFI_INTERFACE)
+        shell_execute(
+            '/data/data/fq.router/wifi-tools/iw %s interface add ap0 type managed' % network_interface.WIFI_INTERFACE)
     assert 'ap0' in list_wifi_ifaces()
     with open('/data/misc/wifi/fqrouter.conf', 'w') as f:
         frequency, channel = get_upstream_frequency_and_channel()
@@ -374,13 +382,29 @@ def get_upstream_frequency_and_channel():
             line = line.strip()
             if not line:
                 continue
-            match = RE_CURRENT_FREQUENCY.match(line)
+            match = RE_CURRENT_FREQUENCY.search(line)
             if match:
                 return match.group(1), match.group(2)
-        return None, None
+        frequency = get_upstream_frequency()
+        return frequency, CHANNELS.get(frequency)
     except:
         LOGGER.exception('failed to get upstream frequency and channel')
         return None, None
+
+
+def get_upstream_frequency():
+    try:
+        output = shell_execute('%s dev %s link' % (IW_PATH, network_interface.WIFI_INTERFACE))
+        for line in output.splitlines():
+            if not line:
+                continue
+            match = RE_FREQ.search(line)
+            if match:
+                return match.group(1)
+        return None
+    except:
+        LOGGER.exception('failed to get upstream frequency')
+        return None
 
 
 def setup_networking(hotspot_interface):
@@ -449,19 +473,6 @@ def stop_p2p_persistent_network(control_socket_dir, control_iface, iface):
             (P2P_CLI_PATH, control_socket_dir, control_iface, iface))
     except:
         LOGGER.error('failed to stop p2p persistent network')
-
-
-def reset_p2p_channels(iface, control_socket_dir):
-    try:
-        frequency, channel = get_upstream_frequency_and_channel()
-        channel = channel or 6
-        shell_execute('%s -p %s -i %s set p2p_oper_channel %s' % (P2P_CLI_PATH, control_socket_dir, iface, channel))
-        shell_execute('%s -p %s -i %s set p2p_oper_reg_class 81' % (P2P_CLI_PATH, control_socket_dir, iface))
-        shell_execute('%s -p %s -i %s set p2p_listen_channel %s' % (P2P_CLI_PATH, control_socket_dir, iface, channel))
-        shell_execute('%s -p %s -i %s set p2p_listen_reg_class 81' % (P2P_CLI_PATH, control_socket_dir, iface))
-        shell_execute('%s -p %s -i %s save_config' % (P2P_CLI_PATH, control_socket_dir, iface))
-    except:
-        LOGGER.exception('failed to reset p2p channels')
 
 
 def delete_existing_p2p_persistent_networks(iface, control_socket_dir):
