@@ -439,6 +439,7 @@ def log_upstream_wifi_status(log, control_socket_dir):
 
 
 def start_p2p_persistent_network(iface, control_socket_dir):
+    shell_execute('%s -p %s -i %s p2p_set disabled 0' % (P2P_CLI_PATH, control_socket_dir, iface))
     index = shell_execute('%s -p %s -i %s add_network' % (P2P_CLI_PATH, control_socket_dir, iface)).strip()
 
     def set_network(param):
