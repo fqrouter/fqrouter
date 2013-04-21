@@ -221,16 +221,17 @@ public class MainActivity extends Activity implements StatusUpdater {
 
     private void showNotification(String text, boolean hasIntent) {
         Intent intent = new Intent(this, MainActivity.class);
+        if (!hasIntent) {
+            intent = new Intent(Intent.ACTION_MAIN);
+            intent.addCategory(Intent.CATEGORY_HOME);
+        }
         PendingIntent pIntent = PendingIntent.getActivity(this, 0, intent, 0);
-        NotificationCompat.Builder notificationBuilder = new NotificationCompat.Builder(this)
+        Notification notification = new NotificationCompat.Builder(this)
                 .setSmallIcon(R.drawable.wall_green)
                 .setContentTitle("fqrouter is running")
-                .setContentText(text);
-        if (hasIntent) {
-            notificationBuilder = notificationBuilder
-                    .setContentIntent(pIntent);
-        }
-        Notification notification = notificationBuilder.build();
+                .setContentText(text)
+                .setContentIntent(pIntent)
+                .build();
         NotificationManager notificationManager =
                 (NotificationManager) getSystemService(NOTIFICATION_SERVICE);
         notification.flags |= Notification.FLAG_ONGOING_EVENT;
@@ -270,7 +271,11 @@ public class MainActivity extends Activity implements StatusUpdater {
             public void run() {
                 TextView textView = (TextView) findViewById(R.id.statusTextView);
                 textView.setText(status);
-                showNotification(status, hasIntent);
+                try {
+                    showNotification(status, hasIntent);
+                } catch (Exception e) {
+                    Log.e("fqrouter", "failed to show notification", e);
+                }
             }
         }, 0);
     }
