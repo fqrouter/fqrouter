@@ -13,6 +13,12 @@ do
     	--proxy-list "./cnproxy.py 8" \
     	--proxy-list "./cnproxy.py 9" \
     	--proxy-list "./cnproxy.py 10" \
+    	--proxy-list "./spys.py 0" \
+    	--proxy-list "./spys.py 1" \
+    	--proxy-list "./spys.py 2" \
+    	--proxy-list "./spys.py 3" \
+    	--proxy-list "./spys.py 4" \
+    	--proxy-list "./spys.py 5" \
     	--proxy-list "./hidemyass.py 1" \
     	--proxy-list "./hidemyass.py 2" \
     	--proxy-list "./hidemyass.py 3" \
