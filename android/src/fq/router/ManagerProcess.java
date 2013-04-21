@@ -63,4 +63,8 @@ public class ManagerProcess {
         }
         return null;
     }
+
+    public static boolean exists() {
+        return findProcessId() > 0;
+    }
 }

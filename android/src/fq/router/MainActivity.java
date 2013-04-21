@@ -37,7 +37,9 @@ public class MainActivity extends Activity implements StatusUpdater {
     private final static int ITEM_ID_EXIT = 1;
     private final static int ITEM_ID_REPORT_ERROR = 2;
     private final static int ITEM_ITEM_CHECK_UPDATES = 3;
+    private final static File EXITING_FLAG = new File("/data/data/fq.router/.exiting");
     private Handler handler = new Handler();
+    private boolean started = false;
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
@@ -48,6 +50,10 @@ public class MainActivity extends Activity implements StatusUpdater {
             @Override
             public void run() {
                 appendLog("ver: " + getMyVersion());
+                if (!shouldStart()) {
+                    finish();
+                    return;
+                }
                 if (Supervisor.ping()) {
                     appendLog("found manager is already running");
                     onStarted();
@@ -57,6 +63,25 @@ public class MainActivity extends Activity implements StatusUpdater {
                 }
             }
         }).start();
+    }
+
+    private boolean shouldStart() {
+        if (!EXITING_FLAG.exists()) {
+            appendLog("exiting flag not found");
+            return true;
+        }
+        if (System.currentTimeMillis() - EXITING_FLAG.lastModified() > 60 * 3) {
+            appendLog("exiting flag expired");
+            EXITING_FLAG.delete();
+            return true;
+        }
+        if (ManagerProcess.exists()) {
+            appendLog("exiting flag and manager process found");
+            return false;
+        }
+        appendLog("exiting flag found and ignored due to manager process missing");
+        EXITING_FLAG.delete();
+        return true;
     }
 
     private void setupUI() {
@@ -161,6 +186,7 @@ public class MainActivity extends Activity implements StatusUpdater {
     }
 
     private void onExitClicked() {
+        EXITING_FLAG.setLastModified(System.currentTimeMillis());
         try {
             Intent intent = new Intent(Intent.ACTION_MAIN);
             intent.addCategory(Intent.CATEGORY_HOME);
@@ -171,7 +197,7 @@ public class MainActivity extends Activity implements StatusUpdater {
         new Thread(new Runnable() {
             @Override
             public void run() {
-                if (isWifiHotspotStarted()) {
+                if (started && isWifiHotspotStarted()) {
                     stopWifiHotspot();
                 }
                 updateStatus("Exiting...", false);
@@ -180,6 +206,7 @@ public class MainActivity extends Activity implements StatusUpdater {
                 } catch (Exception e) {
                     Log.e("fqrouter", "failed to kill manager process", e);
                 }
+                EXITING_FLAG.delete();
                 handler.postDelayed(new Runnable() {
                     @Override
                     public void run() {
@@ -261,6 +288,7 @@ public class MainActivity extends Activity implements StatusUpdater {
 
     @Override
     public void onStarted() {
+        started = true;
         updateStatus("Checking if wifi hotspot is started");
         boolean isStarted = isWifiHotspotStarted();
         showWifiHotspotCheckbox(isStarted);
