@@ -73,7 +73,7 @@ public class Supervisor implements Runnable {
             return false;
         }
         statusUpdater.appendLog("starting launcher thread");
-        new Thread(new Launcher(statusUpdater, deployer)).start();
+        new Thread(new Launcher(statusUpdater)).start();
         return true;
     }
 

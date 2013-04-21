@@ -245,29 +245,4 @@ public class Deployer {
             statusUpdater.appendLog("failed to make " + file.getName() + " executable");
         }
     }
-
-    public void linkLibs() throws Exception {
-        try {
-            ShellUtils.sudo(BUSYBOX_FILE.getCanonicalPath(), "mount", "-o", "rw,remount", "/system");
-            File[] files = new File(PYTHON_DIR, "lib").listFiles();
-            for (File file : files) {
-                if (file.getName().endsWith(".so")) {
-                    linkFile(file, "/system/lib/" + file.getName());
-                }
-            }
-        } finally {
-            ShellUtils.sudo(BUSYBOX_FILE.getCanonicalPath(), "mount", "-o", "ro,remount", "/system");
-        }
-    }
-
-    private void linkFile(File src, String dst) throws Exception {
-        if (new File(dst).exists()) {
-            return;
-        }
-        try {
-            ShellUtils.sudo(BUSYBOX_FILE.getAbsolutePath(), "ln", "-s", src.getCanonicalPath(), dst);
-        } catch (Exception e) {
-            Log.e("fqrouter", "failed to link " + src.getName(), e);
-        }
-    }
 }
