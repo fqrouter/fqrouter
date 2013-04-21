@@ -383,6 +383,8 @@ def pick_proxy(ip_packet):
                 marks[proxy['rank'] - 5] = mark
             continue
         marks[proxy['rank']] = mark
+    if not marks:
+        return None
     mark = marks[sorted(marks.keys())[0]]
     ip = socket.inet_ntoa(ip_packet.src)
     port = ip_packet.tcp.sport
