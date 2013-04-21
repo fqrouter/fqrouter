@@ -24,6 +24,7 @@ P2P_SUPPLICANT_CONF_PATH = '/data/misc/wifi/p2p_supplicant.conf'
 P2P_CLI_PATH = '/data/data/fq.router/wifi-tools/p2p_cli'
 IW_PATH = '/data/data/fq.router/wifi-tools/iw'
 IWLIST_PATH = '/data/data/fq.router/wifi-tools/iwlist'
+FQROUTER_HOSTAPD_CONF_PATH = '/data/data/fq.router/hostapd.conf'
 CHANNELS = {
     '2412': 1, '2417': 2, '2422': 3, '2427': 4, '2432': 5, '2437': 6, '2442': 7,
     '2447': 8, '2452': 9, '2457': 10, '2462': 11, '2467': 12, '2472': 13, '2484': 14,
@@ -357,12 +358,13 @@ def start_hotspot_on_wl12xx():
         shell_execute(
             '/data/data/fq.router/wifi-tools/iw %s interface add ap0 type managed' % network_interface.WIFI_INTERFACE)
     assert 'ap0' in list_wifi_ifaces()
-    with open('/data/misc/wifi/fqrouter.conf', 'w') as f:
+    with open(FQROUTER_HOSTAPD_CONF_PATH, 'w') as f:
         frequency, channel = get_upstream_frequency_and_channel()
         f.write(hostapd_template.render(channel=channel or 1))
+    os.chmod(FQROUTER_HOSTAPD_CONF_PATH, 0666)
     LOGGER.info('start hostapd')
     proc = subprocess.Popen(
-        ['/data/data/fq.router/wifi-tools/hostapd', '-dd', '/data/misc/wifi/fqrouter.conf'],
+        ['/data/data/fq.router/wifi-tools/hostapd', '-dd', FQROUTER_HOSTAPD_CONF_PATH],
         cwd='/data/misc/wifi', stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
     time.sleep(2)
     if proc.poll():
