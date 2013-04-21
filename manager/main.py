@@ -7,6 +7,24 @@ import os
 import logging
 import logging.handlers
 
+ROOT_DIR = os.path.dirname(__file__)
+LOG_DIR = '/data/data/fq.router'
+LOG_FILE = os.path.join(LOG_DIR, 'manager.log')
+
+
+def setup_logging():
+    logging.basicConfig(level=logging.INFO, format='%(asctime)s %(levelname)s %(message)s')
+    handler = logging.handlers.RotatingFileHandler(
+        LOG_FILE, maxBytes=1024 * 1024, backupCount=1)
+    handler.setFormatter(logging.Formatter('%(asctime)s %(levelname)s %(message)s'))
+    logging.getLogger().addHandler(handler)
+
+
+if '__main__' == __name__:
+    setup_logging()
+
+LOGGER = logging.getLogger(__name__)
+
 import tornado.ioloop
 import tornado.template
 import tornado.web
@@ -19,10 +37,6 @@ import wifi
 import version
 
 
-LOGGER = logging.getLogger(__name__)
-ROOT_DIR = os.path.dirname(__file__)
-LOG_DIR = '/data/data/fq.router'
-LOG_FILE = os.path.join(LOG_DIR, 'manager.log')
 template_loader = tornado.template.Loader(ROOT_DIR)
 
 
@@ -51,15 +65,6 @@ application = tornado.web.Application([
     (r'/version/latest', version.LatestVersionHandler)
 ])
 
-
-def setup_logging():
-    logging.basicConfig(level=logging.INFO)
-    handler = logging.handlers.RotatingFileHandler(
-        LOG_FILE, maxBytes=1024 * 1024, backupCount=1)
-    handler.setFormatter(logging.Formatter(logging.BASIC_FORMAT))
-    logging.getLogger().addHandler(handler)
-
-
 application.listening_to_hotspot_lan = False
 
 
@@ -70,7 +75,6 @@ def listen_to_hotspot_lan():
 
 
 if '__main__' == __name__:
-    setup_logging()
     LOGGER.info('environment: %s' % os.environ.items())
     dns_service.run()
     tcp_service.run()

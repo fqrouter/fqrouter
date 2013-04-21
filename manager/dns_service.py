@@ -15,6 +15,11 @@ import dns_server
 
 
 LOGGER = logging.getLogger(__name__)
+raw_socket = socket.socket(socket.AF_INET, socket.SOCK_RAW, socket.IPPROTO_RAW)
+shutdown_hook.add(raw_socket.close)
+raw_socket.setsockopt(socket.SOL_IP, socket.IP_HDRINCL, 1)
+SO_MARK = 36
+raw_socket.setsockopt(socket.SOL_SOCKET, SO_MARK, 0xface)
 
 
 def run():
@@ -56,21 +61,19 @@ domains = {} # ip => domain
 RULES = []
 for iface in network_interface.list_data_network_interfaces():
     RULES.append((
-        {'target': 'NFQUEUE', 'iface_out': iface, 'extra': 'udp dpt:53 mark match ! 0xfeed/0xffff NFQUEUE num 1'},
-        ('nat', 'OUTPUT', '-o %s -p udp --dport 53 -m mark ! --mark 0xfeed/0xffff -j NFQUEUE --queue-num 1' % iface)
+        {'target': 'NFQUEUE', 'iface_out': iface, 'extra': 'udp dpt:53 NFQUEUE num 1'},
+        ('filter', 'OUTPUT', '-o %s -p udp --dport 53 -j NFQUEUE --queue-num 1' % iface)
     ))
-    for mark, ip, port in dns_server.list_dns_servers():
-        RULES.append((
-            {'target': 'DNAT', 'iface_out': iface, 'extra':
-                'udp dpt:53 mark match 0x%x to:%s:%s' % (mark, ip, port)},
-            ('nat', 'OUTPUT', '-o %s -p udp --dport 53 -m mark --mark 0x%x '
-                              '-j DNAT --to-destination %s:%s' % (iface, mark, ip, port))
-        ))
-    RULE_DROP_PACKET = (
+    RULES.append((
         {'target': 'NFQUEUE', 'iface_in': iface, 'extra': 'udp spt:53 NFQUEUE num 1'},
         ('filter', 'INPUT', '-i %s -p udp --sport 53 -j NFQUEUE --queue-num 1' % iface)
-    )
-    RULES.append(RULE_DROP_PACKET)
+    ))
+    for dns_ip, dns_port in dns_server.list_dns_servers():
+        if dns_port != 53:
+            RULES.append((
+                {'target': 'NFQUEUE', 'iface_in': iface, 'source': dns_ip, 'extra': 'udp spt:53 NFQUEUE num 1'},
+                ('filter', 'INPUT', '-i %s -p udp -s %s --sport %s -j NFQUEUE --queue-num 1' % (iface, dns_ip, dns_port))
+            ))
 
 # source http://zh.wikipedia.org/wiki/%E5%9F%9F%E5%90%8D%E6%9C%8D%E5%8A%A1%E5%99%A8%E7%BC%93%E5%AD%98%E6%B1%A1%E6%9F%93
 WRONG_ANSWERS = {
@@ -117,6 +120,8 @@ GOOGLE_PLUS_WRONG_ANSWERS = {
     '209.85.229.138'
 }
 
+dns_transactions = {} # id => (started_at, orig_dst, orig_dport)
+
 
 def insert_iptables_rules():
     shutdown_hook.add(delete_iptables_rules)
@@ -145,18 +150,44 @@ def handle_packet(nfqueue_element):
         questions = [question for question in dns_packet.qd if question.type == dpkt.dns.DNS_A]
         dns_packet.domain = questions[0].name if questions else None
         if 53 == ip_packet.udp.dport:
-            server_name, mark = dns_server.select_dns_server(dns_packet.domain)
-            if dns_packet.domain:
-                LOGGER.info('resolve %s using: %s' % (dns_packet.domain, server_name))
-            nfqueue_element.set_mark(mark)
-            nfqueue_element.repeat()
+            is_primary = 0xface != nfqueue_element.get_mark()
+            if is_primary:
+                raw_socket.sendto(nfqueue_element.get_payload(), (socket.inet_ntoa(ip_packet.dst), 0))
+            dns_server_name, dns_ip, dns_port = dns_server.select_dns_server(dns_packet.domain, is_primary)
+            if is_primary and dns_packet.domain:
+                LOGGER.info('[%s] resolve %s using: %s' % (dns_packet.id, dns_packet.domain, dns_server_name))
+            dns_transactions[dns_packet.id] = (time.time(), socket.inet_ntoa(ip_packet.dst), ip_packet.udp.dport)
+            ip_packet.dst = socket.inet_aton(dns_ip)
+            ip_packet.sum = 0
+            ip_packet.udp.dport = dns_port
+            ip_packet.udp.sum = 0
+            nfqueue_element.set_payload(str(ip_packet))
+            nfqueue_element.accept()
         else:
             if contains_wrong_answer(dns_packet):
             # after the fake packet dropped, the real answer can be accepted by the client
                 LOGGER.debug('drop fake dns packet: %s' % dns_packet.domain)
                 nfqueue_element.drop()
                 return
-            nfqueue_element.accept()
+            if dns_packet.id in dns_transactions:
+                orig_dst = dns_transactions[dns_packet.id][1]
+                orig_dport = dns_transactions[dns_packet.id][2]
+                del dns_transactions[dns_packet.id]
+                ip_packet.src = socket.inet_aton(orig_dst)
+                ip_packet.sum = 0
+                ip_packet.udp.sport = orig_dport
+                ip_packet.udp.sum = 0
+                nfqueue_element.set_payload(str(ip_packet))
+                nfqueue_element.accept()
+            else:
+                nfqueue_element.drop()
+            expired_dns_transaction_ids = []
+            for dns_transaction_id, dns_transaction in dns_transactions.items():
+                if time.time() - dns_transaction[0] > 10:
+                    LOGGER.error('[%s] timeout' % dns_transaction_id)
+                    expired_dns_transaction_ids.append(dns_transaction_id)
+            for dns_transaction_id in expired_dns_transaction_ids:
+                del dns_transactions[dns_transaction_id]
             dns_service_status.last_activity_at = time.time()
     except:
         LOGGER.exception('failed to handle packet')
@@ -175,7 +206,7 @@ def contains_wrong_answer(dns_packet):
                 return True
             else:
                 domains[resolved_ip] = dns_packet.domain
-                LOGGER.info('dns resolve: %s => %s' % (dns_packet.domain, resolved_ip))
+                LOGGER.info('[%s] resolved %s => %s' % (dns_packet.id, dns_packet.domain, resolved_ip))
                 if 'twitter.com' in dns_packet.domain:
                     full_proxy_service.add_to_black_list(resolved_ip)
                 return False # if the blacklist is incomplete, we will think it is right answer

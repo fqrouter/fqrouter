@@ -1,20 +1,43 @@
 import socket
 import traceback
+import logging
+import china_domain
 
-PRIMARY_DNS_MARK = 0x1feed
-PRIMARY_DNS_IP = '8.8.8.8'
-PRIMARY_DNS_PORT = 53
+LOGGER = logging.getLogger(__name__)
 
-AUTO_UPDATE_DNS_MARK = 0x2feed
-AUTO_UPDATE_DOMAIN = 'd2anp67vmqk4wc.cloudfront.net'
+PRIMARY_DEFAULT_DNS_IP = '8.8.8.8'
+PRIMARY_DEFAULT_DNS_PORT = 53
+SECONDARY_DEFAULT_DNS_IP = '8.8.4.4'
+SECONDARY_DEFAULT_DNS_PORT = 53
+
+DNS_SERVERS = {
+    'default': (
+        (PRIMARY_DEFAULT_DNS_IP, PRIMARY_DEFAULT_DNS_PORT),
+        (SECONDARY_DEFAULT_DNS_IP, SECONDARY_DEFAULT_DNS_PORT)),
+    'china': (
+        ('114.114.114.114', 53),
+        ('114.114.115.115', 53))
+}
+
+VER_DOMAIN = 'd2anp67vmqk4wc.cloudfront.net'
 try:
-    AUTO_UPDATE_DNS_IP = socket.gethostbyname('ns-51.awsdns-06.com')
+    PRIMARY_VER_DNS_IP = socket.gethostbyname('ns-51.awsdns-06.com')
+    PRIMARY_VER_DNS_PORT = 53
 except:
-    traceback.print_exc()
-    AUTO_UPDATE_DNS_IP = '8.8.8.8'
-AUTO_UPDATE_DNS_PORT = 53
+    LOGGER.exception('failed to resolve ns-51.awsdns-06.com')
+    PRIMARY_VER_DNS_IP = PRIMARY_DEFAULT_DNS_IP
+    PRIMARY_VER_DNS_PORT = PRIMARY_DEFAULT_DNS_PORT
+try:
+    SECONDARY_VER_DNS_IP = socket.gethostbyname('ns-738.awsdns-28.net')
+    SECONDARY_VER_DNS_PORT = 53
+except:
+    LOGGER.exception('failed to resolve ns-738.awsdns-28.net')
+    SECONDARY_VER_DNS_IP = SECONDARY_DEFAULT_DNS_IP
+    SECONDARY_VER_DNS_PORT = SECONDARY_DEFAULT_DNS_PORT
+DNS_SERVERS['ver'] = (
+    (PRIMARY_VER_DNS_IP, PRIMARY_VER_DNS_PORT),
+    (SECONDARY_VER_DNS_IP, SECONDARY_VER_DNS_PORT))
 
-GOOGLE_COM_DNS_MARK = 0x3feed
 GOOGLE_COM_DOMAIN = {
     'google.com', 'www.google.com',
     'mail.google.com', 'chatenabled.mail.google.com',
@@ -22,505 +45,67 @@ GOOGLE_COM_DOMAIN = {
     'mobile-gtalk.google.com', 'mtalk.google.com'
 }
 try:
-    GOOGLE_COM_DNS_IP = socket.gethostbyname('ns-285.awsdns-35.com')
+    PRIMARY_GOOGLE_COM_DNS_IP = socket.gethostbyname('ns-285.awsdns-35.com')
+    PRIMARY_GOOGLE_COM_DNS_PORT = 53
 except:
-    traceback.print_exc()
-    GOOGLE_COM_DNS_IP = PRIMARY_DNS_IP
-GOOGLE_COM_DNS_PORT = 53
+    LOGGER.exception('failed to resolve ns-285.awsdns-35.com')
+    PRIMARY_GOOGLE_COM_DNS_IP = PRIMARY_DEFAULT_DNS_IP
+    PRIMARY_GOOGLE_COM_DNS_PORT = PRIMARY_DEFAULT_DNS_PORT
+try:
+    SECONDARY_GOOGLE_COM_DNS_IP = socket.gethostbyname('ns-914.awsdns-50.net')
+    SECONDARY_GOOGLE_COM_DNS_PORT = 53
+except:
+    LOGGER.exception('failed to resolve ns-914.awsdns-50.net')
+    SECONDARY_GOOGLE_COM_DNS_IP = SECONDARY_DEFAULT_DNS_IP
+    SECONDARY_GOOGLE_COM_DNS_PORT = SECONDARY_DEFAULT_DNS_PORT
+DNS_SERVERS['google-com'] = (
+    (PRIMARY_GOOGLE_COM_DNS_IP, PRIMARY_GOOGLE_COM_DNS_PORT),
+    (SECONDARY_GOOGLE_COM_DNS_IP, SECONDARY_GOOGLE_COM_DNS_PORT))
 
-GOOGLE_COM_HK_DNS_MARK = 0x4feed
 GOOGLE_COM_HK_DOMAIN = {'google.com.hk', 'www.google.com.hk'}
 try:
-    GOOGLE_COM_HK_DNS_IP = socket.gethostbyname('ns-320.awsdns-40.com')
+    PRIMARY_GOOGLE_COM_HK_DNS_IP = socket.gethostbyname('ns-320.awsdns-40.com')
+    PRIMARY_GOOGLE_COM_HK_DNS_PORT = 53
 except:
     traceback.print_exc()
-    GOOGLE_COM_HK_DNS_IP = PRIMARY_DNS_IP
-GOOGLE_COM_HK_DNS_PORT = 53
-
-CHINA_DNS_MARK = 0x5feed
-CHINA_DNS_IP = '114.114.114.114'
-CHINA_DNS_PORT = 53
-GOOGLE_DNS_DOMAIN = []
-CHINA_DNS_DOMAIN = [
-    '07073.com',
-    '10010.com',
-    '100ye.com',
-    '114la.com',
-    '115.com',
-    '120ask.com',
-    '126.com',
-    '126.net',
-    '1616.net',
-    '163.com',
-    '17173.com',
-    '1778.com',
-    '178.com',
-    '17u.com',
-    '19lou.com',
-    '1o26.com',
-    '1ting.com',
-    '21cn.com',
-    '2345.com',
-    '265.com',
-    '265g.com',
-    '28.com',
-    '28tui.com',
-    '2hua.com',
-    '2mdn.net',
-    '315che.com',
-    '3366.com',
-    '360buy.com',
-    '360buyimg.com',
-    '360doc.com',
-    '36kr.com',
-    '39.net',
-    '3dmgame.com',
-    '4399.com',
-    '4738.com',
-    '500wan.com',
-    '51.com',
-    '51.la',
-    '5173.com',
-    '51auto.com',
-    '51buy.com',
-    '51cto.com',
-    '51fanli.com',
-    '51job.com',
-    '52kmh.com',
-    '52pk.net',
-    '52tlbb.com',
-    '53kf.com',
-    '55bbs.com',
-    '55tuan.com',
-    '56.com',
-    '58.com',
-    '591hx.com',
-    '5d6d.net',
-    '61.com',
-    '70e.com',
-    '777wyx.com',
-    '778669.com',
-    '7c.com',
-    '7k7k.com',
-    '88db.com',
-    '91.com',
-    '99bill.com',
-    'a135.net',
-    'abang.com',
-    'abchina.com',
-    'ad1111.com',
-    'admin5.com',
-    'adnxs.com',
-    'adobe.com',
-    'adroll.com',
-    'ads8.com',
-    'adsame.com',
-    'adsonar.com',
-    'adtechus.com',
-    'aibang.com',
-    'aifang.com',
-    'aili.com',
-    'aipai.com',
-    'aizhan.com',
-    'ali213.net',
-    'alibaba.com',
-    'alicdn.com',
-    'aliexpress.com',
-    'alimama.com',
-    'alipay.com',
-    'alipayobjects.com',
-    'alisoft.com',
-    'alivv.com',
-    'aliyun.com',
-    'allyes.com',
-    'amazon.com',
-    'anjuke.com',
-    'anzhi.com',
-    'aol.com',
-    'apple.com',
-    'arpg2.com',
-    'atdmt.com',
-    'b2b168.com',
-    'babytree.com',
-    'baidu.com',
-    'baihe.com',
-    'baixing.com',
-    'bankcomm.com',
-    'baomihua.com',
-    'bdimg.com',
-    'bdstatic.com',
-    'bendibao.com',
-    'betrad.com',
-    'bilibili.tv',
-    'bing.com',
-    'bitauto.com',
-    'blog.163.com',
-    'blogchina.com',
-    'blueidea.com',
-    'bluekai.com',
-    'booksky.org',
-    'caixin.com',
-    'ccb.com',
-    'ccidnet.com',
-    'cctv*.com',
-    'china.com',
-    'chinabyte.com',
-    'chinahr.com',
-    'chinanews.com',
-    'chinaunix.net',
-    'chinaw3.com',
-    'chinaz.com',
-    'chuangelm.com',
-    'ci123.com',
-    'cmbchina.com',
-    'cnbeta.com',
-    'cnblogs.com',
-    'cncn.com',
-    'cnhubei.com',
-    'cnki.net',
-    'cnmo.com',
-    'cnxad.com',
-    'cnzz.com',
-    'cocoren.com',
-    'compete.com',
-    'comsenz.com',
-    'coo8.com',
-    'cqnews.net',
-    'crsky.com',
-    'csdn.net',
-    'ct10000.com',
-    'ctrip.com',
-    'dangdang.com',
-    'daqi.com',
-    'dayoo.com',
-    'dbank.com',
-    'ddmap.com',
-    'dedecms.com',
-    'dh818.com',
-    'diandian.com',
-    'dianping.com',
-    'discuz.net',
-    'doc88.com',
-    'docin.com',
-    'donews.com',
-    'dospy.com',
-    'douban.com',
-    'douban.fm',
-    'doubleclick.com',
-    'doubleclick.net',
-    'duba.net',
-    'duote.com',
-    'duowan.com',
-    'dzwww.com',
-    'eastday.com',
-    'eastmoney.com',
-    'ebay.com',
-    'elong.com',
-    'ename.net',
-    'etao.com',
-    'exam8.com',
-    'eye.rs',
-    'fantong.com',
-    'fastcdn.com',
-    'fblife.com',
-    'fengniao.com',
-    'fenzhi.com',
-    'flickr.com',
-    'fobshanghai.com',
-    'ftuan.com',
-    'funshion.com',
-    'fx120.net',
-    'game3737.com',
-    'gamersky.com',
-    'gamestlbb.com',
-    'gamesville.com',
-    'ganji.com',
-    'gfan.com',
-    'gongchang.com',
-    'google-analytics.com',
-    'gougou.com',
-    'gtimg.com',
-    'hao123.com',
-    'haodf.com',
-    'harrenmedianetwork.com',
-    'hc360.com',
-    'hefei.cc',
-    'hf365.com',
-    'hiapk.com',
-    'hichina.com',
-    'homeinns.com',
-    'hotsales.net',
-    'house365.com',
-    'huaban.com',
-    'huanqiu.com',
-    'hudong.com',
-    'hupu.com',
-    'iask.com',
-    'iciba.com',
-    'icson.com',
-    'ifeng.com',
-    'iloveyouxi.com',
-    'im286.com',
-    'imanhua.com',
-    'img.cctvpic.com',
-    'imrworldwide.com',
-    'invitemedia.com',
-    'ip138.com',
-    'ipinyou.com',
-    'iqilu.com',
-    'iqiyi.com',
-    'irs01.com',
-    'irs01.net',
-    'it168.com',
-    'iteye.com',
-    'iyaya.com',
-    'jb51.net',
-    'jiathis.com',
-    'jiayuan.com',
-    'jing.fm',
-    'jinti.com',
-    'jqw.com',
-    'jumei.com',
-    'jxedt.com',
-    'jysq.net',
-    'kaixin001.com',
-    'kandian.com',
-    'kdnet.net',
-    'kimiss.com',
-    'ku6.com',
-    'ku6cdn.com',
-    'ku6img.com',
-    'kuaidi100.com',
-    'kugou.com',
-    'l99.com',
-    'lady8844.com',
-    'lafaso.com',
-    'lashou.com',
-    'legolas-media.com',
-    'lehecai.com',
-    'leho.com',
-    'letv.com',
-    'liebiao.com',
-    'lietou.com',
-    'linezing.com',
-    'linkedin.com',
-    'live.com',
-    'longhoo.net',
-    'lusongsong.com',
-    'lxdns.com',
-    'lycos.com',
-    'lygo.com',
-    'm18.com',
-    'm1905.com',
-    'made-in-china.com',
-    'makepolo.com',
-    'mangocity.com',
-    'manzuo.com',
-    'mapbar.com',
-    'mathtag.com',
-    'mediaplex.com',
-    'mediav.com',
-    'meilele.com',
-    'meilishuo.com',
-    'meishichina.com',
-    'meituan.com',
-    'meizu.com',
-    'miaozhen.com',
-    'microsoft.com',
-    'miercn.com',
-    'mlt01.com',
-    'mmstat.com',
-    'mnwan.com',
-    'mogujie.com',
-    'mookie1.com',
-    'moonbasa.com',
-    'mop.com',
-    'mosso.com',
-    'mplife.com',
-    'msn.com',
-    'mtime.com',
-    'mumayi.com',
-    'mydrivers.com',
-    'net114.com',
-    'netease.com',
-    'newsmth.net',
-    'nipic.com',
-    'nowec.com',
-    'nuomi.com',
-    'oadz.com',
-    'oeeee.com',
-    'onetad.com',
-    'onlinedown.net',
-    'onlylady.com',
-    'oschina.net',
-    'otwan.com',
-    'paipai.com',
-    'paypal.com',
-    'pchome.net',
-    'pcpop.com',
-    'pengyou.com',
-    'php100.com',
-    'phpwind.net',
-    'pingan.com',
-    'pixlr.com',
-    'pp.cc',
-    'ppstream.com',
-    'pptv.com',
-    'ptlogin2.qq.com',
-    'pubmatic.com',
-    'q150.com',
-    'qianlong.com',
-    'qidian.com',
-    'qingdaonews.com',
-    'qire123.com',
-    'qiushibaike.com',
-    'qiyou.com',
-    'qjy168.com',
-    'qq.com',
-    'qq937.com',
-    'qstatic.com',
-    'quantserve.com',
-    'qunar.com',
-    'rakuten.co.jp',
-    'readnovel.com',
-    'renren.com',
-    'rtbidder.net',
-    'scanscout.com',
-    'scorecardresearch.com',
-    'sdo.com',
-    'seowhy.com',
-    'serving-sys.com',
-    'sf-express.com',
-    'shangdu.com',
-    'si.kz',
-    'sina.com',
-    'sinahk.net',
-    'sinajs.com',
-    'smzdm.com',
-    'snyu.com',
-    'sodu.org',
-    'sogou.com',
-    'sohu.com',
-    'soku.com',
-    'sootoo.com',
-    'soso.com',
-    'soufun.com',
-    'sourceforge.net',
-    'staticsdo.com',
-    'stockstar.com',
-    'sttlbb.com',
-    'suning.com',
-    'szhome.com',
-    'sznews.com',
-    'tangdou.com',
-    'tanx.com',
-    'tao123.com',
-    'taobao.com',
-    'taobaocdn.com',
-    'tdimg.com',
-    'tenpay.com',
-    'tgbus.com',
-    'theplanet.com',
-    'thethirdmedia.com',
-    'tiancity.com',
-    'tianji.com',
-    'tiao8.info',
-    'tiexue.net',
-    'titan24.com',
-    'tmall.com',
-    'tom.com',
-    'toocle.com',
-    'tremormedia.com',
-    'tuan800.com',
-    'tudou.com',
-    'tudouui.com',
-    'tui18.com',
-    'tuniu.com',
-    'twcczhu.com',
-    'u17.com',
-    'ucjoy.com',
-    'ulink.cc',
-    'uniontoufang.com',
-    'up2c.com',
-    'uuu9.com',
-    'uuzu.com',
-    'vancl.com',
-    'verycd.com',
-    'vipshop.com',
-    'vizu.com',
-    'vjia.com',
-    'weibo.com',
-    'weiphone.com',
-    'west263.com',
-    'whlongda.com',
-    'wrating.com',
-    'wumii.com',
-    'xiami.com',
-    'xiaomi.com',
-    'xiazaiba.com',
-    'xici.net',
-    'xinhuanet.com',
-    'xinnet.com',
-    'xitek.com',
-    'xiu.com',
-    'xunlei.com',
-    'xyxy.net',
-    'yahoo.co.jp',
-    'yahoo.com',
-    'yaolan.com',
-    'yesky.com',
-    'yieldmanager.com',
-    'yihaodian.com',
-    'yingjiesheng.com',
-    'yinyuetai.com',
-    'yiqifa.com',
-    'ykimg.com',
-    'ynet.com',
-    'yoka.com',
-    'yolk7.com',
-    'youboy.com',
-    'youdao.com',
-    'yougou.com',
-    'youku.com',
-    'youshang.com',
-    'ytimg.com',
-    'yupoo.com',
-    'yxlady.com',
-    'yyets.com',
-    'zhaodao123.com',
-    'zhaopin.com',
-    'zhenai.com',
-    'zhibo8.cc',
-    'zhihu.com',
-    'zhubajie.com',
-    'zongheng.com',
-    'zoosnet.net',
-    'zqgame.com',
-    'ztgame.com',
-    'zx915.com'
-]
+    PRIMARY_GOOGLE_COM_HK_DNS_IP = PRIMARY_DEFAULT_DNS_IP
+    PRIMARY_GOOGLE_COM_HK_DNS_PORT = PRIMARY_DEFAULT_DNS_PORT
+try:
+    SECONDARY_GOOGLE_COM_HK_DNS_IP = socket.gethostbyname('ns-590.awsdns-09.net')
+    SECONDARY_GOOGLE_COM_HK_DNS_PORT = 53
+except:
+    traceback.print_exc()
+    SECONDARY_GOOGLE_COM_HK_DNS_IP = SECONDARY_DEFAULT_DNS_IP
+    SECONDARY_GOOGLE_COM_HK_DNS_PORT = SECONDARY_DEFAULT_DNS_PORT
+DNS_SERVERS['google-com-hk'] = (
+    (PRIMARY_GOOGLE_COM_HK_DNS_IP, PRIMARY_GOOGLE_COM_HK_DNS_PORT),
+    (SECONDARY_GOOGLE_COM_HK_DNS_IP, SECONDARY_GOOGLE_COM_HK_DNS_PORT))
 
 
 def list_dns_servers():
-    yield PRIMARY_DNS_MARK, PRIMARY_DNS_IP, PRIMARY_DNS_PORT
-    yield AUTO_UPDATE_DNS_MARK, AUTO_UPDATE_DNS_IP, AUTO_UPDATE_DNS_PORT
-    yield GOOGLE_COM_DNS_MARK, GOOGLE_COM_DNS_IP, GOOGLE_COM_DNS_PORT
-    yield GOOGLE_COM_HK_DNS_MARK, GOOGLE_COM_HK_DNS_IP, GOOGLE_COM_HK_DNS_PORT
-    yield CHINA_DNS_MARK, CHINA_DNS_IP, CHINA_DNS_PORT
+    for dns_server in DNS_SERVERS.values():
+        yield dns_server[0] # primary
+        yield dns_server[1] # secondary
 
 
-def select_dns_server(domain):
+def select_dns_server(domain, is_primary):
+    dns_server_name = select_dns_server_name(domain)
+    if is_primary:
+        dns_server = DNS_SERVERS[dns_server_name][0]
+    else:
+        dns_server = DNS_SERVERS[dns_server_name][1]
+    return dns_server_name if is_primary else dns_server_name, dns_server[0], dns_server[1]
+
+
+def select_dns_server_name(domain):
     if not domain:
-        return '8.8.8.8', PRIMARY_DNS_MARK
-    if AUTO_UPDATE_DOMAIN == domain:
-        return 'auto-update', AUTO_UPDATE_DNS_MARK
+        return 'default'
+    if VER_DOMAIN == domain:
+        return 'ver'
     if domain in GOOGLE_COM_DOMAIN:
-        return 'google-com', GOOGLE_COM_DNS_MARK
+        return 'google-com'
     if domain in GOOGLE_COM_HK_DOMAIN:
-        return 'google-com-hk', GOOGLE_COM_HK_DNS_MARK
-    if domain.endswith('.cn'):
-        return '114', CHINA_DNS_MARK
-    for chain_domain in CHINA_DNS_DOMAIN:
-        if domain.endswith(chain_domain):
-            return '114', CHINA_DNS_MARK
-    return '8.8.8.8', PRIMARY_DNS_MARK
+        return 'google-com-hk'
+    if china_domain.is_china_domain(domain):
+        return 'china'
+    return 'default'
