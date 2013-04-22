@@ -1,6 +1,7 @@
 package fq.router;
 
 import android.content.res.AssetManager;
+import android.os.Build;
 import android.util.Log;
 import fq.router.utils.IOUtils;
 import fq.router.utils.ShellUtils;
@@ -18,6 +19,9 @@ public class Deployer {
     public static File PAYLOAD_CHECKSUM = new File(DATA_DIR, "payload.checksum");
     public static File PYTHON_DIR = new File(DATA_DIR, "python");
     public static File PYTHON_LAUNCHER = new File(PYTHON_DIR, "bin/python-launcher.sh");
+    public static File LINKER_FILE = new File(PYTHON_DIR, "bin/linker");
+    public static File LINKER_2_X_FILE = new File(PYTHON_DIR, "bin/linker-2.x");
+    public static File LINKER_4_X_FILE = new File(PYTHON_DIR, "bin/linker-4.x");
     public static File WIFI_TOOLS_DIR = new File(DATA_DIR, "wifi-tools");
     public static File PROXY_TOOLS_DIR = new File(DATA_DIR, "proxy-tools");
     public static File MANAGER_DIR = new File(DATA_DIR, "manager");
@@ -80,6 +84,12 @@ public class Deployer {
             unzipPayloadZip();
         } catch (Exception e) {
             statusUpdater.reportError("failed to unzip payload.zip", e);
+            return false;
+        }
+        try {
+            selectLinker();
+        } catch (Exception e) {
+            statusUpdater.reportError("failed to select linker", e);
             return false;
         }
         try {
@@ -208,6 +218,19 @@ public class Deployer {
         Thread.sleep(1000); // wait for the files written out
     }
 
+    private void selectLinker() throws Exception {
+        if (LINKER_FILE.exists()) {
+            LINKER_FILE.delete();
+        }
+        if (Build.VERSION.RELEASE.startsWith("2.")) {
+            statusUpdater.appendLog("select linker 2.x");
+            linkFile(LINKER_2_X_FILE, LINKER_FILE);
+        } else {
+            statusUpdater.appendLog("select linker 4.x");
+            linkFile(LINKER_4_X_FILE, LINKER_FILE);
+        }
+    }
+
     private void makePayloadExecutable() throws Exception {
         File[] files = new File(PYTHON_DIR, "bin").listFiles();
         if (files == null) {
@@ -243,6 +266,17 @@ public class Deployer {
             statusUpdater.appendLog("successfully made " + file.getName() + " executable");
         } else {
             statusUpdater.appendLog("failed to make " + file.getName() + " executable");
+        }
+    }
+
+    private static void linkFile(File src, File dst) throws Exception {
+        if (dst.exists()) {
+            return;
+        }
+        try {
+            ShellUtils.sudo(BUSYBOX_FILE.getAbsolutePath(), "ln", "-s", src.getAbsolutePath(), dst.getAbsolutePath());
+        } catch (Exception e) {
+            Log.e("fqrouter", "failed to link " + src.getName(), e);
         }
     }
 }

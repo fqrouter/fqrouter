@@ -80,6 +80,7 @@ public class Supervisor implements Runnable {
     private boolean waitForManager() {
         for (int i = 0; i < 30; i++) {
             sleepOneSecond();
+            sleepOneSecond();
             if (ping()) {
                 return true;
             }
