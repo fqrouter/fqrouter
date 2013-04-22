@@ -56,6 +56,7 @@ application = tornado.web.Application([
     (r'/wifi/start', wifi.WifiStartHandler),
     (r'/wifi/stop', wifi.WifiStopHandler),
     (r'/wifi/started', wifi.WifiIsStartedHandler),
+    (r'/wifi/setup', wifi.WifiSetupHandler),
     (r'/version/latest', version.LatestVersionHandler)
 ])
 

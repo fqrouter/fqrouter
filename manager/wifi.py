@@ -63,6 +63,16 @@ class WifiStopHandler(tornado.web.RequestHandler):
         self.write(stop_hotspot())
 
 
+class WifiSetupHandler(tornado.web.RequestHandler):
+    def post(self):
+        for i in range(10):
+            iface = get_working_hotspot_iface()
+            if not iface:
+                time.sleep(1)
+                continue
+            setup_networking(iface)
+
+
 class WifiIsStartedHandler(tornado.web.RequestHandler):
     def get(self):
         if get_working_hotspot_iface():

@@ -23,6 +23,26 @@ public class WifiHotspot {
         }
     }
 
+//    public void start() {
+//        try {
+//            WifiManager wifiManager = getWifiManager();
+//            Method setWifiApEnabledMethod = wifiManager.getClass().getMethod("setWifiApEnabled", WifiConfiguration.class, boolean.class);
+//            WifiConfiguration wifiConfig = new WifiConfiguration();
+//            wifiConfig.SSID = "StockAp";
+//            wifiConfig.allowedKeyManagement.set(WifiConfiguration.AuthAlgorithm.SHARED);
+//            wifiConfig.allowedAuthAlgorithms.set(WifiConfiguration.AuthAlgorithm.OPEN);
+//            wifiConfig.preSharedKey = "12345678";
+//            wifiManager.setWifiEnabled(false);
+//            HttpUtils.post("http://127.0.0.1:8318/wifi/setup");
+//            statusUpdater.updateStatus("Started wifi hotspot");
+//            statusUpdater.showWifiHotspotToggleButton(true);
+//        } catch (Exception e) {
+//            statusUpdater.reportError("failed to start wifi hotspot", e);
+//            stop();
+//            statusUpdater.showWifiHotspotToggleButton(false);
+//        }
+//    }
+
     public void start() {
         try {
             statusUpdater.updateStatus("Starting wifi hotspot");
@@ -45,10 +65,14 @@ public class WifiHotspot {
         } catch (Exception e) {
             statusUpdater.reportError("failed to stop wifi hotspot", e);
         }
-        WifiManager wifiManager = (WifiManager) statusUpdater.getBaseContext().getSystemService(Context.WIFI_SERVICE);
+        WifiManager wifiManager = getWifiManager();
         wifiManager.setWifiEnabled(false);
         wifiManager.setWifiEnabled(true);
         statusUpdater.updateStatus("Stopped wifi hotspot");
         statusUpdater.showWifiHotspotToggleButton(false);
+    }
+
+    private WifiManager getWifiManager() {
+        return (WifiManager) statusUpdater.getBaseContext().getSystemService(Context.WIFI_SERVICE);
     }
 }
