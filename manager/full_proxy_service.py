@@ -2,14 +2,10 @@ import logging
 import thread
 from netfilterqueue import NetfilterQueue
 import socket
-import subprocess
 import time
-import os
-import signal
-import threading
-import re
 import urllib2
 import struct
+import threading
 
 import dpkt
 from pynetfilter_conntrack import Conntrack
@@ -17,9 +13,9 @@ from pynetfilter_conntrack import Conntrack
 import shutdown_hook
 import iptables
 import network_interface
-import redsocks_template
 import china_ip
-import goagent_service
+import redsocks_monitor
+import goagent_monitor
 
 
 LOGGER = logging.getLogger(__name__)
@@ -39,7 +35,8 @@ def status():
 
 def clean():
     delete_iptables_rules()
-    kill_redsocks()
+    redsocks_monitor.kill_redsocks()
+    goagent_monitor.kill_goagent()
 
 
 #=== private ===
@@ -50,19 +47,14 @@ raw_socket.setsockopt(socket.SOL_IP, socket.IP_HDRINCL, 1)
 SO_MARK = 36
 raw_socket.setsockopt(socket.SOL_SOCKET, SO_MARK, 0xcafe)
 
+REFRESH_INTERVAL = 60 * 30
 PROXIES_COUNT = 20
-RE_IP_PORT = r'(\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}):(\d+)'
-RE_REDSOCKS_CLIENT = re.compile(RE_IP_PORT + '->')
-RE_REDSOCKS_INSTANCE = re.compile(r'Dumping client list for instance ' + RE_IP_PORT)
 RULES = []
 white_list = set()
 black_list = set()
 pending_list = {} # ip => started_at
 proxies = {} # mark => proxy
-redsocks_process = None
-redsocks_started_at = 0
-redsocks_dumped_at = None
-uses_goagent = True
+proxies_refreshed_at = 0
 
 for iface in network_interface.list_data_network_interfaces():
     RULES.append((
@@ -149,168 +141,90 @@ def start_full_proxy():
     try:
         thread.start_new(keep_proxies_fresh, ())
     except:
-        LOGGER.exception('failed to start keep_proxies_fresh thread')
+        LOGGER.exception('failed to start keep proxies fresh thread')
         proxies.clear()
     handle_nfqueue()
 
 
 def keep_proxies_fresh():
-    global redsocks_started_at
-    global uses_goagent
-    shutdown_hook.add(kill_redsocks)
+    global proxies_refreshed_at
+    shutdown_hook.add(redsocks_monitor.kill_redsocks)
     try:
         while True:
             if not proxies:
-                LOGGER.info('no proxies, start redsocks now')
-                try:
-                    if kill_redsocks():
-                        LOGGER.info('existing redsocks killed')
-                        time.sleep(2)
-                    start_redsocks()
-                except:
-                    LOGGER.exception('failed to start redsocks')
-                    kill_redsocks()
+                LOGGER.info('no proxies, refresh now')
+                if not start_proxies():
                     return
-                if proxies:
-                    redsocks_started_at = time.time()
-                    if not can_access_twitter():
-                        LOGGER.info('still can not access twitter, retry in 120 seconds')
-                        proxies.clear()
-                        time.sleep(120)
-                else:
-                    LOGGER.info('still no proxies after redsocks started, retry in 120 seconds')
-                    time.sleep(120)
-            if time.time() - redsocks_started_at > 60 * 30:
+                proxies_refreshed_at = time.time()
+            if time.time() - proxies_refreshed_at > REFRESH_INTERVAL:
                 LOGGER.info('refresh now, restart redsocks')
                 proxies.clear()
-            if uses_goagent and not goagent_service.enabled:
-                LOGGER.info('goagent service disabled, restart redsocks')
-                uses_goagent = False
-                proxies.clear()
             time.sleep(1)
-            dump_redsocks_client_list()
     except:
         LOGGER.exception('failed to keep proxies fresh')
+    finally:
+        LOGGER.info('keep proxies fresh thread died')
 
 
-def can_access_twitter():
-    success = 0
-    for i in range(PROXIES_COUNT):
-        try:
-            urllib2.urlopen('https://www.twitter.com', timeout=5).read()
-            success += 1
-        except:
-            pass
-    LOGGER.info('twitter access success rate: %s/%s' % (success, PROXIES_COUNT))
-    return success
-
-
-def start_redsocks():
-    global redsocks_process
-    cfg_path = '/data/data/fq.router/redsocks.conf'
-    for i in range(1, 1 + PROXIES_COUNT):
-        resolve_proxy(eval('0x%sbabe' % i), 19830 + i, 'proxy%s.fqrouter.com' % i)
-    if uses_goagent:
-        proxies[eval('0x%sbabe' % (PROXIES_COUNT + 1))] = {
-            'clients': set(),
-            'rank': 0, # lower is better
-            'pre_rank': 0, # lower is better
-            'error_penalty': 256, # if error is found, this will be added to rank
-            'connection_info': ('http-relay', '127.0.0.1', '8319', '', ''),
-            'local_port': 19830 + PROXIES_COUNT + 1
-        }
-    with open(cfg_path, 'w') as f:
-        f.write(redsocks_template.render(proxies.values()))
-    redsocks_process = subprocess.Popen(
-        ['/data/data/fq.router/proxy-tools/redsocks', '-c', cfg_path],
-        stderr=subprocess.STDOUT, stdout=subprocess.PIPE, bufsize=1, close_fds=True)
-    time.sleep(0.5)
-    if redsocks_process.poll() is None:
-        LOGGER.info('redsocks seems started: %s' % redsocks_process.pid)
-        t = threading.Thread(target=poll_redsocks_output)
-        t.daemon = True
-        t.start()
-    else:
-        LOGGER.error('redsocks output:')
-        LOGGER.error(redsocks_process.stdout.read())
-        raise Exception('failed to start redsocks')
-
-
-def poll_redsocks_output():
+def start_proxies():
+    if redsocks_monitor.kill_redsocks():
+        LOGGER.info('existing redsocks killed')
+        time.sleep(2)
+    LOGGER.info('starting goagent')
     try:
-        current_instance = None
-        current_clients = set()
-        for line in iter(redsocks_process.stdout.readline, b''):
-            match = RE_REDSOCKS_INSTANCE.search(line)
-            if match:
-                current_instance = int(match.group(2))
-                current_clients = set()
-                LOGGER.debug('dump redsocks instance %s' % current_instance)
-            if current_instance:
-                match = RE_REDSOCKS_CLIENT.search(line)
-                if match:
-                    ip = match.group(1)
-                    port = int(match.group(2))
-                    current_clients.add((ip, port))
-                    LOGGER.debug('client %s:%s' % (ip, port))
-            else:
-                if 'http-connect.c:149' in line:
-                    match = RE_REDSOCKS_CLIENT.search(line)
-                    if match:
-                        ip = match.group(1)
-                        port = int(match.group(2))
-                        for mark, proxy in proxies.items():
-                            if (ip, port) in proxy['clients']:
-                                LOGGER.error(line.strip())
-                                handle_proxy_error(mark, proxy)
-            if 'End of client list' in line:
-                update_proxy_status(current_instance, current_clients)
-                current_instance = None
-        LOGGER.error('redsocks died, clear proxies')
-        redsocks_process.stdout.close()
-        proxies.clear()
+        start_goagent()
     except:
-        LOGGER.exception('failed to poll redsocks output')
+        LOGGER.exception('failed to start goagent')
+        goagent_monitor.kill_goagent()
+    LOGGER.info('resolving free proxies')
+    resolve_free_proxies()
+    LOGGER.info('starting redsocks')
+    try:
+        start_redsocks()
+    except:
+        LOGGER.exception('failed to start redsocks')
         proxies.clear()
-
-
-def handle_proxy_error(mark, proxy):
-    error_penalty = proxy['error_penalty']
-    if error_penalty > 256 * 2 * 2 * 2:
-        LOGGER.error('proxy 0x%x purged due to too many errors: %s' % (mark, str(proxy['connection_info'])))
-        del proxies[mark]
+        redsocks_monitor.kill_redsocks()
+        return False
+    if proxies:
+        if not can_access_twitter():
+            LOGGER.info('still can not access twitter, retry in 120 seconds')
+            proxies.clear()
+            time.sleep(120)
+        redsocks_monitor.dump_redsocks_client_list(should_dump=True)
     else:
-        LOGGER.error('add error penalty to proxy 0x%x: %s to %s' % (mark, error_penalty, str(proxy['connection_info'])))
-        proxy['rank'] += error_penalty
-        proxy['pre_rank'] += error_penalty
-        proxy['error_penalty'] *= 2
+        LOGGER.info('still no proxies after redsocks started, retry in 120 seconds')
+        time.sleep(120)
+    return True
 
 
-def update_proxy_status(current_instance, current_clients):
-    for mark, proxy in proxies.items():
-        if proxy['local_port'] == current_instance:
-            hangover_penalty = int(proxy['pre_rank'] / 2)
-            rank = len(current_clients) + hangover_penalty # factor in the previous performance
-            LOGGER.info('update proxy 0x%x rank: [%s+%s] %s' %
-                        (mark, proxy['pre_rank'], hangover_penalty, str(proxy['connection_info'])))
-            proxy['rank'] = rank
-            proxy['pre_rank'] = rank
-            proxy['clients'] = current_clients
-            return
-    LOGGER.debug('this redsocks instance has been removed from proxy list')
+def start_goagent():
+    goagent_monitor.kill_goagent()
+    goagent_monitor.on_goagent_died = on_goagent_died
+    goagent_monitor.start_goagent()
+    proxies[eval('0x%sbabe' % (PROXIES_COUNT + 1))] = {
+        'clients': set(),
+        'rank': 0, # lower is better
+        'pre_rank': 0, # lower is better
+        'error_penalty': 256, # if error is found, this will be added to rank
+        'connection_info': ('http-relay', '127.0.0.1', '8319', '', ''),
+        'local_port': 19830 + PROXIES_COUNT + 1
+    }
 
 
-def dump_redsocks_client_list():
-    global redsocks_dumped_at
-    if redsocks_dumped_at is None:
-        redsocks_dumped_at = time.time()
-    elif time.time() - redsocks_dumped_at > 60:
-        LOGGER.info('dump redsocks client list')
-        os.kill(redsocks_process.pid, signal.SIGUSR1)
-        redsocks_dumped_at = time.time()
+def on_goagent_died():
+    LOGGER.info('goagent died')
+    mark = eval('0x%sbabe' % (PROXIES_COUNT + 1))
+    if mark in proxies:
+        del proxies[mark]
 
 
-def resolve_proxy(mark, local_port, name):
+def resolve_free_proxies():
+    for i in range(1, 1 + PROXIES_COUNT):
+        resolve_free_proxy(eval('0x%sbabe' % i), 19830 + i, 'proxy%s.fqrouter.com' % i)
+
+
+def resolve_free_proxy(mark, local_port, name):
     try:
         sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM) # UDP
         sock.settimeout(3)
@@ -331,11 +245,61 @@ def resolve_proxy(mark, local_port, name):
         }
         LOGGER.info('resolved proxy 0x%x: %s' % (mark, proxies[mark]))
     except:
-        LOGGER.exception('failed to resolve proxy 0x%x: %s %s' % (mark, local_port, name))
+        LOGGER.exception('failed to resolve free proxy 0x%x: %s %s' % (mark, local_port, name))
 
 
-def kill_redsocks():
-    return not subprocess.call(['/data/data/fq.router/busybox', 'killall', 'redsocks'])
+def start_redsocks():
+    redsocks_monitor.list_proxies = proxies.items
+    redsocks_monitor.clear_proxies = proxies.clear
+    redsocks_monitor.handle_proxy_error = handle_proxy_error
+    redsocks_monitor.update_proxy = update_proxy
+    redsocks_monitor.start_redsocks(proxies)
+
+
+def update_proxy(mark, **kwargs):
+    proxies[mark].update(kwargs)
+
+
+def handle_proxy_error(mark, proxy):
+    error_penalty = proxy['error_penalty']
+    if error_penalty > 256 * 2 * 2 * 2:
+        LOGGER.error('proxy 0x%x purged due to too many errors: %s' % (mark, str(proxy['connection_info'])))
+        del proxies[mark]
+    else:
+        LOGGER.error('add error penalty to proxy 0x%x: %s to %s' % (mark, error_penalty, str(proxy['connection_info'])))
+        proxy['rank'] += error_penalty
+        proxy['pre_rank'] += error_penalty
+        proxy['error_penalty'] *= 2
+
+
+def can_access_twitter():
+    checkers = []
+    for i in range(PROXIES_COUNT * 2):
+        checker = TwitterAccessChecker()
+        checker.daemon = True
+        checker.start()
+        checkers.append(checker)
+        time.sleep(0.5)
+    success_count = 0
+    for checker in checkers:
+        checker.join()
+        if checker.success:
+            success_count += 1
+    LOGGER.info('twitter access success rate: %s/%s' % (success_count, len(checkers)))
+    return success_count
+
+
+class TwitterAccessChecker(threading.Thread):
+    def __init__(self):
+        super(TwitterAccessChecker, self).__init__()
+        self.success = False
+
+    def run(self):
+        try:
+            urllib2.urlopen('https://www.twitter.com', timeout=10).read()
+            self.success = True
+        except:
+            pass
 
 
 def handle_nfqueue():
@@ -380,7 +344,7 @@ def pick_proxy(ip_packet):
     for mark, proxy in proxies.items():
         if 'http-relay' == proxy['connection_info'][0]:
             if 80 == ip_packet.tcp.dport:
-                marks[proxy['rank'] - 5] = mark
+                marks[proxy['rank'] - 15] = mark
             continue
         marks[proxy['rank']] = mark
     if not marks:

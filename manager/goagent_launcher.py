@@ -1,4 +1,3 @@
-import thread
 import socket
 import logging
 
@@ -9,19 +8,25 @@ import goagent
 
 LOGGER = logging.getLogger(__name__)
 APPIDS_COUNT = 10
-enabled = True
 failures_count = 0
+server = None
 
 
 def modified_gae_urlfetch(*args, **kwargs):
+    global server
     global failures_count
-    global enabled
     response = goagent.gae_urlfetch(*args, **kwargs)
-    if 200 != response.app_status:
+    if 200 == response.app_status:
+        failures_count = 0
+    else:
         failures_count += 1
     if failures_count > 5:
         LOGGER.error('goagent failed for more than 5 times, disable service')
-        enabled = False
+        if server:
+            try:
+                server.shutdown()
+            finally:
+                server = None
     return response
 
 
@@ -33,20 +38,12 @@ def monkey_patch_goagent():
 monkey_patch_goagent()
 
 
-def run():
-    thread.start_new(start_goagent, ())
-
-
-def clean():
-    pass
-
-
-def start_goagent():
+def main():
+    global server
+    logging.basicConfig(level=logging.INFO)
     try:
-        global enabled
         goagent.common.GAE_APPIDS = resolve_appids()
         if not goagent.common.GAE_APPIDS:
-            enabled = False
             LOGGER.error("no appids, disable goagent service")
             return
         goagent.common.GAE_FETCHSERVER = '%s://%s.appspot.com%s?' % (
@@ -54,8 +51,9 @@ def start_goagent():
         server = goagent.gevent.server.StreamServer(
             (goagent.common.LISTEN_IP, goagent.common.LISTEN_PORT), goagent.GAEProxyHandler)
         server.serve_forever()
-    except:
-        LOGGER.exception('goagent service failed')
+    finally:
+        LOGGER.info('goagent server shutdown')
+        server = None
 
 
 def resolve_appids():
@@ -82,3 +80,7 @@ def resolve_appid(index):
     except:
         LOGGER.exception('failed to resolve goagent appid %s' % index)
         return None
+
+
+if '__main__' == __name__:
+    main()
