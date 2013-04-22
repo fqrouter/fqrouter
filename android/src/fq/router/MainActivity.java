@@ -1,12 +1,11 @@
 package fq.router;
 
 import android.app.*;
-import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.pm.PackageInfo;
+import android.content.res.AssetManager;
 import android.net.Uri;
-import android.net.wifi.WifiManager;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
@@ -19,7 +18,6 @@ import android.view.View;
 import android.widget.TextView;
 import android.widget.Toast;
 import android.widget.ToggleButton;
-import fq.router.utils.HttpUtils;
 import fq.router.utils.IOUtils;
 import fq.router.utils.ShellUtils;
 
@@ -40,6 +38,8 @@ public class MainActivity extends Activity implements StatusUpdater {
     private final static File EXITING_FLAG = new File("/data/data/fq.router/.exiting");
     private Handler handler = new Handler();
     private boolean started = false;
+    private final Supervisor supervisor = new Supervisor(this);
+    private final WifiHotspot wifiHotspot = new WifiHotspot(this);
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
@@ -59,7 +59,7 @@ public class MainActivity extends Activity implements StatusUpdater {
                     onStarted();
                 } else {
                     appendLog("starting supervisor thread");
-                    new Thread(new Supervisor(getAssets(), MainActivity.this)).start();
+                    new Thread(supervisor).start();
                 }
             }
         }).start();
@@ -97,9 +97,9 @@ public class MainActivity extends Activity implements StatusUpdater {
                     @Override
                     public void run() {
                         if (checked) {
-                            startWifiHotspot();
+                            wifiHotspot.start();
                         } else {
-                            stopWifiHotspot();
+                            wifiHotspot.stop();
                         }
                     }
                 }).start();
@@ -107,7 +107,7 @@ public class MainActivity extends Activity implements StatusUpdater {
         });
     }
 
-    private void showWifiHotspotToggleButton(final boolean checked) {
+    public void showWifiHotspotToggleButton(final boolean checked) {
         handler.postDelayed(new Runnable() {
             @Override
             public void run() {
@@ -117,35 +117,6 @@ public class MainActivity extends Activity implements StatusUpdater {
                 wifiHotspotPanel.setVisibility(View.VISIBLE);
             }
         }, 0);
-    }
-
-    private void startWifiHotspot() {
-        try {
-            updateStatus("Starting wifi hotspot");
-            HttpUtils.post("http://127.0.0.1:8318/wifi/start");
-            updateStatus("Started wifi hotspot");
-            appendLog("SSID: spike");
-            appendLog("PASSWORD: 12345678");
-            showWifiHotspotToggleButton(true);
-        } catch (Exception e) {
-            reportError("failed to start wifi hotspot", e);
-            stopWifiHotspot();
-            showWifiHotspotToggleButton(false);
-        }
-    }
-
-    private void stopWifiHotspot() {
-        try {
-            updateStatus("Stopping wifi hotspot");
-            HttpUtils.post("http://127.0.0.1:8318/wifi/stop");
-        } catch (Exception e) {
-            reportError("failed to stop wifi hotspot", e);
-        }
-        WifiManager wifiManager = (WifiManager) getBaseContext().getSystemService(Context.WIFI_SERVICE);
-        wifiManager.setWifiEnabled(false);
-        wifiManager.setWifiEnabled(true);
-        updateStatus("Stopped wifi hotspot");
-        showWifiHotspotToggleButton(false);
     }
 
     @Override
@@ -198,8 +169,8 @@ public class MainActivity extends Activity implements StatusUpdater {
         new Thread(new Runnable() {
             @Override
             public void run() {
-                if (started && isWifiHotspotStarted()) {
-                    stopWifiHotspot();
+                if (started && WifiHotspot.isStarted()) {
+                    wifiHotspot.stop();
                 }
                 updateStatus("Exiting...", false);
                 try {
@@ -296,19 +267,9 @@ public class MainActivity extends Activity implements StatusUpdater {
     public void onStarted() {
         started = true;
         updateStatus("Checking if wifi hotspot is started");
-        boolean isStarted = isWifiHotspotStarted();
+        boolean isStarted = WifiHotspot.isStarted();
         showWifiHotspotToggleButton(isStarted);
         updateStatus("Started, f**k censorship");
-    }
-
-    private boolean isWifiHotspotStarted() {
-        try {
-            return "TRUE".equals(HttpUtils.get("http://127.0.0.1:8318/wifi/started"));
-
-        } catch (Exception e) {
-            Log.e("fqrouter", "failed to check wifi hotspot is started", e);
-            return false;
-        }
     }
 
     @Override

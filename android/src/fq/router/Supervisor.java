@@ -12,9 +12,9 @@ public class Supervisor implements Runnable {
     private final Deployer deployer;
     private final StatusUpdater statusUpdater;
 
-    public Supervisor(AssetManager assetManager, StatusUpdater statusUpdater) {
+    public Supervisor(StatusUpdater statusUpdater) {
         this.statusUpdater = statusUpdater;
-        deployer = new Deployer(assetManager, statusUpdater);
+        deployer = new Deployer(statusUpdater);
     }
 
     private static void sleepOneSecond() {

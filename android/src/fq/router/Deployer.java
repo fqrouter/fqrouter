@@ -1,6 +1,5 @@
 package fq.router;
 
-import android.content.res.AssetManager;
 import android.os.Build;
 import android.util.Log;
 import fq.router.utils.IOUtils;
@@ -28,11 +27,9 @@ public class Deployer {
     public static File MANAGER_MAIN_PY = new File(MANAGER_DIR, "main.py");
     public static File MANAGER_CLEAN_PY = new File(MANAGER_DIR, "clean.py");
     private static final int SDK_ICS = 14; // SDK Ice Cream Sandwich
-    private final AssetManager assetManager;
     private final StatusUpdater statusUpdater;
 
-    public Deployer(AssetManager assetManager, StatusUpdater statusUpdater) {
-        this.assetManager = assetManager;
+    public Deployer(StatusUpdater statusUpdater) {
         this.statusUpdater = statusUpdater;
 
     }
@@ -122,7 +119,7 @@ public class Deployer {
             return true;
         }
         String oldChecksum = IOUtils.readFromFile(PAYLOAD_CHECKSUM);
-        InputStream inputStream = assetManager.open("payload.zip");
+        InputStream inputStream = statusUpdater.getAssets().open("payload.zip");
         try {
             String newChecksum = IOUtils.copy(inputStream, null);
             if (oldChecksum.equals(newChecksum)) {
@@ -168,7 +165,7 @@ public class Deployer {
             return;
         }
         statusUpdater.appendLog("copying payload.zip to data directory");
-        InputStream inputStream = assetManager.open("payload.zip");
+        InputStream inputStream = statusUpdater.getAssets().open("payload.zip");
         try {
             OutputStream outputStream = new FileOutputStream(PAYLOAD_ZIP);
             try {
@@ -189,7 +186,7 @@ public class Deployer {
             return;
         }
         statusUpdater.appendLog("copying busybox to data directory");
-        InputStream inputStream = assetManager.open("busybox");
+        InputStream inputStream = statusUpdater.getAssets().open("busybox");
         try {
             OutputStream outputStream = new FileOutputStream(BUSYBOX_FILE);
             try {
