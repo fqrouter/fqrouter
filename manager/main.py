@@ -1,8 +1,3 @@
-__import__('goagent')
-import sys
-
-del sys.modules['logging'] # reset the logging module injected by goagent
-
 import os
 import logging
 import logging.handlers

@@ -15,7 +15,7 @@ argument_parser.add_argument('--proxy', action='append')
 args = argument_parser.parse_args()
 
 PROXY_LIST_DIR = os.path.join(os.path.dirname(__file__), 'proxy-list')
-
+CONCURRENT_CHECKERS_COUNT = 16
 
 def log(message):
     sys.stderr.write(message)
@@ -151,7 +151,7 @@ for i in range(10):
             except:
                 log('FATAL %s:%s' % (checker.ip, checker.port))
                 checkers.remove(checker)
-        new_checkers_count = 4 - len(checkers)
+        new_checkers_count = CONCURRENT_CHECKERS_COUNT - len(checkers)
         for i in range(new_checkers_count):
             if proxies:
                 ip, port, elapsed = proxies.pop()
