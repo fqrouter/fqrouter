@@ -27,6 +27,7 @@ public class Deployer {
     public static File MANAGER_DIR = new File(DATA_DIR, "manager");
     public static File MANAGER_MAIN_PY = new File(MANAGER_DIR, "main.py");
     public static File MANAGER_CLEAN_PY = new File(MANAGER_DIR, "clean.py");
+    private static final int SDK_ICS = 14; // SDK Ice Cream Sandwich
     private final AssetManager assetManager;
     private final StatusUpdater statusUpdater;
 
@@ -222,7 +223,7 @@ public class Deployer {
         if (LINKER_FILE.exists()) {
             LINKER_FILE.delete();
         }
-        if (Build.VERSION.RELEASE.startsWith("2.")) {
+        if (Build.VERSION.SDK_INT < SDK_ICS) {
             statusUpdater.appendLog("select linker 2.x");
             linkFile(LINKER_2_X_FILE, LINKER_FILE);
         } else {
