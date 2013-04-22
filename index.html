@@ -1,6 +1,6 @@
 <!doctype html>
 <html>
-  <head>
+<head>
     <meta charset="utf-8">
     <meta http-equiv="X-UA-Compatible" content="chrome=1">
     <title>fqrouter by fqrouter</title>
@@ -11,77 +11,122 @@
     <!--[if lt IE 9]>
     <script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script>
     <![endif]-->
-  </head>
-  <body>
-    <div class="wrapper">
-      <header>
+</head>
+<body>
+<div class="wrapper">
+    <header>
         <h1>fqrouter</h1>
+
         <p></p>
 
-        <p class="view"><a href="https://github.com/fqrouter/fqrouter">View the Project on GitHub <small>fqrouter/fqrouter</small></a></p>
+        <p class="view"><a href="https://github.com/fqrouter/fqrouter">View the Project on GitHub
+            <small>fqrouter/fqrouter</small>
+        </a></p>
 
 
         <ul>
-          <li><a href="http://fqrouter.tumblr.com/android-latest">Download <strong>APK File</strong></a></li>
-          <li><a href="http://fqrouter.tumblr.com">View My <strong>Blog</strong></a></li>
-          <li><a href="https://github.com/fqrouter/fqrouter">View On <strong>GitHub</strong></a></li>
+            <li><a href="http://fqrouter.tumblr.com/android-latest">Download <strong>APK File</strong></a></li>
+            <li><a href="http://fqrouter.tumblr.com">View My <strong>Blog</strong></a></li>
+            <li><a href="https://github.com/fqrouter/fqrouter">View On <strong>GitHub</strong></a></li>
         </ul>
-      </header>
-      <section>
+    </header>
+    <section>
         <h3>What's fqrouter Vision</h3>
 
-<p>It is a software designed to help you by-pass Great Firewall of China (GFW). Different from similar softwares, it is designed to run as router instead of running as a client installed on some device. 
-Being router means, you can have one thing (Android mobile phone, for example) running fqrotuer, 
-then other devices can just connect the wireless network created by fqrotuer. 
-Those devices can enjoy all the benefits provided without worrying about how it is being implemented.
-  The unique feature fqrouter provides is to be able to start the wifi hotspot without breaking existing wifi connection,
-  this technology is known as wifi-repeater, and it has not been implemeneted before on Android mobile.
-</p>
-      <p>Besides the unique "router" proposition, fqrouter also features several ways to by-pass GFW. Especially there are ways to access a lot of blocked websites without the help of server or proxy. 
-        Although the method alone can not allow you to access ALL blocked websites (ip blocked is no luck), it can be
-        combined with other by-pass technologies, such as uni-directional proxy or traditional SSH/VPN to make a complete solution.
-      </p>
-        
-      </section>
-      <section>
-        <h3>Current Status</h3>
-        <p>fqrouter is not ready for its prime time yet. We are working on these things concurrently: </p>
-        <ol>
-          <li>[60%] Blocking Detector: tell you why you can not access xxx (replace xxx with your favourite website), 
-          also tells you if fqrouter is actually working</li>
-          <li>[80%] Wifi Hotspot: turn your mobile into a wifi router</li>
-          <li>[90%] GFW By-pass without server/proxy help</li>
-          <li>[90%] GFW By-pass with full proxy (proxy both upstream and downstream)</li>
-          <li>[00%] GFW By-pass with half proxy (proxy only upstream)</li>
-          <li>[00%] GFW By-pass with traditional proxy: SSH/VPN/GoAgent etc.</li>
-        </ol>
-      </section>
-      <section>
-        <h3>History</h3>
-        <p>fqrotuer project was started as a ROM for <a href="http://wiki.openwrt.org/toh/tp-link/tl-wr703n">tplink-wr703n</a>, 
-        a mini wireless router capable of running 3rd party OS <a href="https://openwrt.org/">OpenWRT</a>. 
-        At that time, I did not believe it is possible to make Android mobile phone as wireless router. But after the discovery of ways to start
-          wifi hotspot concurrently with normal wifi connection on Android phones, the development focus then shifted from OpenWRT to Android.
-          However, the support of OpenWRT is still on my radar, home wifi-router running OpenWRT is still the best 
-          platform for infrastructure deployment, such as Home/Office.
+        <p>It is a software designed to help you by-pass Great Firewall of China (GFW). Different from similar
+            softwares, it is designed to run as router instead of running as a client installed on some device.
+            Being router means, you can have one thing (Android mobile phone, for example) running fqrouter,
+            then other devices can just connect the wireless network created by fqrouter.
+            Those devices can enjoy all the benefits provided without worrying about how it is being implemented.
+            The unique feature fqrouter provides is to be able to start the wifi hotspot without breaking existing wifi
+            connection,
+            this technology is known as wifi-repeater, and it has never been implemented before on Android mobile.
         </p>
-      </section>
-      <footer>
-        <p>This project is maintained by <a href="https://github.com/fqrouter">fqrouter</a></p>
-        <p><small>Hosted on GitHub Pages &mdash; Theme by <a href="https://github.com/orderedlist">orderedlist</a></small></p>
-      </footer>
-    </div>
-    <script src="javascripts/scale.fix.js"></script>
-              <script type="text/javascript">
-            var gaJsHost = (("https:" == document.location.protocol) ? "https://ssl." : "http://www.");
-            document.write(unescape("%3Cscript src='" + gaJsHost + "google-analytics.com/ga.js' type='text/javascript'%3E%3C/script%3E"));
-          </script>
-          <script type="text/javascript">
-            try {
-              var pageTracker = _gat._getTracker("UA-39787633-1");
-            pageTracker._trackPageview();
-            } catch(err) {}
-          </script>
 
-  </body>
+        <p>
+            However, not all android mobile phones in use supports "wifi-repeating", especially those old models.
+            To help those users, there two sub-optimal solutions. First, if mobile is using 3G connection, wifi
+            hotspot can be started using the system default method (wifi just for hotspot, no repeating required).
+            Second, fqrouter can list all the other devices in the same wifi network, and "pick & play". Device being
+            picked will be redirected to a new gateway, which allows it to surf free internet via fqrouter.
+        </p>
+
+        <p>Besides the unique "router" proposition, fqrouter also features several ways to by-pass GFW, and combine all
+            those methods together as a best solution. The biggest highlight is there are ways to access a lot of
+            blocked websites without the help of server or proxy. Although the method alone can not allow you to access
+            ALL blocked websites (ip blocked is no luck), it can be combined with other by-pass technologies,
+            such as uni-directional proxy or traditional SSH/VPN to make a complete solution. The fallback from "direct
+            access" to "via proxy" happens automatically, you even do not need to refresh the browser.
+        </p>
+    </section>
+    <section>
+        <h3>Current Status</h3>
+
+        <p>fqrouter is not ready for its prime time yet. We are working on these things concurrently: </p>
+        <h4>GFW By-passs Methods</h4>
+        <ol>
+            <li>[90%] No Proxy: NIDS injection attack, for websites without ip/port blocked</li>
+            <li>[90%] No Proxy: hosted domain resolving not blocked ip, just for google.com</li>
+            <li>[90%] Public Full proxy: via public/free https proxy (proxy both upstream and downstream)</li>
+            <li>[70%] Public/Private Full proxy: via goagent (http only, appid from <a
+                    href="http://code.google.com/p/gfanqiang/">gfanqiang</a>)
+            </li>
+            <li>[00%] Private Full proxy: via SSH</li>
+            <li>[00%] Private Full proxy: via shadowsocks</li>
+            <li>[00%] Private Full proxy: via SPDY</li>
+            <li>[00%] Half Proxy (proxy only upstream)</li>
+        </ol>
+        <h4>Free Internet Sharing Methods</h4>
+        <ol>
+            <li>[80%] Share as "Wifi Repeater" (Hardware support required)</li>
+            <li>[00%] Share using system wifi hotspot (only feasible in 3G environment)</li>
+            <li>[00%] Pick & Play: let other devices in same wifi network surf free internet via fqrouter (No hardware
+                support required)
+            </li>
+        </ol>
+    </section>
+    <section>
+        <h3>History</h3>
+
+        <p>fqrotuer project was started as a ROM for <a href="http://wiki.openwrt.org/toh/tp-link/tl-wr703n">tplink-wr703n</a>,
+            a mini wireless router capable of running 3rd party OS <a href="https://openwrt.org/">OpenWRT</a>.
+            At that time, I did not believe it is possible to make Android mobile phone as wireless router. But after
+            the discovery of ways to start
+            wifi hotspot concurrently with normal wifi connection on Android phones, the development focus then shifted
+            from OpenWRT to Android.
+            However, the support of OpenWRT is still on my radar, home wifi-router running OpenWRT is still the best
+            platform for infrastructure deployment, such as Home/Office.
+        </p>
+    </section>
+    <section>
+
+        <ul>
+            <li><a href="http://fqrouter.tumblr.com/android-latest">Download APK File</a></li>
+            <li><a href="http://fqrouter.tumblr.com">View My Blog</a></li>
+            <li><a href="https://github.com/fqrouter/fqrouter">View On GitHub</a></li>
+        </ul>
+    </section>
+    <footer>
+        <p>This project is maintained by <a href="https://github.com/fqrouter">fqrouter</a></p>
+
+        <p>
+            <small>Hosted on GitHub Pages &mdash; Theme by <a href="https://github.com/orderedlist">orderedlist</a>
+            </small>
+        </p>
+    </footer>
+</div>
+<script src="javascripts/scale.fix.js"></script>
+<script type="text/javascript">
+    var gaJsHost = (("https:" == document.location.protocol) ? "https://ssl." : "http://www.");
+    document.write(unescape("%3Cscript src='" + gaJsHost + "google-analytics.com/ga.js' type='text/javascript'%3E%3C/script%3E"));
+</script>
+<script type="text/javascript">
+    try {
+        var pageTracker = _gat._getTracker("UA-39787633-1");
+        pageTracker._trackPageview();
+    } catch (err) {
+    }
+</script>
+
+</body>
 </html>
