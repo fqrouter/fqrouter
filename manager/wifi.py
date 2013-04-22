@@ -251,13 +251,14 @@ def start_hotspot_interface(wifi_chipset):
         hotspot_interface = start_hotspot_on_bcm()
     elif 'platform:wcnss_wlan' == wifi_chipset:
         hotspot_interface = start_hotspot_on_wcnss()
-    elif wifi_chipset.endswith('6620') or wifi_chipset.endswith('6628'):
-    # only tested on sdio:c00v037Ad6628
-    # support of mt6620 is a wild gues
-        hotspot_interface = start_hotspot_on_mtk()
     elif 'platform:wl12xx' == wifi_chipset:
     # ar6003 is c00v0271d0301
         hotspot_interface = start_hotspot_on_wl12xx()
+    elif wifi_chipset.endswith('6620') or wifi_chipset.endswith('6628') or \
+            shell_execute('getprop ro.mediatek.platform').strip():
+    # only tested on sdio:c00v037Ad6628
+    # support of mt6620 is a wild gues
+        hotspot_interface = start_hotspot_on_mtk()
     else:
         raise Exception('wifi chipset is not supported: %s' % wifi_chipset)
     if not get_working_hotspot_iface():
