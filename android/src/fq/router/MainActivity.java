@@ -16,9 +16,9 @@ import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
-import android.widget.CheckBox;
 import android.widget.TextView;
 import android.widget.Toast;
+import android.widget.ToggleButton;
 import fq.router.utils.HttpUtils;
 import fq.router.utils.IOUtils;
 import fq.router.utils.ShellUtils;
@@ -87,12 +87,12 @@ public class MainActivity extends Activity implements StatusUpdater {
     private void setupUI() {
         TextView textView = (TextView) findViewById(R.id.logTextView);
         textView.setMovementMethod(new ScrollingMovementMethod());
-        final CheckBox wifiHotspotCheckBox = (CheckBox) findViewById(R.id.wifiHotspotCheckBox);
-        wifiHotspotCheckBox.setOnClickListener(new View.OnClickListener() {
+        final ToggleButton wifiHotspotToggleButton = (ToggleButton) findViewById(R.id.wifiHotspotToggleButton);
+        wifiHotspotToggleButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                final boolean checked = wifiHotspotCheckBox.isChecked();
-                wifiHotspotCheckBox.setVisibility(View.INVISIBLE);
+                final boolean checked = wifiHotspotToggleButton.isChecked();
+                findViewById(R.id.wifiHotspotPanel).setVisibility(View.INVISIBLE);
                 new Thread(new Runnable() {
                     @Override
                     public void run() {
@@ -107,13 +107,14 @@ public class MainActivity extends Activity implements StatusUpdater {
         });
     }
 
-    private void showWifiHotspotCheckbox(final boolean checked) {
+    private void showWifiHotspotToggleButton(final boolean checked) {
         handler.postDelayed(new Runnable() {
             @Override
             public void run() {
-                final CheckBox wifiHotspotCheckBox = (CheckBox) findViewById(R.id.wifiHotspotCheckBox);
-                wifiHotspotCheckBox.setChecked(checked);
-                wifiHotspotCheckBox.setVisibility(View.VISIBLE);
+                final ToggleButton wifiHotspotToggleButton = (ToggleButton) findViewById(R.id.wifiHotspotToggleButton);
+                wifiHotspotToggleButton.setChecked(checked);
+                final View wifiHotspotPanel = findViewById(R.id.wifiHotspotPanel);
+                wifiHotspotPanel.setVisibility(View.VISIBLE);
             }
         }, 0);
     }
@@ -125,11 +126,11 @@ public class MainActivity extends Activity implements StatusUpdater {
             updateStatus("Started wifi hotspot");
             appendLog("SSID: spike");
             appendLog("PASSWORD: 12345678");
-            showWifiHotspotCheckbox(true);
+            showWifiHotspotToggleButton(true);
         } catch (Exception e) {
             reportError("failed to start wifi hotspot", e);
             stopWifiHotspot();
-            showWifiHotspotCheckbox(false);
+            showWifiHotspotToggleButton(false);
         }
     }
 
@@ -144,7 +145,7 @@ public class MainActivity extends Activity implements StatusUpdater {
         wifiManager.setWifiEnabled(false);
         wifiManager.setWifiEnabled(true);
         updateStatus("Stopped wifi hotspot");
-        showWifiHotspotCheckbox(false);
+        showWifiHotspotToggleButton(false);
     }
 
     @Override
@@ -296,7 +297,7 @@ public class MainActivity extends Activity implements StatusUpdater {
         started = true;
         updateStatus("Checking if wifi hotspot is started");
         boolean isStarted = isWifiHotspotStarted();
-        showWifiHotspotCheckbox(isStarted);
+        showWifiHotspotToggleButton(isStarted);
         updateStatus("Started, f**k censorship");
     }
 
