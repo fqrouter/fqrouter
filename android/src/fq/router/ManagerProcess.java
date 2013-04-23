@@ -1,70 +1,37 @@
 package fq.router;
 
 import android.util.Log;
-import fq.router.utils.IOUtils;
 import fq.router.utils.ShellUtils;
-
-import java.io.File;
 
 public class ManagerProcess {
 
     public static void kill() throws Exception {
-        try {
-            int processId = findProcessId();
-            if (processId > 0) {
-                Log.i("fqrouter", "kill manager process " + processId);
-                ShellUtils.sudo("/system/bin/kill " + processId);
-                for (int i = 0; i < 30; i++) {
-                    if (new File("/proc/" + processId).exists()) {
-                        Thread.sleep(1000);
-                    } else {
-                        Log.i("fqrouter", "manage process " + processId + " has been killed cleanly");
-                        return;
-                    }
-                }
-                ShellUtils.sudo("/system/bin/kill -9 " + processId);
-                Log.i("fqrouter", "manage process " + processId + " has been killed with blood");
-                kill();
-            }
-        } finally {
-            ShellUtils.sudo("PYTHONHOME=" + Deployer.PYTHON_DIR + " " +
-                    Deployer.BUSYBOX_FILE + " sh " + Deployer.PYTHON_LAUNCHER + " " + Deployer.MANAGER_CLEAN_PY);
+        if (!exists()) {
+            Log.i("fqrouter", "no python process to kill");
+            return;
         }
-    }
-
-    private static int findProcessId() {
-        File PROC = new File("/proc");
-        int targetProcessId = 0;
-        for (File file : PROC.listFiles()) {
-            String commandline = getCommandline(file);
-            if (null != commandline && commandline.contains("manager/main.py")) {
-                int processId = Integer.parseInt(file.getName());
-                if (processId > targetProcessId) {
-                    targetProcessId = processId;
-                }
+        Log.i("fqrouter", "killall python");
+        ShellUtils.sudo("/data/data/fq.router/busybox killall -TERM python");
+        for (int i = 0; i < 60; i++) {
+            if (exists()) {
+                Thread.sleep(1000);
+            } else {
+                Log.i("fqrouter", "killall python done cleanly");
+                return;
             }
         }
-        if (0 == targetProcessId) {
-            Log.i("fqrouter", "manager process not found");
-            return 0;
-        } else {
-            Log.i("fqrouter", "found manager process: " + targetProcessId);
-            return targetProcessId;
-        }
-    }
-
-    private static String getCommandline(File file) {
-        if (!file.isDirectory()) {
-            return null;
-        }
-        File cmdlineFile = new File(file, "cmdline");
-        if (cmdlineFile.exists()) {
-            return IOUtils.readFromFile(cmdlineFile);
-        }
-        return null;
+        Log.e("fqrouter", "killall python by force");
+        ShellUtils.sudo("/data/data/fq.router/busybox killall -KILL python");
+        ShellUtils.sudo("PYTHONHOME=" + Deployer.PYTHON_DIR + " " +
+                Deployer.BUSYBOX_FILE + " sh " + Deployer.PYTHON_LAUNCHER + " " + Deployer.MANAGER_CLEAN_PY);
     }
 
     public static boolean exists() {
-        return findProcessId() > 0;
+        try {
+            ShellUtils.sudo("/data/data/fq.router/busybox killall -0 python");
+            return true;
+        } catch (Exception e) {
+            return false;
+        }
     }
 }

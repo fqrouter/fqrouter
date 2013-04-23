@@ -77,7 +77,7 @@ public class WifiHotspot {
         WifiManager wifiManager = getWifiManager();
         Method setWifiApEnabledMethod = wifiManager.getClass().getMethod("setWifiApEnabled", WifiConfiguration.class, boolean.class);
         WifiConfiguration wifiConfig = new WifiConfiguration();
-        wifiConfig.SSID = "fqrouter-3g";
+        wifiConfig.SSID = "spike";
         wifiConfig.allowedKeyManagement.set(WifiConfiguration.AuthAlgorithm.SHARED);
         wifiConfig.allowedAuthAlgorithms.set(WifiConfiguration.AuthAlgorithm.OPEN);
         wifiConfig.preSharedKey = "12345678";
