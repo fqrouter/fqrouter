@@ -33,8 +33,7 @@ public class WifiHotspot {
         statusUpdater.appendLog("wifi hotspot mode: " + wifiHotspotMode);
         try {
             if (MODE_WIFI_REPEATER.equals(wifiHotspotMode)) {
-                throw new RuntimeException("abc");
-//                startWifiRepeater();
+                startWifiRepeater();
             } else {
                 startTraditionalWifiHotspot();
             }

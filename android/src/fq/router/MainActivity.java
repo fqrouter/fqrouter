@@ -70,9 +70,9 @@ public class MainActivity extends Activity implements StatusUpdater {
             return true;
         }
         long delta = System.currentTimeMillis() - EXITING_FLAG.lastModified();
-        int tenMinutes = 60 * 10 * 1000;
-        if (delta > tenMinutes) {
-            appendLog("exiting flag expired: " + (delta - tenMinutes));
+        int threeMinutes = 3 * 60 * 1000;
+        if (delta > threeMinutes) {
+            appendLog("exiting flag expired: " + (delta - threeMinutes));
             EXITING_FLAG.delete();
             return true;
         }
