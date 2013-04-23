@@ -11,7 +11,6 @@ import iptables
 import pending_connection
 import shutdown_hook
 import china_ip
-import network_interface
 import dns_service
 import full_proxy_service
 
@@ -45,106 +44,135 @@ RANGE_OF_TTL_TO_GFW = range(MIN_TTL_TO_GFW, MAX_TTL_TO_GFW + 1)
 RULES = []
 
 
-def add_rules(iface, is_forward):
+def add_rules():
     RULE_INPUT_SYN_ACK = (
-        {'target': 'NFQUEUE', 'iface_in': iface, 'extra': 'tcp flags:0x3F/0x12 NFQUEUE num 2'},
-        ('filter', 'scramble_FORWARD' if is_forward else 'scramble_INPUT',
-         '-i %s -p tcp --tcp-flags ALL SYN,ACK -j NFQUEUE --queue-num 2' % iface)
+        {'target': 'NFQUEUE', 'extra': 'tcp flags:0x3F/0x12 NFQUEUE num 2'},
+        ('filter', 'scramble_INPUT', '-p tcp --tcp-flags ALL SYN,ACK -j NFQUEUE --queue-num 2')
     )
     RULES.append(RULE_INPUT_SYN_ACK)
     RULE_INPUT_RST = (
-        {'target': 'NFQUEUE', 'iface_in': iface, 'extra': 'tcp flags:0x3F/0x04 NFQUEUE num 2'},
-        ('filter', 'scramble_FORWARD' if is_forward else 'scramble_INPUT',
-         '-i %s -p tcp --tcp-flags ALL RST -j NFQUEUE --queue-num 2' % iface)
+        {'target': 'NFQUEUE', 'extra': 'tcp flags:0x3F/0x04 NFQUEUE num 2'},
+        ('filter', 'scramble_INPUT', '-p tcp --tcp-flags ALL RST -j NFQUEUE --queue-num 2')
     )
     RULES.append(RULE_INPUT_RST)
     RULE_INPUT_ICMP = (
-        {'target': 'NFQUEUE', 'iface_in': iface, 'extra': 'NFQUEUE num 2'},
-        ('filter', 'scramble_FORWARD' if is_forward else 'scramble_INPUT', '-i %s -p icmp -j NFQUEUE --queue-num 2' % iface)
+        {'target': 'NFQUEUE', 'extra': 'NFQUEUE num 2'},
+        ('filter', 'scramble_INPUT', '-p icmp -j NFQUEUE --queue-num 2')
     )
     RULES.append(RULE_INPUT_ICMP)
     RULE_OUTPUT_PSH_ACK = (
-        {'target': 'NFQUEUE', 'iface_out': iface, 'extra': 'tcp flags:0x3F/0x18 NFQUEUE num 2'},
-        ('filter', 'scramble_FORWARD' if is_forward else 'scramble_OUTPUT',
-         '-o %s -p tcp --tcp-flags ALL PSH,ACK -j NFQUEUE --queue-num 2' % iface)
+        {'target': 'NFQUEUE', 'extra': 'tcp flags:0x3F/0x18 NFQUEUE num 2'},
+        ('filter', 'scramble_OUTPUT', '-o %s -p tcp --tcp-flags ALL PSH,ACK -j NFQUEUE --queue-num 2')
     )
     RULES.append(RULE_OUTPUT_PSH_ACK)
     RULE_OUTPUT_SYN = (
-        {'target': 'NFQUEUE', 'iface_out': iface, 'extra': 'tcp flags:0x3F/0x18 NFQUEUE num 2'},
-        ('filter', 'scramble_FORWARD' if is_forward else 'scramble_OUTPUT',
-         '-o %s -p tcp --tcp-flags ALL SYN -j NFQUEUE --queue-num 2' % iface)
+        {'target': 'NFQUEUE', 'extra': 'tcp flags:0x3F/0x18 NFQUEUE num 2'},
+        ('filter', 'scramble_OUTPUT', '-p tcp --tcp-flags ALL SYN -j NFQUEUE --queue-num 2')
     )
     RULES.append(RULE_OUTPUT_SYN)
 
 
-def add_output_chain(iface):
+def add_scramble_output_chain():
     RULES.append((
-        {'target': 'scramble_OUTPUT', 'iface_out': iface},
-        ('filter', 'OUTPUT', '-o %s -j scramble_OUTPUT' % iface)
+        {'target': 'scramble_OUTPUT'},
+        ('filter', 'OUTPUT', '-j scramble_OUTPUT')
     ))
     RULES.append((
-        {'target': 'RETURN', 'extra': 'mark match 0xcafe', 'iface_out': iface},
-        ('filter', 'scramble_OUTPUT', '-o %s -m mark --mark 0xcafe -j RETURN' % iface)
+        {'target': 'RETURN', 'extra': 'mark match 0xcafe'},
+        ('filter', 'scramble_OUTPUT', '-m mark --mark 0xcafe -j RETURN')
     ))
-    for lan_ip_range in [
-        '0.0.0.0/8', '10.0.0.0/8', '127.0.0.0/8', '169.254.0.0/16',
-        '172.16.0.0/12', '192.168.0.0/16', '224.0.0.0/4', '240.0.0.0/4']:
-        RULES.append((
-            {'target': 'RETURN', 'destination': lan_ip_range, 'iface_out': iface},
-            ('filter', 'scramble_OUTPUT', '-o %s -d %s -j RETURN' % (iface, lan_ip_range))
-        ))
-
-def add_input_chain(iface):
     RULES.append((
-        {'target': 'scramble_INPUT', 'iface_in': iface},
-        ('filter', 'INPUT', '-i %s -j scramble_INPUT' % iface)
+        {'target': 'RETURN', 'iface_out': 'lo'},
+        ('filter', 'scramble_OUTPUT', '-o lo -j RETURN')
     ))
     for lan_ip_range in [
         '0.0.0.0/8', '10.0.0.0/8', '127.0.0.0/8', '169.254.0.0/16',
         '172.16.0.0/12', '192.168.0.0/16', '224.0.0.0/4', '240.0.0.0/4']:
         RULES.append((
-            {'target': 'RETURN', 'source': lan_ip_range, 'iface_in': iface},
-            ('filter', 'scramble_INPUT', '-i %s -s %s -j RETURN' % (iface, lan_ip_range))
+            {'target': 'RETURN', 'destination': lan_ip_range},
+            ('filter', 'scramble_OUTPUT', '-d %s -j RETURN' % lan_ip_range)
         ))
 
-def add_forward_chain(iface):
+
+def add_scramble_input_chain():
     RULES.append((
-        {'target': 'scramble_FORWARD', 'iface_in': iface},
-        ('filter', 'FORWARD', '-i %s -j scramble_FORWARD' % iface)
+        {'target': 'scramble_INPUT'},
+        ('filter', 'INPUT', '-j scramble_INPUT')
     ))
     RULES.append((
-        {'target': 'scramble_FORWARD', 'iface_out': iface},
-        ('filter', 'FORWARD', '-o %s -j scramble_FORWARD' % iface)
+        {'target': 'RETURN', 'extra': 'mark match 0xcafe'},
+        ('filter', 'scramble_INPUT', '-m mark --mark 0xcafe -j RETURN')
     ))
     RULES.append((
-        {'target': 'RETURN', 'extra': 'mark match 0xcafe', 'iface_out': iface},
-        ('filter', 'scramble_FORWARD', '-o %s -m mark --mark 0xcafe -j RETURN' % iface)
+        {'target': 'RETURN', 'iface_in': 'lo'},
+        ('filter', 'scramble_INPUT', '-i lo -j RETURN')
     ))
     for lan_ip_range in [
         '0.0.0.0/8', '10.0.0.0/8', '127.0.0.0/8', '169.254.0.0/16',
         '172.16.0.0/12', '192.168.0.0/16', '224.0.0.0/4', '240.0.0.0/4']:
         RULES.append((
-            {'target': 'RETURN', 'destination': lan_ip_range, 'iface_out': iface},
-            ('filter', 'scramble_FORWARD', '-o %s -d %s -j RETURN' % (iface, lan_ip_range))
+            {'target': 'RETURN', 'source': lan_ip_range},
+            ('filter', 'scramble_INPUT', '-s %s -j RETURN' % lan_ip_range)
+        ))
+
+
+def add_lan_chains():
+    RULES.append((
+        {'target': 'lan_unknown'},
+        ('filter', 'FORWARD', '-j lan_unknown')
+    ))
+    RULES.append((
+        {'target': 'RETURN', 'extra': 'mark match 0xcafe'},
+        ('filter', 'lan_unknown', '-m mark --mark 0xcafe -j RETURN')
+    ))
+    RULES.append((
+        {'target': 'RETURN', 'iface_in': 'lo'},
+        ('filter', 'lan_unknown', '-i lo -j RETURN')
+    ))
+    RULES.append((
+        {'target': 'RETURN', 'iface_out': 'lo'},
+        ('filter', 'lan_unknown', '-o lo -j RETURN')
+    ))
+    for lan_ip_range in [
+        '0.0.0.0/8', '10.0.0.0/8', '127.0.0.0/8', '169.254.0.0/16',
+        '172.16.0.0/12', '192.168.0.0/16', '224.0.0.0/4', '240.0.0.0/4']:
+        RULES.append((
+            {'target': 'lan_dst', 'destination': lan_ip_range},
+            ('filter', 'lan_unknown', '-d %s -j lan_dst' % lan_ip_range)
         ))
         RULES.append((
-            {'target': 'RETURN', 'source': lan_ip_range, 'iface_in': iface},
-            ('filter', 'scramble_FORWARD', '-i %s -s %s -j RETURN' % (iface, lan_ip_range))
+            {'target': 'lan_src', 'source': lan_ip_range},
+            ('filter', 'lan_unknown', '-s %s -j lan_src' % lan_ip_range)
         ))
+        RULES.append((
+            {'target': 'RETURN', 'source': lan_ip_range},
+            ('filter', 'lan_dst', '-s %s -j RETURN' % lan_ip_range)
+        ))
+        RULES.append((
+            {'target': 'RETURN', 'destination': lan_ip_range},
+            ('filter', 'lan_src', '-d %s -j RETURN' % lan_ip_range)
+        ))
+    RULES.append((
+        {'target': 'scramble_OUTPUT'},
+        ('filter', 'lan_src', '-j scramble_OUTPUT')
+    ))
+    RULES.append((
+        {'target': 'scramble_INPUT'},
+        ('filter', 'lan_dst', '-j scramble_INPUT')
+    ))
 
 
-for iface in network_interface.list_data_network_interfaces():
-    add_input_chain(iface)
-    add_output_chain(iface)
-    add_forward_chain(iface)
-    add_rules(iface, is_forward=False)
-    add_rules(iface, is_forward=True)
+add_scramble_input_chain()
+add_scramble_output_chain()
+add_lan_chains()
+add_rules()
 
 raw_socket = socket.socket(socket.AF_INET, socket.SOCK_RAW, socket.IPPROTO_RAW)
 shutdown_hook.add(raw_socket.close)
 raw_socket.setsockopt(socket.SOL_IP, socket.IP_HDRINCL, 1)
 SO_MARK = 36
 raw_socket.setsockopt(socket.SOL_SOCKET, SO_MARK, 0xcafe)
+
 
 class TcpServiceStatus(object):
     def __init__(self):
@@ -178,7 +206,9 @@ def delete_iptables_rules():
     iptables.delete_nfqueue_rules(2)
     iptables.delete_chain('scramble_INPUT')
     iptables.delete_chain('scramble_OUTPUT')
-    iptables.delete_chain('scramble_FORWARD')
+    iptables.delete_chain('lan_unknown')
+    iptables.delete_chain('lan_src')
+    iptables.delete_chain('lan_dst')
 
 
 def handle_nfqueue():
@@ -275,7 +305,8 @@ def handle_syn_ack(syn_ack):
         LOGGER.error(
             'received spoofed SYN ACK: expected ttl is %s, actually is %s, the packet %s' %
             (expected_ttl, syn_ack.ttl, format_ip_packet(syn_ack)))
-    syn_ack_ttl[(uncertain_ip, syn_ack.tcp.sport)] = syn_ack.ttl # later one should be the correct one as GFW is closer to us
+    syn_ack_ttl[
+        (uncertain_ip, syn_ack.tcp.sport)] = syn_ack.ttl # later one should be the correct one as GFW is closer to us
     if uncertain_ip in international_zone:
         inject_poison_ack_to_fill_gfw_buffer_with_garbage(syn_ack, international_zone[uncertain_ip])
         return True

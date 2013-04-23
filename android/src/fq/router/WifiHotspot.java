@@ -104,7 +104,7 @@ public class WifiHotspot {
 
     public boolean setup() {
         try {
-            if ("192.168.49.1".equals(getWifiIp())) {
+            if ("10.24.1.1".equals(getWifiIp())) {
                 return false;
             }
             statusUpdater.updateStatus("Setup wifi hotspot network");

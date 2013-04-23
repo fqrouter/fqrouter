@@ -66,7 +66,7 @@ application.listening_to_hotspot_lan = False
 def listen_to_hotspot_lan():
     if not application.listening_to_hotspot_lan:
         application.listening_to_hotspot_lan = True
-        application.listen(80, '192.168.49.1')
+        application.listen(80, '10.24.1.1')
 
 
 if '__main__' == __name__:

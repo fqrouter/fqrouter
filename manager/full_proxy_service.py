@@ -12,7 +12,6 @@ from pynetfilter_conntrack import Conntrack
 
 import shutdown_hook
 import iptables
-import network_interface
 import china_ip
 import redsocks_monitor
 import goagent_monitor
@@ -56,74 +55,72 @@ pending_list = {} # ip => started_at
 proxies = {} # mark => proxy
 proxies_refreshed_at = 0
 
-for iface in network_interface.list_data_network_interfaces():
+
+def add_lan_chains():
+    # all 443,80 goes to lan_unknown before routing
     RULES.append((
-        {'target': 'fp_OUTPUT', 'iface_out': iface, 'extra': 'tcp dpt:80'},
-        ('nat', 'OUTPUT', '-o %s -p tcp --dport 80 -j fp_OUTPUT' % iface)
+        {'target': 'lan_unknown', 'extra': 'tcp dpt:80'},
+        ('nat', 'OUTPUT', '-p tcp --dport 80 -j lan_unknown')
     ))
     RULES.append((
-        {'target': 'fp_OUTPUT', 'iface_out': iface, 'extra': 'tcp dpt:443'},
-        ('nat', 'OUTPUT', '-o %s -p tcp --dport 443 -j fp_OUTPUT' % iface)
+        {'target': 'lan_unknown', 'extra': 'tcp dpt:443'},
+        ('nat', 'OUTPUT', '-p tcp --dport 443 -j lan_unknown')
     ))
-RULES.append((
-    {'target': 'fp_PREROUTING', 'extra': 'tcp dpt:80'},
-    ('nat', 'PREROUTING', '-p tcp -s 192.168.49.0/24 --dport 80 -j fp_PREROUTING')
-))
-RULES.append((
-    {'target': 'fp_PREROUTING', 'extra': 'tcp dpt:443'},
-    ('nat', 'PREROUTING', '-p tcp -s 192.168.49.0/24 --dport 443 -j fp_PREROUTING')
-))
-
-
-def add_full_proxy_chain(is_prerouting):
-    chain_name = 'fp_PREROUTING' if is_prerouting else 'fp_OUTPUT'
+    RULES.append((
+        {'target': 'lan_unknown', 'extra': 'tcp dpt:80'},
+        ('nat', 'PREROUTING', '-p tcp --dport 80 -j lan_unknown')
+    ))
+    RULES.append((
+        {'target': 'lan_unknown', 'extra': 'tcp dpt:443'},
+        ('nat', 'PREROUTING', '-p tcp --dport 443 -j lan_unknown')
+    ))
+    # ignore mark 0xcafe
+    RULES.append((
+        {'target': 'RETURN', 'extra': 'mark match 0xcafe'},
+        ('nat', 'lan_unknown', '-m mark --mark 0xcafe -j RETURN')
+    ))
+    # filter out lan_src
     for lan_ip_range in [
         '0.0.0.0/8', '10.0.0.0/8', '127.0.0.0/8', '169.254.0.0/16',
         '172.16.0.0/12', '192.168.0.0/16', '224.0.0.0/4', '240.0.0.0/4']:
         RULES.append((
-            {'target': 'RETURN', 'destination': lan_ip_range},
-            ('nat', chain_name, '-d %s -j RETURN' % lan_ip_range)
+            {'target': 'lan_src', 'source': lan_ip_range},
+            ('nat', 'lan_unknown', '-s %s -j lan_src' % lan_ip_range)
         ))
+        RULES.append((
+            {'target': 'RETURN', 'destination': lan_ip_range},
+            ('nat', 'lan_src', '-d %s -j RETURN' % lan_ip_range)
+        ))
+        # from lan => not lan, that is outgoing traffic
     RULES.append((
-        {'target': 'RETURN', 'extra': 'mark match 0xcafe'},
-        ('nat', chain_name, '-p tcp -m mark --mark 0xcafe -j RETURN')
+        {'target': 'full_proxy'},
+        ('nat', 'lan_src', '-j full_proxy')
     ))
+
+
+def add_full_proxy_chain():
     RULES.append((
         {'target': 'NFQUEUE', 'extra': 'mark match ! 0xbabe/0xffff NFQUEUE num 3'},
-        ('nat', chain_name, '-p tcp -m mark ! --mark 0xbabe/0xffff -j NFQUEUE --queue-num 3')
+        ('nat', 'full_proxy', '-p tcp -m mark ! --mark 0xbabe/0xffff -j NFQUEUE --queue-num 3')
     ))
     for i in range(1, 1 + PROXIES_COUNT + 1): # the final one is for goagent
-        if is_prerouting:
-            RULES.append((
-                {'target': 'CONNMARK', 'extra': 'mark match 0x%sbabe CONNMARK set 0x%sbabe' % (i, i)},
-                ('nat', chain_name, '-p tcp -m mark --mark 0x%sbabe -j CONNMARK --set-mark 0x%sbabe' % (i, i))
-            ))
-            RULES.append((
-                {'target': 'CONNMARK', 'extra': 'mark match 0x%sbabe CONNMARK save' % i},
-                ('nat', chain_name, '-p tcp -m mark --mark 0x%sbabe -j CONNMARK --save-mark' % i)
-            ))
-            RULES.append((
-                {'target': 'DNAT', 'extra': 'mark match 0x%sbabe to:192.168.49.1:%s' % (i, 19830 + i)},
-                ('nat', chain_name, '-p tcp -m mark --mark 0x%sbabe -j DNAT'
-                                    ' --to-destination 192.168.49.1:%s' % (i, 19830 + i))
-            ))
-        else:
-            RULES.append((
-                {'target': 'CONNMARK', 'extra': 'mark match 0x%sbabe CONNMARK set 0x%sbabe' % (i, i)},
-                ('nat', chain_name, '-p tcp -m mark --mark 0x%sbabe -j CONNMARK --set-mark 0x%sbabe' % (i, i))
-            ))
-            RULES.append((
-                {'target': 'CONNMARK', 'extra': 'mark match 0x%sbabe CONNMARK save' % i},
-                ('nat', chain_name, '-p tcp -m mark --mark 0x%sbabe -j CONNMARK --save-mark' % i)
-            ))
-            RULES.append((
-                {'target': 'REDIRECT', 'extra': 'mark match 0x%sbabe redir ports %s' % (i, 19830 + i)},
-                ('nat', chain_name, '-p tcp -m mark --mark 0x%sbabe -j REDIRECT --to-ports %s' % (i, 19830 + i))
-            ))
+        RULES.append((
+            {'target': 'CONNMARK', 'extra': 'mark match 0x%sbabe CONNMARK set 0x%sbabe' % (i, i)},
+            ('nat', 'full_proxy', '-p tcp -m mark --mark 0x%sbabe -j CONNMARK --set-mark 0x%sbabe' % (i, i))
+        ))
+        RULES.append((
+            {'target': 'CONNMARK', 'extra': 'mark match 0x%sbabe CONNMARK save' % i},
+            ('nat', 'full_proxy', '-p tcp -m mark --mark 0x%sbabe -j CONNMARK --save-mark' % i)
+        ))
+        RULES.append((
+            {'target': 'DNAT', 'extra': 'mark match 0x%sbabe to:10.1.2.3:%s' % (i, 19830 + i)},
+            ('nat', 'full_proxy', '-p tcp -m mark --mark 0x%sbabe -j DNAT'
+                                  ' --to-destination 10.1.2.3:%s' % (i, 19830 + i))
+        ))
 
 
-add_full_proxy_chain(is_prerouting=False)
-add_full_proxy_chain(is_prerouting=True)
+add_lan_chains()
+add_full_proxy_chain()
 
 
 def insert_iptables_rules():
@@ -133,8 +130,9 @@ def insert_iptables_rules():
 
 def delete_iptables_rules():
     iptables.delete_rules(RULES)
-    iptables.delete_chain('fp_PREROUTING')
-    iptables.delete_chain('fp_OUTPUT')
+    iptables.delete_chain('full_proxy')
+    iptables.delete_chain('lan_unknown')
+    iptables.delete_chain('lan_src')
 
 
 def start_full_proxy():

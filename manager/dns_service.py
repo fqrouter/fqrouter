@@ -9,7 +9,6 @@ import dpkt
 
 import iptables
 import shutdown_hook
-import network_interface
 import full_proxy_service
 import dns_server
 
@@ -58,22 +57,31 @@ class DnsServiceStatus(object):
 dns_service_status = DnsServiceStatus()
 domains = {} # ip => domain
 
-RULES = []
-for iface in network_interface.list_data_network_interfaces():
-    RULES.append((
-        {'target': 'NFQUEUE', 'iface_out': iface, 'extra': 'udp dpt:53 NFQUEUE num 1'},
-        ('filter', 'OUTPUT', '-o %s -p udp --dport 53 -j NFQUEUE --queue-num 1' % iface)
-    ))
-    RULES.append((
-        {'target': 'NFQUEUE', 'iface_in': iface, 'extra': 'udp spt:53 NFQUEUE num 1'},
-        ('filter', 'INPUT', '-i %s -p udp --sport 53 -j NFQUEUE --queue-num 1' % iface)
-    ))
-    for dns_ip, dns_port in dns_server.list_dns_servers():
-        if dns_port != 53:
-            RULES.append((
-                {'target': 'NFQUEUE', 'iface_in': iface, 'source': dns_ip, 'extra': 'udp spt:53 NFQUEUE num 1'},
-                ('filter', 'INPUT', '-i %s -p udp -s %s --sport %s -j NFQUEUE --queue-num 1' % (iface, dns_ip, dns_port))
-            ))
+RULES = [
+    (
+        {'target': 'NFQUEUE', 'extra': 'udp dpt:53 NFQUEUE num 1'},
+        ('filter', 'OUTPUT', '-p udp --dport 53 -j NFQUEUE --queue-num 1')
+    ), (
+        {'target': 'NFQUEUE', 'extra': 'udp dpt:53 NFQUEUE num 1'},
+        ('filter', 'FORWARD', '-p udp --dport 53 -j NFQUEUE --queue-num 1')
+    ), (
+        {'target': 'NFQUEUE', 'extra': 'udp spt:53 NFQUEUE num 1'},
+        ('filter', 'INPUT', '-p udp --sport 53 -j NFQUEUE --queue-num 1')
+    ), (
+        {'target': 'NFQUEUE', 'extra': 'udp spt:53 NFQUEUE num 1'},
+        ('filter', 'FORWARD', '-p udp --sport 53 -j NFQUEUE --queue-num 1')
+    )
+]
+for dns_ip, dns_port in dns_server.list_dns_servers():
+    if dns_port != 53:
+        RULES.append((
+            {'target': 'NFQUEUE', 'source': dns_ip, 'extra': 'udp spt:53 NFQUEUE num 1'},
+            ('filter', 'INPUT', '-p udp -s %s --sport %s -j NFQUEUE --queue-num 1' % (dns_ip, dns_port))
+        ))
+        RULES.append((
+            {'target': 'NFQUEUE', 'source': dns_ip, 'extra': 'udp spt:53 NFQUEUE num 1'},
+            ('filter', 'FORWARD', '-p udp -s %s --sport %s -j NFQUEUE --queue-num 1' % (dns_ip, dns_port))
+        ))
 
 # source http://zh.wikipedia.org/wiki/%E5%9F%9F%E5%90%8D%E6%9C%8D%E5%8A%A1%E5%99%A8%E7%BC%93%E5%AD%98%E6%B1%A1%E6%9F%93
 WRONG_ANSWERS = {

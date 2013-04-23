@@ -1,5 +1,3 @@
-import network_interface
-
 TEMPLATE = """
 #
 # hostapd.conf
@@ -112,5 +110,5 @@ device_type=0-00000000-0
 """
 
 
-def render(channel):
-    return TEMPLATE % (network_interface.WIFI_INTERFACE, channel)
+def render(iface, channel):
+    return TEMPLATE % (iface, channel)
