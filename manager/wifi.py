@@ -236,13 +236,13 @@ def list_wifi_ifaces():
 def stop_hotspot_interface(iface):
     iptables.delete_rules(RULES)
     netd_execute('tether stop')
+    netd_execute('softap fwreload %s STA' % network_interface.WIFI_INTERFACE)
+    shell_execute('netcfg %s down' % network_interface.WIFI_INTERFACE)
+    shell_execute('netcfg %s up' % network_interface.WIFI_INTERFACE)
     try:
         shell_execute('%s dev %s del' % (IW_PATH, iface))
     except:
         LOGGER.exception('failed to delete wifi interface')
-    netd_execute('softap fwreload %s STA' % network_interface.WIFI_INTERFACE)
-    shell_execute('netcfg %s down' % network_interface.WIFI_INTERFACE)
-    shell_execute('netcfg %s up' % network_interface.WIFI_INTERFACE)
     try:
         shell_execute('killall hostapd')
     except:
