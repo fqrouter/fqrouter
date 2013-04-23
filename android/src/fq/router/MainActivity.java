@@ -33,7 +33,8 @@ public class MainActivity extends Activity implements StatusUpdater {
     private final static int SHOW_AS_ACTION_IF_ROOM = 1;
     private final static int ITEM_ID_EXIT = 1;
     private final static int ITEM_ID_REPORT_ERROR = 2;
-    private final static int ITEM_ITEM_CHECK_UPDATES = 3;
+    private final static int ITEM_ID_CHECK_UPDATES = 3;
+    private final static int ITEM_ID_SETTINGS = 4;
     private final static File EXITING_FLAG = new File("/data/data/fq.router/.exiting");
     private Handler handler = new Handler();
     private boolean started = false;
@@ -162,13 +163,14 @@ public class MainActivity extends Activity implements StatusUpdater {
 
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
-        menu.add(Menu.NONE, ITEM_ITEM_CHECK_UPDATES, Menu.NONE, "Check Updates");
+        menu.add(Menu.NONE, ITEM_ID_SETTINGS, Menu.NONE, "Settings");
+        menu.add(Menu.NONE, ITEM_ID_CHECK_UPDATES, Menu.NONE, "Check Updates");
         addMenuItem(menu, ITEM_ID_REPORT_ERROR, "Report Error");
         addMenuItem(menu, ITEM_ID_EXIT, "Exit");
         return super.onCreateOptionsMenu(menu);
     }
 
-    private void addMenuItem(Menu menu, int menuItemId, String caption) {
+    private MenuItem addMenuItem(Menu menu, int menuItemId, String caption) {
         MenuItem menuItem = menu.add(Menu.NONE, menuItemId, Menu.NONE, caption);
         try {
             Method method = MenuItem.class.getMethod("setShowAsAction", int.class);
@@ -178,6 +180,7 @@ public class MainActivity extends Activity implements StatusUpdater {
             }
         } catch (NoSuchMethodException e) {
         }
+        return menuItem;
     }
 
     @Override
@@ -186,7 +189,7 @@ public class MainActivity extends Activity implements StatusUpdater {
             onExitClicked();
         } else if (ITEM_ID_REPORT_ERROR == item.getItemId()) {
             onReportErrorClicked();
-        } else if (ITEM_ITEM_CHECK_UPDATES == item.getItemId()) {
+        } else if (ITEM_ID_CHECK_UPDATES == item.getItemId()) {
             new Thread(new Runnable() {
                 @Override
                 public void run() {
@@ -194,6 +197,8 @@ public class MainActivity extends Activity implements StatusUpdater {
                     Supervisor.checkUpdates(MainActivity.this);
                 }
             }).start();
+        } else if (ITEM_ID_SETTINGS == item.getItemId()) {
+            startActivity(new Intent(this, SettingsActivity.class));
         }
         return super.onMenuItemSelected(featureId, item);
     }
