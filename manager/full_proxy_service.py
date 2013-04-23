@@ -105,14 +105,6 @@ def add_full_proxy_chain():
     ))
     for i in range(1, 1 + PROXIES_COUNT + 1): # the final one is for goagent
         RULES.append((
-            {'target': 'CONNMARK', 'extra': 'mark match 0x%sbabe CONNMARK set 0x%sbabe' % (i, i)},
-            ('nat', 'full_proxy', '-p tcp -m mark --mark 0x%sbabe -j CONNMARK --set-mark 0x%sbabe' % (i, i))
-        ))
-        RULES.append((
-            {'target': 'CONNMARK', 'extra': 'mark match 0x%sbabe CONNMARK save' % i},
-            ('nat', 'full_proxy', '-p tcp -m mark --mark 0x%sbabe -j CONNMARK --save-mark' % i)
-        ))
-        RULES.append((
             {'target': 'DNAT', 'extra': 'mark match 0x%sbabe to:10.1.2.3:%s' % (i, 19830 + i)},
             ('nat', 'full_proxy', '-p tcp -m mark --mark 0x%sbabe -j DNAT'
                                   ' --to-destination 10.1.2.3:%s' % (i, 19830 + i))
@@ -377,8 +369,8 @@ def add_to_black_list(ip, syn=None):
 def delete_existing_conntrack_entry(ip):
     conntrack = Conntrack()
     for entry in conntrack.dump_table():
-        dst = socket.inet_ntoa(struct.pack('!I', entry.orig_ipv4_dst))
-        if 0 == entry.mark and ip == dst:
+        reply_src = socket.inet_ntoa(struct.pack('!I', entry.repl_ipv4_src))
+        if ip == reply_src:
             LOGGER.info('delete %s' % entry)
             conntrack.destroy_conntrack(entry)
 
