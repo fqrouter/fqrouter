@@ -69,8 +69,10 @@ public class MainActivity extends Activity implements StatusUpdater {
             appendLog("exiting flag not found");
             return true;
         }
-        if (System.currentTimeMillis() - EXITING_FLAG.lastModified() > 60 * 3) {
-            appendLog("exiting flag expired");
+        long delta = System.currentTimeMillis() - EXITING_FLAG.lastModified();
+        int tenMinutes = 60 * 10 * 1000;
+        if (delta > tenMinutes) {
+            appendLog("exiting flag expired: " + (delta - tenMinutes));
             EXITING_FLAG.delete();
             return true;
         }
@@ -197,6 +199,11 @@ public class MainActivity extends Activity implements StatusUpdater {
     }
 
     private void onExitClicked() {
+        try {
+            EXITING_FLAG.createNewFile();
+        } catch (Exception e) {
+            Log.e("fqrouter", "failed to create .exit flag", e);
+        }
         EXITING_FLAG.setLastModified(System.currentTimeMillis());
         try {
             Intent intent = new Intent(Intent.ACTION_MAIN);
