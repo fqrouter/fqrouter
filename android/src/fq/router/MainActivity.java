@@ -4,7 +4,6 @@ import android.app.*;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.pm.PackageInfo;
-import android.content.res.AssetManager;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
@@ -97,7 +96,7 @@ public class MainActivity extends Activity implements StatusUpdater {
                     @Override
                     public void run() {
                         if (checked) {
-                            wifiHotspot.start();
+                            startWifiHotspot();
                         } else {
                             wifiHotspot.stop();
                         }
@@ -105,6 +104,46 @@ public class MainActivity extends Activity implements StatusUpdater {
                 }).start();
             }
         });
+    }
+
+    private void startWifiHotspot() {
+        boolean wasConnected = wifiHotspot.isConnected();
+        boolean started = wifiHotspot.start(WifiHotspot.MODE_WIFI_REPEATER);
+        if (!started) {
+            if (wasConnected) {
+                askIfStartTraditionalWifiHotspot();
+            } else {
+                wifiHotspot.start(WifiHotspot.MODE_TRADITIONAL_WIFI_HOTSPOT);
+            }
+        }
+    }
+
+    private void askIfStartTraditionalWifiHotspot() {
+        handler.postDelayed(new Runnable() {
+            @Override
+            public void run() {
+                new AlertDialog.Builder(MainActivity.this)
+                        .setIcon(android.R.drawable.ic_dialog_alert)
+                        .setTitle("Failed to start wifi repeater")
+                        .setMessage("Do you want to start wifi hotspot sharing 3G connection? " +
+                                "It will consume your 3G data traffic volume.")
+                        .setPositiveButton("Yes", new DialogInterface.OnClickListener() {
+
+                            @Override
+                            public void onClick(DialogInterface dialog, int which) {
+                                new Thread(new Runnable() {
+                                    @Override
+                                    public void run() {
+                                        wifiHotspot.start(WifiHotspot.MODE_TRADITIONAL_WIFI_HOTSPOT);
+                                    }
+                                }).start();
+                            }
+
+                        })
+                        .setNegativeButton("No", null)
+                        .show();
+            }
+        }, 2000);
     }
 
     public void showWifiHotspotToggleButton(final boolean checked) {
@@ -269,6 +308,9 @@ public class MainActivity extends Activity implements StatusUpdater {
         updateStatus("Checking if wifi hotspot is started");
         boolean isStarted = WifiHotspot.isStarted();
         showWifiHotspotToggleButton(isStarted);
+        if (isStarted) {
+            wifiHotspot.setup();
+        }
         updateStatus("Started, f**k censorship");
     }
 

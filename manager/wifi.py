@@ -23,7 +23,11 @@ WPA_SUPPLICANT_CONF_PATH = '/data/misc/wifi/wpa_supplicant.conf'
 P2P_SUPPLICANT_CONF_PATH = '/data/misc/wifi/p2p_supplicant.conf'
 P2P_CLI_PATH = '/data/data/fq.router/wifi-tools/p2p_cli'
 IW_PATH = '/data/data/fq.router/wifi-tools/iw'
+HOSTAPD_PATH = '/data/data/fq.router/wifi-tools/hostapd'
+IWCONFIG_PATH = '/data/data/fq.router/wifi-tools/iwconfig'
 IWLIST_PATH = '/data/data/fq.router/wifi-tools/iwlist'
+DNSMASQ_PATH = '/data/data/fq.router/wifi-tools/dnsmasq'
+KILLALL_PATH = '/data/data/fq.router/busybox killall'
 FQROUTER_HOSTAPD_CONF_PATH = '/data/data/fq.router/hostapd.conf'
 CHANNELS = {
     '2412': 1, '2417': 2, '2422': 3, '2427': 4, '2432': 5, '2437': 6, '2442': 7,
@@ -65,12 +69,17 @@ class WifiStopHandler(tornado.web.RequestHandler):
 
 class WifiSetupHandler(tornado.web.RequestHandler):
     def post(self):
-        for i in range(10):
-            iface = get_working_hotspot_iface()
-            if not iface:
-                time.sleep(1)
-                continue
-            setup_networking(iface)
+        try:
+            for i in range(10):
+                iface = get_working_hotspot_iface()
+                if not iface:
+                    time.sleep(2)
+                    continue
+                setup_networking(iface)
+                return
+        except:
+            LOGGER.exception('failed to setup network')
+            self.set_status(httplib.INTERNAL_SERVER_ERROR)
 
 
 class WifiIsStartedHandler(tornado.web.RequestHandler):
@@ -83,6 +92,14 @@ class WifiIsStartedHandler(tornado.web.RequestHandler):
 
 def stop_hotspot():
     try:
+        try:
+            iptables.delete_rules(RULES)
+        except:
+            LOGGER.exception('failed to delete rules')
+        try:
+            shell_execute('%s dnsmasq' % KILLALL_PATH)
+        except:
+            LOGGER.exception('failed to killall dnsmasq')
         try:
             working_hotspot_iface = get_working_hotspot_iface()
             if working_hotspot_iface:
@@ -210,11 +227,19 @@ def dump_unix_sockets():
 
 
 def get_working_hotspot_iface():
-    ifaces = list_wifi_ifaces()
-    for iface, is_hotspot in ifaces.items():
-        if is_hotspot:
-            return iface
-    return None
+    try:
+        ifaces = list_wifi_ifaces()
+        for iface, is_hotspot in ifaces.items():
+            if is_hotspot:
+                return iface
+        return None
+    except:
+        LOGGER.exception('failed to get working hotspot iface using nl80211')
+        if 'Mode:Master' in shell_execute('%s %s' % (IWCONFIG_PATH, 'wl0.1')):
+            return 'wl0.1'
+        if 'Mode:Master' in shell_execute('%s %s' % (IWCONFIG_PATH, network_interface.WIFI_INTERFACE)):
+            return network_interface.WIFI_INTERFACE
+        return None
 
 
 def list_wifi_ifaces():
@@ -234,8 +259,6 @@ def list_wifi_ifaces():
 
 
 def stop_hotspot_interface(iface):
-    iptables.delete_rules(RULES)
-    netd_execute('tether stop')
     netd_execute('softap fwreload %s STA' % network_interface.WIFI_INTERFACE)
     shell_execute('netcfg %s down' % network_interface.WIFI_INTERFACE)
     shell_execute('netcfg %s up' % network_interface.WIFI_INTERFACE)
@@ -244,7 +267,7 @@ def stop_hotspot_interface(iface):
     except:
         LOGGER.exception('failed to delete wifi interface')
     try:
-        shell_execute('killall hostapd')
+        shell_execute('%s hostapd' % KILLALL_PATH)
     except:
         LOGGER.exception('failed to killall hostapd')
 
@@ -262,7 +285,6 @@ def start_hotspot_interface(wifi_chipset):
     elif 'platform:wcnss_wlan' == wifi_chipset:
         hotspot_interface = start_hotspot_on_wcnss()
     elif 'platform:wl12xx' == wifi_chipset:
-    # ar6003 is c00v0271d0301
         hotspot_interface = start_hotspot_on_wl12xx()
     elif wifi_chipset.endswith('6620') or wifi_chipset.endswith('6628') or \
             shell_execute('getprop ro.mediatek.platform').strip():
@@ -367,7 +389,7 @@ def start_hotspot_on_mtk():
 def start_hotspot_on_wl12xx():
     if 'ap0' not in list_wifi_ifaces():
         shell_execute(
-            '/data/data/fq.router/wifi-tools/iw %s interface add ap0 type managed' % network_interface.WIFI_INTERFACE)
+            '%s %s interface add ap0 type managed' % (IW_PATH, network_interface.WIFI_INTERFACE))
     assert 'ap0' in list_wifi_ifaces()
     with open(FQROUTER_HOSTAPD_CONF_PATH, 'w') as f:
         frequency, channel = get_upstream_frequency_and_channel()
@@ -375,7 +397,7 @@ def start_hotspot_on_wl12xx():
     os.chmod(FQROUTER_HOSTAPD_CONF_PATH, 0666)
     LOGGER.info('start hostapd')
     proc = subprocess.Popen(
-        ['/data/data/fq.router/wifi-tools/hostapd', '-dd', FQROUTER_HOSTAPD_CONF_PATH],
+        [HOSTAPD_PATH, '-dd', FQROUTER_HOSTAPD_CONF_PATH],
         cwd='/data/misc/wifi', stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
     time.sleep(2)
     if proc.poll():
@@ -423,11 +445,14 @@ def get_upstream_frequency():
 def setup_networking(hotspot_interface):
     control_socket_dir = get_wpa_supplicant_control_socket_dir()
     netd_execute('interface setcfg %s 192.168.49.1 24' % hotspot_interface)
-    netd_execute('tether stop')
-    netd_execute('tether interface add %s' % hotspot_interface)
-    netd_execute('tether start 192.168.49.2 192.168.49.254')
-    log_upstream_wifi_status('after tether started', control_socket_dir)
-    netd_execute('tether dns set 8.8.8.8')
+    try:
+        shell_execute('%s dnsmasq' % KILLALL_PATH)
+    except:
+        LOGGER.exception('failed to killall dnsmasq')
+    shell_execute('%s -i %s --dhcp-authoritative --no-negcache --user=root --no-resolv --no-hosts '
+                  '--server=8.8.8.8 --dhcp-range=192.168.49.2,192.168.49.254,12h '
+                  '--dhcp-leasefile=/data/data/fq.router/dnsmasq.leases '
+                  '--pid-file=/data/data/fq.router/dnsmasq.pid' % (DNSMASQ_PATH, hotspot_interface))
     enable_ipv4_forward()
     shell_execute('iptables -P FORWARD ACCEPT')
     iptables.insert_rules(RULES)
