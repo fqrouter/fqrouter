@@ -6,12 +6,13 @@ import shlex
 import time
 import httplib
 import re
+import traceback
 
 import tornado.web
 
 import iptables
-import traceback
 import hostapd_template
+
 
 try:
     WIFI_INTERFACE = subprocess.check_output(['getprop', 'wifi.interface']).strip() or 'wlan0'
@@ -33,6 +34,7 @@ IWCONFIG_PATH = '/data/data/fq.router/wifi-tools/iwconfig'
 IWLIST_PATH = '/data/data/fq.router/wifi-tools/iwlist'
 DNSMASQ_PATH = '/data/data/fq.router/wifi-tools/dnsmasq'
 KILLALL_PATH = '/data/data/fq.router/busybox killall'
+IFCONFIG_PATH = '/data/data/fq.router/busybox ifconfig'
 FQROUTER_HOSTAPD_CONF_PATH = '/data/data/fq.router/hostapd.conf'
 CHANNELS = {
     '2412': 1, '2417': 2, '2422': 3, '2427': 4, '2432': 5, '2437': 6, '2442': 7,
@@ -448,7 +450,7 @@ def get_upstream_frequency():
 
 def setup_networking(hotspot_interface):
     control_socket_dir = get_wpa_supplicant_control_socket_dir()
-    netd_execute('interface setcfg %s 10.24.1.1 24' % hotspot_interface)
+    setup_network_interface_ip(hotspot_interface, '10.24.1.1', '255.255.255.0')
     try:
         shell_execute('%s dnsmasq' % KILLALL_PATH)
     except:
@@ -461,6 +463,14 @@ def setup_networking(hotspot_interface):
     shell_execute('iptables -P FORWARD ACCEPT')
     iptables.insert_rules(RULES)
     log_upstream_wifi_status('after setup networking', control_socket_dir)
+
+
+def setup_lo_alias():
+    setup_network_interface_ip('lo:1', '10.1.2.3', '255.255.255.255')
+
+
+def setup_network_interface_ip(iface, ip, netmask):
+    shell_execute('%s %s %s netmask %s' % (IFCONFIG_PATH, iface, ip, netmask))
 
 
 def enable_ipv4_forward():

@@ -74,6 +74,7 @@ if '__main__' == __name__:
     dns_service.run()
     tcp_service.run()
     full_proxy_service.run()
+    wifi.setup_lo_alias()
     LOGGER.info('services started')
     application.listen(8318, '127.0.0.1')
     wifi.on_wifi_hotspot_started = listen_to_hotspot_lan
