@@ -151,7 +151,10 @@ def keep_proxies_fresh():
             if time.time() - proxies_refreshed_at > REFRESH_INTERVAL:
                 LOGGER.info('refresh now, restart redsocks')
                 proxies.clear()
-            time.sleep(1)
+            if not redsocks_monitor.is_redsocks_live():
+                LOGGER.info('redsocks died, restart')
+                proxies.clear()
+            time.sleep(15)
     except:
         LOGGER.exception('failed to keep proxies fresh')
     finally:
