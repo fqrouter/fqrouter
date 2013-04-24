@@ -504,10 +504,10 @@ def start_p2p_persistent_network(iface, control_socket_dir, ssid, password):
 def reset_p2p_channels(iface, control_socket_dir, channel):
     try:
         channel = channel or 6
-        shell_execute('%s -p %s -i %s set p2p_oper_channel %s' % (P2P_CLI_PATH, control_socket_dir, iface, channel))
-        shell_execute('%s -p %s -i %s set p2p_oper_reg_class 81' % (P2P_CLI_PATH, control_socket_dir, iface))
-        shell_execute('%s -p %s -i %s set p2p_listen_channel %s' % (P2P_CLI_PATH, control_socket_dir, iface, channel))
-        shell_execute('%s -p %s -i %s set p2p_listen_reg_class 81' % (P2P_CLI_PATH, control_socket_dir, iface))
+        shell_execute('%s -p %s -i %s set p2p_oper_channel %s' % (P2P_CLI_PATH, control_socket_dir, iface, 0))
+        shell_execute('%s -p %s -i %s set p2p_oper_reg_class 0' % (P2P_CLI_PATH, control_socket_dir, iface))
+        shell_execute('%s -p %s -i %s set p2p_listen_channel %s' % (P2P_CLI_PATH, control_socket_dir, iface, 0))
+        shell_execute('%s -p %s -i %s set p2p_listen_reg_class 0' % (P2P_CLI_PATH, control_socket_dir, iface))
         shell_execute('%s -p %s -i %s save_config' % (P2P_CLI_PATH, control_socket_dir, iface))
     except:
         LOGGER.exception('failed to reset p2p channels')

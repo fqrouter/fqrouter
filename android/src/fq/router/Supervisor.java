@@ -23,7 +23,7 @@ public class Supervisor implements Runnable {
 
     public static boolean ping() {
         try {
-            String content = HttpUtils.get("http://10.1.2.3:8318/ping");
+            String content = HttpUtils.get("http://127.0.0.1:8318/ping");
             if ("PONG".equals(content)) {
                 return true;
             } else {
@@ -90,7 +90,7 @@ public class Supervisor implements Runnable {
 
     public static boolean checkUpdates(StatusUpdater statusUpdater) {
         try {
-            String versionInfo = HttpUtils.get("http://10.1.2.3:8318/version/latest");
+            String versionInfo = HttpUtils.get("http://127.0.0.1:8318/version/latest");
             String latestVersion = versionInfo.split("\\|")[0];
             String upgradeUrl = versionInfo.split("\\|")[1];
             if (isNewer(latestVersion, statusUpdater.getMyVersion())) {

@@ -43,7 +43,7 @@ redsocks {
 	 * use 0.0.0.0 if you want to listen on every interface.
 	 * `local_*' are used as port to redirect to.
 	 */
-	local_ip = 0.0.0.0;
+	local_ip = 10.1.2.3;
 	local_port = %s;
 
 	// listen() queue length. Default value is SOMAXCONN and it should be

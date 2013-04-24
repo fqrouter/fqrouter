@@ -90,7 +90,7 @@ if '__main__' == __name__:
     wifi.setup_lo_alias()
     LOGGER.info('services started')
     try:
-        httpd = wsgiref.simple_server.make_server('10.1.2.3', 8318, handle_request)
+        httpd = wsgiref.simple_server.make_server('127.0.0.1', 8318, handle_request)
         LOGGER.info('serving HTTP on port 8318...')
     except:
         LOGGER.exception('failed to start HTTP server on port 8318')
