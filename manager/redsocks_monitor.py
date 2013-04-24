@@ -49,33 +49,34 @@ def monitor_redsocks():
     try:
         current_instance = None
         current_clients = set()
-        for line in iter(redsocks_process.stdout.readline, b''):
-            match = RE_REDSOCKS_INSTANCE.search(line)
-            if match:
-                current_instance = int(match.group(2))
-                current_clients = set()
-                LOGGER.debug('dump redsocks instance %s' % current_instance)
-            if current_instance:
-                match = RE_REDSOCKS_CLIENT.search(line)
+        while is_redsocks_live():
+            for line in iter(redsocks_process.stdout.readline, b''):
+                match = RE_REDSOCKS_INSTANCE.search(line)
                 if match:
-                    ip = match.group(1)
-                    port = int(match.group(2))
-                    current_clients.add((ip, port))
-                    LOGGER.debug('client %s:%s' % (ip, port))
-            else:
-                if 'http-connect.c:149' in line:
+                    current_instance = int(match.group(2))
+                    current_clients = set()
+                    LOGGER.debug('dump redsocks instance %s' % current_instance)
+                if current_instance:
                     match = RE_REDSOCKS_CLIENT.search(line)
                     if match:
                         ip = match.group(1)
                         port = int(match.group(2))
-                        for mark, proxy in list_proxies():
-                            if (ip, port) in proxy['clients']:
-                                LOGGER.error(line.strip())
-                                handle_proxy_error(mark, proxy)
-            if 'End of client list' in line:
-                update_proxy_status(current_instance, current_clients)
-                current_instance = None
-            dump_redsocks_client_list()
+                        current_clients.add((ip, port))
+                        LOGGER.debug('client %s:%s' % (ip, port))
+                else:
+                    if 'http-connect.c:149' in line:
+                        match = RE_REDSOCKS_CLIENT.search(line)
+                        if match:
+                            ip = match.group(1)
+                            port = int(match.group(2))
+                            for mark, proxy in list_proxies():
+                                if (ip, port) in proxy['clients']:
+                                    LOGGER.error(line.strip())
+                                    handle_proxy_error(mark, proxy)
+                if 'End of client list' in line:
+                    update_proxy_status(current_instance, current_clients)
+                    current_instance = None
+                dump_redsocks_client_list()
         LOGGER.error('redsocks died, clear proxies')
         redsocks_process.stdout.close()
         clear_proxies()
@@ -110,3 +111,7 @@ def dump_redsocks_client_list(should_dump=False):
 
 def kill_redsocks():
     return not subprocess.call(['/data/data/fq.router/busybox', 'killall', 'redsocks'])
+
+
+def is_redsocks_live():
+    return not subprocess.call(['/data/data/fq.router/busybox', 'killall', '-0', 'redsocks'])

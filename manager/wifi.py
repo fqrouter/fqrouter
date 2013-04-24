@@ -163,6 +163,10 @@ def dump_wifi_status():
             except:
                 LOGGER.exception('failed to log iwlist channel')
             try:
+                shell_execute('%s dev %s link' % (IW_PATH, iface))
+            except:
+                LOGGER.exception('failed to log iw dev link')
+            try:
                 if 'p2p' in iface or 'ap0' == iface:
                     control_socket_dir = get_p2p_supplicant_control_socket_dir()
                 else:
@@ -179,15 +183,6 @@ def dump_wifi_status():
                     if 'supplicant' in cmdline:
                         LOGGER.info('pid %s: %s' % (pid, cmdline))
                         dump_wpa_supplicant(cmdline)
-        if os.path.exists(P2P_SUPPLICANT_CONF_PATH):
-            LOGGER.info('content of %s: ' % P2P_SUPPLICANT_CONF_PATH)
-            with open(P2P_SUPPLICANT_CONF_PATH) as f:
-                LOGGER.info(f.read())
-        if os.path.exists(WPA_SUPPLICANT_CONF_PATH):
-            LOGGER.info('content of %s: ' % WPA_SUPPLICANT_CONF_PATH)
-            with open(WPA_SUPPLICANT_CONF_PATH) as f:
-                LOGGER.info(f.read())
-        dump_dir('/dev/socket')
         try:
             dump_unix_sockets()
         except:
@@ -503,6 +498,8 @@ def start_p2p_persistent_network(iface, control_socket_dir):
     set_network('pairwise CCMP')
     set_network('psk \'"12345678"\'')
     frequency, channel = get_upstream_frequency_and_channel()
+    if channel:
+        reset_p2p_channels(iface, control_socket_dir, channel)
     if frequency:
         shell_execute('%s -p %s -i %s p2p_group_add persistent=%s freq=%s ' %
                       (P2P_CLI_PATH, control_socket_dir, iface, index, frequency.replace('.', '')))
@@ -510,6 +507,18 @@ def start_p2p_persistent_network(iface, control_socket_dir):
         shell_execute('%s -p %s -i %s p2p_group_add persistent=%s' % (P2P_CLI_PATH, control_socket_dir, iface, index))
     time.sleep(1)
     return index
+
+
+def reset_p2p_channels(iface, control_socket_dir, channel):
+    try:
+        channel = channel or 6
+        shell_execute('%s -p %s -i %s set p2p_oper_channel %s' % (P2P_CLI_PATH, control_socket_dir, iface, channel))
+        shell_execute('%s -p %s -i %s set p2p_oper_reg_class 81' % (P2P_CLI_PATH, control_socket_dir, iface))
+        shell_execute('%s -p %s -i %s set p2p_listen_channel %s' % (P2P_CLI_PATH, control_socket_dir, iface, channel))
+        shell_execute('%s -p %s -i %s set p2p_listen_reg_class 81' % (P2P_CLI_PATH, control_socket_dir, iface))
+        shell_execute('%s -p %s -i %s save_config' % (P2P_CLI_PATH, control_socket_dir, iface))
+    except:
+        LOGGER.exception('failed to reset p2p channels')
 
 
 def get_p2p_persistent_iface():
