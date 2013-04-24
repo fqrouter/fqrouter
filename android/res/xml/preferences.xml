@@ -3,19 +3,19 @@
     <PreferenceCategory
             android:title="Wifi Hotspot">
         <ListPreference
-                android:key="wifiHotspotMode"
+                android:key="WifiHotspotMode"
                 android:title="Wifi Hotspot Mode"
                 android:summary="use traditional wifi hotspot will consume your 3G data traffic volume"
                 android:entries="@array/settings_wifi_hotspot_mode_label"
                 android:entryValues="@array/settings_wifi_hotspot_mode_value"
                 android:defaultValue="wifi-repeater"/>
         <EditTextPreference
-                android:key="wifiHotspotSSID"
+                android:key="WifiHotspotSSID"
                 android:title="SSID"
                 android:summary="the wifi network name you see in list"
                 android:defaultValue="fqrouter"/>
         <EditTextPreference
-                android:key="wifiHotspotPassword"
+                android:key="WifiHotspotPassword"
                 android:title="Password"
                 android:defaultValue="12345678"/>
     </PreferenceCategory>

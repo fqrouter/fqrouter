@@ -38,11 +38,11 @@ wpa_group_rekey=0
 wpa_gmk_rekey=0
 wpa_ptk_rekey=0
 interface=ap0
-wpa_passphrase=12345678
 auth_algs=1
 wpa=2
 wpa_pairwise=CCMP
-ssid=spike
+ssid=%s
+wpa_passphrase=%s
 ieee80211d=1
 country_code=US
 max_num_sta=5
@@ -110,5 +110,5 @@ device_type=0-00000000-0
 """
 
 
-def render(iface, channel):
-    return TEMPLATE % (iface, channel)
+def render(iface, channel, ssid, password):
+    return TEMPLATE % (iface, channel, ssid, password)

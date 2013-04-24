@@ -33,6 +33,8 @@ def status():
 
 
 def clean():
+    global enabled
+    enabled = False
     delete_iptables_rules()
     redsocks_monitor.kill_redsocks()
     goagent_monitor.kill_goagent()
@@ -54,6 +56,7 @@ black_list = set()
 pending_list = {} # ip => started_at
 proxies = {} # mark => proxy
 proxies_refreshed_at = 0
+enabled = True
 
 
 def add_lan_chains():
@@ -140,7 +143,7 @@ def keep_proxies_fresh():
     global proxies_refreshed_at
     shutdown_hook.add(redsocks_monitor.kill_redsocks)
     try:
-        while True:
+        while enabled:
             if not proxies:
                 LOGGER.info('no proxies, refresh now')
                 if not start_proxies():

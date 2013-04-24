@@ -1,18 +1,21 @@
 package fq.router;
 
 import android.content.Context;
+import android.content.SharedPreferences;
 import android.net.wifi.SupplicantState;
 import android.net.wifi.WifiConfiguration;
 import android.net.wifi.WifiManager;
+import android.preference.PreferenceManager;
 import android.util.Log;
 import fq.router.utils.HttpUtils;
 
 import java.lang.reflect.Method;
+import java.net.URLEncoder;
 
 public class WifiHotspot {
 
-    public static final String MODE_WIFI_REPEATER = "wifi repeater";
-    public static final String MODE_TRADITIONAL_WIFI_HOTSPOT = "traditional wifi hotspot";
+    public static final String MODE_WIFI_REPEATER = "wifi-repeater";
+    public static final String MODE_TRADITIONAL_WIFI_HOTSPOT = "traditional-wifi-hotspot";
     private final StatusUpdater statusUpdater;
 
     public WifiHotspot(StatusUpdater statusUpdater) {
@@ -38,8 +41,8 @@ public class WifiHotspot {
                 startTraditionalWifiHotspot();
             }
             statusUpdater.updateStatus("Started wifi hotspot");
-            statusUpdater.appendLog("SSID: spike");
-            statusUpdater.appendLog("PASSWORD: 12345678");
+            statusUpdater.appendLog("SSID: " + getSSID());
+            statusUpdater.appendLog("PASSWORD: " + getPassword());
             statusUpdater.showWifiHotspotToggleButton(true);
             return true;
         } catch (HttpUtils.Error e) {
@@ -59,7 +62,9 @@ public class WifiHotspot {
 
     private void startWifiRepeater() throws Exception {
         statusUpdater.updateStatus("Starting wifi hotspot");
-        HttpUtils.post("http://127.0.0.1:8318/wifi/start");
+        HttpUtils.post("http://127.0.0.1:8318/wifi/start",
+                "ssid=" + URLEncoder.encode(getSSID(), "UTF-8") +
+                        "&password=" + URLEncoder.encode(getPassword(), "UTF-8"));
     }
 
     private void startTraditionalWifiHotspot() {
@@ -77,13 +82,23 @@ public class WifiHotspot {
         WifiManager wifiManager = getWifiManager();
         Method setWifiApEnabledMethod = wifiManager.getClass().getMethod("setWifiApEnabled", WifiConfiguration.class, boolean.class);
         WifiConfiguration wifiConfig = new WifiConfiguration();
-        wifiConfig.SSID = "spike";
+        wifiConfig.SSID = getSSID();
         wifiConfig.allowedKeyManagement.set(WifiConfiguration.AuthAlgorithm.SHARED);
         wifiConfig.allowedAuthAlgorithms.set(WifiConfiguration.AuthAlgorithm.OPEN);
-        wifiConfig.preSharedKey = "12345678";
+        wifiConfig.preSharedKey = getPassword();
         wifiManager.setWifiEnabled(false);
         Thread.sleep(1500);
         setWifiApEnabledMethod.invoke(wifiManager, wifiConfig, enabled);
+    }
+
+    private String getSSID() {
+        SharedPreferences preferences = PreferenceManager.getDefaultSharedPreferences(statusUpdater.getBaseContext());
+        return preferences.getString("WifiHotspotSSID", "fqrouter");
+    }
+
+    private String getPassword() {
+        SharedPreferences preferences = PreferenceManager.getDefaultSharedPreferences(statusUpdater.getBaseContext());
+        return preferences.getString("WifiHotspotPassword", "12345678");
     }
 
     public boolean isConnected() {

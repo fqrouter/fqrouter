@@ -3,11 +3,12 @@ package fq.router;
 import android.app.*;
 import android.content.DialogInterface;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.content.pm.PackageInfo;
 import android.net.Uri;
-import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
+import android.preference.PreferenceManager;
 import android.support.v4.app.NotificationCompat;
 import android.text.method.ScrollingMovementMethod;
 import android.util.Log;
@@ -17,15 +18,9 @@ import android.view.View;
 import android.widget.TextView;
 import android.widget.Toast;
 import android.widget.ToggleButton;
-import fq.router.utils.IOUtils;
-import fq.router.utils.ShellUtils;
 
 import java.io.File;
-import java.io.FileOutputStream;
-import java.io.InputStream;
-import java.io.OutputStream;
 import java.lang.reflect.Method;
-import java.util.ArrayList;
 
 
 public class MainActivity extends Activity implements StatusUpdater {
@@ -45,6 +40,7 @@ public class MainActivity extends Activity implements StatusUpdater {
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.main);
+        PreferenceManager.setDefaultValues(this, R.xml.preferences, false);
         setupUI();
         new Thread(new Runnable() {
             @Override
@@ -95,24 +91,30 @@ public class MainActivity extends Activity implements StatusUpdater {
             public void onClick(View view) {
                 final boolean checked = wifiHotspotToggleButton.isChecked();
                 findViewById(R.id.wifiHotspotPanel).setVisibility(View.INVISIBLE);
-                new Thread(new Runnable() {
-                    @Override
-                    public void run() {
-                        if (checked) {
-                            startWifiHotspot();
-                        } else {
-                            wifiHotspot.stop();
-                        }
-                    }
-                }).start();
+                applyWifiHotspotIsStarted(checked);
             }
         });
     }
 
+    private void applyWifiHotspotIsStarted(final boolean isStarted) {
+        new Thread(new Runnable() {
+            @Override
+            public void run() {
+                if (isStarted) {
+                    startWifiHotspot();
+                } else {
+                    wifiHotspot.stop();
+                }
+            }
+        }).start();
+    }
+
     private void startWifiHotspot() {
+        SharedPreferences preferences = PreferenceManager.getDefaultSharedPreferences(this);
+        String mode = preferences.getString("WifiHotspotMode", WifiHotspot.MODE_WIFI_REPEATER);
         boolean wasConnected = wifiHotspot.isConnected();
-        boolean started = wifiHotspot.start(WifiHotspot.MODE_WIFI_REPEATER);
-        if (!started) {
+        boolean started = wifiHotspot.start(mode);
+        if (!started && WifiHotspot.MODE_WIFI_REPEATER.equals(mode)) {
             if (wasConnected) {
                 askIfStartTraditionalWifiHotspot();
             } else {
@@ -149,12 +151,12 @@ public class MainActivity extends Activity implements StatusUpdater {
         }, 2000);
     }
 
-    public void showWifiHotspotToggleButton(final boolean checked) {
+    public void showWifiHotspotToggleButton(final boolean isStarted) {
         handler.postDelayed(new Runnable() {
             @Override
             public void run() {
                 final ToggleButton wifiHotspotToggleButton = (ToggleButton) findViewById(R.id.wifiHotspotToggleButton);
-                wifiHotspotToggleButton.setChecked(checked);
+                wifiHotspotToggleButton.setChecked(isStarted);
                 final View wifiHotspotPanel = findViewById(R.id.wifiHotspotPanel);
                 wifiHotspotPanel.setVisibility(View.VISIBLE);
             }
@@ -268,16 +270,8 @@ public class MainActivity extends Activity implements StatusUpdater {
     }
 
     private void onReportErrorClicked() {
-        Intent i = new Intent(Intent.ACTION_SEND_MULTIPLE);
-        i.setType("text/plain");
-        i.putExtra(Intent.EXTRA_EMAIL, new String[]{"fqrouter@gmail.com"});
-        i.putExtra(Intent.EXTRA_SUBJECT, "android fqrouter error report for version " + getMyVersion());
-        i.putExtra(Intent.EXTRA_TEXT, getErrorMailBody());
-        createLogFiles();
-        attachLogFiles(i, "/sdcard/manager.log", "/sdcard/logcat.log",
-                "/sdcard/getprop.log", "/sdcard/dmesg.log");
         try {
-            startActivity(Intent.createChooser(i, "Send mail..."));
+            startActivity(Intent.createChooser(new ErrorReportEmail(this).prepare(), "Send mail..."));
         } catch (android.content.ActivityNotFoundException ex) {
             Toast.makeText(MainActivity.this, "There are no email clients installed.", Toast.LENGTH_SHORT).show();
         }
@@ -336,15 +330,6 @@ public class MainActivity extends Activity implements StatusUpdater {
         updateStatus("Error: " + msg);
     }
 
-    private String getErrorMailBody() {
-        StringBuilder body = new StringBuilder();
-        body.append("phone model: " + Build.MODEL + "\n");
-        body.append("android version: " + Build.VERSION.RELEASE + "\n");
-        body.append("kernel version: " + System.getProperty("os.version") + "\n");
-        body.append("fqrouter version: " + getMyVersion() + "\n");
-        return body.toString();
-    }
-
     public String getMyVersion() {
         try {
             PackageInfo packageInfo = getPackageManager().getPackageInfo(getPackageName(), 0);
@@ -377,62 +362,5 @@ public class MainActivity extends Activity implements StatusUpdater {
                         .show();
             }
         }, 0);
-    }
-
-    private void createLogFiles() {
-        try {
-            deployCaptureLogSh();
-            ShellUtils.sudo("/system/bin/sh", "/data/data/fq.router/capture-log.sh");
-        } catch (Exception e) {
-            Log.e("fqrouter", "failed to execute capture-log.sh", e);
-            try {
-                ShellUtils.sudo(false, "/system/bin/getprop", ">", "/sdcard/getprop.log");
-            } catch (Exception e2) {
-                Log.e("fqrouter", "failed to execute getprop", e2);
-            }
-            try {
-                ShellUtils.sudo(false, "/system/bin/dmesg", ">", "/sdcard/dmesg.log");
-            } catch (Exception e2) {
-                Log.e("fqrouter", "failed to execute dmesg", e2);
-            }
-            try {
-                ShellUtils.sudo(false, "/system/bin/logcat", "-d", "-v", "time", "-s", "fqrouter:V", ">", "/sdcard/logcat.log");
-            } catch (Exception e2) {
-                Log.e("fqrouter", "failed to execute logcat", e2);
-            }
-        }
-    }
-
-    private void deployCaptureLogSh() {
-        try {
-            InputStream inputStream = getAssets().open("capture-log.sh");
-            try {
-                OutputStream outputStream = new FileOutputStream("/data/data/fq.router/capture-log.sh");
-                try {
-                    IOUtils.copy(inputStream, outputStream);
-                } finally {
-                    outputStream.close();
-                }
-            } finally {
-                inputStream.close();
-            }
-        } catch (Exception e) {
-            Log.e("fqrouter", "failed to deploy capture-log.sh", e);
-        }
-    }
-
-    private void attachLogFiles(Intent i, String... logFilePaths) {
-        ArrayList<Uri> logFiles = new ArrayList<Uri>();
-        for (String logFilePath : logFilePaths) {
-            File logFile = new File(logFilePath);
-            if (logFile.exists()) {
-                logFiles.add(Uri.fromFile(logFile));
-            }
-        }
-        try {
-            i.putParcelableArrayListExtra(Intent.EXTRA_STREAM, logFiles);
-        } catch (Exception e) {
-            Log.e("fqrouter", "failed to attach log", e);
-        }
     }
 }

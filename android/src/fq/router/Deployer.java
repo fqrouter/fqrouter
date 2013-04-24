@@ -86,6 +86,7 @@ public class Deployer {
         }
         try {
             selectLinker();
+            linkFile(new File("/data/data/fq.router/python/lib"), new File("/data/data/fq.router/lib"));
         } catch (Exception e) {
             statusUpdater.reportError("failed to select linker", e);
             return false;
@@ -217,9 +218,6 @@ public class Deployer {
     }
 
     private void selectLinker() throws Exception {
-        if (LINKER_FILE.exists()) {
-            LINKER_FILE.delete();
-        }
         if (Build.VERSION.SDK_INT < SDK_ICS) {
             statusUpdater.appendLog("select linker 2.x");
             linkFile(LINKER_2_X_FILE, LINKER_FILE);
@@ -269,7 +267,10 @@ public class Deployer {
 
     private static void linkFile(File src, File dst) throws Exception {
         if (dst.exists()) {
-            return;
+            if (dst.getCanonicalPath().equals(src.getCanonicalPath())) {
+                return;
+            }
+            dst.delete();
         }
         try {
             ShellUtils.sudo(BUSYBOX_FILE.getAbsolutePath(), "ln", "-s", src.getAbsolutePath(), dst.getAbsolutePath());
