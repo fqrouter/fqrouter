@@ -1,17 +1,15 @@
 import logging
 import socket
+import httplib
 
-import tornado.web
 import dpkt
 
 
 LOGGER = logging.getLogger(__name__)
 DOMAIN = 'beta.android.ver.fqrouter.com'
 
-
-class LatestVersionHandler(tornado.web.RequestHandler):
-    def get(self):
-        self.write(resolve_latest_version())
+def handle_latest(environ):
+    return httplib.OK, [('Content-Type', 'text/plain')], resolve_latest_version()
 
 
 def resolve_latest_version():

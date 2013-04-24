@@ -14,9 +14,6 @@ PYTHON_ZIP_FILE = os.path.join(PAYLOAD_DIR, 'python.zip')
 PYTHON_DIR = os.path.join(PAYLOAD_DIR, 'python')
 WIFI_TOOLS_ZIP_FILE = os.path.join(PAYLOAD_DIR, 'wifi-tools.zip')
 WIFI_TOOLS_DIR = os.path.join(PAYLOAD_DIR, 'wifi-tools')
-TORNADO_ZIP_FILE = os.path.join(PAYLOAD_DIR, 'tornado.zip')
-TORNADO_DIR = os.path.join(PAYLOAD_DIR, 'tornado-branch2.4')
-TORNADO_PACKAGE_DIR = os.path.join(TORNADO_DIR, 'tornado')
 DPKT_TAR_GZ_FILE = os.path.join(PAYLOAD_DIR, 'dpkt-1.7.tar.gz')
 DPKT_DIR = os.path.join(PAYLOAD_DIR, 'dpkt-1.7')
 DPKT_PACKAGE_DIR = os.path.join(DPKT_DIR, 'dpkt')
@@ -40,8 +37,6 @@ def main():
     unzip_python27()
     download_wifi_tools()
     unzip_wifi_tools()
-    download_tornado()
-    unzip_tornado()
     download_dpkt()
     untargz_dpkt()
     download_busybox()
@@ -76,21 +71,6 @@ def unzip_wifi_tools():
         return
     os.mkdir(WIFI_TOOLS_DIR)
     subprocess.check_call('unzip %s' % WIFI_TOOLS_DIR, cwd=WIFI_TOOLS_DIR, shell=True)
-
-
-def download_tornado():
-    if os.path.exists(TORNADO_ZIP_FILE):
-        return
-    urllib.urlretrieve('https://github.com/facebook/tornado/archive/branch2.4.zip', TORNADO_ZIP_FILE)
-
-
-def unzip_tornado():
-    if os.path.exists(TORNADO_DIR):
-        return
-    subprocess.check_call('unzip %s' % TORNADO_ZIP_FILE, cwd=PAYLOAD_DIR, shell=True)
-    if not os.path.exists(os.path.join(TORNADO_DIR, 'setup.py')):
-        print('zip file not as expected')
-        sys.exit(1)
 
 
 def download_dpkt():
@@ -143,7 +123,6 @@ def zip_payload():
     include_directory(WIFI_TOOLS_DIR, PAYLOAD_DIR)
     include_directory(PROXY_TOOLS_DIR, PAYLOAD_DIR)
     include_directory(MANAGER_DIR, os.path.dirname(MANAGER_DIR))
-    include_directory(TORNADO_PACKAGE_DIR, TORNADO_DIR, 'python/lib/python2.7/site-packages')
     include_directory(DPKT_PACKAGE_DIR, DPKT_DIR, 'python/lib/python2.7/site-packages')
 
     payload_zip.close()

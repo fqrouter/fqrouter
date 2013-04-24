@@ -8,8 +8,6 @@ import httplib
 import re
 import traceback
 
-import tornado.web
-
 import iptables
 import hostapd_template
 
@@ -60,40 +58,30 @@ def clean():
     stop_hotspot()
 
 
-class WifiStartHandler(tornado.web.RequestHandler):
-    def post(self):
-        success, message = start_hotspot(self.get_argument('ssid'), self.get_argument('password'))
-        if not success:
-            self.set_status(httplib.INTERNAL_SERVER_ERROR)
-        self.write(message)
+def handle_start(environ):
+    ssid = environ['REQUEST_ARGUMENTS']['ssid'].value
+    password = environ['REQUEST_ARGUMENTS']['password'].value
+    success, message = start_hotspot(ssid, password)
+    status = httplib.OK if success else httplib.INTERNAL_SERVER_ERROR
+    return status, [('Content-Type', 'text/plain')], message
 
 
-class WifiStopHandler(tornado.web.RequestHandler):
-    def post(self):
-        self.write(stop_hotspot())
+def handle_stop(environ):
+    return httplib.OK, [('Content-Type', 'text/plain')], [stop_hotspot()]
 
 
-class WifiSetupHandler(tornado.web.RequestHandler):
-    def post(self):
-        try:
-            for i in range(10):
-                iface = get_working_hotspot_iface()
-                if not iface:
-                    time.sleep(2)
-                    continue
-                setup_networking(iface)
-                return
-        except:
-            LOGGER.exception('failed to setup network')
-            self.set_status(httplib.INTERNAL_SERVER_ERROR)
+def handle_setup(environ):
+    for i in range(10):
+        iface = get_working_hotspot_iface()
+        if not iface:
+            time.sleep(2)
+            continue
+        setup_networking(iface)
+        return httplib.OK, [('Content-Type', 'text/plain')], []
 
 
-class WifiIsStartedHandler(tornado.web.RequestHandler):
-    def get(self):
-        if get_working_hotspot_iface():
-            self.write('TRUE')
-        else:
-            self.write('FALSE')
+def handle_started(environ):
+    return httplib.OK, [('Content-Type', 'text/plain')], ['TRUE' if get_working_hotspot_iface() else 'FALSE']
 
 
 def stop_hotspot():

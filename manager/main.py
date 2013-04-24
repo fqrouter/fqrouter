@@ -20,53 +20,65 @@ if '__main__' == __name__:
 
 LOGGER = logging.getLogger(__name__)
 
-import tornado.ioloop
-import tornado.template
-import tornado.web
-
+import httplib
+import wifi
+import version
+import cgi
+import wsgiref.simple_server
 import dns_service
 import tcp_service
 import full_proxy_service
-import wifi
-import version
 
 
-template_loader = tornado.template.Loader(ROOT_DIR)
+def handle_ping(environ):
+    return httplib.OK, [('Content-Type', 'text/plain')], 'PONG'
 
 
-class PingHandler(tornado.web.RequestHandler):
-    def get(self):
-        self.write('PONG')
+def handle_logs(environ):
+    output = ['<html><body><pre>']
+    lines = []
+    with open(LOG_FILE) as f:
+        lines.append(f.read())
+    output.extend(reversed(lines))
+    output.append('</pre></body></html>')
+    return httplib.OK, [('Content-Type', 'text/html')], output
 
 
-class LogsHandler(tornado.web.RequestHandler):
-    def get(self):
-        self.write('<html><body><pre>')
-        lines = []
-        with open(LOG_FILE) as f:
-            lines.append(f.read())
-        for line in reversed(lines):
-            self.write(line)
-        self.write('</pre></body></html>')
+HANDLERS = {
+    ('GET', 'ping'): handle_ping,
+    ('GET', 'logs'): handle_logs,
+    ('POST', 'wifi/start'): wifi.handle_start,
+    ('POST', 'wifi/stop'): wifi.handle_stop,
+    ('GET', 'wifi/started'): wifi.handle_started,
+    ('POST', 'wifi/setup'): wifi.handle_setup,
+    ('GET', 'version/latest'): version.handle_latest
+}
 
 
-application = tornado.web.Application([
-    (r'/ping', PingHandler),
-    (r'/logs', LogsHandler),
-    (r'/wifi/start', wifi.WifiStartHandler),
-    (r'/wifi/stop', wifi.WifiStopHandler),
-    (r'/wifi/started', wifi.WifiIsStartedHandler),
-    (r'/wifi/setup', wifi.WifiSetupHandler),
-    (r'/version/latest', version.LatestVersionHandler)
-])
+def handle_request(environ, start_response):
+    method = environ.get('REQUEST_METHOD')
+    path = environ.get('PATH_INFO', '').strip('/')
+    environ['REQUEST_ARGUMENTS'] = cgi.FieldStorage(
+        fp=environ['wsgi.input'],
+        environ=environ,
+        keep_blank_values=True)
+    handler = HANDLERS.get((method, path))
+    if handler:
+        try:
+            status, headers, output = handler(environ)
+            start_response(get_http_response(status), headers)
+            return [output] if isinstance(output, basestring) else output
+        except:
+            LOGGER.exception('failed to handle request: %s %s' % (method, path))
+            start_response(get_http_response(httplib.INTERNAL_SERVER_ERROR), [('Content-Type', 'text/plain')])
+            return []
+    else:
+        start_response(get_http_response(httplib.NOT_FOUND), [('Content-Type', 'text/plain')])
+        return []
 
-application.listening_to_hotspot_lan = False
 
-
-def listen_to_hotspot_lan():
-    if not application.listening_to_hotspot_lan:
-        application.listening_to_hotspot_lan = True
-        application.listen(80, '10.24.1.1')
+def get_http_response(code):
+    return '%s %s' % (code, httplib.responses[code])
 
 
 if '__main__' == __name__:
@@ -76,6 +88,6 @@ if '__main__' == __name__:
     full_proxy_service.run()
     wifi.setup_lo_alias()
     LOGGER.info('services started')
-    application.listen(8318, '127.0.0.1')
-    wifi.on_wifi_hotspot_started = listen_to_hotspot_lan
-    tornado.ioloop.IOLoop.instance().start()
+    httpd = wsgiref.simple_server.make_server('', 8318, handle_request)
+    LOGGER.info('Serving HTTP on port 8318...')
+    httpd.serve_forever()
