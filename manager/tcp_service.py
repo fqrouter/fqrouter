@@ -62,7 +62,7 @@ def add_rules():
     RULES.append(RULE_INPUT_ICMP)
     RULE_OUTPUT_PSH_ACK = (
         {'target': 'NFQUEUE', 'extra': 'tcp flags:0x3F/0x18 NFQUEUE num 2'},
-        ('filter', 'scramble_OUTPUT', '-o %s -p tcp --tcp-flags ALL PSH,ACK -j NFQUEUE --queue-num 2')
+        ('filter', 'scramble_OUTPUT', '-p tcp --tcp-flags ALL PSH,ACK -j NFQUEUE --queue-num 2')
     )
     RULES.append(RULE_OUTPUT_PSH_ACK)
     RULE_OUTPUT_SYN = (
