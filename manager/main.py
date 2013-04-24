@@ -28,6 +28,7 @@ import wsgiref.simple_server
 import dns_service
 import tcp_service
 import full_proxy_service
+import sys
 
 
 def handle_ping(environ):
@@ -88,6 +89,10 @@ if '__main__' == __name__:
     full_proxy_service.run()
     wifi.setup_lo_alias()
     LOGGER.info('services started')
-    httpd = wsgiref.simple_server.make_server('', 8318, handle_request)
-    LOGGER.info('Serving HTTP on port 8318...')
+    try:
+        httpd = wsgiref.simple_server.make_server('', 8318, handle_request)
+        LOGGER.info('serving HTTP on port 8318...')
+    except:
+        LOGGER.exception('failed to start HTTP server on port 8318')
+        sys.exit(1)
     httpd.serve_forever()

@@ -1,11 +1,7 @@
 package fq.router;
 
-import android.content.res.AssetManager;
 import android.util.Log;
 import fq.router.utils.HttpUtils;
-import fq.router.utils.IOUtils;
-
-import java.net.URL;
 
 public class Supervisor implements Runnable {
 
@@ -27,13 +23,16 @@ public class Supervisor implements Runnable {
 
     public static boolean ping() {
         try {
-            String content = IOUtils.readAll(new URL("http://127.0.0.1:8318/ping").openStream());
+            String content = HttpUtils.get("http://127.0.0.1:8318/ping");
             if ("PONG".equals(content)) {
                 return true;
             } else {
                 Log.e("fqrouter", "ping failed: " + content);
                 return false;
             }
+        } catch (HttpUtils.Error e) {
+            Log.e("fqrouter", "ping failed: [" + e.responseCode + "] " + e.output);
+            return false;
         } catch (Exception e) {
             Log.e("fqrouter", "ping failed");
             return false;

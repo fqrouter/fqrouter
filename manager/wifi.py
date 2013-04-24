@@ -491,6 +491,7 @@ def start_p2p_persistent_network(iface, control_socket_dir, ssid, password):
     frequency, channel = get_upstream_frequency_and_channel()
     if channel:
         reset_p2p_channels(iface, control_socket_dir, channel)
+        reset_p2p_channels(WIFI_INTERFACE, get_wpa_supplicant_control_socket_dir(), channel)
     if frequency:
         shell_execute('%s -p %s -i %s p2p_group_add persistent=%s freq=%s ' %
                       (P2P_CLI_PATH, control_socket_dir, iface, index, frequency.replace('.', '')))

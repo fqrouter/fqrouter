@@ -1,6 +1,5 @@
 package fq.router;
 
-import android.os.Build;
 import android.util.Log;
 import fq.router.utils.IOUtils;
 import fq.router.utils.ShellUtils;
@@ -19,14 +18,11 @@ public class Deployer {
     public static File PYTHON_DIR = new File(DATA_DIR, "python");
     public static File PYTHON_LAUNCHER = new File(PYTHON_DIR, "bin/python-launcher.sh");
     public static File LINKER_FILE = new File(PYTHON_DIR, "bin/linker");
-    public static File LINKER_2_X_FILE = new File(PYTHON_DIR, "bin/linker-2.x");
-    public static File LINKER_4_X_FILE = new File(PYTHON_DIR, "bin/linker-4.x");
     public static File WIFI_TOOLS_DIR = new File(DATA_DIR, "wifi-tools");
     public static File PROXY_TOOLS_DIR = new File(DATA_DIR, "proxy-tools");
     public static File MANAGER_DIR = new File(DATA_DIR, "manager");
     public static File MANAGER_MAIN_PY = new File(MANAGER_DIR, "main.py");
     public static File MANAGER_CLEAN_PY = new File(MANAGER_DIR, "clean.py");
-    private static final int SDK_ICS = 14; // SDK Ice Cream Sandwich
     private final StatusUpdater statusUpdater;
 
     public Deployer(StatusUpdater statusUpdater) {
@@ -218,12 +214,8 @@ public class Deployer {
     }
 
     private void selectLinker() throws Exception {
-        if (Build.VERSION.SDK_INT < SDK_ICS) {
-            statusUpdater.appendLog("select linker 2.x");
-            linkFile(LINKER_2_X_FILE, LINKER_FILE);
-        } else {
-            statusUpdater.appendLog("select linker 4.x");
-            linkFile(LINKER_4_X_FILE, LINKER_FILE);
+        if (!LINKER_FILE.exists()) {
+            linkFile(new File("/system/bin/linker"), LINKER_FILE);
         }
     }
 
