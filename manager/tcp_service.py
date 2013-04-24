@@ -274,7 +274,7 @@ def handle_syn(syn):
         pending_syn[dst] = time.time()
     for ip, sent_at in pending_syn.items():
         elapsed_seconds = time.time() - sent_at
-        if elapsed_seconds > 3:
+        if elapsed_seconds > 2:
             log_jamming_event(ip, 'syn packet drop')
             del pending_syn[ip]
             full_proxy_service.add_to_black_list(ip, syn=syn)

@@ -4,11 +4,10 @@ from netfilterqueue import NetfilterQueue
 import socket
 import time
 import urllib2
-import struct
 import threading
+import subprocess
 
 import dpkt
-from pynetfilter_conntrack import Conntrack
 
 import shutdown_hook
 import iptables
@@ -370,12 +369,14 @@ def add_to_black_list(ip, syn=None):
 
 
 def delete_existing_conntrack_entry(ip):
-    conntrack = Conntrack()
-    for entry in conntrack.dump_table():
-        reply_src = socket.inet_ntoa(struct.pack('!I', entry.repl_ipv4_src))
-        if ip == reply_src:
-            LOGGER.info('delete %s' % entry)
-            conntrack.destroy_conntrack(entry)
+    try:
+        output = subprocess.check_output(
+            ['/data/data/fq.router/python/bin/conntrack', '-D', '-p', 'tcp', '--reply-src', ip],
+            stderr=subprocess.STDOUT).strip()
+        LOGGER.info('succeed: %s' % output)
+    except subprocess.CalledProcessError, e:
+        LOGGER.error('failed: %s' % e.output)
+        LOGGER.exception('failed to delete existing conntrack entry %s' % ip)
 
 
 def add_to_white_list(ip):
