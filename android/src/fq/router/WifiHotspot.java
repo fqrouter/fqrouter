@@ -24,7 +24,7 @@ public class WifiHotspot {
 
     public static boolean isStarted() {
         try {
-            return "TRUE".equals(HttpUtils.get("http://127.0.0.1:8318/wifi/started"));
+            return "TRUE".equals(HttpUtils.get("http://10.1.2.3:8318/wifi/started"));
 
         } catch (Exception e) {
             Log.e("fqrouter", "failed to check wifi hotspot is started", e);
@@ -62,7 +62,7 @@ public class WifiHotspot {
 
     private void startWifiRepeater() throws Exception {
         statusUpdater.updateStatus("Starting wifi hotspot");
-        HttpUtils.post("http://127.0.0.1:8318/wifi/start",
+        HttpUtils.post("http://10.1.2.3:8318/wifi/start",
                 "ssid=" + URLEncoder.encode(getSSID(), "UTF-8") +
                         "&password=" + URLEncoder.encode(getPassword(), "UTF-8"));
     }
@@ -123,7 +123,7 @@ public class WifiHotspot {
                 return false;
             }
             statusUpdater.updateStatus("Setup wifi hotspot network");
-            HttpUtils.post("http://127.0.0.1:8318/wifi/setup");
+            HttpUtils.post("http://10.1.2.3:8318/wifi/setup");
             return true;
         } catch (HttpUtils.Error e) {
             statusUpdater.appendLog("error: " + e.output);
@@ -148,7 +148,7 @@ public class WifiHotspot {
             } catch (Exception e) {
                 Log.e("fqrouter", "failed to disable wifi ap", e);
             }
-            HttpUtils.post("http://127.0.0.1:8318/wifi/stop");
+            HttpUtils.post("http://10.1.2.3:8318/wifi/stop");
         } catch (Exception e) {
             statusUpdater.reportError("failed to stop wifi hotspot", e);
         }
