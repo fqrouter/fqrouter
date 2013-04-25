@@ -25,7 +25,6 @@ public class WifiHotspot {
     public static boolean isStarted() {
         try {
             return "TRUE".equals(HttpUtils.get("http://127.0.0.1:8318/wifi/started"));
-
         } catch (Exception e) {
             Log.e("fqrouter", "failed to check wifi hotspot is started", e);
             return false;

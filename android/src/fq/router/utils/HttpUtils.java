@@ -24,6 +24,7 @@ public class HttpUtils {
             connection.setRequestProperty("charset", "utf-8");
             connection.setRequestProperty("Content-Length", "" + Integer.toString(body.getBytes().length));
             connection.setUseCaches(false);
+            connection.setReadTimeout(60000);
             DataOutputStream wr = new DataOutputStream(connection.getOutputStream());
             try {
                 wr.writeBytes(body);
@@ -50,6 +51,7 @@ public class HttpUtils {
             connection.setInstanceFollowRedirects(false);
             connection.setRequestMethod("GET");
             connection.setUseCaches(false);
+            connection.setReadTimeout(3000);
             int responseCode = connection.getResponseCode();
             String output = IOUtils.readAll(connection.getInputStream());
             if (responseCode >= 200 && responseCode < 300) {

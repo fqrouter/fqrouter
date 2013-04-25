@@ -2,6 +2,7 @@ package fq.router.utils;
 
 import java.io.*;
 import java.math.BigInteger;
+import java.net.Socket;
 import java.security.MessageDigest;
 
 public class IOUtils {

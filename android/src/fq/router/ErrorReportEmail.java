@@ -29,28 +29,28 @@ public class ErrorReportEmail {
         i.putExtra(Intent.EXTRA_TEXT, getErrorMailBody());
         createLogFiles();
         attachLogFiles(i, "/sdcard/manager.log", "/sdcard/logcat.log",
-                "/sdcard/getprop.log", "/sdcard/dmesg.log");
+                "/sdcard/getprop.log", "/sdcard/dmesg.log", "/sdcard/iptables.log");
         return i;
     }
 
     private void createLogFiles() {
         try {
             deployCaptureLogSh();
-            ShellUtils.sudo("/system/bin/sh", "/data/data/fq.router/capture-log.sh");
+            ShellUtils.sudo("sh", "/data/data/fq.router/capture-log.sh");
         } catch (Exception e) {
             Log.e("fqrouter", "failed to execute capture-log.sh", e);
             try {
-                ShellUtils.sudo(false, "/system/bin/getprop", ">", "/sdcard/getprop.log");
+                ShellUtils.sudo(false, "getprop", ">", "/sdcard/getprop.log");
             } catch (Exception e2) {
                 Log.e("fqrouter", "failed to execute getprop", e2);
             }
             try {
-                ShellUtils.sudo(false, "/system/bin/dmesg", ">", "/sdcard/dmesg.log");
+                ShellUtils.sudo(false, "dmesg", ">", "/sdcard/dmesg.log");
             } catch (Exception e2) {
                 Log.e("fqrouter", "failed to execute dmesg", e2);
             }
             try {
-                ShellUtils.sudo(false, "/system/bin/logcat", "-d", "-v", "time", "-s", "fqrouter:V", ">", "/sdcard/logcat.log");
+                ShellUtils.sudo(false, "logcat", "-d", "-v", "time", "-s", "fqrouter:V", ">", "/sdcard/logcat.log");
             } catch (Exception e2) {
                 Log.e("fqrouter", "failed to execute logcat", e2);
             }

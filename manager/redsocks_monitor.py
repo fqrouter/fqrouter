@@ -33,7 +33,7 @@ def start_redsocks(proxies):
     redsocks_process = subprocess.Popen(
         ['/data/data/fq.router/proxy-tools/redsocks', '-c', cfg_path],
         stderr=subprocess.STDOUT, stdout=subprocess.PIPE, bufsize=1, close_fds=True)
-    time.sleep(0.5)
+    time.sleep(2)
     if redsocks_process.poll() is None:
         LOGGER.info('redsocks seems started: %s' % redsocks_process.pid)
         t = threading.Thread(target=monitor_redsocks)
