@@ -1,9 +1,9 @@
-import socket
 import logging
 
 import dpkt
 
 import goagent
+import dns_resolver
 
 
 LOGGER = logging.getLogger('fqrouter.%s' % __name__)
@@ -67,13 +67,7 @@ def resolve_appids():
 
 def resolve_appid(index):
     try:
-        sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM) # UDP
-        sock.settimeout(3)
-        request = dpkt.dns.DNS(qd=[dpkt.dns.DNS.Q(name='goagent%s.fqrouter.com' % index, type=dpkt.dns.DNS_TXT)])
-        sock.sendto(str(request), ('8.8.8.8', 53))
-        data, addr = sock.recvfrom(1024)
-        response = dpkt.dns.DNS(data)
-        answer = response.an[0]
+        answer = dns_resolver.resolve('goagent%s.fqrouter.com' % index, record_type=dpkt.dns.DNS_TXT)
         appid = ''.join(e for e in answer.rdata if e.isalnum())
         LOGGER.info('resolved goagent appid %s => %s' % (index, appid))
         return appid

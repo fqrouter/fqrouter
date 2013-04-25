@@ -12,6 +12,7 @@ import pending_connection
 import shutdown_hook
 import china_ip
 import dns_service
+import dns_resolver
 import full_proxy_service
 
 LOGGER = logging.getLogger('fqrouter.%s' % __name__)
@@ -334,7 +335,7 @@ def handle_syn_ack(syn_ack):
 
 
 def log_jamming_event(ip, event):
-    event = '%s: %s %s' % (dns_service.get_domain(ip) or 'unknown.com', ip, event)
+    event = '%s: %s %s' % (dns_resolver.get_domain(ip) or 'unknown.com', ip, event)
     LOGGER.error('jamming event: %s' % event)
 
 

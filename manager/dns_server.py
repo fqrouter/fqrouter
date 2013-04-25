@@ -1,7 +1,7 @@
-import socket
 import traceback
 import logging
 import china_domain
+import dns_resolver
 
 LOGGER = logging.getLogger('fqrouter.%s' % __name__)
 
@@ -21,14 +21,14 @@ DNS_SERVERS = {
 
 VER_DOMAIN = 'd2anp67vmqk4wc.cloudfront.net'
 try:
-    PRIMARY_VER_DNS_IP = socket.gethostbyname('ns-51.awsdns-06.com')
+    PRIMARY_VER_DNS_IP = dns_resolver.resolve('ns-51.awsdns-06.com')
     PRIMARY_VER_DNS_PORT = 53
 except:
     LOGGER.exception('failed to resolve ns-51.awsdns-06.com')
     PRIMARY_VER_DNS_IP = PRIMARY_DEFAULT_DNS_IP
     PRIMARY_VER_DNS_PORT = PRIMARY_DEFAULT_DNS_PORT
 try:
-    SECONDARY_VER_DNS_IP = socket.gethostbyname('ns-738.awsdns-28.net')
+    SECONDARY_VER_DNS_IP = dns_resolver.resolve('ns-738.awsdns-28.net')
     SECONDARY_VER_DNS_PORT = 53
 except:
     LOGGER.exception('failed to resolve ns-738.awsdns-28.net')
@@ -45,14 +45,14 @@ GOOGLE_COM_DOMAIN = {
     'mobile-gtalk.google.com', 'mtalk.google.com'
 }
 try:
-    PRIMARY_GOOGLE_COM_DNS_IP = socket.gethostbyname('ns-285.awsdns-35.com')
+    PRIMARY_GOOGLE_COM_DNS_IP = dns_resolver.resolve('ns-285.awsdns-35.com')
     PRIMARY_GOOGLE_COM_DNS_PORT = 53
 except:
     LOGGER.exception('failed to resolve ns-285.awsdns-35.com')
     PRIMARY_GOOGLE_COM_DNS_IP = PRIMARY_DEFAULT_DNS_IP
     PRIMARY_GOOGLE_COM_DNS_PORT = PRIMARY_DEFAULT_DNS_PORT
 try:
-    SECONDARY_GOOGLE_COM_DNS_IP = socket.gethostbyname('ns-914.awsdns-50.net')
+    SECONDARY_GOOGLE_COM_DNS_IP = dns_resolver.resolve('ns-914.awsdns-50.net')
     SECONDARY_GOOGLE_COM_DNS_PORT = 53
 except:
     LOGGER.exception('failed to resolve ns-914.awsdns-50.net')
@@ -64,14 +64,14 @@ DNS_SERVERS['google-com'] = (
 
 GOOGLE_COM_HK_DOMAIN = {'google.com.hk', 'www.google.com.hk'}
 try:
-    PRIMARY_GOOGLE_COM_HK_DNS_IP = socket.gethostbyname('ns-320.awsdns-40.com')
+    PRIMARY_GOOGLE_COM_HK_DNS_IP = dns_resolver.resolve('ns-320.awsdns-40.com')
     PRIMARY_GOOGLE_COM_HK_DNS_PORT = 53
 except:
     traceback.print_exc()
     PRIMARY_GOOGLE_COM_HK_DNS_IP = PRIMARY_DEFAULT_DNS_IP
     PRIMARY_GOOGLE_COM_HK_DNS_PORT = PRIMARY_DEFAULT_DNS_PORT
 try:
-    SECONDARY_GOOGLE_COM_HK_DNS_IP = socket.gethostbyname('ns-590.awsdns-09.net')
+    SECONDARY_GOOGLE_COM_HK_DNS_IP = dns_resolver.resolve('ns-590.awsdns-09.net')
     SECONDARY_GOOGLE_COM_HK_DNS_PORT = 53
 except:
     traceback.print_exc()

@@ -14,6 +14,7 @@ import iptables
 import china_ip
 import redsocks_monitor
 import goagent_monitor
+import dns_resolver
 
 
 LOGGER = logging.getLogger('fqrouter.%s' % __name__)
@@ -221,13 +222,7 @@ def resolve_free_proxies():
 
 def resolve_free_proxy(mark, local_port, name):
     try:
-        sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM) # UDP
-        sock.settimeout(3)
-        request = dpkt.dns.DNS(qd=[dpkt.dns.DNS.Q(name=name, type=dpkt.dns.DNS_TXT)])
-        sock.sendto(str(request), ('8.8.8.8', 53))
-        data, addr = sock.recvfrom(1024)
-        response = dpkt.dns.DNS(data)
-        answer = response.an[0]
+        answer = dns_resolver.resolve(name, record_type=dpkt.dns.DNS_TXT)
         connection_info = ''.join(e for e in answer.rdata if e.isalnum() or e in [':', '.', '-'])
         connection_info = connection_info.split(':') # proxy_type:ip:port:username:password
         proxies[mark] = {
@@ -391,3 +386,6 @@ def add_to_white_list(ip):
             LOGGER.info('add white list ip: %s' % ip)
         white_list.add(ip)
     pending_list.pop(ip, None)
+
+
+dns_resolver.on_blacklist_ip_resolved = add_to_black_list
