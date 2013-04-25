@@ -6,7 +6,7 @@ import dpkt
 import goagent
 
 
-LOGGER = logging.getLogger(__name__)
+LOGGER = logging.getLogger('fqrouter.%s' % __name__)
 APPIDS_COUNT = 10
 failures_count = 0
 server = None

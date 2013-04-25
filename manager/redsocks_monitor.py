@@ -1,6 +1,7 @@
 import subprocess
 import time
 import logging
+import logging.handlers
 import threading
 import re
 import os
@@ -9,7 +10,17 @@ import signal
 import redsocks_template
 
 
-LOGGER = logging.getLogger(__name__)
+LOGGER = logging.getLogger('fqrouter.%s' % __name__)
+
+ROOT_DIR = os.path.dirname(__file__)
+LOG_DIR = '/data/data/fq.router'
+REDSOCKS_LOG_FILE = os.path.join(LOG_DIR, 'redsocks.log')
+REDSOCKS_LOGGER = logging.getLogger('redsocks')
+handler = logging.handlers.RotatingFileHandler(
+    REDSOCKS_LOG_FILE, maxBytes=1024 * 1024, backupCount=1)
+handler.setFormatter(logging.Formatter('%(asctime)s %(message)s'))
+REDSOCKS_LOGGER.handlers = [handler]
+
 RE_IP_PORT = r'(\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}):(\d+)'
 RE_REDSOCKS_CLIENT = re.compile(RE_IP_PORT + '->')
 RE_REDSOCKS_INSTANCE = re.compile(r'Dumping client list for instance ' + RE_IP_PORT)
@@ -49,8 +60,9 @@ def monitor_redsocks():
     try:
         current_instance = None
         current_clients = set()
-        while is_redsocks_live():
+        while redsocks_process.poll() is None:
             for line in iter(redsocks_process.stdout.readline, b''):
+                REDSOCKS_LOGGER.info(line.strip())
                 match = RE_REDSOCKS_INSTANCE.search(line)
                 if match:
                     current_instance = int(match.group(2))
@@ -78,7 +90,7 @@ def monitor_redsocks():
                     current_instance = None
                 dump_redsocks_client_list()
         LOGGER.error('redsocks died, clear proxies')
-        redsocks_process.stdout.close()
+        redsocks_process.communicate()
         clear_proxies()
     except:
         LOGGER.exception('failed to poll redsocks output')
@@ -101,12 +113,12 @@ def dump_redsocks_client_list(should_dump=False):
     global redsocks_dumped_at
     if redsocks_dumped_at is None:
         redsocks_dumped_at = time.time()
-    elif time.time() - redsocks_dumped_at > 60:
+    elif (time.time() - redsocks_dumped_at) > 60 * 5:
         should_dump = True
     if should_dump:
         LOGGER.info('dump redsocks client list')
-        os.kill(redsocks_process.pid, signal.SIGUSR1)
         redsocks_dumped_at = time.time()
+        os.kill(redsocks_process.pid, signal.SIGUSR1)
 
 
 def kill_redsocks():
@@ -114,4 +126,6 @@ def kill_redsocks():
 
 
 def is_redsocks_live():
-    return not subprocess.call(['/data/data/fq.router/busybox', 'killall', '-0', 'redsocks'])
+    if not redsocks_process:
+        return False
+    return redsocks_process.poll() is None

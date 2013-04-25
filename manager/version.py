@@ -5,7 +5,7 @@ import httplib
 import dpkt
 
 
-LOGGER = logging.getLogger(__name__)
+LOGGER = logging.getLogger('fqrouter.%s' % __name__)
 DOMAIN = 'beta.android.ver.fqrouter.com'
 
 def handle_latest(environ):

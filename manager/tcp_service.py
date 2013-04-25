@@ -14,7 +14,7 @@ import china_ip
 import dns_service
 import full_proxy_service
 
-LOGGER = logging.getLogger(__name__)
+LOGGER = logging.getLogger('fqrouter.%s' % __name__)
 
 
 def run():

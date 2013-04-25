@@ -16,7 +16,7 @@ import redsocks_monitor
 import goagent_monitor
 
 
-LOGGER = logging.getLogger(__name__)
+LOGGER = logging.getLogger('fqrouter.%s' % __name__)
 
 
 def run():

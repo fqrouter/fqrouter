@@ -12,13 +12,13 @@ def setup_logging():
     handler = logging.handlers.RotatingFileHandler(
         LOG_FILE, maxBytes=1024 * 1024, backupCount=1)
     handler.setFormatter(logging.Formatter('%(asctime)s %(levelname)s %(message)s'))
-    logging.getLogger().addHandler(handler)
+    logging.getLogger('fqrouter').addHandler(handler)
 
 
 if '__main__' == __name__:
     setup_logging()
 
-LOGGER = logging.getLogger(__name__)
+LOGGER = logging.getLogger('fqrouter.%s' % __name__)
 
 import httplib
 import wifi

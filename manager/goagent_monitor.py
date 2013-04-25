@@ -5,7 +5,7 @@ import threading
 import os
 import signal
 
-LOGGER = logging.getLogger(__name__)
+LOGGER = logging.getLogger('fqrouter.%s' % __name__)
 BUSYBOX_PATH = '/data/data/fq.router/busybox'
 PYTHON_LAUNCHER_PATH = '/data/data/fq.router/python/bin/python-launcher.sh'
 GOAGENT_LAUNCHER_PATH = os.path.join(os.path.dirname(__file__), 'goagent_launcher.py')

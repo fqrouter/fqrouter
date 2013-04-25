@@ -3,7 +3,7 @@ import traceback
 import logging
 import china_domain
 
-LOGGER = logging.getLogger(__name__)
+LOGGER = logging.getLogger('fqrouter.%s' % __name__)
 
 PRIMARY_DEFAULT_DNS_IP = '8.8.8.8'
 PRIMARY_DEFAULT_DNS_PORT = 53

@@ -13,7 +13,7 @@ import full_proxy_service
 import dns_server
 
 
-LOGGER = logging.getLogger(__name__)
+LOGGER = logging.getLogger('fqrouter.%s' % __name__)
 raw_socket = socket.socket(socket.AF_INET, socket.SOCK_RAW, socket.IPPROTO_RAW)
 shutdown_hook.add(raw_socket.close)
 raw_socket.setsockopt(socket.SOL_IP, socket.IP_HDRINCL, 1)

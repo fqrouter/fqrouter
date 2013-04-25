@@ -4,7 +4,7 @@ import signal
 import logging
 
 
-LOGGER = logging.getLogger(__name__)
+LOGGER = logging.getLogger('fqrouter.%s' % __name__)
 
 shutdown_hooks = []
 

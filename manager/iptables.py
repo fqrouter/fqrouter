@@ -3,7 +3,7 @@ import re
 import subprocess
 import shlex
 
-LOGGER = logging.getLogger(__name__)
+LOGGER = logging.getLogger('fqrouter.%s' % __name__)
 RE_CHAIN_NAME = re.compile(r'Chain (.+) \(')
 RE_SPACE = re.compile(r'\s+')
 
