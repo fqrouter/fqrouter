@@ -23,6 +23,7 @@ CAPTURE_LOG_SH_SRC = os.path.join(SRC_DIR, 'capture-log.sh')
 PROXY_TOOLS_DIR = os.path.join(PAYLOAD_DIR, 'proxy-tools')
 REDSOCKS_FILE = os.path.join(PROXY_TOOLS_DIR, 'redsocks')
 REDSOCKS_FILE_SRC = os.path.join(ROOT_DIR, 'libs', 'armeabi', 'redsocks')
+CONNTRACK_FILE = os.path.join(PROXY_TOOLS_DIR, 'conntrack')
 MANAGER_DIR = os.path.join(ROOT_DIR, '../manager')
 
 
@@ -40,6 +41,7 @@ def main():
     download_dpkt()
     untargz_dpkt()
     download_busybox()
+    download_conntrack()
     copy_capture_log_sh()
     copy_redsocks()
     zip_payload()
@@ -94,6 +96,12 @@ def download_busybox():
     urllib.urlretrieve('http://www.busybox.net/downloads/binaries/latest/busybox-armv6l', BUSYBOX_FILE)
 
 
+def download_conntrack():
+    if os.path.exists(CONNTRACK_FILE):
+        return
+    urllib.urlretrieve('http://cdn.fqrouter.com/android-utils/conntrack', CONNTRACK_FILE)
+
+
 def copy_capture_log_sh():
     subprocess.check_call('cp %s %s' % (CAPTURE_LOG_SH_SRC, CAPTURE_LOG_SH), shell=True)
 
@@ -127,6 +135,7 @@ def zip_payload():
 
     payload_zip.close()
     time.sleep(1)
+
 
 if '__main__' == __name__:
     main()

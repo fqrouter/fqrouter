@@ -369,7 +369,7 @@ def add_to_black_list(ip, syn=None):
 def delete_existing_conntrack_entry(ip):
     try:
         output = subprocess.check_output(
-            ['/data/data/fq.router/python/bin/conntrack', '-D', '-p', 'tcp', '--reply-src', ip],
+            ['/data/data/fq.router/proxy-tools/conntrack', '-D', '-p', 'tcp', '--reply-src', ip],
             stderr=subprocess.STDOUT).strip()
         LOGGER.info('succeed: %s' % output)
     except subprocess.CalledProcessError, e:
