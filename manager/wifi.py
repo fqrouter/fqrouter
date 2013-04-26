@@ -220,6 +220,21 @@ def dump_unix_sockets():
 
 
 def get_working_hotspot_iface():
+    iface = get_working_hotspot_iface_using_nl80211()
+    if iface:
+        return iface
+    try:
+        if 'Mode:Master' in shell_execute('%s %s' % (IWCONFIG_PATH, 'wl0.1')):
+            return 'wl0.1'
+        if 'Mode:Master' in shell_execute('%s %s' % (IWCONFIG_PATH, WIFI_INTERFACE)):
+            return WIFI_INTERFACE
+        return None
+    except:
+        LOGGER.exception('failed to get working hotspot iface using wext')
+        return None
+
+
+def get_working_hotspot_iface_using_nl80211():
     try:
         ifaces = list_wifi_ifaces()
         for iface, is_hotspot in ifaces.items():
@@ -228,10 +243,6 @@ def get_working_hotspot_iface():
         return None
     except:
         LOGGER.exception('failed to get working hotspot iface using nl80211')
-        if 'Mode:Master' in shell_execute('%s %s' % (IWCONFIG_PATH, 'wl0.1')):
-            return 'wl0.1'
-        if 'Mode:Master' in shell_execute('%s %s' % (IWCONFIG_PATH, WIFI_INTERFACE)):
-            return WIFI_INTERFACE
         return None
 
 
@@ -271,8 +282,6 @@ def start_hotspot_interface(wifi_chipset, ssid, password):
         LOGGER.exception('failed to start p2p_supplicant')
     if wifi_chipset.endswith('4330') or wifi_chipset.endswith('4334') or wifi_chipset.endswith('4324'):
     # only tested on sdio:c00v02D0d4330
-    # support of bcm43241(4324) is a wild guess
-    # support of bcm4334(4334) is a wild guess
         hotspot_interface = start_hotspot_on_bcm(ssid, password)
     elif 'platform:wcnss_wlan' == wifi_chipset:
         hotspot_interface = start_hotspot_on_wcnss(ssid, password)
