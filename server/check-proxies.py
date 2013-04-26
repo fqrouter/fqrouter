@@ -51,14 +51,16 @@ def add_proxy(line):
     line = line.strip()
     if not line:
         return
-    ip, port = line.split(':')
-    if manager.china_ip.is_china_ip(ip):
-        log('skip china ip: %s' % ip)
-    if ip in black_list:
-        log('skip blacklisted ip: %s' % ip)
-    else:
-        proxies.add((ip, port, 0))
-
+    try:
+        ip, port = line.split(':')
+        if manager.china_ip.is_china_ip(ip):
+            log('skip china ip: %s' % ip)
+        if ip in black_list:
+            log('skip blacklisted ip: %s' % ip)
+        else:
+            proxies.add((ip, port, 0))
+    except:
+        log('skip illegal ip: %s' % ip)
 
 if args.proxy:
     for proxy in args.proxy:
