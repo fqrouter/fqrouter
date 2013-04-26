@@ -360,13 +360,6 @@ def create_conntrack_entry(src, sport, dst, dport, local_port):
             del conntrack_entry
     finally:
         del conntrack
-    LOGGER.info('nat %s:%s => %s:%s' % (src, sport, dst, dport))
-    output = subprocess.check_output(
-        ['/data/data/fq.router/proxy-tools/conntrack', '-L'],
-        stderr=subprocess.STDOUT).strip()
-    for line in output.splitlines():
-        if 'sport=%s' % sport in line:
-            LOGGER.info(line.strip())
 
 
 def delete_existing_conntrack_entry(ip):
