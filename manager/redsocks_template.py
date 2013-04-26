@@ -75,9 +75,9 @@ redsocks {
 
 def render(proxies):
     sections = [CONF_BASE]
-    for proxy in proxies:
+    for local_port, proxy in proxies.items():
         proxy_type, ip, port, username, password = proxy['connection_info']
         username = 'login = "%s";' % username if username else ''
         password = 'password = "%s";' % password if password else ''
-        sections.append(CONF_REDSOCKS % (proxy['local_port'], proxy_type, ip, port, username, password))
+        sections.append(CONF_REDSOCKS % (local_port, proxy_type, ip, port, username, password))
     return ''.join(sections)

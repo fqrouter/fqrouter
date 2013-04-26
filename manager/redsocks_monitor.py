@@ -40,7 +40,7 @@ def start_redsocks(proxies):
     global redsocks_process
     cfg_path = '/data/data/fq.router/redsocks.conf'
     with open(cfg_path, 'w') as f:
-        f.write(redsocks_template.render(proxies.values()))
+        f.write(redsocks_template.render(proxies))
     redsocks_process = subprocess.Popen(
         ['/data/data/fq.router/proxy-tools/redsocks', '-c', cfg_path],
         stderr=subprocess.STDOUT, stdout=subprocess.PIPE, bufsize=1, close_fds=True)
@@ -60,7 +60,7 @@ def monitor_redsocks():
     try:
         current_instance = None
         current_clients = set()
-        while redsocks_process.poll() is None:
+        while is_redsocks_live():
             for line in iter(redsocks_process.stdout.readline, b''):
                 REDSOCKS_LOGGER.info(line.strip())
                 match = RE_REDSOCKS_INSTANCE.search(line)
@@ -81,15 +81,16 @@ def monitor_redsocks():
                         if match:
                             ip = match.group(1)
                             port = int(match.group(2))
-                            for mark, proxy in list_proxies():
+                            for local_port, proxy in list_proxies():
                                 if (ip, port) in proxy['clients']:
                                     LOGGER.error(line.strip())
-                                    handle_proxy_error(mark, proxy)
+                                    handle_proxy_error(local_port, proxy)
                 if 'End of client list' in line:
                     update_proxy_status(current_instance, current_clients)
                     current_instance = None
                 dump_redsocks_client_list()
-        LOGGER.error('redsocks died, clear proxies')
+            time.sleep(1)
+        LOGGER.error('redsocks died, clear proxies: %s' % redsocks_process.poll())
         redsocks_process.communicate()
         clear_proxies()
     except:
@@ -98,13 +99,13 @@ def monitor_redsocks():
 
 
 def update_proxy_status(current_instance, current_clients):
-    for mark, proxy in list_proxies():
-        if proxy['local_port'] == current_instance:
+    for local_port, proxy in list_proxies():
+        if local_port == current_instance:
             hangover_penalty = int(proxy['pre_rank'] / 2)
             rank = len(current_clients) + hangover_penalty # factor in the previous performance
-            LOGGER.info('update proxy 0x%x rank: [%s+%s] %s' %
-                        (mark, proxy['pre_rank'], hangover_penalty, str(proxy['connection_info'])))
-            update_proxy(mark, rank=rank, pre_rank=rank, clients=current_clients)
+            LOGGER.info('update proxy %s rank: [%s+%s] %s' %
+                        (local_port, proxy['pre_rank'], hangover_penalty, str(proxy['connection_info'])))
+            update_proxy(local_port, rank=rank, pre_rank=rank, clients=current_clients)
             return
     LOGGER.debug('this redsocks instance has been removed from proxy list')
 

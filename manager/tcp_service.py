@@ -79,10 +79,6 @@ def add_scramble_output_chain():
         ('filter', 'OUTPUT', '-j scramble_OUTPUT')
     ))
     RULES.append((
-        {'target': 'RETURN', 'extra': 'mark match 0xcafe'},
-        ('filter', 'scramble_OUTPUT', '-m mark --mark 0xcafe -j RETURN')
-    ))
-    RULES.append((
         {'target': 'RETURN', 'iface_out': 'lo'},
         ('filter', 'scramble_OUTPUT', '-o lo -j RETURN')
     ))
@@ -101,10 +97,6 @@ def add_scramble_input_chain():
         ('filter', 'INPUT', '-j scramble_INPUT')
     ))
     RULES.append((
-        {'target': 'RETURN', 'extra': 'mark match 0xcafe'},
-        ('filter', 'scramble_INPUT', '-m mark --mark 0xcafe -j RETURN')
-    ))
-    RULES.append((
         {'target': 'RETURN', 'iface_in': 'lo'},
         ('filter', 'scramble_INPUT', '-i lo -j RETURN')
     ))
@@ -121,10 +113,6 @@ def add_lan_chains():
     RULES.append((
         {'target': 'lan_unknown'},
         ('filter', 'FORWARD', '-j lan_unknown')
-    ))
-    RULES.append((
-        {'target': 'RETURN', 'extra': 'mark match 0xcafe'},
-        ('filter', 'lan_unknown', '-m mark --mark 0xcafe -j RETURN')
     ))
     RULES.append((
         {'target': 'RETURN', 'iface_in': 'lo'},
@@ -224,6 +212,9 @@ def handle_nfqueue():
 
 def handle_packet(nfqueue_element):
     try:
+        if 0xcafe == nfqueue_element.get_mark():
+            nfqueue_element.accept()
+            return
         ip_packet = dpkt.ip.IP(nfqueue_element.get_payload())
         if hasattr(ip_packet, 'tcp'):
             if dpkt.tcp.TH_RST & ip_packet.tcp.flags:

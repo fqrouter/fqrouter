@@ -9,6 +9,8 @@ import struct
 
 import dpkt
 from pynetfilter_conntrack.conntrack import Conntrack
+from pynetfilter_conntrack.conntrack_entry import ConntrackEntry
+from pynetfilter_conntrack.constant import NFCT_SOPT_SETUP_REPLY
 
 import shutdown_hook
 import iptables
@@ -19,7 +21,6 @@ import dns_resolver
 
 
 LOGGER = logging.getLogger('fqrouter.%s' % __name__)
-
 
 def run():
     try:
@@ -55,7 +56,7 @@ RULES = []
 white_list = set()
 black_list = set()
 pending_list = {} # ip => started_at
-proxies = {} # mark => proxy
+proxies = {} # local_port => proxy
 proxies_refreshed_at = 0
 enabled = True
 
@@ -78,11 +79,6 @@ def add_lan_chains():
         {'target': 'lan_unknown', 'extra': 'tcp dpt:443'},
         ('nat', 'PREROUTING', '-p tcp --dport 443 -j lan_unknown')
     ))
-    # ignore mark 0xcafe
-    RULES.append((
-        {'target': 'RETURN', 'extra': 'mark match 0xcafe'},
-        ('nat', 'lan_unknown', '-m mark --mark 0xcafe -j RETURN')
-    ))
     # filter out lan_src
     for lan_ip_range in [
         '0.0.0.0/8', '10.0.0.0/8', '127.0.0.0/8', '169.254.0.0/16',
@@ -104,15 +100,9 @@ def add_lan_chains():
 
 def add_full_proxy_chain():
     RULES.append((
-        {'target': 'NFQUEUE', 'extra': 'mark match ! 0xbabe/0xffff NFQUEUE num 3'},
-        ('nat', 'full_proxy', '-p tcp -m mark ! --mark 0xbabe/0xffff -j NFQUEUE --queue-num 3')
+        {'target': 'NFQUEUE', 'extra': 'NFQUEUE num 3'},
+        ('nat', 'full_proxy', '-p tcp -j NFQUEUE --queue-num 3')
     ))
-    for i in range(1, 1 + PROXIES_COUNT + 1): # the final one is for goagent
-        RULES.append((
-            {'target': 'DNAT', 'extra': 'mark match 0x%sbabe to:10.1.2.3:%s' % (i, 19830 + i)},
-            ('nat', 'full_proxy', '-p tcp -m mark --mark 0x%sbabe -j DNAT'
-                                  ' --to-destination 10.1.2.3:%s' % (i, 19830 + i))
-        ))
 
 
 add_lan_chains()
@@ -152,9 +142,6 @@ def keep_proxies_fresh():
                 proxies_refreshed_at = time.time()
             if time.time() - proxies_refreshed_at > REFRESH_INTERVAL:
                 LOGGER.info('refresh now, restart redsocks')
-                proxies.clear()
-            if not redsocks_monitor.is_redsocks_live():
-                LOGGER.info('redsocks died, restart')
                 proxies.clear()
             time.sleep(15)
     except:
@@ -199,44 +186,42 @@ def start_goagent():
     goagent_monitor.kill_goagent()
     goagent_monitor.on_goagent_died = on_goagent_died
     goagent_monitor.start_goagent()
-    proxies[eval('0x%sbabe' % (PROXIES_COUNT + 1))] = {
+    proxies[19830 + PROXIES_COUNT + 1] = {
         'clients': set(),
         'rank': 0, # lower is better
         'pre_rank': 0, # lower is better
         'error_penalty': 256, # if error is found, this will be added to rank
-        'connection_info': ('http-relay', '127.0.0.1', '8319', '', ''),
-        'local_port': 19830 + PROXIES_COUNT + 1
+        'connection_info': ('http-relay', '127.0.0.1', '8319', '', '')
     }
 
 
 def on_goagent_died():
     LOGGER.info('goagent died')
-    mark = eval('0x%sbabe' % (PROXIES_COUNT + 1))
-    if mark in proxies:
-        del proxies[mark]
+    local_port = 19830 + PROXIES_COUNT + 1
+    if local_port in proxies:
+        del proxies[local_port]
 
 
 def resolve_free_proxies():
     for i in range(1, 1 + PROXIES_COUNT):
-        resolve_free_proxy(eval('0x%sbabe' % i), 19830 + i, 'proxy%s.fqrouter.com' % i)
+        resolve_free_proxy(19830 + i, 'proxy%s.fqrouter.com' % i)
 
 
-def resolve_free_proxy(mark, local_port, name):
+def resolve_free_proxy(local_port, name):
     try:
         answer = dns_resolver.resolve(name, record_type=dpkt.dns.DNS_TXT)
         connection_info = ''.join(e for e in answer.rdata if e.isalnum() or e in [':', '.', '-'])
         connection_info = connection_info.split(':') # proxy_type:ip:port:username:password
-        proxies[mark] = {
+        proxies[local_port] = {
             'clients': set(),
             'rank': 0, # lower is better
             'pre_rank': 0, # lower is better
             'error_penalty': 256, # if error is found, this will be added to rank
-            'connection_info': connection_info,
-            'local_port': local_port
+            'connection_info': connection_info
         }
-        LOGGER.info('resolved proxy 0x%x: %s' % (mark, proxies[mark]))
+        LOGGER.info('resolved proxy %s: %s' % (local_port, proxies[local_port]))
     except:
-        LOGGER.exception('failed to resolve free proxy 0x%x: %s %s' % (mark, local_port, name))
+        LOGGER.exception('failed to resolve free proxy %s: %s' % (local_port, name))
 
 
 def start_redsocks():
@@ -247,17 +232,18 @@ def start_redsocks():
     redsocks_monitor.start_redsocks(proxies)
 
 
-def update_proxy(mark, **kwargs):
-    proxies[mark].update(kwargs)
+def update_proxy(local_port, **kwargs):
+    proxies[local_port].update(kwargs)
 
 
-def handle_proxy_error(mark, proxy):
+def handle_proxy_error(local_port, proxy):
     error_penalty = proxy['error_penalty']
     if error_penalty > 256 * 2 * 2 * 2:
-        LOGGER.error('proxy 0x%x purged due to too many errors: %s' % (mark, str(proxy['connection_info'])))
-        del proxies[mark]
+        LOGGER.error('proxy %s purged due to too many errors: %s' % (local_port, str(proxy['connection_info'])))
+        del proxies[local_port]
     else:
-        LOGGER.error('add error penalty to proxy 0x%x: %s to %s' % (mark, error_penalty, str(proxy['connection_info'])))
+        LOGGER.error('add error penalty to proxy %s: %s to %s' %
+                     (local_port, error_penalty, str(proxy['connection_info'])))
         proxy['rank'] += error_penalty
         proxy['pre_rank'] += error_penalty
         proxy['error_penalty'] *= 2
@@ -320,10 +306,34 @@ def handle_packet(nfqueue_element):
 
 
 def set_verdict_proxy(nfqueue_element, ip_packet):
-    mark = pick_proxy(ip_packet)
-    if mark:
-        nfqueue_element.set_mark(mark)
-        nfqueue_element.repeat()
+    local_port = pick_proxy(ip_packet)
+    if local_port:
+        dst = socket.inet_ntoa(ip_packet.dst)
+        conntrack = Conntrack()
+        try:
+            conntrack_entry = ConntrackEntry.new(conntrack)
+            try:
+                conntrack_entry.orig_l3proto = socket.AF_INET
+                conntrack_entry.orig_l4proto = socket.IPPROTO_TCP
+                conntrack_entry.orig_ipv4_src = struct.unpack('!I', ip_packet.src)[0]
+                conntrack_entry.orig_ipv4_dst = struct.unpack('!I', ip_packet.dst)[0]
+                conntrack_entry.orig_port_src = ip_packet.tcp.sport
+                conntrack_entry.orig_port_dst = ip_packet.tcp.dport
+                conntrack_entry.setobjopt(NFCT_SOPT_SETUP_REPLY)
+                conntrack_entry.dnat_ipv4 = struct.unpack('!I', socket.inet_aton('10.1.2.3'))[0]
+                conntrack_entry.dnat_port = local_port
+                conntrack_entry.timeout = 120
+                try:
+                    conntrack_entry.create()
+                except:
+                    LOGGER.exception('failed to create nat conntrack entry for %s:%s' %
+                                 (socket.inet_ntoa(ip_packet.src), ip_packet.tcp.sport))
+            finally:
+                del conntrack_entry
+        finally:
+            del conntrack
+        raw_socket.sendto(str(ip_packet), (dst, 0))
+        nfqueue_element.drop()
     else:
         nfqueue_element.accept()
 
@@ -331,33 +341,33 @@ def set_verdict_proxy(nfqueue_element, ip_packet):
 def pick_proxy(ip_packet):
     if not proxies:
         return None
-    marks = {}
-    for mark, proxy in proxies.items():
+    local_ports = {}
+    for local_port, proxy in proxies.items():
         if 'http-relay' == proxy['connection_info'][0]:
             if 80 == ip_packet.tcp.dport:
-                marks[proxy['rank'] - 15] = mark
+                local_ports[proxy['rank'] - 15] = local_port
             continue
-        marks[proxy['rank']] = mark
-    if not marks:
+        local_ports[proxy['rank']] = local_port
+    if not local_ports:
         return None
-    mark = marks[sorted(marks.keys())[0]]
+    local_port = local_ports[sorted(local_ports.keys())[0]]
     ip = socket.inet_ntoa(ip_packet.src)
     port = ip_packet.tcp.sport
-    proxy = proxies[mark]
+    proxy = proxies[local_port]
     proxy['rank'] += 1
     proxy['clients'].add((ip, port))
-    LOGGER.info('full proxy via 0x%x [%s] %s: %s:%s => %s:%s' % (
-        mark, proxy['rank'], str(proxy['connection_info']),
+    LOGGER.info('full proxy via %s [%s] %s: %s:%s => %s:%s' % (
+        local_port, proxy['rank'], str(proxy['connection_info']),
         ip, port, socket.inet_ntoa(ip_packet.dst), ip_packet.tcp.dport))
-    return mark
+    return local_port
 
 
 def add_to_black_list(ip, syn=None):
     if ip not in black_list and ip not in white_list:
-        for mark, proxy in proxies.items():
+        for local_port, proxy in proxies.items():
             if ip == proxy['connection_info'][1]:
-                LOGGER.error('proxy died: %s' % ip)
-                del proxies[mark]
+                LOGGER.error('proxy %s died: %s' % (local_port, ip))
+                del proxies[local_port]
                 return
         LOGGER.info('add black list ip: %s' % ip)
         black_list.add(ip)
@@ -370,10 +380,16 @@ def add_to_black_list(ip, syn=None):
 def delete_existing_conntrack_entry(ip):
     try:
         conntrack = Conntrack()
-        for entry in conntrack.dump_table():
-            if ip == str(entry.repl_ipv4_src):
-                LOGGER.info('delete %s' % entry)
-                entry.destroy()
+        try:
+            for entry in conntrack.dump_table():
+                try:
+                    if ip == str(entry.repl_ipv4_src):
+                        LOGGER.info('delete %s' % entry)
+                        entry.destroy()
+                finally:
+                    del entry
+        finally:
+            del conntrack
         return True
     except:
         LOGGER.exception('failed to delete existing conntrack entry %s' % ip)
