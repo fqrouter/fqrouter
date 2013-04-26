@@ -13,6 +13,14 @@ do
     	--proxy-list "./cnproxy.py 8" \
     	--proxy-list "./cnproxy.py 9" \
     	--proxy-list "./cnproxy.py 10" \
+    	--proxy-list "./proxynova.py us" \
+    	--proxy-list "./proxynova.py br" \
+    	--proxy-list "./proxynova.py ru" \
+    	--proxy-list "./proxynova.py fr" \
+    	--proxy-list "./proxynova.py de" \
+    	--proxy-list "./proxynova.py ua" \
+    	--proxy-list "./proxynova.py pl" \
+    	--proxy-list "./proxynova.py id" \
     	--proxy-list "./spys.py 0" \
     	--proxy-list "./spys.py 1" \
     	--proxy-list "./spys.py 2" \
