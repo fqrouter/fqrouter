@@ -5,9 +5,10 @@ import socket
 import time
 import urllib2
 import threading
-import subprocess
+import struct
 
 import dpkt
+from pynetfilter_conntrack.conntrack import Conntrack
 
 import shutdown_hook
 import iptables
@@ -361,20 +362,22 @@ def add_to_black_list(ip, syn=None):
         LOGGER.info('add black list ip: %s' % ip)
         black_list.add(ip)
         if syn:
-            delete_existing_conntrack_entry(ip)
-            raw_socket.sendto(str(syn), (socket.inet_ntoa(syn.dst), 0))
+            if delete_existing_conntrack_entry(ip):
+                raw_socket.sendto(str(syn), (socket.inet_ntoa(syn.dst), 0))
     pending_list.pop(ip, None)
 
 
 def delete_existing_conntrack_entry(ip):
     try:
-        output = subprocess.check_output(
-            ['/data/data/fq.router/proxy-tools/conntrack', '-D', '-p', 'tcp', '--reply-src', ip],
-            stderr=subprocess.STDOUT).strip()
-        LOGGER.info('succeed: %s' % output)
-    except subprocess.CalledProcessError, e:
-        LOGGER.error('failed: %s' % e.output)
+        conntrack = Conntrack()
+        for entry in conntrack.dump_table():
+            if ip == str(entry.repl_ipv4_src):
+                LOGGER.info('delete %s' % entry)
+                entry.destroy()
+        return True
+    except:
         LOGGER.exception('failed to delete existing conntrack entry %s' % ip)
+        return False
 
 
 def add_to_white_list(ip):

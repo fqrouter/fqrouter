@@ -19,6 +19,7 @@ def execute():
             hook()
         except:
             LOGGER.exception('failed to execute shutdown hook: %s' % hook)
+    LOGGER.info('shutdown hook completed')
 
 
 atexit.register(execute)

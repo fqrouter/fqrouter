@@ -23,7 +23,9 @@ CAPTURE_LOG_SH_SRC = os.path.join(SRC_DIR, 'capture-log.sh')
 PROXY_TOOLS_DIR = os.path.join(PAYLOAD_DIR, 'proxy-tools')
 REDSOCKS_FILE = os.path.join(PROXY_TOOLS_DIR, 'redsocks')
 REDSOCKS_FILE_SRC = os.path.join(ROOT_DIR, 'libs', 'armeabi', 'redsocks')
-CONNTRACK_FILE = os.path.join(PROXY_TOOLS_DIR, 'conntrack')
+PYNETFILTER_CONNTRACK_ZIP_FILE = os.path.join(PAYLOAD_DIR, 'pynetfilter_conntrack.zip')
+PYNETFILTER_CONNTRACK_DIR = os.path.join(PAYLOAD_DIR, 'pynetfilter_conntrack-android')
+PYNETFILTER_CONNTRACK_PACKAGE_DIR = os.path.join(PYNETFILTER_CONNTRACK_DIR, 'pynetfilter_conntrack')
 MANAGER_DIR = os.path.join(ROOT_DIR, '../manager')
 
 
@@ -41,7 +43,8 @@ def main():
     download_dpkt()
     untargz_dpkt()
     download_busybox()
-    download_conntrack()
+    download_pynetfilter_conntrack()
+    unzip_pynetfilter_conntrack()
     copy_capture_log_sh()
     copy_redsocks()
     zip_payload()
@@ -96,12 +99,6 @@ def download_busybox():
     urllib.urlretrieve('http://www.busybox.net/downloads/binaries/latest/busybox-armv6l', BUSYBOX_FILE)
 
 
-def download_conntrack():
-    if os.path.exists(CONNTRACK_FILE):
-        return
-    urllib.urlretrieve('http://cdn.fqrouter.com/android-utils/conntrack', CONNTRACK_FILE)
-
-
 def copy_capture_log_sh():
     subprocess.check_call('cp %s %s' % (CAPTURE_LOG_SH_SRC, CAPTURE_LOG_SH), shell=True)
 
@@ -111,6 +108,19 @@ def copy_redsocks():
         return
     subprocess.check_call('cp %s %s' % (REDSOCKS_FILE_SRC, REDSOCKS_FILE), shell=True)
 
+def download_pynetfilter_conntrack():
+    if os.path.exists(PYNETFILTER_CONNTRACK_ZIP_FILE):
+        return
+    urllib.urlretrieve('https://github.com/fqrouter/pynetfilter_conntrack/archive/android.zip', PYNETFILTER_CONNTRACK_ZIP_FILE)
+
+
+def unzip_pynetfilter_conntrack():
+    if os.path.exists(PYNETFILTER_CONNTRACK_DIR):
+        return
+    subprocess.check_call('unzip %s' % PYNETFILTER_CONNTRACK_ZIP_FILE, cwd=PAYLOAD_DIR, shell=True)
+    if not os.path.exists(os.path.join(PYNETFILTER_CONNTRACK_DIR, 'setup.py')):
+        print('zip file not as expected')
+        sys.exit(1)
 
 def zip_payload():
     payload_zip_path = os.path.join(ASSETS_DIR, 'payload.zip')
@@ -131,6 +141,7 @@ def zip_payload():
     include_directory(WIFI_TOOLS_DIR, PAYLOAD_DIR)
     include_directory(PROXY_TOOLS_DIR, PAYLOAD_DIR)
     include_directory(MANAGER_DIR, os.path.dirname(MANAGER_DIR))
+    include_directory(PYNETFILTER_CONNTRACK_PACKAGE_DIR, PYNETFILTER_CONNTRACK_DIR, 'python/lib/python2.7/site-packages')
     include_directory(DPKT_PACKAGE_DIR, DPKT_DIR, 'python/lib/python2.7/site-packages')
 
     payload_zip.close()
