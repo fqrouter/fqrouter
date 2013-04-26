@@ -46,14 +46,15 @@ RULES = []
 
 
 def add_rules(is_forward):
-    RULES.append((
-        {'target': 'ACCEPT', 'iface_out': 'lo'},
-        ('filter', 'FORWARD' if is_forward else 'OUTPUT', '-o lo -j ACCEPT')
-    ))
-    RULES.append((
-        {'target': 'ACCEPT', 'iface_in': 'lo'},
-        ('filter', 'FORWARD' if is_forward else 'INPUT', '-i lo -j ACCEPT')
-    ))
+    if not is_forward:
+        RULES.append((
+            {'target': 'ACCEPT', 'iface_out': 'lo'},
+            ('filter', 'OUTPUT', '-o lo -j ACCEPT')
+        ))
+        RULES.append((
+            {'target': 'ACCEPT', 'iface_in': 'lo'},
+            ('filter', 'INPUT', '-i lo -j ACCEPT')
+        ))
     RULE_INPUT_SYN_ACK = (
         {'target': 'NFQUEUE', 'extra': 'tcp flags:0x3F/0x12 NFQUEUE num 2'},
         ('filter', 'FORWARD' if is_forward else 'INPUT', '-p tcp --tcp-flags ALL SYN,ACK -j NFQUEUE --queue-num 2')
@@ -121,11 +122,6 @@ def insert_iptables_rules():
 def delete_iptables_rules():
     iptables.delete_rules(RULES)
     iptables.delete_nfqueue_rules(2)
-    iptables.delete_chain('scramble_INPUT')
-    iptables.delete_chain('scramble_OUTPUT')
-    iptables.delete_chain('lan_unknown')
-    iptables.delete_chain('lan_src')
-    iptables.delete_chain('lan_dst')
 
 
 def handle_nfqueue():

@@ -80,9 +80,6 @@ def insert_iptables_rules():
 
 def delete_iptables_rules():
     iptables.delete_rules(RULES)
-    iptables.delete_chain('full_proxy')
-    iptables.delete_chain('lan_unknown')
-    iptables.delete_chain('lan_src')
 
 
 def start_full_proxy():

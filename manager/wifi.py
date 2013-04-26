@@ -370,7 +370,7 @@ def start_hotspot_on_mtk(ssid, password):
     log_upstream_wifi_status('after loaded ap firmware', control_socket_dir)
     shell_execute('%s -p %s -i ap0 reconfigure' % (P2P_CLI_PATH, control_socket_dir))
     delete_existing_p2p_persistent_networks('ap0', control_socket_dir)
-    network_index = start_p2p_persistent_network('ap0', control_socket_dir, ssid, password)
+    network_index = start_p2p_persistent_network('ap0', control_socket_dir, ssid, password, sets_channel=True)
     # restart p2p persistent group otherwise the ssid is not usable
     shell_execute('%s -p %s -i ap0 p2p_group_remove ap0' % (P2P_CLI_PATH, control_socket_dir))
     shell_execute('%s -p %s -i ap0 p2p_group_add persistent=%s' % (P2P_CLI_PATH, control_socket_dir, network_index))
@@ -474,7 +474,7 @@ def log_upstream_wifi_status(log, control_socket_dir):
         LOGGER.exception('failed to log upstream wifi status')
 
 
-def start_p2p_persistent_network(iface, control_socket_dir, ssid, password):
+def start_p2p_persistent_network(iface, control_socket_dir, ssid, password, sets_channel=False):
     shell_execute('%s -p %s -i %s p2p_set disabled 0' % (P2P_CLI_PATH, control_socket_dir, iface))
     index = shell_execute('%s -p %s -i %s add_network' % (P2P_CLI_PATH, control_socket_dir, iface)).strip()
 
@@ -490,8 +490,10 @@ def start_p2p_persistent_network(iface, control_socket_dir, ssid, password):
     set_network('psk \'"%s"\'' % password)
     frequency, channel = get_upstream_frequency_and_channel()
     if channel:
-        reset_p2p_channels(iface, control_socket_dir, channel)
-        reset_p2p_channels(WIFI_INTERFACE, get_wpa_supplicant_control_socket_dir(), channel)
+        channel = channel if sets_channel else 0
+        reg_class = 81 if sets_channel else 0
+        reset_p2p_channels(iface, control_socket_dir, channel, reg_class)
+        reset_p2p_channels(WIFI_INTERFACE, get_wpa_supplicant_control_socket_dir(), channel, reg_class)
     if frequency:
         shell_execute('%s -p %s -i %s p2p_group_add persistent=%s freq=%s ' %
                       (P2P_CLI_PATH, control_socket_dir, iface, index, frequency.replace('.', '')))
@@ -501,13 +503,17 @@ def start_p2p_persistent_network(iface, control_socket_dir, ssid, password):
     return index
 
 
-def reset_p2p_channels(iface, control_socket_dir, channel):
+def reset_p2p_channels(iface, control_socket_dir, channel, reg_class):
     try:
         channel = channel or 6
-        shell_execute('%s -p %s -i %s set p2p_oper_channel %s' % (P2P_CLI_PATH, control_socket_dir, iface, 0))
-        shell_execute('%s -p %s -i %s set p2p_oper_reg_class 0' % (P2P_CLI_PATH, control_socket_dir, iface))
-        shell_execute('%s -p %s -i %s set p2p_listen_channel %s' % (P2P_CLI_PATH, control_socket_dir, iface, 0))
-        shell_execute('%s -p %s -i %s set p2p_listen_reg_class 0' % (P2P_CLI_PATH, control_socket_dir, iface))
+        shell_execute('%s -p %s -i %s set p2p_oper_channel %s' %
+                      (P2P_CLI_PATH, control_socket_dir, iface, channel))
+        shell_execute('%s -p %s -i %s set p2p_oper_reg_class %s' %
+                      (P2P_CLI_PATH, control_socket_dir, iface, reg_class))
+        shell_execute('%s -p %s -i %s set p2p_listen_channel %s' %
+                      (P2P_CLI_PATH, control_socket_dir, iface, channel))
+        shell_execute('%s -p %s -i %s set p2p_listen_reg_class %s' %
+                      (P2P_CLI_PATH, control_socket_dir, iface, reg_class))
         shell_execute('%s -p %s -i %s save_config' % (P2P_CLI_PATH, control_socket_dir, iface))
     except:
         LOGGER.exception('failed to reset p2p channels')
