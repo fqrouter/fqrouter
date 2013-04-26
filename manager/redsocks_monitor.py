@@ -29,7 +29,6 @@ RE_REDSOCKS_CLIENT = re.compile(RE_IP_PORT + '->')
 # call back from full_proxy_service
 list_proxies = None
 handle_proxy_error = None
-clear_proxies = None
 update_proxy = None
 refresh_proxies = None
 
@@ -78,10 +77,10 @@ def monitor_redsocks():
             time.sleep(1)
         LOGGER.error('redsocks died, clear proxies: %s' % redsocks_process.poll())
         redsocks_process.communicate()
-        clear_proxies()
+        refresh_proxies()
     except:
         LOGGER.exception('failed to poll redsocks output')
-        clear_proxies()
+        refresh_proxies()
 
 
 def update_proxies_according_to_schedule():

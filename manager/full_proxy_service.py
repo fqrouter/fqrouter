@@ -22,6 +22,7 @@ import china_ip
 import redsocks_monitor
 import goagent_monitor
 import dns_resolver
+import wifi
 
 
 LOGGER = logging.getLogger('fqrouter.%s' % __name__)
@@ -121,9 +122,6 @@ def refresh_proxies():
     return True
 
 
-redsocks_monitor.refresh_proxies = refresh_proxies
-
-
 def start_goagent():
     goagent_monitor.kill_goagent()
     goagent_monitor.on_goagent_died = on_goagent_died
@@ -168,9 +166,10 @@ def add_free_proxy(local_port, connection_info):
 
 def start_redsocks():
     redsocks_monitor.list_proxies = proxies.items
-    redsocks_monitor.clear_proxies = proxies.clear
     redsocks_monitor.handle_proxy_error = handle_proxy_error
     redsocks_monitor.update_proxy = update_proxy
+    redsocks_monitor.refresh_proxies = refresh_proxies
+    wifi.on_wifi_hotspot_started = lambda: thread.start_new(refresh_proxies, ())
     redsocks_monitor.start_redsocks(proxies)
 
 
