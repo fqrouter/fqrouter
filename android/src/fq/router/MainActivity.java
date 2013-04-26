@@ -50,7 +50,7 @@ public class MainActivity extends Activity implements StatusUpdater {
                     finish();
                     return;
                 }
-                if (Supervisor.ping()) {
+                if (Supervisor.ping() || Supervisor.ping() || Supervisor.ping()) {
                     appendLog("found manager is already running");
                     onStarted();
                 } else {

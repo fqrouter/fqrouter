@@ -6,14 +6,14 @@ import time
 import traceback
 
 import dpkt
-
 import iptables
 import pending_connection
 import shutdown_hook
 import china_ip
-import dns_service
 import dns_resolver
 import full_proxy_service
+import lan_ip
+
 
 LOGGER = logging.getLogger('fqrouter.%s' % __name__)
 
@@ -45,116 +45,44 @@ RANGE_OF_TTL_TO_GFW = range(MIN_TTL_TO_GFW, MAX_TTL_TO_GFW + 1)
 RULES = []
 
 
-def add_rules():
+def add_rules(is_forward):
+    RULES.append((
+        {'target': 'ACCEPT', 'iface_out': 'lo'},
+        ('filter', 'FORWARD' if is_forward else 'OUTPUT', '-o lo -j ACCEPT')
+    ))
+    RULES.append((
+        {'target': 'ACCEPT', 'iface_in': 'lo'},
+        ('filter', 'FORWARD' if is_forward else 'INPUT', '-i lo -j ACCEPT')
+    ))
     RULE_INPUT_SYN_ACK = (
         {'target': 'NFQUEUE', 'extra': 'tcp flags:0x3F/0x12 NFQUEUE num 2'},
-        ('filter', 'scramble_INPUT', '-p tcp --tcp-flags ALL SYN,ACK -j NFQUEUE --queue-num 2')
+        ('filter', 'FORWARD' if is_forward else 'INPUT', '-p tcp --tcp-flags ALL SYN,ACK -j NFQUEUE --queue-num 2')
     )
     RULES.append(RULE_INPUT_SYN_ACK)
     RULE_INPUT_RST = (
         {'target': 'NFQUEUE', 'extra': 'tcp flags:0x3F/0x04 NFQUEUE num 2'},
-        ('filter', 'scramble_INPUT', '-p tcp --tcp-flags ALL RST -j NFQUEUE --queue-num 2')
+        ('filter', 'FORWARD' if is_forward else 'INPUT', '-p tcp --tcp-flags ALL RST -j NFQUEUE --queue-num 2')
     )
     RULES.append(RULE_INPUT_RST)
     RULE_INPUT_ICMP = (
         {'target': 'NFQUEUE', 'extra': 'NFQUEUE num 2'},
-        ('filter', 'scramble_INPUT', '-p icmp -j NFQUEUE --queue-num 2')
+        ('filter', 'FORWARD' if is_forward else 'INPUT', '-p icmp -j NFQUEUE --queue-num 2')
     )
     RULES.append(RULE_INPUT_ICMP)
     RULE_OUTPUT_PSH_ACK = (
         {'target': 'NFQUEUE', 'extra': 'tcp flags:0x3F/0x18 NFQUEUE num 2'},
-        ('filter', 'scramble_OUTPUT', '-p tcp --tcp-flags ALL PSH,ACK -j NFQUEUE --queue-num 2')
+        ('filter', 'FORWARD' if is_forward else 'OUTPUT', '-p tcp --tcp-flags ALL PSH,ACK -j NFQUEUE --queue-num 2')
     )
     RULES.append(RULE_OUTPUT_PSH_ACK)
     RULE_OUTPUT_SYN = (
         {'target': 'NFQUEUE', 'extra': 'tcp flags:0x3F/0x18 NFQUEUE num 2'},
-        ('filter', 'scramble_OUTPUT', '-p tcp --tcp-flags ALL SYN -j NFQUEUE --queue-num 2')
+        ('filter', 'FORWARD' if is_forward else 'OUTPUT', '-p tcp --tcp-flags ALL SYN -j NFQUEUE --queue-num 2')
     )
     RULES.append(RULE_OUTPUT_SYN)
 
 
-def add_scramble_output_chain():
-    RULES.append((
-        {'target': 'scramble_OUTPUT'},
-        ('filter', 'OUTPUT', '-j scramble_OUTPUT')
-    ))
-    RULES.append((
-        {'target': 'RETURN', 'iface_out': 'lo'},
-        ('filter', 'scramble_OUTPUT', '-o lo -j RETURN')
-    ))
-    for lan_ip_range in [
-        '0.0.0.0/8', '10.0.0.0/8', '127.0.0.0/8', '169.254.0.0/16',
-        '172.16.0.0/12', '192.168.0.0/16', '224.0.0.0/4', '240.0.0.0/4']:
-        RULES.append((
-            {'target': 'RETURN', 'destination': lan_ip_range},
-            ('filter', 'scramble_OUTPUT', '-d %s -j RETURN' % lan_ip_range)
-        ))
-
-
-def add_scramble_input_chain():
-    RULES.append((
-        {'target': 'scramble_INPUT'},
-        ('filter', 'INPUT', '-j scramble_INPUT')
-    ))
-    RULES.append((
-        {'target': 'RETURN', 'iface_in': 'lo'},
-        ('filter', 'scramble_INPUT', '-i lo -j RETURN')
-    ))
-    for lan_ip_range in [
-        '0.0.0.0/8', '10.0.0.0/8', '127.0.0.0/8', '169.254.0.0/16',
-        '172.16.0.0/12', '192.168.0.0/16', '224.0.0.0/4', '240.0.0.0/4']:
-        RULES.append((
-            {'target': 'RETURN', 'source': lan_ip_range},
-            ('filter', 'scramble_INPUT', '-s %s -j RETURN' % lan_ip_range)
-        ))
-
-
-def add_lan_chains():
-    RULES.append((
-        {'target': 'lan_unknown'},
-        ('filter', 'FORWARD', '-j lan_unknown')
-    ))
-    RULES.append((
-        {'target': 'RETURN', 'iface_in': 'lo'},
-        ('filter', 'lan_unknown', '-i lo -j RETURN')
-    ))
-    RULES.append((
-        {'target': 'RETURN', 'iface_out': 'lo'},
-        ('filter', 'lan_unknown', '-o lo -j RETURN')
-    ))
-    for lan_ip_range in [
-        '0.0.0.0/8', '10.0.0.0/8', '127.0.0.0/8', '169.254.0.0/16',
-        '172.16.0.0/12', '192.168.0.0/16', '224.0.0.0/4', '240.0.0.0/4']:
-        RULES.append((
-            {'target': 'lan_dst', 'destination': lan_ip_range},
-            ('filter', 'lan_unknown', '-d %s -j lan_dst' % lan_ip_range)
-        ))
-        RULES.append((
-            {'target': 'lan_src', 'source': lan_ip_range},
-            ('filter', 'lan_unknown', '-s %s -j lan_src' % lan_ip_range)
-        ))
-        RULES.append((
-            {'target': 'RETURN', 'source': lan_ip_range},
-            ('filter', 'lan_dst', '-s %s -j RETURN' % lan_ip_range)
-        ))
-        RULES.append((
-            {'target': 'RETURN', 'destination': lan_ip_range},
-            ('filter', 'lan_src', '-d %s -j RETURN' % lan_ip_range)
-        ))
-    RULES.append((
-        {'target': 'scramble_OUTPUT'},
-        ('filter', 'lan_src', '-j scramble_OUTPUT')
-    ))
-    RULES.append((
-        {'target': 'scramble_INPUT'},
-        ('filter', 'lan_dst', '-j scramble_INPUT')
-    ))
-
-
-add_scramble_input_chain()
-add_scramble_output_chain()
-add_lan_chains()
-add_rules()
+add_rules(is_forward=False)
+add_rules(is_forward=True)
 
 raw_socket = socket.socket(socket.AF_INET, socket.SOCK_RAW, socket.IPPROTO_RAW)
 shutdown_hook.add(raw_socket.close)
@@ -216,6 +144,9 @@ def handle_packet(nfqueue_element):
             nfqueue_element.accept()
             return
         ip_packet = dpkt.ip.IP(nfqueue_element.get_payload())
+        if lan_ip.is_lan_traffic(ip_packet):
+            nfqueue_element.accept()
+            return
         if hasattr(ip_packet, 'tcp'):
             if dpkt.tcp.TH_RST & ip_packet.tcp.flags:
                 should_accept = handle_rst(ip_packet)

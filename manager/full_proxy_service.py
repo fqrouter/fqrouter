@@ -12,6 +12,9 @@ import dpkt
 from pynetfilter_conntrack.conntrack import Conntrack
 from pynetfilter_conntrack.conntrack_entry import ConntrackEntry
 from pynetfilter_conntrack.constant import NFCT_SOPT_SETUP_REPLY
+from pynetfilter_conntrack.constant import IPS_DST_NAT
+from pynetfilter_conntrack.constant import IPS_DST_NAT_DONE
+import lan_ip
 
 import shutdown_hook
 import iptables
@@ -54,7 +57,6 @@ raw_socket.setsockopt(socket.SOL_SOCKET, SO_MARK, 0xcafe)
 
 REFRESH_INTERVAL = 60 * 30
 PROXIES_COUNT = 20
-RULES = []
 white_list = set()
 black_list = set()
 pending_list = {} # ip => started_at
@@ -62,53 +64,14 @@ proxies = {} # local_port => proxy
 proxies_refreshed_at = 0
 enabled = True
 
-
-def add_lan_chains():
-    # all 443,80 goes to lan_unknown before routing
-    RULES.append((
-        {'target': 'lan_unknown', 'extra': 'tcp dpt:80'},
-        ('nat', 'OUTPUT', '-p tcp --dport 80 -j lan_unknown')
-    ))
-    RULES.append((
-        {'target': 'lan_unknown', 'extra': 'tcp dpt:443'},
-        ('nat', 'OUTPUT', '-p tcp --dport 443 -j lan_unknown')
-    ))
-    RULES.append((
-        {'target': 'lan_unknown', 'extra': 'tcp dpt:80'},
-        ('nat', 'PREROUTING', '-p tcp --dport 80 -j lan_unknown')
-    ))
-    RULES.append((
-        {'target': 'lan_unknown', 'extra': 'tcp dpt:443'},
-        ('nat', 'PREROUTING', '-p tcp --dport 443 -j lan_unknown')
-    ))
-    # filter out lan_src
-    for lan_ip_range in [
-        '0.0.0.0/8', '10.0.0.0/8', '127.0.0.0/8', '169.254.0.0/16',
-        '172.16.0.0/12', '192.168.0.0/16', '224.0.0.0/4', '240.0.0.0/4']:
-        RULES.append((
-            {'target': 'lan_src', 'source': lan_ip_range},
-            ('nat', 'lan_unknown', '-s %s -j lan_src' % lan_ip_range)
-        ))
-        RULES.append((
-            {'target': 'RETURN', 'destination': lan_ip_range},
-            ('nat', 'lan_src', '-d %s -j RETURN' % lan_ip_range)
-        ))
-        # from lan => not lan, that is outgoing traffic
-    RULES.append((
-        {'target': 'full_proxy'},
-        ('nat', 'lan_src', '-j full_proxy')
-    ))
-
-
-def add_full_proxy_chain():
-    RULES.append((
+RULES = [
+    (
         {'target': 'NFQUEUE', 'extra': 'NFQUEUE num 3'},
-        ('nat', 'full_proxy', '-p tcp -j NFQUEUE --queue-num 3')
-    ))
-
-
-add_lan_chains()
-add_full_proxy_chain()
+        ('nat', 'OUTPUT', '-p tcp -j NFQUEUE --queue-num 3')
+    ), (
+        {'target': 'NFQUEUE', 'extra': 'NFQUEUE num 3'},
+        ('nat', 'PREROUTING', '-p tcp -j NFQUEUE --queue-num 3')
+    )]
 
 
 def insert_iptables_rules():
@@ -292,14 +255,23 @@ def handle_nfqueue():
 
 def handle_packet(nfqueue_element):
     try:
+        if 0xcafe == nfqueue_element.get_mark():
+            nfqueue_element.accept()
+            return
         ip_packet = dpkt.ip.IP(nfqueue_element.get_payload())
+        if ip_packet.tcp.dport not in {80, 443}:
+            nfqueue_element.accept()
+            return
+        if lan_ip.is_lan_traffic(ip_packet):
+            nfqueue_element.accept()
+            return
         ip = socket.inet_ntoa(ip_packet.dst)
         if china_ip.is_china_ip(ip):
             nfqueue_element.accept()
-        elif ip in white_list:
-            nfqueue_element.accept()
         elif ip in black_list:
             set_verdict_proxy(nfqueue_element, ip_packet)
+        elif ip in white_list:
+            nfqueue_element.accept()
         else:
             nfqueue_element.accept()
     except:
@@ -310,30 +282,9 @@ def handle_packet(nfqueue_element):
 def set_verdict_proxy(nfqueue_element, ip_packet):
     local_port = pick_proxy(ip_packet)
     if local_port:
+        src = socket.inet_ntoa(ip_packet.src)
         dst = socket.inet_ntoa(ip_packet.dst)
-        conntrack = Conntrack()
-        try:
-            conntrack_entry = ConntrackEntry.new(conntrack)
-            try:
-                conntrack_entry.orig_l3proto = socket.AF_INET
-                conntrack_entry.orig_l4proto = socket.IPPROTO_TCP
-                conntrack_entry.orig_ipv4_src = struct.unpack('!I', ip_packet.src)[0]
-                conntrack_entry.orig_ipv4_dst = struct.unpack('!I', ip_packet.dst)[0]
-                conntrack_entry.orig_port_src = ip_packet.tcp.sport
-                conntrack_entry.orig_port_dst = ip_packet.tcp.dport
-                conntrack_entry.setobjopt(NFCT_SOPT_SETUP_REPLY)
-                conntrack_entry.dnat_ipv4 = struct.unpack('!I', socket.inet_aton('10.1.2.3'))[0]
-                conntrack_entry.dnat_port = local_port
-                conntrack_entry.timeout = 120
-                try:
-                    conntrack_entry.create()
-                except:
-                    LOGGER.exception('failed to create nat conntrack entry for %s:%s' %
-                                     (socket.inet_ntoa(ip_packet.src), ip_packet.tcp.sport))
-            finally:
-                del conntrack_entry
-        finally:
-            del conntrack
+        create_conntrack_entry(src, ip_packet.tcp.sport, dst, ip_packet.tcp.dport, local_port)
         raw_socket.sendto(str(ip_packet), (dst, 0))
         nfqueue_element.drop()
     else:
@@ -373,13 +324,13 @@ def add_to_black_list(ip, syn=None):
                 return
         LOGGER.info('add black list ip: %s' % ip)
         black_list.add(ip)
-        if syn:
-            if delete_existing_conntrack_entry(ip):
-                raw_socket.sendto(str(syn), (socket.inet_ntoa(syn.dst), 0))
+        if syn and delete_existing_conntrack_entry(ip):
+            raw_socket.sendto(str(syn), (socket.inet_ntoa(syn.dst), 0))
     pending_list.pop(ip, None)
 
 
 def create_conntrack_entry(src, sport, dst, dport, local_port):
+    # delete_existing_conntrack_entry(dst)
     conntrack = Conntrack()
     try:
         conntrack_entry = ConntrackEntry.new(conntrack)
@@ -391,17 +342,31 @@ def create_conntrack_entry(src, sport, dst, dport, local_port):
             conntrack_entry.orig_port_src = sport
             conntrack_entry.orig_port_dst = dport
             conntrack_entry.setobjopt(NFCT_SOPT_SETUP_REPLY)
+            conntrack_entry.repl_ipv4_src = struct.unpack('!I', socket.inet_aton(dst))[0]
+            conntrack_entry.repl_ipv4_dst = struct.unpack('!I', socket.inet_aton(src))[0]
+            conntrack_entry.repl_port_src = dport
+            conntrack_entry.repl_port_dst = sport
             conntrack_entry.dnat_ipv4 = struct.unpack('!I', socket.inet_aton('10.1.2.3'))[0]
             conntrack_entry.dnat_port = local_port
+            conntrack_entry.snat_ipv4 = struct.unpack('!I', socket.inet_aton(src))[0]
+            conntrack_entry.snat_port = sport
+            conntrack_entry.status = IPS_DST_NAT | IPS_DST_NAT_DONE
             conntrack_entry.timeout = 120
             try:
                 conntrack_entry.create()
             except:
-                LOGGER.exception('failed to create nat conntrack entry for %s:%s' % (src, sport))
+                LOGGER.exception('failed to create nat conntrack entry for %s:%s => %s:%s' % (src, sport, dst, dport))
         finally:
             del conntrack_entry
     finally:
         del conntrack
+    LOGGER.info('nat %s:%s => %s:%s' % (src, sport, dst, dport))
+    output = subprocess.check_output(
+        ['/data/data/fq.router/proxy-tools/conntrack', '-L'],
+        stderr=subprocess.STDOUT).strip()
+    for line in output.splitlines():
+        if 'sport=%s' % sport in line:
+            LOGGER.info(line.strip())
 
 
 def delete_existing_conntrack_entry(ip):
@@ -417,11 +382,7 @@ def delete_existing_conntrack_entry(ip):
 
 def add_to_white_list(ip):
     if ip not in white_list and not china_ip.is_china_ip(ip):
-        if ip in black_list:
-            LOGGER.info('add white list ip from black list: %s' % ip)
-            black_list.remove(ip)
-        else:
-            LOGGER.info('add white list ip: %s' % ip)
+        LOGGER.info('add white list ip: %s' % ip)
         white_list.add(ip)
     pending_list.pop(ip, None)
 
