@@ -6,6 +6,7 @@ import time
 import urllib2
 import threading
 import struct
+import subprocess
 
 import dpkt
 from pynetfilter_conntrack.conntrack import Conntrack
@@ -21,6 +22,7 @@ import dns_resolver
 
 
 LOGGER = logging.getLogger('fqrouter.%s' % __name__)
+
 
 def run():
     try:
@@ -327,7 +329,7 @@ def set_verdict_proxy(nfqueue_element, ip_packet):
                     conntrack_entry.create()
                 except:
                     LOGGER.exception('failed to create nat conntrack entry for %s:%s' %
-                                 (socket.inet_ntoa(ip_packet.src), ip_packet.tcp.sport))
+                                     (socket.inet_ntoa(ip_packet.src), ip_packet.tcp.sport))
             finally:
                 del conntrack_entry
         finally:
@@ -377,23 +379,40 @@ def add_to_black_list(ip, syn=None):
     pending_list.pop(ip, None)
 
 
+def create_conntrack_entry(src, sport, dst, dport, local_port):
+    conntrack = Conntrack()
+    try:
+        conntrack_entry = ConntrackEntry.new(conntrack)
+        try:
+            conntrack_entry.orig_l3proto = socket.AF_INET
+            conntrack_entry.orig_l4proto = socket.IPPROTO_TCP
+            conntrack_entry.orig_ipv4_src = struct.unpack('!I', socket.inet_aton(src))[0]
+            conntrack_entry.orig_ipv4_dst = struct.unpack('!I', socket.inet_aton(dst))[0]
+            conntrack_entry.orig_port_src = sport
+            conntrack_entry.orig_port_dst = dport
+            conntrack_entry.setobjopt(NFCT_SOPT_SETUP_REPLY)
+            conntrack_entry.dnat_ipv4 = struct.unpack('!I', socket.inet_aton('10.1.2.3'))[0]
+            conntrack_entry.dnat_port = local_port
+            conntrack_entry.timeout = 120
+            try:
+                conntrack_entry.create()
+            except:
+                LOGGER.exception('failed to create nat conntrack entry for %s:%s' % (src, sport))
+        finally:
+            del conntrack_entry
+    finally:
+        del conntrack
+
+
 def delete_existing_conntrack_entry(ip):
     try:
-        conntrack = Conntrack()
-        try:
-            for entry in conntrack.dump_table():
-                try:
-                    if ip == str(entry.repl_ipv4_src):
-                        LOGGER.info('delete %s' % entry)
-                        entry.destroy()
-                finally:
-                    del entry
-        finally:
-            del conntrack
-        return True
-    except:
+        output = subprocess.check_output(
+            ['/data/data/fq.router/proxy-tools/conntrack', '-D', '-p', 'tcp', '--reply-src', ip],
+            stderr=subprocess.STDOUT).strip()
+        LOGGER.info('succeed: %s' % output)
+    except subprocess.CalledProcessError, e:
+        LOGGER.error('failed: %s' % e.output)
         LOGGER.exception('failed to delete existing conntrack entry %s' % ip)
-        return False
 
 
 def add_to_white_list(ip):
