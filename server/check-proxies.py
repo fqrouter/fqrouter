@@ -15,7 +15,7 @@ argument_parser.add_argument('--proxy', action='append')
 args = argument_parser.parse_args()
 
 PROXY_LIST_DIR = os.path.join(os.path.dirname(__file__), 'proxy-list')
-CONCURRENT_CHECKERS_COUNT = 16
+CONCURRENT_CHECKERS_COUNT = 8
 
 def log(message):
     sys.stderr.write(message)
