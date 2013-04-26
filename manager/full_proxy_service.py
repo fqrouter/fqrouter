@@ -55,7 +55,6 @@ raw_socket.setsockopt(socket.SOL_IP, socket.IP_HDRINCL, 1)
 SO_MARK = 36
 raw_socket.setsockopt(socket.SOL_SOCKET, SO_MARK, 0xcafe)
 
-REFRESH_INTERVAL = 60 * 30
 PROXIES_COUNT = 20
 white_list = set()
 black_list = set()
@@ -88,34 +87,16 @@ def delete_iptables_rules():
 
 def start_full_proxy():
     try:
-        thread.start_new(keep_proxies_fresh, ())
+        shutdown_hook.add(redsocks_monitor.kill_redsocks)
+        thread.start_new(refresh_proxies, ())
     except:
         LOGGER.exception('failed to start keep proxies fresh thread')
         proxies.clear()
     handle_nfqueue()
 
 
-def keep_proxies_fresh():
-    global proxies_refreshed_at
-    shutdown_hook.add(redsocks_monitor.kill_redsocks)
-    try:
-        while enabled:
-            if not proxies:
-                LOGGER.info('no proxies, refresh now')
-                if not start_proxies():
-                    return
-                proxies_refreshed_at = time.time()
-            if time.time() - proxies_refreshed_at > REFRESH_INTERVAL:
-                LOGGER.info('refresh now, restart redsocks')
-                proxies.clear()
-            time.sleep(15)
-    except:
-        LOGGER.exception('failed to keep proxies fresh')
-    finally:
-        LOGGER.info('keep proxies fresh thread died')
-
-
-def start_proxies():
+def refresh_proxies():
+    proxies.clear()
     if redsocks_monitor.kill_redsocks():
         LOGGER.info('existing redsocks killed')
         time.sleep(2)
@@ -141,6 +122,9 @@ def start_proxies():
         LOGGER.info('still no proxies after redsocks started, retry in 120 seconds')
         time.sleep(120)
     return True
+
+
+redsocks_monitor.refresh_proxies = refresh_proxies
 
 
 def start_goagent():
@@ -351,7 +335,7 @@ def create_conntrack_entry(src, sport, dst, dport, local_port):
             try:
                 conntrack_entry.create()
             except:
-                LOGGER.exception('failed to create nat conntrack entry for %s:%s => %s:%s' % (src, sport, dst, dport))
+                LOGGER.warn('failed to create nat conntrack entry for %s:%s => %s:%s' % (src, sport, dst, dport))
         finally:
             del conntrack_entry
     finally:
@@ -365,8 +349,8 @@ def delete_existing_conntrack_entry(ip):
             stderr=subprocess.STDOUT).strip()
         LOGGER.info('succeed: %s' % output)
     except subprocess.CalledProcessError, e:
-        LOGGER.error('failed: %s' % e.output)
-        LOGGER.exception('failed to delete existing conntrack entry %s' % ip)
+        LOGGER.warn('failed: %s' % e.output)
+        LOGGER.warn('failed to delete existing conntrack entry %s' % ip)
 
 
 def add_to_white_list(ip):

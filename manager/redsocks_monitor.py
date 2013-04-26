@@ -20,6 +20,9 @@ handler = logging.handlers.RotatingFileHandler(
 handler.setFormatter(logging.Formatter('%(asctime)s %(message)s'))
 REDSOCKS_LOGGER.handlers = [handler]
 
+REFRESH_INTERVAL = 60 * 30
+UPDATE_INTERVAL = 60 * 5
+
 RE_IP_PORT = r'(\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}):(\d+)'
 RE_REDSOCKS_CLIENT = re.compile(RE_IP_PORT + '->')
 
@@ -28,10 +31,12 @@ list_proxies = None
 handle_proxy_error = None
 clear_proxies = None
 update_proxy = None
+refresh_proxies = None
 
 # internal
 redsocks_process = None
-status_updated_at = None
+updated_at = None
+refreshed_at = None
 
 
 def start_redsocks(proxies):
@@ -68,7 +73,8 @@ def monitor_redsocks():
                             if (ip, port) in proxy['clients']:
                                 LOGGER.error(line.strip())
                                 handle_proxy_error(local_port, proxy)
-                update_proxies_status_every_five_minutes()
+                update_proxies_according_to_schedule()
+                refresh_proxies_according_to_schedule()
             time.sleep(1)
         LOGGER.error('redsocks died, clear proxies: %s' % redsocks_process.poll())
         redsocks_process.communicate()
@@ -78,17 +84,28 @@ def monitor_redsocks():
         clear_proxies()
 
 
-def update_proxies_status_every_five_minutes():
-    global status_updated_at
-    if status_updated_at is None:
-        status_updated_at = time.time()
-    elif (time.time() - status_updated_at) > 60 * 5:
+def update_proxies_according_to_schedule():
+    global updated_at
+    if updated_at is None:
+        updated_at = time.time()
+    elif (time.time() - updated_at) > UPDATE_INTERVAL:
+        updated_at = time.time()
+        LOGGER.info('update proxies every %s seconds' % UPDATE_INTERVAL)
         for local_port, proxy in list_proxies():
             rank = int(proxy['pre_rank'] / 2) # factor in the previous performance
             LOGGER.info('update proxy %s rank: %s %s' %
                         (local_port, rank, str(proxy['connection_info'])))
             update_proxy(local_port, rank=rank, pre_rank=rank, clients=set())
-        status_updated_at = time.time()
+
+
+def refresh_proxies_according_to_schedule():
+    global refreshed_at
+    if refreshed_at is None:
+        refreshed_at = time.time()
+    elif (time.time() - refreshed_at) > REFRESH_INTERVAL:
+        refreshed_at = time.time()
+        LOGGER.info('refresh proxies every %s seconds' % REFRESH_INTERVAL)
+        refresh_proxies()
 
 
 def kill_redsocks():
