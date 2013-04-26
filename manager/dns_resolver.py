@@ -75,8 +75,8 @@ def resolve(domain_name, record_type=dpkt.dns.DNS_A):
 def contains_wrong_answer(dns_packet):
     questions = [question for question in dns_packet.qd if question.type == dpkt.dns.DNS_A]
     dns_packet.domain = questions[0].name if questions else None
-    if dpkt.dns.DNS_A not in [question.type for question in dns_packet.qd]:
-        return False # not answer to A question, might be PTR
+    if not dns_packet.domain:
+        return False
     for answer in dns_packet.an:
         if dpkt.dns.DNS_A == answer.type:
             resolved_ip = socket.inet_ntoa(answer['rdata'])

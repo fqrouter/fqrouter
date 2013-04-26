@@ -192,6 +192,7 @@ def handle_proxy_error(local_port, proxy):
 
 
 def can_access_twitter():
+    return
     checkers = []
     for i in range(PROXIES_COUNT * 2):
         checker = TwitterAccessChecker()
