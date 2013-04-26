@@ -44,11 +44,11 @@ def main():
     download_dpkt()
     untargz_dpkt()
     download_busybox()
+    download_redsocks()
     download_conntrack()
     download_pynetfilter_conntrack()
     unzip_pynetfilter_conntrack()
     copy_capture_log_sh()
-    copy_redsocks()
     zip_payload()
 
 
@@ -101,6 +101,12 @@ def download_busybox():
     urllib.urlretrieve('http://www.busybox.net/downloads/binaries/latest/busybox-armv6l', BUSYBOX_FILE)
 
 
+def download_redsocks():
+    if os.path.exists(REDSOCKS_FILE):
+        return
+    urllib.urlretrieve('http://cdn.fqrouter.com/android-utils/redsocks', REDSOCKS_FILE)
+
+
 def download_conntrack():
     if os.path.exists(CONNTRACK_FILE):
         return
@@ -109,12 +115,6 @@ def download_conntrack():
 
 def copy_capture_log_sh():
     subprocess.check_call('cp %s %s' % (CAPTURE_LOG_SH_SRC, CAPTURE_LOG_SH), shell=True)
-
-
-def copy_redsocks():
-    if os.path.exists(REDSOCKS_FILE):
-        return
-    subprocess.check_call('cp %s %s' % (REDSOCKS_FILE_SRC, REDSOCKS_FILE), shell=True)
 
 
 def download_pynetfilter_conntrack():

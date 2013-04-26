@@ -5,7 +5,6 @@ import logging.handlers
 import threading
 import re
 import os
-import signal
 
 import redsocks_template
 
@@ -23,7 +22,6 @@ REDSOCKS_LOGGER.handlers = [handler]
 
 RE_IP_PORT = r'(\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}):(\d+)'
 RE_REDSOCKS_CLIENT = re.compile(RE_IP_PORT + '->')
-RE_REDSOCKS_INSTANCE = re.compile(r'Dumping client list for instance ' + RE_IP_PORT)
 
 # call back from full_proxy_service
 list_proxies = None
@@ -33,7 +31,7 @@ update_proxy = None
 
 # internal
 redsocks_process = None
-redsocks_dumped_at = None
+status_updated_at = None
 
 
 def start_redsocks(proxies):
@@ -58,37 +56,19 @@ def start_redsocks(proxies):
 
 def monitor_redsocks():
     try:
-        current_instance = None
-        current_clients = set()
         while is_redsocks_live():
             for line in iter(redsocks_process.stdout.readline, b''):
                 REDSOCKS_LOGGER.info(line.strip())
-                match = RE_REDSOCKS_INSTANCE.search(line)
-                if match:
-                    current_instance = int(match.group(2))
-                    current_clients = set()
-                    LOGGER.debug('dump redsocks instance %s' % current_instance)
-                if current_instance:
+                if 'HTTP/' in line or 'No route to host' in line:
                     match = RE_REDSOCKS_CLIENT.search(line)
                     if match:
                         ip = match.group(1)
                         port = int(match.group(2))
-                        current_clients.add((ip, port))
-                        LOGGER.debug('client %s:%s' % (ip, port))
-                else:
-                    if 'http-connect.c:149' in line:
-                        match = RE_REDSOCKS_CLIENT.search(line)
-                        if match:
-                            ip = match.group(1)
-                            port = int(match.group(2))
-                            for local_port, proxy in list_proxies():
-                                if (ip, port) in proxy['clients']:
-                                    LOGGER.error(line.strip())
-                                    handle_proxy_error(local_port, proxy)
-                if 'End of client list' in line:
-                    update_proxy_status(current_instance, current_clients)
-                    current_instance = None
-                dump_redsocks_client_list()
+                        for local_port, proxy in list_proxies():
+                            if (ip, port) in proxy['clients']:
+                                LOGGER.error(line.strip())
+                                handle_proxy_error(local_port, proxy)
+                update_proxies_status_every_five_minutes()
             time.sleep(1)
         LOGGER.error('redsocks died, clear proxies: %s' % redsocks_process.poll())
         redsocks_process.communicate()
@@ -98,28 +78,17 @@ def monitor_redsocks():
         clear_proxies()
 
 
-def update_proxy_status(current_instance, current_clients):
-    for local_port, proxy in list_proxies():
-        if local_port == current_instance:
-            hangover_penalty = int(proxy['pre_rank'] / 2)
-            rank = len(current_clients) + hangover_penalty # factor in the previous performance
-            LOGGER.info('update proxy %s rank: [%s+%s] %s' %
-                        (local_port, proxy['pre_rank'], hangover_penalty, str(proxy['connection_info'])))
-            update_proxy(local_port, rank=rank, pre_rank=rank, clients=current_clients)
-            return
-    LOGGER.debug('this redsocks instance has been removed from proxy list')
-
-
-def dump_redsocks_client_list(should_dump=False):
-    global redsocks_dumped_at
-    if redsocks_dumped_at is None:
-        redsocks_dumped_at = time.time()
-    elif (time.time() - redsocks_dumped_at) > 60 * 5:
-        should_dump = True
-    if should_dump:
-        LOGGER.info('dump redsocks client list')
-        redsocks_dumped_at = time.time()
-        os.kill(redsocks_process.pid, signal.SIGUSR1)
+def update_proxies_status_every_five_minutes():
+    global status_updated_at
+    if status_updated_at is None:
+        status_updated_at = time.time()
+    elif (time.time() - status_updated_at) > 60 * 5:
+        for local_port, proxy in list_proxies():
+            rank = int(proxy['pre_rank'] / 2) # factor in the previous performance
+            LOGGER.info('update proxy %s rank: %s %s' %
+                        (local_port, rank, str(proxy['connection_info'])))
+            update_proxy(local_port, rank=rank, pre_rank=rank, clients=set())
+        status_updated_at = time.time()
 
 
 def kill_redsocks():

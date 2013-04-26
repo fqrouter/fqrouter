@@ -136,11 +136,7 @@ def start_proxies():
         redsocks_monitor.kill_redsocks()
         return False
     if proxies:
-        if not can_access_twitter():
-            LOGGER.info('still can not access twitter, retry in 120 seconds')
-            proxies.clear()
-            time.sleep(120)
-        redsocks_monitor.dump_redsocks_client_list(should_dump=True)
+        can_access_twitter()
     else:
         LOGGER.info('still no proxies after redsocks started, retry in 120 seconds')
         time.sleep(120)
