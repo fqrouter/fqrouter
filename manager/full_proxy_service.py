@@ -145,25 +145,25 @@ def on_goagent_died():
 
 
 def resolve_free_proxies():
+    proxy_domain_names = {}
     for i in range(1, 1 + PROXIES_COUNT):
-        resolve_free_proxy(19830 + i, 'proxy%s.fqrouter.com' % i)
+        proxy_domain_names[19830 + i] = 'proxy%s.fqrouter.com' % i
+    answers = dns_resolver.resolve(dpkt.dns.DNS_TXT, proxy_domain_names.values())
+    for i, connection_info in enumerate(answers.values()):
+        add_free_proxy(19830 + i, connection_info)
 
 
-def resolve_free_proxy(local_port, name):
-    try:
-        answer = dns_resolver.resolve(name, record_type=dpkt.dns.DNS_TXT)
-        connection_info = ''.join(e for e in answer.rdata if e.isalnum() or e in [':', '.', '-'])
-        connection_info = connection_info.split(':') # proxy_type:ip:port:username:password
-        proxies[local_port] = {
-            'clients': set(),
-            'rank': 0, # lower is better
-            'pre_rank': 0, # lower is better
-            'error_penalty': 256, # if error is found, this will be added to rank
-            'connection_info': connection_info
-        }
-        LOGGER.info('resolved proxy %s: %s' % (local_port, proxies[local_port]))
-    except:
-        LOGGER.exception('failed to resolve free proxy %s: %s' % (local_port, name))
+def add_free_proxy(local_port, connection_info):
+    connection_info = ''.join(e for e in connection_info if e.isalnum() or e in [':', '.', '-'])
+    connection_info = connection_info.split(':') # proxy_type:ip:port:username:password
+    proxies[local_port] = {
+        'clients': set(),
+        'rank': 0, # lower is better
+        'pre_rank': 0, # lower is better
+        'error_penalty': 256, # if error is found, this will be added to rank
+        'connection_info': connection_info
+    }
+    LOGGER.info('add free proxy %s: %s' % (local_port, proxies[local_port]))
 
 
 def start_redsocks():
@@ -192,7 +192,6 @@ def handle_proxy_error(local_port, proxy):
 
 
 def can_access_twitter():
-    return
     checkers = []
     for i in range(PROXIES_COUNT * 2):
         checker = TwitterAccessChecker()

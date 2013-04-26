@@ -125,7 +125,8 @@ def handle_outbound_packet(nfqueue_element, ip_packet, dns_packet):
     is_primary = not nfqueue_element.get_mark()
     if is_primary:
         raw_socket.sendto(nfqueue_element.get_payload(), (socket.inet_ntoa(ip_packet.dst), 0))
-    dns_server_name, dns_ip, dns_port = dns_server.select_dns_server(dns_packet.domain, is_primary)
+    hosted_form = dns_server.transform_domain_to_hosted_form(dns_packet.domain)
+    dns_server_name, dns_ip, dns_port = dns_server.select_dns_server(hosted_form or dns_packet.domain, is_primary)
     if is_primary and dns_packet.domain:
         LOGGER.info('[%s] resolve %s using: %s' % (dns_packet.id, dns_packet.domain, dns_server_name))
     dns_transactions[dns_packet.id] = (time.time(), socket.inet_ntoa(ip_packet.dst), ip_packet.udp.dport)
@@ -133,7 +134,6 @@ def handle_outbound_packet(nfqueue_element, ip_packet, dns_packet):
     ip_packet.sum = 0
     ip_packet.udp.dport = dns_port
     ip_packet.udp.sum = 0
-    hosted_form = dns_server.transform_domain_to_hosted_form(dns_packet.domain)
     if hosted_form:
         dns_packet.qd[0].name = hosted_form
         ip_packet.udp.data = str(dns_packet)

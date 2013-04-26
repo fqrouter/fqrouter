@@ -58,22 +58,12 @@ def main():
 
 def resolve_appids():
     appids = []
-    for i in range(1, 1 + APPIDS_COUNT):
-        appid = resolve_appid(i)
+    domain_names = ['goagent%s.fqrouter.com' % i for i in range(1, 1 + APPIDS_COUNT)]
+    answers = dns_resolver.resolve(dpkt.dns.DNS_TXT, domain_names)
+    for appid in answers.values():
         if appid:
             appids.append(appid)
     return appids
-
-
-def resolve_appid(index):
-    try:
-        answer = dns_resolver.resolve('goagent%s.fqrouter.com' % index, record_type=dpkt.dns.DNS_TXT)
-        appid = ''.join(e for e in answer.rdata if e.isalnum())
-        LOGGER.info('resolved goagent appid %s => %s' % (index, appid))
-        return appid
-    except:
-        LOGGER.exception('failed to resolve goagent appid %s' % index)
-        return None
 
 
 if '__main__' == __name__:

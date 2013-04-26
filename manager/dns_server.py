@@ -26,7 +26,9 @@ HOSTED_DOMAINS = {
     'filetransferenabled.mail.google.com', 'apis.google.com',
     'mobile-gtalk.google.com', 'mtalk.google.com',
     # google.com.hk
-    'google.com.hk', 'www.google.com.hk'
+    'google.com.hk', 'www.google.com.hk',
+    # google.cn
+    'google.cn', 'www.google.cn'
 }
 
 

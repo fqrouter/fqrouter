@@ -15,8 +15,11 @@ def handle_latest(environ):
 
 def resolve_latest_version():
     try:
-        answer = dns_resolver.resolve(VER_DOMAIN, record_type=dpkt.dns.DNS_TXT)
-        ver = ''.join(e for e in answer.rdata if e.isalnum() or e in {'.', '|', ':', '/', '-', '_'})
+        answers = dns_resolver.resolve(dpkt.dns.DNS_TXT, [VER_DOMAIN])
+        answer = answers.get(VER_DOMAIN)
+        if not answer:
+            return None
+        ver = ''.join(e for e in answer if e.isalnum() or e in {'.', '|', ':', '/', '-', '_'})
         LOGGER.info('resolved latest version %s => %s' % (VER_DOMAIN, ver))
         return ver
     except:
