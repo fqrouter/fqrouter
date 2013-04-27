@@ -17,6 +17,7 @@ public class WifiHotspot {
     public static final String MODE_WIFI_REPEATER = "wifi-repeater";
     public static final String MODE_TRADITIONAL_WIFI_HOTSPOT = "traditional-wifi-hotspot";
     private final StatusUpdater statusUpdater;
+    private WifiManager.WifiLock wifiLock = null;
 
     public WifiHotspot(StatusUpdater statusUpdater) {
         this.statusUpdater = statusUpdater;
@@ -42,6 +43,10 @@ public class WifiHotspot {
             statusUpdater.updateStatus("Started wifi hotspot");
             statusUpdater.appendLog("SSID: " + getSSID());
             statusUpdater.appendLog("PASSWORD: " + getPassword());
+            if (null == wifiLock) {
+                wifiLock = getWifiManager().createWifiLock(WifiManager.WIFI_MODE_FULL_HIGH_PERF, "fqrouter");
+            }
+            wifiLock.acquire();
             statusUpdater.showWifiHotspotToggleButton(true);
             return true;
         } catch (HttpUtils.Error e) {
@@ -142,6 +147,9 @@ public class WifiHotspot {
     public void stop() {
         try {
             statusUpdater.updateStatus("Stopping wifi hotspot");
+            if (null != wifiLock) {
+                wifiLock.release();
+            }
             try {
                 setWifiApEnabled(false);
             } catch (Exception e) {
