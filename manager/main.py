@@ -57,6 +57,7 @@ HANDLERS = {
     ('GET', 'wifi/started'): wifi.handle_started,
     ('POST', 'wifi/setup'): wifi.handle_setup,
     ('GET', 'lan/scan'): lan.handle_scan,
+    ('POST', 'lan/clear-scan-results'): lan.handle_clear_scan_results,
     ('GET', 'version/latest'): version.handle_latest
 }
 

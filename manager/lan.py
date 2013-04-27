@@ -16,9 +16,16 @@ CONCURRENT_CHECKERS_COUNT = 20
 
 LOGGER = logging.getLogger('fqrouter.%s' % __name__)
 
+scan_results = []
+
 
 def handle_scan(environ, start_response):
     start_response(httplib.OK, [('Content-Type', 'text/plain')])
+    if scan_results:
+        LOGGER.info('return cached scan results')
+        for line in scan_results:
+            yield '%s,%s,%s\n' % line
+        return
     ip_range = get_ip_range(wifi.WIFI_INTERFACE)
     if not ip_range:
         LOGGER.warn('ip range not found')
@@ -35,7 +42,15 @@ def handle_scan(environ, start_response):
         if default_gateway == ip:
             LOGGER.info('skip default gateway')
         else:
+            scan_results.append((ip, mac_address, host_name))
             yield '%s,%s,%s\n' % (ip, mac_address, host_name)
+
+
+def handle_clear_scan_results(environ, start_response):
+    global scan_results
+    scan_results = []
+    start_response(httplib.OK, [('Content-Type', 'text/plain')])
+    return []
 
 
 def get_ip_range(ifname):
@@ -45,6 +60,7 @@ def get_ip_range(ifname):
             return parts[2]
     return None
 
+
 def get_default_gateway(ifname):
     for line in wifi.shell_execute('/data/data/fq.router/busybox ip route').splitlines():
         if 'dev %s' % ifname not in line:
@@ -53,6 +69,7 @@ def get_default_gateway(ifname):
         if match:
             return match.group(1)
     return None
+
 
 def scan(ip_range):
     unscanned_ip_addresses = list(IP(ip_range))

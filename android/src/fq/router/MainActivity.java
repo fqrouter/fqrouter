@@ -25,7 +25,7 @@ import java.lang.reflect.Method;
 
 public class MainActivity extends Activity implements StatusUpdater {
 
-    private final static int SHOW_AS_ACTION_IF_ROOM = 1;
+    public final static int SHOW_AS_ACTION_IF_ROOM = 1;
     private final static int ITEM_ID_EXIT = 1;
     private final static int ITEM_ID_REPORT_ERROR = 2;
     private final static int ITEM_ID_CHECK_UPDATES = 3;
