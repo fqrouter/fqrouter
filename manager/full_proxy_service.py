@@ -171,7 +171,7 @@ def start_redsocks():
     redsocks_monitor.handle_proxy_error = handle_proxy_error
     redsocks_monitor.update_proxy = update_proxy
     redsocks_monitor.refresh_proxies = refresh_proxies
-    wifi.on_wifi_hotspot_started = lambda: thread.start_new(refresh_proxies, ())
+    wifi.on_wifi_hotspot_started = redsocks_monitor.kill_redsocks
     redsocks_monitor.start_redsocks(proxies)
 
 
@@ -193,7 +193,6 @@ def handle_proxy_error(local_port, proxy):
 
 
 def can_access_twitter():
-    return
     checkers = []
     for i in range(PROXIES_COUNT * 2):
         checker = TwitterAccessChecker()
