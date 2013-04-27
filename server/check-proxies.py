@@ -55,12 +55,12 @@ def add_proxy(line):
         ip, port = line.split(':')
         if manager.china_ip.is_china_ip(ip):
             log('skip china ip: %s' % ip)
-        if ip in black_list:
+        elif ip in black_list:
             log('skip blacklisted ip: %s' % ip)
         else:
             proxies.add((ip, port, 0))
     except:
-        log('skip illegal ip: %s' % ip)
+        log('skip illegal proxy: %s' % line)
 
 if args.proxy:
     for proxy in args.proxy:
@@ -68,11 +68,13 @@ if args.proxy:
 if args.proxy_list:
     for command in args.proxy_list:
         try:
+            before = len(proxies)
             log('executing %s' % command)
             lines = subprocess.check_output(command, shell=True, cwd=PROXY_LIST_DIR).splitlines(False)
-            log('succeeded, %s lines' % len(lines))
             for line in lines:
                 add_proxy(line)
+            after = len(proxies)
+            log('succeeded, %s new proxies' % (after - before))
         except subprocess.CalledProcessError, e:
             log('failed, output:')
             log(e.output)

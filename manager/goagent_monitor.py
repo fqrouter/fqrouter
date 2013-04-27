@@ -35,6 +35,7 @@ def start_goagent():
 def monitor_goagent(goagent_process):
     try:
         output, _ = goagent_process.communicate()
+        LOGGER.info('goagent output: %s' % output)
         if not shutting_down and goagent_process.poll():
             LOGGER.error('goagent output: %s' % output)
     except:
@@ -44,11 +45,13 @@ def monitor_goagent(goagent_process):
 
 
 def kill_goagent():
+    found = False
     for i in range(10):
         if kill_goagent_once():
+            found = True
             time.sleep(1)
         else:
-            return
+            return found
 
 
 def kill_goagent_once():

@@ -119,11 +119,13 @@ def refresh_proxies():
     else:
         LOGGER.info('still no proxies after redsocks started, retry in 120 seconds')
         time.sleep(120)
+        return refresh_proxies()
     return True
 
 
 def start_goagent():
-    goagent_monitor.kill_goagent()
+    if goagent_monitor.kill_goagent():
+        time.sleep(2)
     goagent_monitor.on_goagent_died = on_goagent_died
     goagent_monitor.start_goagent()
     proxies[19830 + PROXIES_COUNT + 1] = {
@@ -191,6 +193,7 @@ def handle_proxy_error(local_port, proxy):
 
 
 def can_access_twitter():
+    return
     checkers = []
     for i in range(PROXIES_COUNT * 2):
         checker = TwitterAccessChecker()
