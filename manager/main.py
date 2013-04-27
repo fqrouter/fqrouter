@@ -1,7 +1,7 @@
 import os
 import logging
 import logging.handlers
-import lan
+import lan_service
 
 ROOT_DIR = os.path.dirname(__file__)
 LOG_DIR = '/data/data/fq.router'
@@ -56,8 +56,10 @@ HANDLERS = {
     ('POST', 'wifi/stop'): wifi.handle_stop,
     ('GET', 'wifi/started'): wifi.handle_started,
     ('POST', 'wifi/setup'): wifi.handle_setup,
-    ('GET', 'lan/scan'): lan.handle_scan,
-    ('POST', 'lan/clear-scan-results'): lan.handle_clear_scan_results,
+    ('GET', 'lan/scan'): lan_service.handle_scan,
+    ('POST', 'lan/clear-scan-results'): lan_service.handle_clear_scan_results,
+    ('POST', 'lan/forge-default-gateway'): lan_service.handle_forge_default_gateway,
+    ('POST', 'lan/restore-default-gateway'): lan_service.handle_restore_default_gateway,
     ('GET', 'version/latest'): version.handle_latest
 }
 
@@ -96,6 +98,7 @@ if '__main__' == __name__:
     dns_service.run()
     tcp_service.run()
     full_proxy_service.run()
+    lan_service.run()
     wifi.setup_lo_alias()
     LOGGER.info('services started')
     try:

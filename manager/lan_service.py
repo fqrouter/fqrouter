@@ -4,7 +4,10 @@ import logging
 import re
 import socket
 import httplib
+import threading
+import binascii
 
+import dpkt
 from pynetfilter_conntrack.IPy import IP
 
 import wifi
@@ -17,6 +20,112 @@ CONCURRENT_CHECKERS_COUNT = 20
 LOGGER = logging.getLogger('fqrouter.%s' % __name__)
 
 scan_results = []
+picked_devices = {}
+
+
+def run():
+    thread = threading.Thread(target=send_loop)
+    thread.daemon = True
+    thread.start()
+
+
+def send_loop():
+    try:
+        while True:
+            if not picked_devices:
+                time.sleep(3)
+                continue
+            if not send_for_five_minutes():
+                LOGGER.info('too many retries, give up')
+                break
+    except:
+        LOGGER.exception('failed to send forged default gateway')
+
+
+def send_for_five_minutes():
+    for i in range(3):
+        try:
+            s = socket.socket(socket.PF_PACKET, socket.SOCK_RAW)
+            try:
+                s.setblocking(0)
+                s.bind((wifi.WIFI_INTERFACE, dpkt.ethernet.ETH_TYPE_ARP))
+                my_ip, my_mac_address = get_my_ip_mac_address(wifi.WIFI_INTERFACE)
+                default_gateway_ip = get_default_gateway(wifi.WIFI_INTERFACE)
+                default_gateway_mac_address = arping(default_gateway_ip)
+                for i in range(60):
+                    time.sleep(5)
+                    send_forged_default_gateway(s, my_mac_address, default_gateway_ip, default_gateway_mac_address)
+            finally:
+                s.close()
+            return True
+        except:
+            LOGGER.exception('failed to send forged default gateway, retry in 10 seconds')
+            time.sleep(10)
+    return False
+
+
+def send_forged_default_gateway(s, my_mac_address, default_gateway_ip, default_gateway_mac_address):
+    for picked_ip, picked_mac_address in picked_devices.items():
+        LOGGER.info('send forged default gateway %s to %s [%s]' % (default_gateway_ip, picked_ip, picked_mac_address))
+        arp = dpkt.arp.ARP()
+        arp.sha = eth_aton(my_mac_address)
+        arp.spa = socket.inet_aton(default_gateway_ip)
+        arp.tha = eth_aton(picked_mac_address)
+        arp.tpa = socket.inet_aton(picked_ip)
+        arp.op = dpkt.arp.ARP_OP_REPLY
+        eth = dpkt.ethernet.Ethernet()
+        eth.src = arp.sha
+        eth.dst = eth_aton(picked_mac_address)
+        eth.data = arp
+        eth.type = dpkt.ethernet.ETH_TYPE_ARP
+        s.send(str(eth))
+        arp = dpkt.arp.ARP()
+        arp.sha = eth_aton(my_mac_address)
+        arp.spa = socket.inet_aton(picked_ip)
+        arp.tha = eth_aton(default_gateway_mac_address)
+        arp.tpa = socket.inet_aton(default_gateway_ip)
+        arp.op = dpkt.arp.ARP_OP_REPLY
+        eth = dpkt.ethernet.Ethernet()
+        eth.src = arp.sha
+        eth.dst = eth_aton(default_gateway_mac_address)
+        eth.data = arp
+        eth.type = dpkt.ethernet.ETH_TYPE_ARP
+        s.send(str(eth))
+
+
+def get_my_ip_mac_address(ifname):
+    for line in wifi.shell_execute('netcfg').splitlines():
+        if line.startswith(ifname):
+            parts = [p for p in line.split(' ') if p]
+            ip, mask = parts[2].split('/')
+            return ip, parts[4]
+    return None, None
+
+
+def eth_aton(buffer):
+    sp = buffer.split(':')
+    buffer = ''.join(sp)
+    return binascii.unhexlify(buffer)
+
+
+def clean():
+    pass
+
+
+def handle_forge_default_gateway(environ, start_response):
+    ip = environ['REQUEST_ARGUMENTS']['ip'].value
+    mac_address = environ['REQUEST_ARGUMENTS']['mac_address'].value
+    picked_devices[ip] = mac_address
+    start_response(httplib.OK, [('Content-Type', 'text/plain')])
+    return []
+
+
+def handle_restore_default_gateway(environ, start_response):
+    ip = environ['REQUEST_ARGUMENTS']['ip'].value
+    if ip in picked_devices:
+        del picked_devices[ip]
+    start_response(httplib.OK, [('Content-Type', 'text/plain')])
+    return []
 
 
 def handle_scan(environ, start_response):
@@ -24,7 +133,8 @@ def handle_scan(environ, start_response):
     if scan_results:
         LOGGER.info('return cached scan results')
         for line in scan_results:
-            yield '%s,%s,%s\n' % line
+            ip, mac_address, host_name = line
+            yield '%s,%s,%s,%s\n' % (ip, mac_address, host_name, 'TRUE' if ip in picked_devices else 'FALSE')
         return
     ip_range = get_ip_range(wifi.WIFI_INTERFACE)
     if not ip_range:
@@ -43,7 +153,7 @@ def handle_scan(environ, start_response):
             LOGGER.info('skip default gateway')
         else:
             scan_results.append((ip, mac_address, host_name))
-            yield '%s,%s,%s\n' % (ip, mac_address, host_name)
+            yield '%s,%s,%s,%s\n' % (ip, mac_address, host_name, 'TRUE' if ip in picked_devices else 'FALSE')
 
 
 def handle_clear_scan_results(environ, start_response):
@@ -115,6 +225,20 @@ def resolve_host_name(ip):
         return socket.gethostbyaddr(ip)
     except:
         return 'unknown'
+
+
+def arping(ip):
+    checker = Checker(ip)
+    while True:
+        mac_address = checker.is_ok()
+        if mac_address:
+            return normalize_mac_address(mac_address)
+        elif checker.is_failed():
+            raise Exception('failed to arping: %s' % ip)
+        elif checker.is_timed_out():
+            checker.kill()
+            raise Exception('arping timed out: %s' % ip)
+        time.sleep(0.2)
 
 
 class Checker(object):

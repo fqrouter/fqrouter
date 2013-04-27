@@ -20,7 +20,7 @@ adb push goagent_launcher.py /sdcard/manager/goagent_launcher.py
 adb push goagent_monitor.py /sdcard/manager/goagent_monitor.py
 adb push goagent.py /sdcard/manager/goagent.py
 adb push goagent.ini /sdcard/manager/goagent.ini
-adb push lan.py /sdcard/manager/lan.py
+adb push lan_service.py /sdcard/manager/lan_service.py
 adb push version.py /sdcard/manager/version.py
 adb shell su -c "rm /sdcard/manager/*.pyc"
 adb shell su -c "PYTHONHOME=/data/data/fq.router/python /data/data/fq.router/busybox sh /data/data/fq.router/python/bin/python-launcher.sh /sdcard/manager/main.py"

@@ -193,7 +193,6 @@ def handle_proxy_error(local_port, proxy):
 
 
 def can_access_twitter():
-    return
     checkers = []
     for i in range(PROXIES_COUNT * 2):
         checker = TwitterAccessChecker()
@@ -277,7 +276,7 @@ def pick_proxy(ip_packet):
     for local_port, proxy in proxies.items():
         if 'http-relay' == proxy['connection_info'][0]:
             if 80 == ip_packet.tcp.dport:
-                local_ports[proxy['rank'] - 15] = local_port
+                local_ports[-1] = local_port
             continue
         local_ports[proxy['rank']] = local_port
     if not local_ports:
