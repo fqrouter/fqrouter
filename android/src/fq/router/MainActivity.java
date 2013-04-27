@@ -30,6 +30,7 @@ public class MainActivity extends Activity implements StatusUpdater {
     private final static int ITEM_ID_REPORT_ERROR = 2;
     private final static int ITEM_ID_CHECK_UPDATES = 3;
     private final static int ITEM_ID_SETTINGS = 4;
+    private final static int ITEM_ID_PICK_AND_PLAY = 5;
     private final static File EXITING_FLAG = new File("/data/data/fq.router/.exiting");
     private Handler handler = new Handler();
     private boolean started = false;
@@ -165,6 +166,7 @@ public class MainActivity extends Activity implements StatusUpdater {
 
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
+        menu.add(Menu.NONE, ITEM_ID_PICK_AND_PLAY, Menu.NONE, "Pick & Play");
         menu.add(Menu.NONE, ITEM_ID_SETTINGS, Menu.NONE, "Settings");
         menu.add(Menu.NONE, ITEM_ID_CHECK_UPDATES, Menu.NONE, "Check Updates");
         addMenuItem(menu, ITEM_ID_REPORT_ERROR, "Report Error");
@@ -201,6 +203,8 @@ public class MainActivity extends Activity implements StatusUpdater {
             }).start();
         } else if (ITEM_ID_SETTINGS == item.getItemId()) {
             startActivity(new Intent(this, SettingsActivity.class));
+        } else if (ITEM_ID_PICK_AND_PLAY == item.getItemId()) {
+            startActivity(new Intent(this, PickAndPlayActivity.class));
         }
         return super.onMenuItemSelected(featureId, item);
     }

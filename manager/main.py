@@ -1,6 +1,7 @@
 import os
 import logging
 import logging.handlers
+import lan
 
 ROOT_DIR = os.path.dirname(__file__)
 LOG_DIR = '/data/data/fq.router'
@@ -32,18 +33,20 @@ import full_proxy_service
 import sys
 
 
-def handle_ping(environ):
-    return httplib.OK, [('Content-Type', 'text/plain')], 'PONG'
+def handle_ping(environ, start_response):
+    start_response(httplib.OK, [('Content-Type', 'text/plain')])
+    yield 'PONG'
 
 
-def handle_logs(environ):
-    output = ['<html><body><pre>']
+def handle_logs(environ, start_response):
+    start_response(httplib.OK, [('Content-Type', 'text/html')])
+    yield '<html><body><pre>'
     lines = []
     with open(LOG_FILE) as f:
         lines.append(f.read())
-    output.extend(reversed(lines))
-    output.append('</pre></body></html>')
-    return httplib.OK, [('Content-Type', 'text/html')], output
+    for line in reversed(lines):
+        yield line
+    yield '</pre></body></html>'
 
 
 HANDLERS = {
@@ -53,6 +56,7 @@ HANDLERS = {
     ('POST', 'wifi/stop'): wifi.handle_stop,
     ('GET', 'wifi/started'): wifi.handle_started,
     ('POST', 'wifi/setup'): wifi.handle_setup,
+    ('GET', 'lan/scan'): lan.handle_scan,
     ('GET', 'version/latest'): version.handle_latest
 }
 
@@ -67,16 +71,15 @@ def handle_request(environ, start_response):
     handler = HANDLERS.get((method, path))
     if handler:
         try:
-            status, headers, output = handler(environ)
-            start_response(get_http_response(status), headers)
-            return [output] if isinstance(output, basestring) else output
+            lines = handler(environ, lambda status, headers: start_response(get_http_response(status), headers))
         except:
             LOGGER.exception('failed to handle request: %s %s' % (method, path))
-            start_response(get_http_response(httplib.INTERNAL_SERVER_ERROR), [('Content-Type', 'text/plain')])
-            return []
+            raise
     else:
         start_response(get_http_response(httplib.NOT_FOUND), [('Content-Type', 'text/plain')])
-        return []
+        lines = []
+    for line in lines:
+        yield line
 
 
 def get_http_response(code):

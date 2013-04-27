@@ -461,6 +461,6 @@ def is_china_domain(domain):
     if domain.endswith('.cn'):
         return True
     for chain_domain in CHINA_DOMAIN:
-        if domain.endswith(chain_domain):
+        if domain == chain_domain or domain.endswith('.%s' % chain_domain):
             return True
     return False

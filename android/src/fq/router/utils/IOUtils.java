@@ -2,17 +2,28 @@ package fq.router.utils;
 
 import java.io.*;
 import java.math.BigInteger;
-import java.net.Socket;
 import java.security.MessageDigest;
 
 public class IOUtils {
 
+
+    public static interface Callback {
+        void onLineRead(String line);
+    }
+
     public static String readAll(InputStream inputStream) throws Exception {
+        return readAll(inputStream, null);
+    }
+
+    public static String readAll(InputStream inputStream, Callback callback) throws Exception {
         try {
             BufferedReader reader = new BufferedReader(new InputStreamReader(inputStream));
             StringBuilder stringBuilder = new StringBuilder();
             String line;
             while (null != (line = reader.readLine())) {
+                if (null != callback) {
+                    callback.onLineRead(line);
+                }
                 stringBuilder.append(line);
             }
             return stringBuilder.toString();

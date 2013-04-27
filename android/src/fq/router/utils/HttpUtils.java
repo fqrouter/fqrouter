@@ -45,15 +45,21 @@ public class HttpUtils {
     }
 
     public static String get(String request) throws Exception {
+        return get(request, null, 3000);
+    }
+
+    public static String get(String request, IOUtils.Callback callback, int timeout) throws Exception {
         URL url = new URL(request);
         HttpURLConnection connection = (HttpURLConnection) url.openConnection();
         try {
             connection.setInstanceFollowRedirects(false);
             connection.setRequestMethod("GET");
             connection.setUseCaches(false);
-            connection.setReadTimeout(3000);
+            if (timeout > 0) {
+                connection.setReadTimeout(timeout);
+            }
             int responseCode = connection.getResponseCode();
-            String output = IOUtils.readAll(connection.getInputStream());
+            String output = IOUtils.readAll(connection.getInputStream(), callback);
             if (responseCode >= 200 && responseCode < 300) {
                 return output;
             } else {

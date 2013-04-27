@@ -21,6 +21,11 @@
                 <category android:name="android.intent.category.LAUNCHER"/>
             </intent-filter>
         </activity>
+        <activity android:name="PickAndPlayActivity"
+                  android:label="Pick &amp; Play"
+                  android:launchMode="singleInstance"
+                  android:configChanges="keyboard|keyboardHidden|orientation|screenSize">
+        </activity>
         <activity android:name="SettingsActivity">
         </activity>
     </application>

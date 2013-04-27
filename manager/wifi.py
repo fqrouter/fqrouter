@@ -58,30 +58,34 @@ def clean():
     stop_hotspot()
 
 
-def handle_start(environ):
+def handle_start(environ, start_response):
     ssid = environ['REQUEST_ARGUMENTS']['ssid'].value
     password = environ['REQUEST_ARGUMENTS']['password'].value
     success, message = start_hotspot(ssid, password)
     status = httplib.OK if success else httplib.INTERNAL_SERVER_ERROR
-    return status, [('Content-Type', 'text/plain')], message
+    start_response(status, [('Content-Type', 'text/plain')])
+    yield message
 
 
-def handle_stop(environ):
-    return httplib.OK, [('Content-Type', 'text/plain')], [stop_hotspot()]
+def handle_stop(environ, start_response):
+    start_response(httplib.OK, [('Content-Type', 'text/plain')])
+    yield stop_hotspot()
 
 
-def handle_setup(environ):
+def handle_setup(environ, start_response):
     for i in range(10):
         iface = get_working_hotspot_iface()
         if not iface:
             time.sleep(2)
             continue
         setup_networking(iface)
-        return httplib.OK, [('Content-Type', 'text/plain')], []
+        start_response(httplib.OK, [('Content-Type', 'text/plain')])
+        return []
 
 
-def handle_started(environ):
-    return httplib.OK, [('Content-Type', 'text/plain')], ['TRUE' if get_working_hotspot_iface() else 'FALSE']
+def handle_started(environ, start_response):
+    start_response(httplib.OK, [('Content-Type', 'text/plain')])
+    yield 'TRUE' if get_working_hotspot_iface() else 'FALSE'
 
 
 def stop_hotspot():

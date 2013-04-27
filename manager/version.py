@@ -9,8 +9,9 @@ LOGGER = logging.getLogger('fqrouter.%s' % __name__)
 VER_DOMAIN = 'beta.android.ver.fqrouter.com'
 
 
-def handle_latest(environ):
-    return httplib.OK, [('Content-Type', 'text/plain')], resolve_latest_version()
+def handle_latest(environ, start_response):
+    start_response(httplib.OK, [('Content-Type', 'text/plain')])
+    yield resolve_latest_version()
 
 
 def resolve_latest_version():
