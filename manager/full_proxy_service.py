@@ -26,6 +26,7 @@ import wifi
 
 
 LOGGER = logging.getLogger('fqrouter.%s' % __name__)
+APPIDS_COUNT = 10
 
 
 def run():
@@ -104,11 +105,15 @@ def refresh_proxies():
         LOGGER.info('existing redsocks killed')
         time.sleep(2)
     LOGGER.info('starting goagent')
-    try:
-        start_goagent()
-    except:
-        LOGGER.exception('failed to start goagent')
-        goagent_monitor.kill_goagent()
+    appids = resolve_appids()
+    if appids:
+        try:
+            start_goagent(appids)
+        except:
+            LOGGER.exception('failed to start goagent')
+            goagent_monitor.kill_goagent()
+    else:
+        LOGGER.info('no appids resolved, do not start goagent')
     LOGGER.info('resolving free proxies')
     resolve_free_proxies()
     LOGGER.info('starting redsocks')
@@ -128,11 +133,27 @@ def refresh_proxies():
     return True
 
 
-def start_goagent():
+def resolve_appids():
+    appids = []
+    for i in range(3):
+        domain_names = ['goagent%s.fqrouter.com' % i for i in range(1, 1 + APPIDS_COUNT)]
+        answers = dns_resolver.resolve(dpkt.dns.DNS_TXT, domain_names)
+        for appid in answers.values():
+            appid = ''.join(e for e in appid if e.isalnum())
+            if appid:
+                appids.append(appid)
+        if appids:
+            return appids
+        time.sleep(10)
+    LOGGER.error('resolve appids failed, too many retries, give up')
+    return []
+
+
+def start_goagent(appids):
     if goagent_monitor.kill_goagent():
         time.sleep(2)
     goagent_monitor.on_goagent_died = on_goagent_died
-    goagent_monitor.start_goagent()
+    goagent_monitor.start_goagent(appids)
     proxies[19830 + PROXIES_COUNT + 1] = {
         'clients': set(),
         'rank': 0, # lower is better

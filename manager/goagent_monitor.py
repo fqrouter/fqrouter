@@ -14,11 +14,11 @@ on_goagent_died = None
 shutting_down = False
 
 
-def start_goagent():
+def start_goagent(appids):
     global shutting_down
     shutting_down = False
     goagent_process = subprocess.Popen(
-        [BUSYBOX_PATH, 'sh', PYTHON_LAUNCHER_PATH, GOAGENT_LAUNCHER_PATH],
+        [BUSYBOX_PATH, 'sh', PYTHON_LAUNCHER_PATH, GOAGENT_LAUNCHER_PATH] + appids,
         stderr=subprocess.STDOUT, stdout=subprocess.PIPE)
     time.sleep(0.5)
     if goagent_process.poll() is None:

@@ -1,14 +1,10 @@
 import logging
-
-import dpkt
+import sys
 
 import goagent
-import dns_resolver
-import time
 
 
 LOGGER = logging.getLogger('fqrouter.%s' % __name__)
-APPIDS_COUNT = 10
 failures_count = 0
 server = None
 
@@ -43,7 +39,7 @@ def main():
     global server
     logging.basicConfig(level=logging.INFO)
     try:
-        goagent.common.GAE_APPIDS = resolve_appids()
+        goagent.common.GAE_APPIDS = sys.argv[1:]
         if not goagent.common.GAE_APPIDS:
             LOGGER.error("no appids, disable goagent service")
             return
@@ -55,22 +51,6 @@ def main():
     finally:
         LOGGER.info('goagent server shutdown')
         server = None
-
-
-def resolve_appids():
-    appids = []
-    for i in range(3):
-        domain_names = ['goagent%s.fqrouter.com' % i for i in range(1, 1 + APPIDS_COUNT)]
-        answers = dns_resolver.resolve(dpkt.dns.DNS_TXT, domain_names)
-        for appid in answers.values():
-            appid = ''.join(e for e in appid if e.isalnum())
-            if appid:
-                appids.append(appid)
-        if appids:
-            return appids
-        time.sleep(10)
-    LOGGER.error('resolve appids failed, too many retries, give up')
-    return []
 
 
 if '__main__' == __name__:
