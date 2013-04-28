@@ -66,6 +66,11 @@ enabled = True
 
 RULES = [
     (
+        # somehow 10.1.2.3 sends "un-nated" packet to destination, results in RST back
+        # drop them is a hack, but works
+        {'target': 'DROP', 'extra': 'tcpflags: 0x3F/0x04', 'destination': '10.1.2.3'},
+        ('filter', 'INPUT', '-d 10.1.2.3 -p tcp --tcp-flags ALL RST -j DROP')
+    ), (
         {'target': 'NFQUEUE', 'extra': 'NFQUEUE num 3'},
         ('nat', 'OUTPUT', '-p tcp -j NFQUEUE --queue-num 3')
     ), (

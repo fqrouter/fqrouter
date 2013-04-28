@@ -24,25 +24,26 @@ picked_devices = {}
 
 
 def run():
-    thread = threading.Thread(target=send_loop)
+    thread = threading.Thread(target=start_lan_service)
     thread.daemon = True
     thread.start()
 
 
-def send_loop():
+def start_lan_service():
     try:
+        wifi.enable_ipv4_forward()
         while True:
             if not picked_devices:
                 time.sleep(3)
                 continue
-            if not send_for_five_minutes():
+            if not send_for_ten_minutes():
                 LOGGER.info('too many retries, give up')
                 break
     except:
         LOGGER.exception('failed to send forged default gateway')
 
 
-def send_for_five_minutes():
+def send_for_ten_minutes():
     for i in range(3):
         try:
             s = socket.socket(socket.PF_PACKET, socket.SOCK_RAW)
@@ -53,8 +54,8 @@ def send_for_five_minutes():
                 default_gateway_ip = get_default_gateway(wifi.WIFI_INTERFACE)
                 default_gateway_mac_address = arping(default_gateway_ip)
                 for i in range(60):
-                    time.sleep(5)
                     send_forged_default_gateway(s, my_mac_address, default_gateway_ip, default_gateway_mac_address)
+                    time.sleep(10)
             finally:
                 s.close()
             return True
