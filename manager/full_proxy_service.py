@@ -115,7 +115,8 @@ def refresh_proxies():
     else:
         LOGGER.info('no appids resolved, do not start goagent')
     LOGGER.info('resolving free proxies')
-    resolve_free_proxies()
+    for i, connection_info in enumerate(resolve_free_proxies()):
+        add_free_proxy(19830 + i, connection_info)
     LOGGER.info('starting redsocks')
     try:
         start_redsocks()
@@ -135,7 +136,7 @@ def refresh_proxies():
 
 def resolve_appids():
     appids = []
-    for i in range(3):
+    for i in range(6):
         domain_names = ['goagent%s.fqrouter.com' % i for i in range(1, 1 + APPIDS_COUNT)]
         answers = dns_resolver.resolve(dpkt.dns.DNS_TXT, domain_names)
         for appid in answers.values():
@@ -174,14 +175,23 @@ def resolve_free_proxies():
     proxy_domain_names = {}
     for i in range(1, 1 + PROXIES_COUNT):
         proxy_domain_names[19830 + i] = 'proxy%s.fqrouter.com' % i
-    answers = dns_resolver.resolve(dpkt.dns.DNS_TXT, proxy_domain_names.values())
-    for i, connection_info in enumerate(answers.values()):
-        add_free_proxy(19830 + i, connection_info)
+    for i in range(6):
+        answers = dns_resolver.resolve(dpkt.dns.DNS_TXT, proxy_domain_names.values())
+        if answers:
+            connection_infos = []
+            for connection_info in answers.values():
+                if not connection_info:
+                    continue
+                connection_info = ''.join(e for e in connection_info if e.isalnum() or e in [':', '.', '-'])
+                connection_info = connection_info.split(':') # proxy_type:ip:port:username:password
+                connection_infos.append(connection_info)
+            return connection_infos
+        time.sleep(10)
+    LOGGER.error('resolve free proxies failed, too many retries, give up')
+    return []
 
 
 def add_free_proxy(local_port, connection_info):
-    connection_info = ''.join(e for e in connection_info if e.isalnum() or e in [':', '.', '-'])
-    connection_info = connection_info.split(':') # proxy_type:ip:port:username:password
     proxies[local_port] = {
         'clients': set(),
         'rank': 0, # lower is better
