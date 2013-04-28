@@ -13,8 +13,10 @@ from pynetfilter_conntrack.IPy import IP
 import wifi
 
 
+RE_IFCONFIG_IP = re.compile(r'inet addr:(\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3})')
 RE_MAC_ADDRESS = re.compile(r'[0-9a-f]+:[0-9a-f]+:[0-9a-f]+:[0-9a-f]+:[0-9a-f]+:[0-9a-f]+')
 RE_DEFAULT_GATEWAY = re.compile(r'default via (\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3})')
+RE_IP_RANGE = re.compile(r'(\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}/\d+)')
 CONCURRENT_CHECKERS_COUNT = 20
 
 LOGGER = logging.getLogger('fqrouter.%s' % __name__)
@@ -50,11 +52,11 @@ def send_for_ten_minutes():
             try:
                 s.setblocking(0)
                 s.bind((wifi.WIFI_INTERFACE, dpkt.ethernet.ETH_TYPE_ARP))
-                my_ip, my_mac_address = get_my_ip_mac_address(wifi.WIFI_INTERFACE)
+                my_ip, my_mac = get_ip_and_mac(wifi.WIFI_INTERFACE)
                 default_gateway_ip = get_default_gateway(wifi.WIFI_INTERFACE)
-                default_gateway_mac_address = arping(default_gateway_ip)
+                default_gateway_mac = arping(default_gateway_ip)
                 for i in range(60):
-                    send_forged_default_gateway(s, my_mac_address, default_gateway_ip, default_gateway_mac_address)
+                    send_forged_default_gateway(s, my_mac, default_gateway_ip, default_gateway_mac)
                     time.sleep(10)
             finally:
                 s.close()
@@ -65,42 +67,48 @@ def send_for_ten_minutes():
     return False
 
 
-def send_forged_default_gateway(s, my_mac_address, default_gateway_ip, default_gateway_mac_address):
-    for picked_ip, picked_mac_address in picked_devices.items():
-        LOGGER.info('send forged default gateway %s to %s [%s]' % (default_gateway_ip, picked_ip, picked_mac_address))
+def send_forged_default_gateway(s, my_mac, default_gateway_ip, default_gateway_mac):
+    for picked_ip, picked_mac in picked_devices.items():
+        LOGGER.info('send forged default gateway %s to %s [%s]' % (default_gateway_ip, picked_ip, picked_mac))
         arp = dpkt.arp.ARP()
-        arp.sha = eth_aton(my_mac_address)
+        arp.sha = eth_aton(my_mac)
         arp.spa = socket.inet_aton(default_gateway_ip)
-        arp.tha = eth_aton(picked_mac_address)
+        arp.tha = eth_aton(picked_mac)
         arp.tpa = socket.inet_aton(picked_ip)
         arp.op = dpkt.arp.ARP_OP_REPLY
         eth = dpkt.ethernet.Ethernet()
         eth.src = arp.sha
-        eth.dst = eth_aton(picked_mac_address)
+        eth.dst = eth_aton(picked_mac)
         eth.data = arp
         eth.type = dpkt.ethernet.ETH_TYPE_ARP
         s.send(str(eth))
         arp = dpkt.arp.ARP()
-        arp.sha = eth_aton(my_mac_address)
+        arp.sha = eth_aton(my_mac)
         arp.spa = socket.inet_aton(picked_ip)
-        arp.tha = eth_aton(default_gateway_mac_address)
+        arp.tha = eth_aton(default_gateway_mac)
         arp.tpa = socket.inet_aton(default_gateway_ip)
         arp.op = dpkt.arp.ARP_OP_REPLY
         eth = dpkt.ethernet.Ethernet()
         eth.src = arp.sha
-        eth.dst = eth_aton(default_gateway_mac_address)
+        eth.dst = eth_aton(default_gateway_mac)
         eth.data = arp
         eth.type = dpkt.ethernet.ETH_TYPE_ARP
         s.send(str(eth))
 
 
-def get_my_ip_mac_address(ifname):
-    for line in wifi.shell_execute('netcfg').splitlines():
-        if line.startswith(ifname):
-            parts = [p for p in line.split(' ') if p]
-            ip, mask = parts[2].split('/')
-            return ip, parts[4]
-    return None, None
+def get_ip_and_mac(ifname):
+    output = wifi.shell_execute('/data/data/fq.router/busybox ifconfig %s' % ifname).lower()
+    match = RE_MAC_ADDRESS.search(output)
+    if match:
+        mac = match.group(0)
+    else:
+        mac = None
+    match = RE_IFCONFIG_IP.search(output)
+    if match:
+        ip = match.group(1)
+    else:
+        ip = None
+    return ip, mac
 
 
 def eth_aton(buffer):
@@ -115,8 +123,8 @@ def clean():
 
 def handle_forge_default_gateway(environ, start_response):
     ip = environ['REQUEST_ARGUMENTS']['ip'].value
-    mac_address = environ['REQUEST_ARGUMENTS']['mac_address'].value
-    picked_devices[ip] = mac_address
+    mac = environ['REQUEST_ARGUMENTS']['mac'].value
+    picked_devices[ip] = mac
     start_response(httplib.OK, [('Content-Type', 'text/plain')])
     return []
 
@@ -126,35 +134,48 @@ def handle_restore_default_gateway(environ, start_response):
     if ip in picked_devices:
         del picked_devices[ip]
     start_response(httplib.OK, [('Content-Type', 'text/plain')])
-    return []
+    return [str(len(picked_devices))]
 
 
 def handle_scan(environ, start_response):
-    start_response(httplib.OK, [('Content-Type', 'text/plain')])
     if scan_results:
         LOGGER.info('return cached scan results')
+        start_response(httplib.OK, [('Content-Type', 'text/plain')])
         for line in scan_results:
-            ip, mac_address, host_name = line
-            yield '%s,%s,%s,%s\n' % (ip, mac_address, host_name, 'TRUE' if ip in picked_devices else 'FALSE')
+            ip, mac, host_name = line
+            yield '%s,%s,%s,%s\n' % (ip, mac, host_name, 'TRUE' if ip in picked_devices else 'FALSE')
         return
-    ip_range = get_ip_range(wifi.WIFI_INTERFACE)
-    if not ip_range:
-        LOGGER.warn('ip range not found')
+    try:
+        ip_range = get_ip_range(wifi.WIFI_INTERFACE)
+        if not ip_range:
+            LOGGER.warn('ip range not found')
+            return
+        if not ip_range.endswith('/24'): # home router only
+            LOGGER.warn('ip range is too big: %s' % ip_range)
+            return
+        default_gateway = get_default_gateway(wifi.WIFI_INTERFACE)
+        LOGGER.info('default gateway: %s' % default_gateway)
+        my_ip, _ = get_ip_and_mac(wifi.WIFI_INTERFACE)
+        LOGGER.info('my ip: %s' % my_ip)
+        LOGGER.info('scan started: %s' % ip_range)
+    except:
+        start_response(httplib.INTERNAL_SERVER_ERROR, [('Content-Type', 'text/plain')])
+        LOGGER.exception('failed to prepare scan')
         return
-    if not ip_range.endswith('/24'): # home router only
-        LOGGER.warn('ip range is too big: %s' % ip_range)
+    start_response(httplib.OK, [('Content-Type', 'text/plain')])
+    try:
+        for ip, mac, host_name in scan(ip_range):
+            LOGGER.info('scan: %s,%s,%s' % (ip, mac, host_name))
+            if default_gateway == ip:
+                LOGGER.info('skip default gateway: %s' % default_gateway)
+            elif my_ip == ip:
+                LOGGER.info('skip my ip: %s' % my_ip)
+            else:
+                scan_results.append((ip, mac, host_name))
+                yield '%s,%s,%s,%s\n' % (ip, mac, host_name, 'TRUE' if ip in picked_devices else 'FALSE')
+    except:
+        LOGGER.exception('failed to scan')
         return
-    default_gateway = get_default_gateway(wifi.WIFI_INTERFACE)
-    LOGGER.info('default gateway: %s' % default_gateway)
-    ip_range = '%s/24' % '.'.join(ip_range.split('.')[:3] + ['0'])
-    LOGGER.info('scan started: %s' % ip_range)
-    for ip, mac_address, host_name in scan(ip_range):
-        LOGGER.info('scan: %s,%s,%s' % (ip, mac_address, host_name))
-        if default_gateway == ip:
-            LOGGER.info('skip default gateway')
-        else:
-            scan_results.append((ip, mac_address, host_name))
-            yield '%s,%s,%s,%s\n' % (ip, mac_address, host_name, 'TRUE' if ip in picked_devices else 'FALSE')
 
 
 def handle_clear_scan_results(environ, start_response):
@@ -165,10 +186,11 @@ def handle_clear_scan_results(environ, start_response):
 
 
 def get_ip_range(ifname):
-    for line in wifi.shell_execute('netcfg').splitlines():
-        if line.startswith(ifname):
-            parts = [p for p in line.split(' ') if p]
-            return parts[2]
+    for line in wifi.shell_execute('ip route').splitlines():
+        if 'dev %s' % ifname in line:
+            match = RE_IP_RANGE.search(line)
+            if match:
+                return match.group(0)
     return None
 
 
@@ -188,12 +210,12 @@ def scan(ip_range):
     while len(unscanned_ip_addresses) + len(checkers):
         for checker in list(checkers):
             try:
-                mac_address = checker.is_ok()
-                if mac_address:
+                mac = checker.is_ok()
+                if mac:
                     try:
-                        mac_address = normalize_mac_address(mac_address)
+                        mac = normalize_mac(mac)
                         host_name = resolve_host_name(checker.ip)
-                        yield checker.ip, mac_address, host_name
+                        yield checker.ip, mac, host_name
                     except:
                         LOGGER.exception('post process ip failed: %s' % checker.ip)
                         yield checker.ip, '', ''
@@ -217,23 +239,24 @@ def scan(ip_range):
         time.sleep(0.2)
 
 
-def normalize_mac_address(mac_address):
-    return ':'.join(['0%s' % p if 1 == len(p) else p for p in mac_address.split(':')])
+def normalize_mac(mac):
+    return ':'.join(['0%s' % p if 1 == len(p) else p for p in mac.split(':')])
 
 
 def resolve_host_name(ip):
     try:
-        return socket.gethostbyaddr(ip)
+        host_name = socket.gethostbyaddr(ip)[0]
+        return '' if ip == host_name else host_name
     except:
-        return 'unknown'
+        return ''
 
 
 def arping(ip):
     checker = Checker(ip)
     while True:
-        mac_address = checker.is_ok()
-        if mac_address:
-            return normalize_mac_address(mac_address)
+        mac = checker.is_ok()
+        if mac:
+            return normalize_mac(mac)
         elif checker.is_failed():
             raise Exception('failed to arping: %s' % ip)
         elif checker.is_timed_out():

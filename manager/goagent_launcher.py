@@ -4,6 +4,7 @@ import dpkt
 
 import goagent
 import dns_resolver
+import time
 
 
 LOGGER = logging.getLogger('fqrouter.%s' % __name__)
@@ -58,12 +59,18 @@ def main():
 
 def resolve_appids():
     appids = []
-    domain_names = ['goagent%s.fqrouter.com' % i for i in range(1, 1 + APPIDS_COUNT)]
-    answers = dns_resolver.resolve(dpkt.dns.DNS_TXT, domain_names)
-    for appid in answers.values():
-        if appid:
-            appids.append(appid)
-    return appids
+    for i in range(3):
+        domain_names = ['goagent%s.fqrouter.com' % i for i in range(1, 1 + APPIDS_COUNT)]
+        answers = dns_resolver.resolve(dpkt.dns.DNS_TXT, domain_names)
+        for appid in answers.values():
+            appid = ''.join(e for e in appid if e.isalnum())
+            if appid:
+                appids.append(appid)
+        if appids:
+            return appids
+        time.sleep(10)
+    LOGGER.error('resolve appids failed, too many retries, give up')
+    return []
 
 
 if '__main__' == __name__:

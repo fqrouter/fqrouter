@@ -1,6 +1,8 @@
 package fq.router;
 
 import android.app.ListActivity;
+import android.content.Context;
+import android.net.wifi.WifiManager;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.Menu;
@@ -23,7 +25,8 @@ public class PickAndPlayActivity extends ListActivity {
     private android.os.Handler handler = new android.os.Handler();
     private ArrayAdapter arrayAdapter;
     private static final ArrayList<String> devices = new ArrayList<String>();
-    private static final HashMap<String, String> macAddresses = new HashMap<String, String>();
+    private static final HashMap<String, String> macs = new HashMap<String, String>();
+    private WifiManager.WifiLock wifiLock;
 
 
     @Override
@@ -121,14 +124,18 @@ public class PickAndPlayActivity extends ListActivity {
 
     }
 
-    private void onNewDeviceDiscovered(final String ip, final String macAddress, final String hostName, final boolean isPicked) {
+    private void onNewDeviceDiscovered(final String ip, final String mac, final String hostName, final boolean isPicked) {
         updateStatus("scanning " + ip + "...");
         handler.postDelayed(new Runnable() {
             @Override
             public void run() {
-                if (!macAddress.isEmpty()) {
-                    macAddresses.put(ip, macAddress);
-                    devices.add(ip);
+                if (!mac.isEmpty()) {
+                    macs.put(ip, mac);
+                    if (hostName.isEmpty()) {
+                        devices.add(ip);
+                    } else {
+                        devices.add(ip + " " + hostName);
+                    }
                     arrayAdapter.notifyDataSetChanged();
                     if (isPicked) {
                         getListView().setItemChecked(devices.size() - 1, true);
@@ -140,18 +147,24 @@ public class PickAndPlayActivity extends ListActivity {
 
     public void onListItemClick(ListView parent, View v, int position, long id) {
         final boolean isChecked = parent.isItemChecked(position);
-        final String ip = devices.get(position);
-        final String macAddress = PickAndPlayActivity.macAddresses.get(ip);
+        final String ip = devices.get(position).split(" ")[0].trim();
+        final String mac = PickAndPlayActivity.macs.get(ip);
+        if (null == wifiLock) {
+            wifiLock = getWifiManager().createWifiLock(WifiManager.WIFI_MODE_FULL_HIGH_PERF, "fqrouter pick and play");
+        }
         new Thread(new Runnable() {
             @Override
             public void run() {
                 try {
                     if (isChecked) {
+                        wifiLock.acquire();
                         HttpUtils.post("http://127.0.0.1:8318/lan/forge-default-gateway", "ip=" + URLEncoder.encode(ip, "UTF-8") +
-                                "&mac_address=" + URLEncoder.encode(macAddress, "UTF-8"));
+                                "&mac=" + URLEncoder.encode(mac, "UTF-8"));
                         updateStatus("picked " + ip + ", free internet is accessible from that device now");
                     } else {
-                        HttpUtils.post("http://127.0.0.1:8318/lan/restore-default-gateway", "ip=" + URLEncoder.encode(ip, "UTF-8"));
+                        if ("0".equals(HttpUtils.post("http://127.0.0.1:8318/lan/restore-default-gateway", "ip=" + URLEncoder.encode(ip, "UTF-8")))) {
+                            wifiLock.release();
+                        }
                         updateStatus("unpicked " + ip + ", network went back to normal");
                     }
                 } catch (Exception e) {
@@ -159,5 +172,10 @@ public class PickAndPlayActivity extends ListActivity {
                 }
             }
         }).start();
+    }
+
+
+    private WifiManager getWifiManager() {
+        return (WifiManager) getBaseContext().getSystemService(Context.WIFI_SERVICE);
     }
 }

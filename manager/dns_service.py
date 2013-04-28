@@ -109,6 +109,9 @@ def handle_packet(nfqueue_element):
     try:
         ip_packet = dpkt.ip.IP(nfqueue_element.get_payload())
         dns_packet = dpkt.dns.DNS(ip_packet.udp.data)
+        if dpkt.dns.DNS_PTR in [question.type for question in dns_packet.qd]:
+            nfqueue_element.accept()
+            return
         questions = [question for question in dns_packet.qd if question.type == dpkt.dns.DNS_A]
         dns_packet.domain = questions[0].name if questions else None
         if 53 == ip_packet.udp.dport:

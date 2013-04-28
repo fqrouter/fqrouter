@@ -44,7 +44,7 @@ public class WifiHotspot {
             statusUpdater.appendLog("SSID: " + getSSID());
             statusUpdater.appendLog("PASSWORD: " + getPassword());
             if (null == wifiLock) {
-                wifiLock = getWifiManager().createWifiLock(WifiManager.WIFI_MODE_FULL_HIGH_PERF, "fqrouter");
+                wifiLock = getWifiManager().createWifiLock(WifiManager.WIFI_MODE_FULL_HIGH_PERF, "fqrouter wifi hotspot");
             }
             wifiLock.acquire();
             statusUpdater.showWifiHotspotToggleButton(true);
