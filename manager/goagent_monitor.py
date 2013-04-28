@@ -15,6 +15,7 @@ shutting_down = False
 
 
 def start_goagent(appids):
+    LOGGER.info('starting goagent with %s' % appids)
     global shutting_down
     shutting_down = False
     goagent_process = subprocess.Popen(
@@ -29,6 +30,10 @@ def start_goagent(appids):
     else:
         LOGGER.error('goagent output:')
         LOGGER.error(goagent_process.stdout.read())
+        try:
+            goagent_process.communicate()
+        except:
+            pass
         raise Exception('failed to start redsocks')
 
 
@@ -52,9 +57,11 @@ def kill_goagent():
             time.sleep(1)
         else:
             return found
+    kill_goagent_once(force=True)
+    return found
 
 
-def kill_goagent_once():
+def kill_goagent_once(force=False):
     global shutting_down
     shutting_down = True
     found = False
@@ -68,7 +75,7 @@ def kill_goagent_once():
                     found = True
                     try:
                         LOGGER.info('kill exiting goagent: %s' % pid)
-                        os.kill(int(pid), signal.SIGKILL)
+                        os.kill(int(pid), signal.SIGKILL if force else signal.SIGTERM)
                     except:
                         pass
     except:

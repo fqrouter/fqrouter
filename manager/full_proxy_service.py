@@ -108,7 +108,6 @@ def refresh_proxies():
     if redsocks_monitor.kill_redsocks():
         LOGGER.info('existing redsocks killed')
         time.sleep(2)
-    LOGGER.info('starting goagent')
     appids = resolve_appids()
     if appids:
         try:

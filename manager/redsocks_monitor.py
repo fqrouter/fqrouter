@@ -108,7 +108,7 @@ def refresh_proxies_according_to_schedule():
 
 
 def kill_redsocks():
-    return not subprocess.call(['/data/data/fq.router/busybox', 'killall', 'redsocks'])
+    return not subprocess.call(['/data/data/fq.router/busybox', 'killall', '-SIGTERM', 'redsocks'])
 
 
 def is_redsocks_live():
