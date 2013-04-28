@@ -64,6 +64,10 @@ pending_list = {} # ip => started_at
 proxies = {} # local_port => proxy
 proxies_refreshed_at = 0
 enabled = True
+previously_resolved_results = {
+    'appids': [],
+    'free_proxies': []
+}
 
 RULES = [
     (
@@ -137,17 +141,22 @@ def refresh_proxies():
 def resolve_appids():
     appids = []
     for i in range(6):
-        domain_names = ['goagent%s.fqrouter.com' % i for i in range(1, 1 + APPIDS_COUNT)]
-        answers = dns_resolver.resolve(dpkt.dns.DNS_TXT, domain_names)
-        for appid in answers.values():
-            appid = ''.join(e for e in appid if e.isalnum())
-            if appid:
-                appids.append(appid)
-        if appids:
-            return appids
+        try:
+            domain_names = ['goagent%s.fqrouter.com' % i for i in range(1, 1 + APPIDS_COUNT)]
+            answers = dns_resolver.resolve(dpkt.dns.DNS_TXT, domain_names)
+            for appid in answers.values():
+                appid = ''.join(e for e in appid if e.isalnum())
+                if appid:
+                    appids.append(appid)
+            if appids and len(appids) > (len(previously_resolved_results['appids']) / 2):
+                previously_resolved_results['appids'] = appids
+                return appids
+        except:
+            LOGGER.exception('failed to resolve appids once')
+        LOGGER.info('retry resolving appids in 10 seconds')
         time.sleep(10)
     LOGGER.error('resolve appids failed, too many retries, give up')
-    return []
+    return previously_resolved_results['appids']
 
 
 def start_goagent(appids):
@@ -176,19 +185,27 @@ def resolve_free_proxies():
     for i in range(1, 1 + PROXIES_COUNT):
         proxy_domain_names[19830 + i] = 'proxy%s.fqrouter.com' % i
     for i in range(6):
-        answers = dns_resolver.resolve(dpkt.dns.DNS_TXT, proxy_domain_names.values())
-        if answers:
-            connection_infos = []
-            for connection_info in answers.values():
-                if not connection_info:
+        try:
+            answers = dns_resolver.resolve(dpkt.dns.DNS_TXT, proxy_domain_names.values())
+            if answers:
+                connection_infos = []
+                for connection_info in answers.values():
+                    if not connection_info:
+                        continue
+                    connection_info = ''.join(e for e in connection_info if e.isalnum() or e in [':', '.', '-'])
+                    connection_info = connection_info.split(':') # proxy_type:ip:port:username:password
+                    connection_infos.append(connection_info)
+                if len(connection_infos) > (len(previously_resolved_results['free_proxies']) / 2):
+                    previously_resolved_results['free_proxies'] = connection_infos
+                    return connection_infos
+                else:
                     continue
-                connection_info = ''.join(e for e in connection_info if e.isalnum() or e in [':', '.', '-'])
-                connection_info = connection_info.split(':') # proxy_type:ip:port:username:password
-                connection_infos.append(connection_info)
-            return connection_infos
+        except:
+            LOGGER.exception('failed to resolve free proxies once')
+        LOGGER.info('retry resolving free proxies in 10 seconds')
         time.sleep(10)
     LOGGER.error('resolve free proxies failed, too many retries, give up')
-    return []
+    return previously_resolved_results['free_proxies']
 
 
 def add_free_proxy(local_port, connection_info):
