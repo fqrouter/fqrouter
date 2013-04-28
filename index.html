@@ -46,8 +46,9 @@
         <p>
             However, not all android mobile phones in use supports "wifi-repeating", especially those old models.
             To help those users, there two sub-optimal solutions. First, if mobile is using 3G connection, wifi
-            hotspot can be started using the system default method (wifi just for hotspot, no repeating required).
-            Second, fqrouter can list all the other devices in the same wifi network, and "pick & play". Device being
+            hotspot can be started using the system default method (wifi just for hotspot, no repeating required, so
+            no special requirement on hardware).
+            Second, fqrouter can list all the other devices in the same wifi network, then "pick & play". Device being
             picked will be redirected to a new gateway, which allows it to surf free internet via fqrouter.
         </p>
 
@@ -80,7 +81,7 @@
         <ol>
             <li>[90%] Share as "Wifi Repeater" (Hardware support required)</li>
             <li>[90%] Share using system wifi hotspot (only feasible in 3G environment)</li>
-            <li>[00%] Pick & Play: let other devices in same wifi network surf free internet via fqrouter (No hardware
+            <li>[80%] Pick & Play: let other devices in same wifi network surf free internet via fqrouter (No hardware
                 support required)
             </li>
         </ol>
