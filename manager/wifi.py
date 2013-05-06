@@ -90,6 +90,7 @@ def handle_started(environ, start_response):
 
 def stop_hotspot():
     try:
+        working_hotspot_iface = get_working_hotspot_iface()
         try:
             iptables.delete_rules(RULES)
         except:
@@ -103,18 +104,24 @@ def stop_hotspot():
         except:
             LOGGER.exception('failed to killall hostapd')
         try:
-            working_hotspot_iface = get_working_hotspot_iface()
-            if working_hotspot_iface:
-                stop_hotspot_interface(working_hotspot_iface)
-                return 'hotspot stopped successfully'
-            else:
-                return 'hotspot has not been started yet'
-        finally:
+            netd_execute('softap fwreload %s STA' % WIFI_INTERFACE)
+            shell_execute('netcfg %s down' % WIFI_INTERFACE)
+            shell_execute('netcfg %s up' % WIFI_INTERFACE)
+        except:
+            LOGGER.exception('failed to reload STA firmware')
+        try:
+            control_socket_dir = get_wpa_supplicant_control_socket_dir()
+            delete_existing_p2p_persistent_networks(WIFI_INTERFACE, control_socket_dir)
+        except:
+            LOGGER.exception('failed to delete existing p2p persistent networks')
+        if working_hotspot_iface:
             try:
-                control_socket_dir = get_wpa_supplicant_control_socket_dir()
-                delete_existing_p2p_persistent_networks(WIFI_INTERFACE, control_socket_dir)
+                shell_execute('%s dev %s del' % (IW_PATH, working_hotspot_iface))
             except:
-                LOGGER.exception('failed to delete existing p2p persistent networks')
+                LOGGER.exception('failed to delete wifi interface')
+            return 'hotspot stopped successfully'
+        else:
+            return 'hotspot has not been started yet'
     except:
         LOGGER.exception('failed to stop hotspot')
         return 'failed to stop hotspot'
@@ -267,19 +274,6 @@ def list_wifi_ifaces():
         if 'type AP' in line or 'type P2P-GO' in line:
             ifaces[current_iface] = True
     return ifaces
-
-
-def stop_hotspot_interface(iface):
-    try:
-        netd_execute('softap fwreload %s STA' % WIFI_INTERFACE)
-        shell_execute('netcfg %s down' % WIFI_INTERFACE)
-        shell_execute('netcfg %s up' % WIFI_INTERFACE)
-    except:
-        LOGGER.exception('failed to reload STA firmware')
-    try:
-        shell_execute('%s dev %s del' % (IW_PATH, iface))
-    except:
-        LOGGER.exception('failed to delete wifi interface')
 
 
 def start_hotspot_interface(wifi_chipset, ssid, password):
