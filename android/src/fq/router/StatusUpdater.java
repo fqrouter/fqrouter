@@ -21,4 +21,6 @@ public interface StatusUpdater {
     Context getBaseContext();
 
     AssetManager getAssets();
+
+    void hideWifiHotspotToggleButton();
 }

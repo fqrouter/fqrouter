@@ -5,6 +5,7 @@ import android.content.SharedPreferences;
 import android.net.wifi.SupplicantState;
 import android.net.wifi.WifiConfiguration;
 import android.net.wifi.WifiManager;
+import android.os.Build;
 import android.preference.PreferenceManager;
 import android.util.Log;
 import fq.router.utils.HttpUtils;
@@ -33,9 +34,21 @@ public class WifiHotspot {
     }
 
     public boolean start(String wifiHotspotMode) {
+        statusUpdater.hideWifiHotspotToggleButton();
         statusUpdater.appendLog("wifi hotspot mode: " + wifiHotspotMode);
+        boolean success = doStart(wifiHotspotMode);
+        statusUpdater.showWifiHotspotToggleButton(success);
+        return success;
+    }
+
+    private boolean doStart(String wifiHotspotMode) {
         try {
             if (MODE_WIFI_REPEATER.equals(wifiHotspotMode)) {
+                if (Build.VERSION.SDK_INT < 14) {
+                    statusUpdater.appendLog("Android 4.0 or above is required to start wifi repeater, " +
+                            "you may use 'Pick & Play' or traditional wifi hotspot instead.");
+                    return false;
+                }
                 startWifiRepeater();
             } else {
                 startTraditionalWifiHotspot();
@@ -47,7 +60,6 @@ public class WifiHotspot {
                 wifiLock = getWifiManager().createWifiLock(WifiManager.WIFI_MODE_FULL_HIGH_PERF, "fqrouter wifi hotspot");
             }
             wifiLock.acquire();
-            statusUpdater.showWifiHotspotToggleButton(true);
             return true;
         } catch (HttpUtils.Error e) {
             statusUpdater.appendLog("error: " + e.output);
@@ -61,7 +73,6 @@ public class WifiHotspot {
     private void reportStartFailure(String wifiHotspotMode, Exception e) {
         statusUpdater.reportError("failed to start wifi hotspot as " + wifiHotspotMode, e);
         stop();
-        statusUpdater.showWifiHotspotToggleButton(false);
     }
 
     private void startWifiRepeater() throws Exception {
@@ -122,6 +133,13 @@ public class WifiHotspot {
     }
 
     public boolean setup() {
+        statusUpdater.hideWifiHotspotToggleButton();
+        boolean success = doSetup();
+        statusUpdater.showWifiHotspotToggleButton(success);
+        return success;
+    }
+
+    private boolean doSetup() {
         try {
             if ("10.24.1.1".equals(getWifiIp())) {
                 return false;
@@ -141,10 +159,18 @@ public class WifiHotspot {
     private void reportSetupFailure(Exception e) {
         statusUpdater.reportError("failed to setup existing wifi hotspot", e);
         stop();
-        statusUpdater.showWifiHotspotToggleButton(false);
     }
 
     public void stop() {
+        statusUpdater.hideWifiHotspotToggleButton();
+        try {
+            doStop();
+        } finally {
+            statusUpdater.showWifiHotspotToggleButton(false);
+        }
+    }
+
+    private void doStop() {
         try {
             statusUpdater.updateStatus("Stopping wifi hotspot");
             if (null != wifiLock) {
@@ -163,7 +189,6 @@ public class WifiHotspot {
         wifiManager.setWifiEnabled(false);
         wifiManager.setWifiEnabled(true);
         statusUpdater.updateStatus("Stopped wifi hotspot");
-        statusUpdater.showWifiHotspotToggleButton(false);
     }
 
     private WifiManager getWifiManager() {

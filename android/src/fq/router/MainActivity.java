@@ -91,10 +91,18 @@ public class MainActivity extends Activity implements StatusUpdater {
             @Override
             public void onClick(View view) {
                 final boolean checked = wifiHotspotToggleButton.isChecked();
-                findViewById(R.id.wifiHotspotPanel).setVisibility(View.INVISIBLE);
                 applyWifiHotspotIsStarted(checked);
             }
         });
+    }
+
+    public void hideWifiHotspotToggleButton() {
+        handler.postDelayed(new Runnable() {
+            @Override
+            public void run() {
+                findViewById(R.id.wifiHotspotPanel).setVisibility(View.INVISIBLE);
+            }
+        }, 0);
     }
 
     private void applyWifiHotspotIsStarted(final boolean isStarted) {
@@ -127,7 +135,10 @@ public class MainActivity extends Activity implements StatusUpdater {
                         .setIcon(android.R.drawable.ic_dialog_alert)
                         .setTitle("Failed to start wifi repeater")
                         .setMessage("Do you want to start traditional wifi hotspot sharing 3G connection? " +
-                                "It will consume your 3G data traffic volume.")
+                                "It will consume your 3G data traffic volume. " +
+                                "Or you can try 'Pick & Play' from the menu, " +
+                                "it can share free internet to devices in your current wifi network")
+
                         .setPositiveButton("Yes", new DialogInterface.OnClickListener() {
 
                             @Override
@@ -141,7 +152,7 @@ public class MainActivity extends Activity implements StatusUpdater {
                             }
 
                         })
-                        .setNegativeButton("No", null)
+                        .setNegativeButton("No, thanks", null)
                         .show();
             }
         }, 2000);
