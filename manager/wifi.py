@@ -20,6 +20,8 @@ except:
 
 RE_CURRENT_FREQUENCY = re.compile(r'Current Frequency:(\d+\.\d+) GHz \(Channel (\d+)\)')
 RE_FREQ = re.compile(r'freq: (\d+)')
+RE_IFCONFIG_IP = re.compile(r'inet addr:(\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3})')
+RE_MAC_ADDRESS = re.compile(r'[0-9a-f]+:[0-9a-f]+:[0-9a-f]+:[0-9a-f]+:[0-9a-f]+:[0-9a-f]+')
 
 LOGGER = logging.getLogger('fqrouter.%s' % __name__)
 MODALIAS_PATH = '/sys/class/net/%s/device/modalias' % WIFI_INTERFACE
@@ -317,6 +319,7 @@ def list_wifi_ifaces():
 
 
 def start_hotspot_interface(wifi_chipset_family, wifichipset_model, ssid, password):
+    was_using_wifi_network = get_ip_and_mac(WIFI_INTERFACE)[0]
     try:
         shell_execute('start p2p_supplicant')
     except:
@@ -333,7 +336,32 @@ def start_hotspot_interface(wifi_chipset_family, wifichipset_model, ssid, passwo
         raise Exception('wifi chipset family %s is not supported: %s' % wifi_chipset_family)
     if not get_working_hotspot_iface():
         raise Exception('working hotspot iface not found after start')
+    if was_using_wifi_network and not wait_for_upstream_wifi_network_connected():
+        raise Exception('wifi interface can not reconnect')
     return hotspot_interface
+
+
+def wait_for_upstream_wifi_network_connected():
+    for i in range(15):
+        time.sleep(1)
+        if get_ip_and_mac(WIFI_INTERFACE)[0]:
+            return True
+    return False
+
+
+def get_ip_and_mac(ifname):
+    output = shell_execute('/data/data/fq.router/busybox ifconfig %s' % ifname).lower()
+    match = RE_MAC_ADDRESS.search(output)
+    if match:
+        mac = match.group(0)
+    else:
+        mac = None
+    match = RE_IFCONFIG_IP.search(output)
+    if match:
+        ip = match.group(1)
+    else:
+        ip = None
+    return ip, mac
 
 
 def get_wifi_chipset():
@@ -405,19 +433,21 @@ def load_bcm_p2p_firmware(wifi_chipset_model, control_socket_dir):
             f.write(downloaded_firmware_path)
     else:
         netd_execute('softap fwreload %s P2P' % WIFI_INTERFACE)
+    reset_wifi_interface()
+    log_upstream_wifi_status('after loaded p2p firmware', control_socket_dir)
+
+
+def reset_wifi_interface():
     shell_execute('netcfg %s down' % WIFI_INTERFACE)
     shell_execute('netcfg %s up' % WIFI_INTERFACE)
     time.sleep(1)
-    log_upstream_wifi_status('after loaded p2p firmware', control_socket_dir)
 
 
 def start_hotspot_on_wcnss(ssid, password):
     control_socket_dir = get_wpa_supplicant_control_socket_dir()
     log_upstream_wifi_status('before load p2p firmware', control_socket_dir)
     netd_execute('softap fwreload %s P2P' % WIFI_INTERFACE)
-    shell_execute('netcfg %s down' % WIFI_INTERFACE)
-    shell_execute('netcfg %s up' % WIFI_INTERFACE)
-    time.sleep(1)
+    reset_wifi_interface()
     log_upstream_wifi_status('after loaded p2p firmware', control_socket_dir)
     delete_existing_p2p_persistent_networks(WIFI_INTERFACE, control_socket_dir)
     start_p2p_persistent_network(WIFI_INTERFACE, control_socket_dir, ssid, password)

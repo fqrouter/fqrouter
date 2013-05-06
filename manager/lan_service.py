@@ -13,8 +13,6 @@ from pynetfilter_conntrack.IPy import IP
 import wifi
 
 
-RE_IFCONFIG_IP = re.compile(r'inet addr:(\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3})')
-RE_MAC_ADDRESS = re.compile(r'[0-9a-f]+:[0-9a-f]+:[0-9a-f]+:[0-9a-f]+:[0-9a-f]+:[0-9a-f]+')
 RE_DEFAULT_GATEWAY = re.compile(r'default via (\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3})')
 RE_IP_RANGE = re.compile(r'(\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}/\d+)')
 CONCURRENT_CHECKERS_COUNT = 20
@@ -52,7 +50,7 @@ def send_for_ten_minutes():
             try:
                 s.setblocking(0)
                 s.bind((wifi.WIFI_INTERFACE, dpkt.ethernet.ETH_TYPE_ARP))
-                my_ip, my_mac = get_ip_and_mac(wifi.WIFI_INTERFACE)
+                my_ip, my_mac = wifi.get_ip_and_mac(wifi.WIFI_INTERFACE)
                 default_gateway_ip = get_default_gateway(wifi.WIFI_INTERFACE)
                 default_gateway_mac = arping(default_gateway_ip)
                 for i in range(60):
@@ -94,21 +92,6 @@ def send_forged_default_gateway(s, my_mac, default_gateway_ip, default_gateway_m
         eth.data = arp
         eth.type = dpkt.ethernet.ETH_TYPE_ARP
         s.send(str(eth))
-
-
-def get_ip_and_mac(ifname):
-    output = wifi.shell_execute('/data/data/fq.router/busybox ifconfig %s' % ifname).lower()
-    match = RE_MAC_ADDRESS.search(output)
-    if match:
-        mac = match.group(0)
-    else:
-        mac = None
-    match = RE_IFCONFIG_IP.search(output)
-    if match:
-        ip = match.group(1)
-    else:
-        ip = None
-    return ip, mac
 
 
 def eth_aton(buffer):
@@ -155,7 +138,7 @@ def handle_scan(environ, start_response):
             return
         default_gateway = get_default_gateway(wifi.WIFI_INTERFACE)
         LOGGER.info('default gateway: %s' % default_gateway)
-        my_ip, _ = get_ip_and_mac(wifi.WIFI_INTERFACE)
+        my_ip, _ = wifi.get_ip_and_mac(wifi.WIFI_INTERFACE)
         LOGGER.info('my ip: %s' % my_ip)
         LOGGER.info('scan started: %s' % ip_range)
     except:
@@ -275,7 +258,7 @@ class Checker(object):
 
     def is_ok(self):
         if 0 == self.proc.poll():
-            match = RE_MAC_ADDRESS.search(self.proc.stdout.read())
+            match = wifi.RE_MAC_ADDRESS.search(self.proc.stdout.read())
             if match:
                 return match.group(0)
         return False

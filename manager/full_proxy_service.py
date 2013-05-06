@@ -385,7 +385,7 @@ def create_conntrack_entry(src, sport, dst, dport, local_port):
             try:
                 conntrack_entry.create()
             except:
-                LOGGER.warn('failed to create nat conntrack entry for %s:%s => %s:%s' % (src, sport, dst, dport))
+                LOGGER.exception('failed to create nat conntrack entry for %s:%s => %s:%s' % (src, sport, dst, dport))
         finally:
             del conntrack_entry
     finally:
