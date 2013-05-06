@@ -32,17 +32,12 @@ public class HttpUtils {
             } finally {
                 wr.close();
             }
-            int responseCode = connection.getResponseCode();
-            String output = IOUtils.readAll(connection.getInputStream());
-            if (responseCode >= 200 && responseCode < 300) {
-                return output;
-            } else {
-                throw new Error(responseCode, output);
-            }
+            return handleResponse(connection, null);
         } finally {
             connection.disconnect();
         }
     }
+
 
     public static String get(String request) throws Exception {
         return get(request, null, 3000);
@@ -58,15 +53,18 @@ public class HttpUtils {
             if (timeout > 0) {
                 connection.setReadTimeout(timeout);
             }
-            int responseCode = connection.getResponseCode();
-            String output = IOUtils.readAll(connection.getInputStream(), callback);
-            if (responseCode >= 200 && responseCode < 300) {
-                return output;
-            } else {
-                throw new Error(responseCode, output);
-            }
+            return handleResponse(connection, callback);
         } finally {
             connection.disconnect();
+        }
+    }
+
+    private static String handleResponse(HttpURLConnection connection, IOUtils.Callback callback) throws Exception {
+        int responseCode = connection.getResponseCode();
+        if (responseCode >= 200 && responseCode < 300) {
+            return IOUtils.readAll(connection.getInputStream(), callback);
+        } else {
+            throw new Error(responseCode, IOUtils.readAll(connection.getErrorStream(), callback));
         }
     }
 

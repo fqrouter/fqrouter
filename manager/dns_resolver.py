@@ -1,6 +1,5 @@
 import socket
 import logging
-
 import dpkt
 
 on_blacklist_ip_resolved = None
@@ -55,39 +54,34 @@ GOOGLE_PLUS_WRONG_ANSWERS = {
 
 
 def resolve(record_type, domain_names):
-    sockets = {}
+    requests = []
     try:
         for i, domain_name in enumerate(domain_names):
-            sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM) # UDP
-            sockets[domain_name] = sock
-            sock.settimeout(3)
-            LOGGER.info('dns resolve %s' % domain_name)
-            request = dpkt.dns.DNS(id=i, qd=[dpkt.dns.DNS.Q(name=domain_name, type=record_type)])
-            sock.sendto(str(request), ('8.8.8.8', 53))
+            requests.append(ResolveRequest(i, domain_name, record_type))
         unresolved_domain_names = set(domain_names)
         answers = {}
-        for domain_name, sock in sockets.items():
+        for request in requests:
             try:
-                domain_name, answer = read_one_answer(sock)
+                domain_name, answer = read_one_answer(request, requests)
                 if domain_name in unresolved_domain_names:
                     unresolved_domain_names.remove(domain_name)
                     LOGGER.info('dns resolved: %s => %s' % (domain_name, answer))
                     answers[domain_name] = answer
             except:
-                LOGGER.exception('failed to resolve: %s' % domain_name)
+                LOGGER.exception('failed to resolve: %s' % request.domain_name)
         return answers
     finally:
-        for sock in sockets.values():
+        for request in requests:
             try:
-                sock.close()
+                request.close()
             except:
                 LOGGER.exception('failed to close socket')
 
 
-def read_one_answer(sock):
+def read_one_answer(request, requests):
     for i in range(3):
         try:
-            data, addr = sock.recvfrom(1024)
+            data, addr = request.receive()
             response = dpkt.dns.DNS(data)
             domain_name = response.qd[0].name if response.qd else None
             if contains_wrong_answer(response):
@@ -100,9 +94,31 @@ def read_one_answer(sock):
                 LOGGER.error('record not found: %s' % domain_name)
                 return domain_name, None
         except:
-            LOGGER.exception('failed to read one answer, retry now')
+            LOGGER.exception('failed to read one answer for %s, retry now' % request.domain_name)
+            for other_request in requests:
+                other_request.retry()
             continue
-    raise Exception('too many retries to read one answer')
+    raise Exception('too many retries to read one answer for %s' % request.domain_name)
+
+
+class ResolveRequest(object):
+    def __init__(self, id, domain_name, record_type):
+        super(ResolveRequest, self).__init__()
+        self.sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM) # UDP
+        self.sock.settimeout(3)
+        LOGGER.info('dns resolve %s' % domain_name)
+        self.domain_name = domain_name
+        self.request = dpkt.dns.DNS(id=id, qd=[dpkt.dns.DNS.Q(name=domain_name, type=record_type)])
+        self.retry()
+
+    def receive(self):
+        return self.sock.recvfrom(1024)
+
+    def retry(self):
+        return self.sock.sendto(str(self.request), ('8.8.8.8', 53))
+
+    def close(self):
+        return self.sock.close()
 
 
 def contains_wrong_answer(dns_packet):

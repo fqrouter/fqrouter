@@ -62,7 +62,7 @@ def handle_start(environ, start_response):
     ssid = environ['REQUEST_ARGUMENTS']['ssid'].value
     password = environ['REQUEST_ARGUMENTS']['password'].value
     success, message = start_hotspot(ssid, password)
-    status = httplib.OK if success else httplib.INTERNAL_SERVER_ERROR
+    status = httplib.OK if success else httplib.BAD_GATEWAY
     start_response(status, [('Content-Type', 'text/plain')])
     yield message
 
@@ -137,8 +137,10 @@ def start_hotspot(ssid, password):
             LOGGER.info('=== Before Starting Hotspot ===')
             dump_wifi_status()
             LOGGER.info('=== Start Hotspot ===')
-            wifi_chipset = get_wifi_chipset()
-            hotspot_interface = start_hotspot_interface(wifi_chipset, ssid, password)
+            wifi_chipset_family, wifi_chipset_model = get_wifi_chipset()
+            if 'unsupported' == wifi_chipset_family:
+                return False, 'wifi chipset [%s] is not supported' % wifi_chipset_model
+            hotspot_interface = start_hotspot_interface(wifi_chipset_family, ssid, password)
             setup_networking(hotspot_interface)
             LOGGER.info('=== Started Hotspot ===')
             dump_wifi_status()
@@ -276,48 +278,61 @@ def list_wifi_ifaces():
     return ifaces
 
 
-def start_hotspot_interface(wifi_chipset, ssid, password):
+def start_hotspot_interface(wifi_chipset_family, ssid, password):
     try:
         shell_execute('start p2p_supplicant')
     except:
         LOGGER.exception('failed to start p2p_supplicant')
-    if wifi_chipset.endswith('4330') or wifi_chipset.endswith('4334') or wifi_chipset.endswith('4324'):
-    # only tested on sdio:c00v02D0d4330
+    if 'bcm' == wifi_chipset_family:
         hotspot_interface = start_hotspot_on_bcm(ssid, password)
-    elif 'platform:wcnss_wlan' == wifi_chipset:
+    elif 'wcnss' == wifi_chipset_family:
         hotspot_interface = start_hotspot_on_wcnss(ssid, password)
-    elif 'platform:wl12xx' == wifi_chipset:
+    elif 'wl12xx' == wifi_chipset_family:
         hotspot_interface = start_hotspot_on_wl12xx(ssid, password)
-    elif wifi_chipset.endswith('6620') or wifi_chipset.endswith('6628') or \
-            shell_execute('getprop ro.mediatek.platform').strip():
-    # only tested on sdio:c00v037Ad6628
-    # support of mt6620 is a wild gues
+    elif 'mtk' == wifi_chipset_family:
         hotspot_interface = start_hotspot_on_mtk(ssid, password)
     else:
-        raise Exception('wifi chipset is not supported: %s' % wifi_chipset)
+        raise Exception('wifi chipset family %s is not supported: %s' % wifi_chipset_family)
     if not get_working_hotspot_iface():
         raise Exception('working hotspot iface not found after start')
     return hotspot_interface
 
 
 def get_wifi_chipset():
-    mediatek_wifi_chipset = get_mediatek_wifi_chipset()
-    if mediatek_wifi_chipset:
-        return mediatek_wifi_chipset
+    chipset = get_mediatek_wifi_chipset() or get_wifi_modalias()
+    if chipset:
+        if chipset.endswith('4330'):
+            return 'bcm', '4330'
+        if chipset.endswith('4324'):
+            return 'bcm', '4324'
+        if 'platform:wcnss_wlan' == chipset:
+            return 'wcnss', 'unknown'
+        if 'platform:wl12xx' == chipset:
+            return 'wl12xx', 'unknown'
+        if chipset.endswith('6620'):
+            return 'mtk', '6620'
+        if chipset.endswith('6628'):
+            return 'mtk', '6628'
+    else:
+        if shell_execute('getprop ro.mediatek.platform').strip():
+            return 'mtk', 'unknown'
+    return 'unsupported', chipset
+
+def get_wifi_modalias():
     if not os.path.exists(MODALIAS_PATH):
-        raise Exception('wifi chipset unknown: %s not found' % MODALIAS_PATH)
+        LOGGER.warn('wifi chipset unknown: %s not found' % MODALIAS_PATH)
+        return ''
     with open(MODALIAS_PATH) as f:
         wifi_chipset = f.read().strip()
         LOGGER.info('wifi chipset: %s' % wifi_chipset)
         return wifi_chipset
-
 
 def get_mediatek_wifi_chipset():
     try:
         return shell_execute('getprop mediatek.wlan.chip').strip()
     except:
         LOGGER.exception('failed to get mediatek wifi chipset')
-        return None
+        return ''
 
 
 def start_hotspot_on_bcm(ssid, password):

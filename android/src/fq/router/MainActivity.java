@@ -126,7 +126,7 @@ public class MainActivity extends Activity implements StatusUpdater {
                 new AlertDialog.Builder(MainActivity.this)
                         .setIcon(android.R.drawable.ic_dialog_alert)
                         .setTitle("Failed to start wifi repeater")
-                        .setMessage("Do you want to start wifi hotspot sharing 3G connection? " +
+                        .setMessage("Do you want to start traditional wifi hotspot sharing 3G connection? " +
                                 "It will consume your 3G data traffic volume.")
                         .setPositiveButton("Yes", new DialogInterface.OnClickListener() {
 
