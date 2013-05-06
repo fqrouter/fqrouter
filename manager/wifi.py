@@ -7,7 +7,7 @@ import time
 import httplib
 import re
 import traceback
-
+import urllib
 import iptables
 import hostapd_template
 
@@ -33,6 +33,7 @@ IWLIST_PATH = '/data/data/fq.router/wifi-tools/iwlist'
 DNSMASQ_PATH = '/data/data/fq.router/wifi-tools/dnsmasq'
 KILLALL_PATH = '/data/data/fq.router/busybox killall'
 IFCONFIG_PATH = '/data/data/fq.router/busybox ifconfig'
+DOWNLOADED_FIRMWARE_DIR = '/data/data/fq.router/wifi-chipset-firmwares'
 FQROUTER_HOSTAPD_CONF_PATH = '/data/data/fq.router/hostapd.conf'
 CHANNELS = {
     '2412': 1, '2417': 2, '2422': 3, '2427': 4, '2432': 5, '2437': 6, '2442': 7,
@@ -88,6 +89,43 @@ def handle_started(environ, start_response):
     yield 'TRUE' if get_working_hotspot_iface() else 'FALSE'
 
 
+def handle_has_p2p_firmware(environ, start_response):
+    start_response(httplib.OK, [('Content-Type', 'text/plain')])
+    yield 'TRUE' if has_p2p_firmware() else 'FALSE'
+
+
+def handle_download_p2p_firmware(environ, start_response):
+    success = download_p2p_firmware()
+    start_response(httplib.OK if success else httplib.BAD_GATEWAY, [('Content-Type', 'text/plain')])
+    yield 'TRUE' if success else 'FALSE'
+
+
+def has_p2p_firmware():
+    wifi_chipset_family, wifi_chipset_model = get_wifi_chipset()
+    filename = '%s-%s-p2p.bin' % (wifi_chipset_family, wifi_chipset_model)
+    if os.path.exists('%s/%s' % (DOWNLOADED_FIRMWARE_DIR, filename)):
+        return False
+    return 'bcm' == wifi_chipset_family
+
+
+def download_p2p_firmware():
+    wifi_chipset_family, wifi_chipset_model = get_wifi_chipset()
+    filename = '%s-%s-p2p.bin' % (wifi_chipset_family, wifi_chipset_model)
+    if not os.path.exists(DOWNLOADED_FIRMWARE_DIR):
+        os.mkdir(DOWNLOADED_FIRMWARE_DIR)
+    for i in range(3):
+        try:
+            urllib.urlretrieve(
+                'https://cdn.fqrouter.com/android-wifi-chipset-firmwares/%s' % filename,
+                '%s/%s' % (DOWNLOADED_FIRMWARE_DIR, filename))
+            return True
+        except:
+            LOGGER.exception('failed to download p2p firmware, retry in 10 seconds')
+            time.sleep(10)
+    LOGGER.error('give up downloading p2p firmware, retry too many times')
+    return False
+
+
 def stop_hotspot():
     try:
         working_hotspot_iface = get_working_hotspot_iface()
@@ -140,7 +178,7 @@ def start_hotspot(ssid, password):
             wifi_chipset_family, wifi_chipset_model = get_wifi_chipset()
             if 'unsupported' == wifi_chipset_family:
                 return False, 'wifi chipset [%s] is not supported' % wifi_chipset_model
-            hotspot_interface = start_hotspot_interface(wifi_chipset_family, ssid, password)
+            hotspot_interface = start_hotspot_interface(wifi_chipset_family, wifi_chipset_model, ssid, password)
             setup_networking(hotspot_interface)
             LOGGER.info('=== Started Hotspot ===')
             dump_wifi_status()
@@ -278,13 +316,13 @@ def list_wifi_ifaces():
     return ifaces
 
 
-def start_hotspot_interface(wifi_chipset_family, ssid, password):
+def start_hotspot_interface(wifi_chipset_family, wifichipset_model, ssid, password):
     try:
         shell_execute('start p2p_supplicant')
     except:
         LOGGER.exception('failed to start p2p_supplicant')
     if 'bcm' == wifi_chipset_family:
-        hotspot_interface = start_hotspot_on_bcm(ssid, password)
+        hotspot_interface = start_hotspot_on_bcm(wifichipset_model, ssid, password)
     elif 'wcnss' == wifi_chipset_family:
         hotspot_interface = start_hotspot_on_wcnss(ssid, password)
     elif 'wl12xx' == wifi_chipset_family:
@@ -318,6 +356,7 @@ def get_wifi_chipset():
             return 'mtk', 'unknown'
     return 'unsupported', chipset
 
+
 def get_wifi_modalias():
     if not os.path.exists(MODALIAS_PATH):
         LOGGER.warn('wifi chipset unknown: %s not found' % MODALIAS_PATH)
@@ -327,6 +366,7 @@ def get_wifi_modalias():
         LOGGER.info('wifi chipset: %s' % wifi_chipset)
         return wifi_chipset
 
+
 def get_mediatek_wifi_chipset():
     try:
         return shell_execute('getprop mediatek.wlan.chip').strip()
@@ -335,14 +375,9 @@ def get_mediatek_wifi_chipset():
         return ''
 
 
-def start_hotspot_on_bcm(ssid, password):
+def start_hotspot_on_bcm(wifi_chipset_model, ssid, password):
     control_socket_dir = get_wpa_supplicant_control_socket_dir()
-    log_upstream_wifi_status('before load p2p firmware', control_socket_dir)
-    netd_execute('softap fwreload %s P2P' % WIFI_INTERFACE)
-    shell_execute('netcfg %s down' % WIFI_INTERFACE)
-    shell_execute('netcfg %s up' % WIFI_INTERFACE)
-    time.sleep(1)
-    log_upstream_wifi_status('after loaded p2p firmware', control_socket_dir)
+    load_bcm_p2p_firmware(wifi_chipset_model, control_socket_dir)
     if 'p2p0' in list_wifi_ifaces():
     # bcmdhd can optionally have p2p0 interface
         LOGGER.info('start p2p persistent group using p2p0')
@@ -360,6 +395,20 @@ def start_hotspot_on_bcm(ssid, password):
         p2p_persistent_iface = get_p2p_persistent_iface()
         log_upstream_wifi_status('after p2p persistent group created', control_socket_dir)
         return p2p_persistent_iface
+
+
+def load_bcm_p2p_firmware(wifi_chipset_model, control_socket_dir):
+    log_upstream_wifi_status('before load p2p firmware', control_socket_dir)
+    downloaded_firmware_path = '%s/bcm-%s-p2p.bin' % (DOWNLOADED_FIRMWARE_DIR, wifi_chipset_model)
+    if os.path.exists(downloaded_firmware_path):
+        with open('/sys/module/bcmdhd/parameters/firmware_path', 'w') as f:
+            f.write(downloaded_firmware_path)
+    else:
+        netd_execute('softap fwreload %s P2P' % WIFI_INTERFACE)
+    shell_execute('netcfg %s down' % WIFI_INTERFACE)
+    shell_execute('netcfg %s up' % WIFI_INTERFACE)
+    time.sleep(1)
+    log_upstream_wifi_status('after loaded p2p firmware', control_socket_dir)
 
 
 def start_hotspot_on_wcnss(ssid, password):
@@ -494,6 +543,7 @@ def log_upstream_wifi_status(log, control_socket_dir):
     try:
         LOGGER.info('=== %s ===' % log)
         shell_execute('%s -p %s -i %s status' % (P2P_CLI_PATH, control_socket_dir, WIFI_INTERFACE))
+        shell_execute('iw dev %s link' % WIFI_INTERFACE)
         shell_execute('netcfg')
     except:
         LOGGER.exception('failed to log upstream wifi status')

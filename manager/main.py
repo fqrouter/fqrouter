@@ -56,6 +56,8 @@ HANDLERS = {
     ('POST', 'wifi/stop'): wifi.handle_stop,
     ('GET', 'wifi/started'): wifi.handle_started,
     ('POST', 'wifi/setup'): wifi.handle_setup,
+    ('GET', 'wifi/has-p2p-firmware'): wifi.handle_has_p2p_firmware,
+    ('POST', 'wifi/download-p2p-firmware'): wifi.handle_download_p2p_firmware,
     ('GET', 'lan/scan'): lan_service.handle_scan,
     ('POST', 'lan/clear-scan-results'): lan_service.handle_clear_scan_results,
     ('POST', 'lan/forge-default-gateway'): lan_service.handle_forge_default_gateway,

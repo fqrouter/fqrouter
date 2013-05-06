@@ -18,6 +18,7 @@ import android.view.View;
 import android.widget.TextView;
 import android.widget.Toast;
 import android.widget.ToggleButton;
+import fq.router.utils.HttpUtils;
 
 import java.io.File;
 import java.lang.reflect.Method;
@@ -122,8 +123,63 @@ public class MainActivity extends Activity implements StatusUpdater {
         SharedPreferences preferences = PreferenceManager.getDefaultSharedPreferences(this);
         String mode = preferences.getString("WifiHotspotMode", WifiHotspot.MODE_WIFI_REPEATER);
         boolean started = wifiHotspot.start(mode);
-        if (!started && WifiHotspot.MODE_WIFI_REPEATER.equals(mode)) {
-            askIfStartTraditionalWifiHotspot();
+        if (!started) {
+            if (hasP2pFirmware()) {
+                askIfDownloadP2pFirmware();
+            } else if (WifiHotspot.MODE_WIFI_REPEATER.equals(mode)) {
+                askIfStartTraditionalWifiHotspot();
+            }
+        }
+    }
+
+    private boolean hasP2pFirmware() {
+        try {
+            return "TRUE".equals(HttpUtils.get("http://127.0.0.1:8318/wifi/has-p2p-firmware"));
+        } catch (Exception e) {
+            Log.e("fqrouter", "failed to check if p2p firmware is available to download", e);
+            return false;
+        }
+    }
+
+    private void askIfDownloadP2pFirmware() {
+        handler.postDelayed(new Runnable() {
+            @Override
+            public void run() {
+                new AlertDialog.Builder(MainActivity.this)
+                        .setIcon(android.R.drawable.ic_dialog_alert)
+                        .setTitle("Failed to start wifi repeater")
+                        .setMessage("Do you want to download wifi chipset firmware that might fix the problem?")
+
+                        .setPositiveButton("Yes", new DialogInterface.OnClickListener() {
+
+                            @Override
+                            public void onClick(DialogInterface dialog, int which) {
+                                new Thread(new Runnable() {
+                                    @Override
+                                    public void run() {
+                                        if (downloadP2pFirmware()) {
+                                            wifiHotspot.start(WifiHotspot.MODE_WIFI_REPEATER);
+                                        }
+                                    }
+                                }).start();
+                            }
+
+                        })
+                        .setNegativeButton("No, thanks", null)
+                        .show();
+            }
+        }, 2000);
+    }
+
+    private boolean downloadP2pFirmware() {
+        updateStatus("Downloading wifi chipset firmware");
+        try {
+            HttpUtils.post("http://127.0.0.1:8318/wifi/download-p2p-firmware");
+            updateStatus("Downloaded wifi chipset firmware");
+            return true;
+        } catch (Exception e) {
+            reportError("failed to download wifi chipset firmware", e);
+            return false;
         }
     }
 
