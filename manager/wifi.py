@@ -197,7 +197,10 @@ def dump_wpa_supplicant(cmdline):
         if cfg_path_exists:
             with open(cfg_path) as f:
                 content = f.read()
-                LOGGER.info(content)
+                for line in content.splitlines():
+                    if 'psk=' in line:
+                        continue
+                    LOGGER.info(line)
             control_socket_dir = parse_wpa_supplicant_conf(content)
             LOGGER.info('parsed control socket dir: %s' % control_socket_dir)
             dump_dir(control_socket_dir)
