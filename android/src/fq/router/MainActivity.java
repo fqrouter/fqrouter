@@ -113,14 +113,9 @@ public class MainActivity extends Activity implements StatusUpdater {
     private void startWifiHotspot() {
         SharedPreferences preferences = PreferenceManager.getDefaultSharedPreferences(this);
         String mode = preferences.getString("WifiHotspotMode", WifiHotspot.MODE_WIFI_REPEATER);
-        boolean wasConnected = wifiHotspot.isConnected();
         boolean started = wifiHotspot.start(mode);
         if (!started && WifiHotspot.MODE_WIFI_REPEATER.equals(mode)) {
-            if (wasConnected) {
-                askIfStartTraditionalWifiHotspot();
-            } else {
-                wifiHotspot.start(WifiHotspot.MODE_TRADITIONAL_WIFI_HOTSPOT);
-            }
+            askIfStartTraditionalWifiHotspot();
         }
     }
 
