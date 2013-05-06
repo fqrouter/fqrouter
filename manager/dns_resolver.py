@@ -55,18 +55,18 @@ GOOGLE_PLUS_WRONG_ANSWERS = {
 
 
 def resolve(record_type, domain_names):
-    sockets = []
+    sockets = {}
     try:
         for i, domain_name in enumerate(domain_names):
             sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM) # UDP
-            sockets.append(sock)
+            sockets[domain_name] = sock
             sock.settimeout(3)
             LOGGER.info('dns resolve %s' % domain_name)
             request = dpkt.dns.DNS(id=i, qd=[dpkt.dns.DNS.Q(name=domain_name, type=record_type)])
             sock.sendto(str(request), ('8.8.8.8', 53))
         unresolved_domain_names = set(domain_names)
         answers = {}
-        for sock in sockets:
+        for domain_name, sock in sockets.items():
             try:
                 domain_name, answer = read_one_answer(sock)
                 if domain_name in unresolved_domain_names:
@@ -74,30 +74,35 @@ def resolve(record_type, domain_names):
                     LOGGER.info('dns resolved: %s => %s' % (domain_name, answer))
                     answers[domain_name] = answer
             except:
-                LOGGER.exception('failed to resolve: %s' % unresolved_domain_names)
-                return answers
+                LOGGER.exception('failed to resolve: %s' % domain_name)
         return answers
     finally:
-        for sock in sockets:
+        for sock in sockets.values():
             try:
                 sock.close()
             except:
                 LOGGER.exception('failed to close socket')
 
+
 def read_one_answer(sock):
     for i in range(3):
-        data, addr = sock.recvfrom(1024)
-        response = dpkt.dns.DNS(data)
-        domain_name = response.qd[0].name if response.qd else None
-        if contains_wrong_answer(response):
+        try:
+            data, addr = sock.recvfrom(1024)
+            response = dpkt.dns.DNS(data)
+            domain_name = response.qd[0].name if response.qd else None
+            if contains_wrong_answer(response):
+                continue
+            if response.an:
+                if dpkt.dns.DNS_A == response.qd[0].type:
+                    return domain_name, socket.inet_ntoa(response.an[0]['rdata'])
+                return domain_name, str(response.an[0]['rdata'])
+            else:
+                LOGGER.error('record not found: %s' % domain_name)
+                return domain_name, None
+        except:
+            LOGGER.exception('failed to read one answer, retry now')
             continue
-        if response.an:
-            if dpkt.dns.DNS_A == response.qd[0].type:
-                return domain_name, socket.inet_ntoa(response.an[0]['rdata'])
-            return domain_name, str(response.an[0]['rdata'])
-        else:
-            LOGGER.error('record not found: %s' % domain_name)
-            return domain_name, None
+    raise Exception('too many retries to read one answer')
 
 
 def contains_wrong_answer(dns_packet):
