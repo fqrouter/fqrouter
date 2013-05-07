@@ -21,7 +21,7 @@ LOGGER = logging.getLogger('fqrouter.%s' % __name__)
 
 scan_results = []
 picked_devices = {}
-previous_default_gateway = None
+previous_default_gateway = ''
 
 
 def run():
@@ -187,7 +187,10 @@ def get_default_gateway(ifname):
         if match:
             previous_default_gateway = match.group(1)
             return previous_default_gateway
-    return previous_default_gateway
+    if previous_default_gateway:
+        return previous_default_gateway
+    else:
+        raise Exception('failed to find default gateway: %s' % ifname)
 
 
 def scan(ip_range):
@@ -238,6 +241,7 @@ def resolve_host_name(ip):
 
 
 def arping(ip):
+    LOGGER.info('arping: %s' % ip)
     checker = Checker(ip)
     while True:
         mac = checker.is_ok()
