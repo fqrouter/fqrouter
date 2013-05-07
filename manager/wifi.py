@@ -300,6 +300,10 @@ def start_hotspot_interface(wifi_chipset_family, wifi_chipset_model, ssid, passw
     else:
         raise Exception('wifi chipset family %s is not supported: %s' % wifi_chipset_family)
     if not get_working_hotspot_iface():
+        try:
+            shell_execute('logcat -d -v time -s wpa_supplicant:V')
+        except:
+            LOGGER.exception('failed to log wpa_supplicant')
         raise Exception('working hotspot iface not found after start')
     if was_using_wifi_network and not wait_for_upstream_wifi_network_connected():
         raise Exception('wifi interface can not reconnect')
@@ -383,7 +387,7 @@ def get_mediatek_wifi_chipset():
 def start_hotspot_on_bcm(wifi_chipset_model, ssid, password):
     control_socket_dir = get_wpa_supplicant_control_socket_dir()
     load_p2p_firmware(control_socket_dir)
-    if 'p2p0' in list_wifi_ifaces() and '4334' != wifi_chipset_model:
+    if 'p2p0' in list_wifi_ifaces():
     # bcmdhd can optionally have p2p0 interface
         LOGGER.info('start p2p persistent group using p2p0')
         shell_execute('netcfg p2p0 up')

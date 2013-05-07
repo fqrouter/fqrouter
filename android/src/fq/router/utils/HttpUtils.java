@@ -24,7 +24,7 @@ public class HttpUtils {
             connection.setRequestProperty("charset", "utf-8");
             connection.setRequestProperty("Content-Length", "" + Integer.toString(body.getBytes().length));
             connection.setUseCaches(false);
-            connection.setConnectTimeout(3000);
+            connection.setConnectTimeout(60000);
             connection.setReadTimeout(60000);
             DataOutputStream wr = new DataOutputStream(connection.getOutputStream());
             try {
@@ -51,8 +51,8 @@ public class HttpUtils {
             connection.setInstanceFollowRedirects(false);
             connection.setRequestMethod("GET");
             connection.setUseCaches(false);
-            connection.setConnectTimeout(3000);
             if (timeout > 0) {
+                connection.setConnectTimeout(timeout);
                 connection.setReadTimeout(timeout);
             }
             return handleResponse(connection, callback);

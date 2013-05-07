@@ -55,7 +55,7 @@ public class Supervisor implements Runnable {
                 statusUpdater.reportError("failed to deploy", null);
                 return;
             }
-            boolean shouldWait = launchManager(deployer);
+            boolean shouldWait = launchManager();
             if (shouldWait && !waitForManager()) {
                 return;
             }
@@ -67,7 +67,7 @@ public class Supervisor implements Runnable {
         }
     }
 
-    private boolean launchManager(Deployer deployer) {
+    private boolean launchManager() {
         if (ping()) {
             statusUpdater.appendLog("manager is already running");
             return false;

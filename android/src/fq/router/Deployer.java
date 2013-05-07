@@ -47,7 +47,7 @@ public class Deployer {
         }
         boolean foundPayloadUpdate;
         try {
-            foundPayloadUpdate = checkUpdate();
+            foundPayloadUpdate = shouldDeployPayload();
         } catch (Exception e) {
             statusUpdater.reportError("failed to check update", e);
             return false;
@@ -129,7 +129,7 @@ public class Deployer {
         }
     }
 
-    private boolean checkUpdate() throws Exception {
+    private boolean shouldDeployPayload() throws Exception {
         if (!PAYLOAD_CHECKSUM.exists()) {
             statusUpdater.appendLog("no checksum, assume it is old");
             return true;
