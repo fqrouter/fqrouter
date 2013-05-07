@@ -3,9 +3,9 @@ import china_domain
 
 LOGGER = logging.getLogger('fqrouter.%s' % __name__)
 
-PRIMARY_DEFAULT_DNS_IP = '8.8.8.8' # google public dns
+PRIMARY_DEFAULT_DNS_IP = '8.8.8.8'
 PRIMARY_DEFAULT_DNS_PORT = 53
-SECONDARY_DEFAULT_DNS_IP = '4.2.2.2' # level3 dns
+SECONDARY_DEFAULT_DNS_IP = '8.8.4.4'
 SECONDARY_DEFAULT_DNS_PORT = 53
 
 DNS_SERVERS = {
