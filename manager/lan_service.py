@@ -21,6 +21,7 @@ LOGGER = logging.getLogger('fqrouter.%s' % __name__)
 
 scan_results = []
 picked_devices = {}
+previous_default_gateway = None
 
 
 def run():
@@ -178,13 +179,15 @@ def get_ip_range(ifname):
 
 
 def get_default_gateway(ifname):
+    global previous_default_gateway
     for line in wifi.shell_execute('/data/data/fq.router/busybox ip route').splitlines():
         if 'dev %s' % ifname not in line:
             continue
         match = RE_DEFAULT_GATEWAY.search(line)
         if match:
-            return match.group(1)
-    return None
+            previous_default_gateway = match.group(1)
+            return previous_default_gateway
+    return previous_default_gateway
 
 
 def scan(ip_range):
