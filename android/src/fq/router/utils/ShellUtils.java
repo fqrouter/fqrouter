@@ -3,7 +3,6 @@ package fq.router.utils;
 import android.util.Log;
 
 import java.io.BufferedReader;
-import java.io.File;
 import java.io.InputStreamReader;
 import java.io.OutputStreamWriter;
 import java.util.Arrays;
@@ -21,7 +20,7 @@ public class ShellUtils {
         return sudo(true, command);
     }
 
-    public static String sudo(boolean logsOutput, String... command) throws Exception {
+    public static String sudo(boolean returnsOutput, String... command) throws Exception {
         Log.d("fqrouter", "sudo: " + Arrays.toString(command));
         Process process = new ProcessBuilder()
                 .command("su")
@@ -38,23 +37,25 @@ public class ShellUtils {
         } finally {
             stdin.close();
         }
-        return waitFor(Arrays.toString(command), process, logsOutput);
+        if (returnsOutput) {
+            return waitFor(Arrays.toString(command), process);
+        } else {
+            process.waitFor();
+            int exitValue = process.exitValue();
+            if (0 != exitValue) {
+                throw new Exception("failed to execute: " + Arrays.toString(command) + ", exit value: " + exitValue);
+            }
+            return "";
+        }
     }
 
     public static String waitFor(String command, Process process) throws Exception {
-        return waitFor(command, process, true);
-    }
-
-    public static String waitFor(String command, Process process, boolean logsOutput) throws Exception {
 
         BufferedReader stdout = new BufferedReader(new InputStreamReader(process.getInputStream()));
         StringBuilder output = new StringBuilder();
         try {
             String line;
             while (null != (line = stdout.readLine())) {
-                if (logsOutput) {
-                    Log.d("fqrouter", "shell: " + line);
-                }
                 output.append(line);
                 output.append("\n");
             }
@@ -64,7 +65,7 @@ public class ShellUtils {
         process.waitFor();
         int exitValue = process.exitValue();
         if (0 != exitValue) {
-            throw new Exception("failed to execute: " + command + ", exit value: " + exitValue);
+            throw new Exception("failed to execute: " + command + ", exit value: " + exitValue + ", output: " + output);
         }
         return output.toString();
     }

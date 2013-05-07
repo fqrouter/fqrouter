@@ -350,18 +350,22 @@ def wait_for_upstream_wifi_network_connected():
 
 
 def get_ip_and_mac(ifname):
-    output = shell_execute('/data/data/fq.router/busybox ifconfig %s' % ifname).lower()
-    match = RE_MAC_ADDRESS.search(output)
-    if match:
-        mac = match.group(0)
-    else:
-        mac = None
-    match = RE_IFCONFIG_IP.search(output)
-    if match:
-        ip = match.group(1)
-    else:
-        ip = None
-    return ip, mac
+    try:
+        output = shell_execute('/data/data/fq.router/busybox ifconfig %s' % ifname).lower()
+        match = RE_MAC_ADDRESS.search(output)
+        if match:
+            mac = match.group(0)
+        else:
+            mac = None
+        match = RE_IFCONFIG_IP.search(output)
+        if match:
+            ip = match.group(1)
+        else:
+            ip = None
+        return ip, mac
+    except:
+        LOGGER.exception('failed to get ip and mac: %s' % ifname)
+        return None, None
 
 
 def get_wifi_chipset():
@@ -742,10 +746,28 @@ def netd_execute(command):
 
 def shell_execute(command):
     LOGGER.info('execute: %s' % command)
-    try:
-        output = subprocess.check_output(shlex.split(command), stderr=subprocess.STDOUT)
+    proc = subprocess.Popen(shlex.split(command), stderr=subprocess.STDOUT, stdout=subprocess.PIPE)
+    exit_code = wait_for_process(proc)
+    if exit_code is None:
+        try:
+            proc.kill()
+            proc.communicate()
+        except:
+            LOGGER.exception('failed to kill timed out process')
+        raise Exception('timed out')
+    elif exit_code == 0:
+        output, _ = proc.communicate()
         LOGGER.info('succeed, output: %s' % output)
-    except subprocess.CalledProcessError, e:
-        LOGGER.error('failed, output: %s' % e.output)
-        raise
-    return output
+        return output or ''
+    else:
+        output, _ = proc.communicate()
+        LOGGER.error('failed, output: %s' % output)
+        raise subprocess.CalledProcessError(exit_code, command, output=output)
+
+
+def wait_for_process(proc):
+    for i in range(100):
+        time.sleep(0.1)
+        if proc.poll() is not None:
+            return proc.poll()
+    return None

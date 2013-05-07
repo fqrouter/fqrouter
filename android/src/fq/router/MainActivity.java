@@ -76,7 +76,12 @@ public class MainActivity extends Activity implements StatusUpdater {
             return true;
         }
         if (ManagerProcess.exists()) {
-            appendLog("exiting flag and manager process found");
+            updateStatus("Another instance is still running, exit in 3 seconds");
+            try {
+                Thread.sleep(3000);
+            } catch (InterruptedException e) {
+                // ignore
+            }
             return false;
         }
         appendLog("exiting flag found and ignored due to manager process missing");
@@ -302,10 +307,10 @@ public class MainActivity extends Activity implements StatusUpdater {
                     @Override
                     public void run() {
                         clearNotification();
+                        finish();
                     }
 
                 }, 0);
-                finish();
             }
         }).start();
     }

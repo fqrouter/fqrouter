@@ -27,7 +27,7 @@ public class Launcher implements Runnable {
     }
 
     private void launch() throws Exception {
-        ShellUtils.sudo("FQROUTER_VERSION=" + statusUpdater.getMyVersion() + " PYTHONHOME=" + Deployer.PYTHON_DIR + " " +
+        ShellUtils.sudo(false, "FQROUTER_VERSION=" + statusUpdater.getMyVersion() + " PYTHONHOME=" + Deployer.PYTHON_DIR + " " +
                 Deployer.BUSYBOX_FILE + " sh " + Deployer.PYTHON_LAUNCHER + " " + Deployer.MANAGER_MAIN_PY);
     }
 }

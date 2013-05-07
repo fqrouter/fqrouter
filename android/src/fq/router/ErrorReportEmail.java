@@ -26,35 +26,41 @@ public class ErrorReportEmail {
         i.setType("text/plain");
         i.putExtra(Intent.EXTRA_EMAIL, new String[]{"fqrouter@gmail.com"});
         i.putExtra(Intent.EXTRA_SUBJECT, "android fqrouter error report for version " + statusUpdater.getMyVersion());
-        i.putExtra(Intent.EXTRA_TEXT, getErrorMailBody());
-        createLogFiles();
+        String error = createLogFiles();
+        i.putExtra(Intent.EXTRA_TEXT, getErrorMailBody() + error);
         attachLogFiles(i, "/sdcard/manager.log", "/sdcard/redsocks.log", "/sdcard/logcat.log",
                 "/sdcard/getprop.log", "/sdcard/dmesg.log", "/sdcard/iptables.log");
         return i;
     }
 
-    private void createLogFiles() {
+    private String createLogFiles() {
+        String error = "";
         try {
             deployCaptureLogSh();
             ShellUtils.sudo("sh", "/data/data/fq.router/capture-log.sh");
         } catch (Exception e) {
             Log.e("fqrouter", "failed to execute capture-log.sh", e);
+            error += "\n" + "failed to execute capture-log.sh" + "\n" + e;
             try {
-                ShellUtils.sudo(false, "getprop", ">", "/sdcard/getprop.log");
+                ShellUtils.sudo("getprop", ">", "/sdcard/getprop.log");
             } catch (Exception e2) {
                 Log.e("fqrouter", "failed to execute getprop", e2);
+                error += "\n" + "failed to execute getprop" + "\n" + e2;
             }
             try {
-                ShellUtils.sudo(false, "dmesg", ">", "/sdcard/dmesg.log");
+                ShellUtils.sudo("dmesg", ">", "/sdcard/dmesg.log");
             } catch (Exception e2) {
                 Log.e("fqrouter", "failed to execute dmesg", e2);
+                error += "\n" + "failed to execute dmesg" + "\n" + e2;
             }
             try {
-                ShellUtils.sudo(false, "logcat", "-d", "-v", "time", "-s", "fqrouter:V", ">", "/sdcard/logcat.log");
+                ShellUtils.sudo("logcat", "-d", "-v", "time", "-s", "fqrouter:V", ">", "/sdcard/logcat.log");
             } catch (Exception e2) {
                 Log.e("fqrouter", "failed to execute logcat", e2);
+                error += "\n" + "failed to execute logcat" + "\n" + e2;
             }
         }
+        return error;
     }
 
     private void deployCaptureLogSh() {
