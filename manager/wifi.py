@@ -719,29 +719,10 @@ def netd_execute(command):
 
 def shell_execute(command):
     LOGGER.info('execute: %s' % command)
-    proc = subprocess.Popen(shlex.split(command), stderr=subprocess.STDOUT, stdout=subprocess.PIPE)
-    exit_code = wait_for_process(proc)
-    if exit_code is None:
-        try:
-            LOGGER.error('kill timed out process: %s' % command)
-            proc.kill()
-            proc.communicate()
-        except:
-            LOGGER.exception('failed to kill timed out process')
-        raise Exception('timed out')
-    elif exit_code == 0:
-        output, _ = proc.communicate()
+    try:
+        output = subprocess.check_output(shlex.split(command), stderr=subprocess.STDOUT)
         LOGGER.info('succeed, output: %s' % output)
-        return output or ''
-    else:
-        output, _ = proc.communicate()
-        LOGGER.error('failed, output: %s' % output)
-        raise subprocess.CalledProcessError(exit_code, command, output=output)
-
-
-def wait_for_process(proc):
-    for i in range(10):
-        time.sleep(i * 0.1)
-        if proc.poll() is not None:
-            return proc.poll()
-    return None
+    except subprocess.CalledProcessError, e:
+        LOGGER.error('failed, output: %s' % e.output)
+        raise
+    return output
