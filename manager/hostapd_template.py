@@ -20,10 +20,10 @@ TEMPLATE = """
 #
 
 driver=nl80211
-logger_syslog=-1
-logger_syslog_level=2
-logger_stdout=-1
-logger_stdout_level=2
+logger_syslog=1
+logger_syslog_level=1
+logger_stdout=1
+logger_stdout_level=1
 dump_file=/data/misc/wifi/hostapd.dump
 ctrl_interface=%s
 hw_mode=g

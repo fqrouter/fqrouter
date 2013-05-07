@@ -395,6 +395,8 @@ def get_wifi_chipset():
             return 'mtk', 'unknown'
         if os.path.exists('/sys/module/bcmdhd'):
             return 'bcm', 'unknown'
+        if os.path.exists('/sys/module/wl12xx'):
+            return 'wl12xx', 'unknown'
     return 'unsupported', chipset
 
 
@@ -504,14 +506,17 @@ def start_hotspot_on_wl12xx(ssid, password):
         frequency, channel = get_upstream_frequency_and_channel()
         f.write(hostapd_template.render(WIFI_INTERFACE, channel=channel or 1, ssid=ssid, password=password))
     os.chmod(FQROUTER_HOSTAPD_CONF_PATH, 0666)
+    try:
+        shell_execute('%s hostapd' % KILLALL_PATH)
+    except:
+        LOGGER.exception('failed to killall hostapd')
     LOGGER.info('start hostapd')
     proc = subprocess.Popen(
         [HOSTAPD_PATH, '-dd', FQROUTER_HOSTAPD_CONF_PATH],
         cwd='/data/misc/wifi', stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
     time.sleep(2)
     if proc.poll():
-        LOGGER.error('hostapd failed')
-        LOGGER.error(proc.stdout.read())
+        LOGGER.error('hostapd failed: %s' % str(proc.communicate()))
         shell_execute('logcat -d -v time -s hostapd:V')
         raise Exception('hostapd failed')
     else:
@@ -640,7 +645,7 @@ def get_p2p_persistent_iface():
     for line in shell_execute('netcfg').splitlines(False):
         if line.startswith('p2p-'):
             return line.split(' ')[0]
-    raise Exception('can not find just started p2p persistent network interface')
+    return None
 
 
 def stop_p2p_persistent_network(control_socket_dir, control_iface, iface):
