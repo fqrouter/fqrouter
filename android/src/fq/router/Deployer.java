@@ -1,5 +1,6 @@
 package fq.router;
 
+import android.os.Build;
 import android.util.Log;
 import fq.router.utils.IOUtils;
 import fq.router.utils.ShellUtils;
@@ -81,7 +82,7 @@ public class Deployer {
             return false;
         }
         try {
-            selectLinker();
+            selectSystemLinker();
             linkFile(new File("/data/data/fq.router/python/lib"), new File("/data/data/fq.router/lib"));
         } catch (Exception e) {
             statusUpdater.reportError("failed to select linker", e);
@@ -93,8 +94,30 @@ public class Deployer {
             statusUpdater.reportError("failed to make payload executable", e);
             return false;
         }
+        try {
+            if (!testPython()) {
+                selectPackagedLinker();
+                if (!testPython()) {
+                    return false;
+                }
+            }
+        } catch (Exception e) {
+            statusUpdater.reportError("failed to test python", e);
+            return false;
+        }
         statusUpdater.updateStatus("Deployed payload");
         return true;
+    }
+
+    private boolean testPython() {
+        try {
+            String output = new Launcher(statusUpdater).executePython(true, "-c \"print('hello')\"").trim();
+            Log.i("fqrouter", "test python output: " + output);
+            return output.contains("hello");
+        } catch (Exception e) {
+            Log.e("fqrouter", "test python failed", e);
+            return false;
+        }
     }
 
     private boolean isRooted() {
@@ -210,12 +233,46 @@ public class Deployer {
             statusUpdater.appendLog("failed to delete payload.zip after unzip");
         }
         statusUpdater.appendLog("successfully unzipped payload.zip");
-        Thread.sleep(1000); // wait for the files written out
+        for (int i = 0; i < 5; i++) {
+            Thread.sleep(1000); // wait for the files written out
+            if (MANAGER_MAIN_PY.exists()) {
+                break;
+            }
+        }
     }
 
-    private void selectLinker() throws Exception {
+    private void selectSystemLinker() throws Exception {
         if (!LINKER_FILE.exists()) {
             linkFile(new File("/system/bin/linker"), LINKER_FILE);
+        }
+    }
+
+    private void selectPackagedLinker() throws Exception {
+        if (LINKER_FILE.exists()) {
+            LINKER_FILE.delete();
+        }
+        statusUpdater.appendLog("copying " + getLinkerName() + " to data directory");
+        InputStream inputStream = statusUpdater.getAssets().open(getLinkerName());
+        try {
+            OutputStream outputStream = new FileOutputStream(LINKER_FILE);
+            try {
+                IOUtils.copy(inputStream, outputStream);
+            } finally {
+                outputStream.close();
+            }
+        } finally {
+            inputStream.close();
+        }
+        LINKER_FILE.setExecutable(true);
+        statusUpdater.appendLog("successfully copied linker");
+
+    }
+
+    private String getLinkerName() {
+        if (Build.VERSION.SDK_INT < 14) {
+            return "linker-2.x";
+        } else {
+            return "linker-4.x";
         }
     }
 

@@ -52,6 +52,7 @@ public class Supervisor implements Runnable {
                 statusUpdater.appendLog("failed to kill manager process before relaunch");
             }
             if (!deployer.deploy()) {
+                statusUpdater.reportError("failed to deploy", null);
                 return;
             }
             boolean shouldWait = launchManager(deployer);
