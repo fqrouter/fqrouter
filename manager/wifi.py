@@ -380,6 +380,8 @@ def get_wifi_chipset():
             return 'bcm', '4334'
         if chipset.endswith('4324'):
             return 'bcm', '4324' # 43241
+        if chipset.endswith('4076'): # sdio:c00v0097d4076
+            return 'wl12xx', 'unknown'
         if 'platform:wcnss_wlan' == chipset:
             return 'wcnss', 'unknown'
         if 'platform:wl12xx' == chipset:
@@ -391,6 +393,8 @@ def get_wifi_chipset():
     else:
         if shell_execute('getprop ro.mediatek.platform').strip():
             return 'mtk', 'unknown'
+        if os.path.exists('/sys/module/bcmdhd'):
+            return 'bcm', 'unknown'
     return 'unsupported', chipset
 
 
