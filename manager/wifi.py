@@ -35,7 +35,6 @@ IWLIST_PATH = '/data/data/fq.router/wifi-tools/iwlist'
 DNSMASQ_PATH = '/data/data/fq.router/wifi-tools/dnsmasq'
 KILLALL_PATH = '/data/data/fq.router/busybox killall'
 IFCONFIG_PATH = '/data/data/fq.router/busybox ifconfig'
-DOWNLOADED_FIRMWARE_DIR = '/data/data/fq.router/wifi-chipset-firmwares'
 FQROUTER_HOSTAPD_CONF_PATH = '/data/data/fq.router/hostapd.conf'
 CHANNELS = {
     '2412': 1, '2417': 2, '2422': 3, '2427': 4, '2432': 5, '2437': 6, '2442': 7,
@@ -89,43 +88,6 @@ def handle_setup(environ, start_response):
 def handle_started(environ, start_response):
     start_response(httplib.OK, [('Content-Type', 'text/plain')])
     yield 'TRUE' if get_working_hotspot_iface() else 'FALSE'
-
-
-def handle_has_p2p_firmware(environ, start_response):
-    start_response(httplib.OK, [('Content-Type', 'text/plain')])
-    yield 'TRUE' if has_p2p_firmware() else 'FALSE'
-
-
-def handle_download_p2p_firmware(environ, start_response):
-    success = download_p2p_firmware()
-    start_response(httplib.OK if success else httplib.BAD_GATEWAY, [('Content-Type', 'text/plain')])
-    yield 'TRUE' if success else 'FALSE'
-
-
-def has_p2p_firmware():
-    wifi_chipset_family, wifi_chipset_model = get_wifi_chipset()
-    filename = '%s-%s-p2p.bin' % (wifi_chipset_family, wifi_chipset_model)
-    if os.path.exists('%s/%s' % (DOWNLOADED_FIRMWARE_DIR, filename)):
-        return False
-    return 'bcm' == wifi_chipset_family
-
-
-def download_p2p_firmware():
-    wifi_chipset_family, wifi_chipset_model = get_wifi_chipset()
-    filename = '%s-%s-p2p.bin' % (wifi_chipset_family, wifi_chipset_model)
-    if not os.path.exists(DOWNLOADED_FIRMWARE_DIR):
-        os.mkdir(DOWNLOADED_FIRMWARE_DIR)
-    for i in range(3):
-        try:
-            urllib.urlretrieve(
-                'https://cdn.fqrouter.com/android-wifi-chipset-firmwares/%s' % filename,
-                '%s/%s' % (DOWNLOADED_FIRMWARE_DIR, filename))
-            return True
-        except:
-            LOGGER.exception('failed to download p2p firmware, retry in 10 seconds')
-            time.sleep(10)
-    LOGGER.error('give up downloading p2p firmware, retry too many times')
-    return False
 
 
 def stop_hotspot():
@@ -328,7 +290,7 @@ def start_hotspot_interface(wifi_chipset_family, wifichipset_model, ssid, passwo
     except:
         LOGGER.exception('failed to start p2p_supplicant')
     if 'bcm' == wifi_chipset_family:
-        hotspot_interface = start_hotspot_on_bcm(wifichipset_model, ssid, password)
+        hotspot_interface = start_hotspot_on_bcm(ssid, password)
     elif 'wcnss' == wifi_chipset_family:
         hotspot_interface = start_hotspot_on_wcnss(ssid, password)
     elif 'wl12xx' == wifi_chipset_family:
@@ -418,9 +380,9 @@ def get_mediatek_wifi_chipset():
         return ''
 
 
-def start_hotspot_on_bcm(wifi_chipset_model, ssid, password):
+def start_hotspot_on_bcm(ssid, password):
     control_socket_dir = get_wpa_supplicant_control_socket_dir()
-    load_bcm_p2p_firmware(wifi_chipset_model, control_socket_dir)
+    load_p2p_firmware(control_socket_dir)
     if 'p2p0' in list_wifi_ifaces():
     # bcmdhd can optionally have p2p0 interface
         LOGGER.info('start p2p persistent group using p2p0')
@@ -440,14 +402,9 @@ def start_hotspot_on_bcm(wifi_chipset_model, ssid, password):
         return p2p_persistent_iface
 
 
-def load_bcm_p2p_firmware(wifi_chipset_model, control_socket_dir):
+def load_p2p_firmware(control_socket_dir):
     log_upstream_wifi_status('before load p2p firmware', control_socket_dir)
-    downloaded_firmware_path = '%s/bcm-%s-p2p.bin' % (DOWNLOADED_FIRMWARE_DIR, wifi_chipset_model)
-    if os.path.exists(downloaded_firmware_path):
-        with open('/sys/module/bcmdhd/parameters/firmware_path', 'w') as f:
-            f.write(downloaded_firmware_path)
-    else:
-        netd_execute('softap fwreload %s P2P' % WIFI_INTERFACE)
+    netd_execute('softap fwreload %s P2P' % WIFI_INTERFACE)
     reset_wifi_interface()
     log_upstream_wifi_status('after loaded p2p firmware', control_socket_dir)
 
@@ -460,10 +417,7 @@ def reset_wifi_interface():
 
 def start_hotspot_on_wcnss(ssid, password):
     control_socket_dir = get_wpa_supplicant_control_socket_dir()
-    log_upstream_wifi_status('before load p2p firmware', control_socket_dir)
-    netd_execute('softap fwreload %s P2P' % WIFI_INTERFACE)
-    reset_wifi_interface()
-    log_upstream_wifi_status('after loaded p2p firmware', control_socket_dir)
+    load_p2p_firmware(control_socket_dir)
     delete_existing_p2p_persistent_networks(WIFI_INTERFACE, control_socket_dir)
     start_p2p_persistent_network(WIFI_INTERFACE, control_socket_dir, ssid, password)
     p2p_persistent_iface = get_p2p_persistent_iface()
