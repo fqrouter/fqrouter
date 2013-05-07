@@ -581,7 +581,7 @@ def start_p2p_persistent_network(iface, control_socket_dir, ssid, password, sets
                       (P2P_CLI_PATH, control_socket_dir, iface, index, frequency.replace('.', '')))
     else:
         shell_execute('%s -p %s -i %s p2p_group_add persistent=%s' % (P2P_CLI_PATH, control_socket_dir, iface, index))
-    time.sleep(1)
+    time.sleep(2)
     return index
 
 
@@ -740,8 +740,8 @@ def shell_execute(command):
 
 
 def wait_for_process(proc):
-    for i in range(20):
-        time.sleep(0.5)
+    for i in range(10):
+        time.sleep(i * 0.1)
         if proc.poll() is not None:
             return proc.poll()
     return None
