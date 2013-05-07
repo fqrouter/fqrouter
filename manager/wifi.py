@@ -276,9 +276,12 @@ def dump_unix_sockets():
 
 
 def get_working_hotspot_iface():
-    iface = get_working_hotspot_iface_using_nl80211()
-    if iface:
-        return iface
+    return get_working_hotspot_iface_using_nl80211() or \
+           get_working_hotspot_iface_using_wext() or \
+           get_p2p_persistent_iface()
+
+
+def get_working_hotspot_iface_using_wext():
     try:
         if 'Mode:Master' in shell_execute('%s %s' % (IWCONFIG_PATH, 'wl0.1')):
             return 'wl0.1'
@@ -579,7 +582,7 @@ def log_upstream_wifi_status(log, control_socket_dir):
     try:
         LOGGER.info('=== %s ===' % log)
         shell_execute('%s -p %s -i %s status' % (P2P_CLI_PATH, control_socket_dir, WIFI_INTERFACE))
-        shell_execute('iw dev %s link' % WIFI_INTERFACE)
+        shell_execute('%s dev %s link' % (IW_PATH, WIFI_INTERFACE))
         shell_execute('netcfg')
     except:
         LOGGER.exception('failed to log upstream wifi status')
