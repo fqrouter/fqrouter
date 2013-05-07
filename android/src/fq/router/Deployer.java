@@ -96,10 +96,7 @@ public class Deployer {
         }
         try {
             if (!testPython()) {
-                selectPackagedLinker();
-                if (!testPython()) {
-                    return false;
-                }
+                return false;
             }
         } catch (Exception e) {
             statusUpdater.reportError("failed to test python", e);
@@ -244,35 +241,6 @@ public class Deployer {
     private void selectSystemLinker() throws Exception {
         if (!LINKER_FILE.exists()) {
             linkFile(new File("/system/bin/linker"), LINKER_FILE);
-        }
-    }
-
-    private void selectPackagedLinker() throws Exception {
-        if (LINKER_FILE.exists()) {
-            LINKER_FILE.delete();
-        }
-        statusUpdater.appendLog("copying " + getLinkerName() + " to data directory");
-        InputStream inputStream = statusUpdater.getAssets().open(getLinkerName());
-        try {
-            OutputStream outputStream = new FileOutputStream(LINKER_FILE);
-            try {
-                IOUtils.copy(inputStream, outputStream);
-            } finally {
-                outputStream.close();
-            }
-        } finally {
-            inputStream.close();
-        }
-        LINKER_FILE.setExecutable(true);
-        statusUpdater.appendLog("successfully copied linker");
-
-    }
-
-    private String getLinkerName() {
-        if (Build.VERSION.SDK_INT < 14) {
-            return "linker-2.x";
-        } else {
-            return "linker-4.x";
         }
     }
 

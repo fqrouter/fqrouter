@@ -18,8 +18,6 @@ DPKT_TAR_GZ_FILE = os.path.join(PAYLOAD_DIR, 'dpkt-1.7.tar.gz')
 DPKT_DIR = os.path.join(PAYLOAD_DIR, 'dpkt-1.7')
 DPKT_PACKAGE_DIR = os.path.join(DPKT_DIR, 'dpkt')
 BUSYBOX_FILE = os.path.join(ASSETS_DIR, 'busybox')
-LINKER_2_X_FILE = os.path.join(ASSETS_DIR, 'linker-2.x')
-LINKER_4_X_FILE = os.path.join(ASSETS_DIR, 'linker-4.x')
 CAPTURE_LOG_SH = os.path.join(ASSETS_DIR, 'capture-log.sh')
 CAPTURE_LOG_SH_SRC = os.path.join(SRC_DIR, 'capture-log.sh')
 PROXY_TOOLS_DIR = os.path.join(PAYLOAD_DIR, 'proxy-tools')
@@ -46,8 +44,6 @@ def main():
     download_dpkt()
     untargz_dpkt()
     download_busybox()
-    download_linker_2_x()
-    download_linker_4_x()
     download_redsocks()
     download_conntrack()
     download_pynetfilter_conntrack()
@@ -103,18 +99,6 @@ def download_busybox():
     if os.path.exists(BUSYBOX_FILE):
         return
     urllib.urlretrieve('http://www.busybox.net/downloads/binaries/latest/busybox-armv6l', BUSYBOX_FILE)
-
-
-def download_linker_2_x():
-    if os.path.exists(LINKER_2_X_FILE):
-        return
-    urllib.urlretrieve('http://cdn.fqrouter.com/android-utils/linker-2.x', LINKER_2_X_FILE)
-
-
-def download_linker_4_x():
-    if os.path.exists(LINKER_4_X_FILE):
-        return
-    urllib.urlretrieve('http://cdn.fqrouter.com/android-utils/linker-4.x', LINKER_4_X_FILE)
 
 
 def download_redsocks():
