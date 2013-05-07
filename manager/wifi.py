@@ -114,6 +114,7 @@ def stop_hotspot():
         try:
             control_socket_dir = get_wpa_supplicant_control_socket_dir()
             delete_existing_p2p_persistent_networks(WIFI_INTERFACE, control_socket_dir)
+            shell_execute('%s -p %s -i %s save_config' % (P2P_CLI_PATH, control_socket_dir, WIFI_INTERFACE))
         except:
             LOGGER.exception('failed to delete existing p2p persistent networks')
         if working_hotspot_iface:
@@ -739,8 +740,8 @@ def shell_execute(command):
 
 
 def wait_for_process(proc):
-    for i in range(100):
-        time.sleep(0.1)
+    for i in range(20):
+        time.sleep(0.5)
         if proc.poll() is not None:
             return proc.poll()
     return None
