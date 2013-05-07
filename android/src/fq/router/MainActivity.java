@@ -277,6 +277,7 @@ public class MainActivity extends Activity implements StatusUpdater {
     }
 
     private void onExitClicked() {
+        updateStatus("About to exit", false);
         try {
             EXITING_FLAG.createNewFile();
         } catch (Exception e) {
