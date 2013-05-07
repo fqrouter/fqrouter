@@ -1,5 +1,4 @@
 import logging
-import thread
 from netfilterqueue import NetfilterQueue
 import socket
 import time
@@ -32,7 +31,9 @@ APPIDS_COUNT = 10
 def run():
     try:
         insert_iptables_rules()
-        thread.start_new(start_full_proxy, ())
+        thread = threading.Thread(target=start_full_proxy)
+        thread.setDaemon(True)
+        thread.start()
     except:
         LOGGER.exception('failed to start full proxy service')
 
@@ -96,7 +97,9 @@ def delete_iptables_rules():
 def start_full_proxy():
     try:
         shutdown_hook.add(redsocks_monitor.kill_redsocks)
-        thread.start_new(refresh_proxies, ())
+        thread = threading.Thread(target=refresh_proxies)
+        thread.setDaemon(True)
+        thread.start()
     except:
         LOGGER.exception('failed to start keep proxies fresh thread')
         proxies.clear()
@@ -394,6 +397,7 @@ def create_conntrack_entry(src, sport, dst, dport, local_port):
 
 def delete_existing_conntrack_entry(ip):
     try:
+        LOGGER.info('delete existing conntrack entry for: %s' % ip)
         output = subprocess.check_output(
             ['/data/data/fq.router/proxy-tools/conntrack', '-D', '-p', 'tcp', '--reply-src', ip],
             stderr=subprocess.STDOUT).strip()

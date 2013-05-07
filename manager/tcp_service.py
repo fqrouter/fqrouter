@@ -1,5 +1,5 @@
 import logging
-import thread
+import threading
 from netfilterqueue import NetfilterQueue
 import socket
 import time
@@ -21,7 +21,9 @@ LOGGER = logging.getLogger('fqrouter.%s' % __name__)
 def run():
     try:
         insert_iptables_rules()
-        thread.start_new(handle_nfqueue, ())
+        thread = threading.Thread(target=handle_nfqueue)
+        thread.setDaemon(True)
+        thread.start()
     except:
         LOGGER.exception('failed to start tcp service')
         tcp_service_status.error = traceback.format_exc()

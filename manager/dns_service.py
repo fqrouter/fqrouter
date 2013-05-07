@@ -1,7 +1,7 @@
 import logging
 from netfilterqueue import NetfilterQueue
 import socket
-import thread
+import threading
 import time
 import traceback
 
@@ -24,7 +24,9 @@ raw_socket.setsockopt(socket.SOL_SOCKET, SO_MARK, 0xface)
 def run():
     try:
         insert_iptables_rules()
-        thread.start_new(handle_nfqueue, ())
+        thread = threading.Thread(target=handle_nfqueue)
+        thread.setDaemon(True)
+        thread.start()
     except:
         LOGGER.exception('failed to start dns service')
         dns_service_status.error = traceback.format_exc()

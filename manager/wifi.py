@@ -764,6 +764,7 @@ def shell_execute(command):
     exit_code = wait_for_process(proc)
     if exit_code is None:
         try:
+            LOGGER.error('kill timed out process: %s' % command)
             proc.kill()
             proc.communicate()
         except:
