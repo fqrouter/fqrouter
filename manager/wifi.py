@@ -283,14 +283,14 @@ def list_wifi_ifaces():
     return ifaces
 
 
-def start_hotspot_interface(wifi_chipset_family, wifichipset_model, ssid, password):
+def start_hotspot_interface(wifi_chipset_family, wifi_chipset_model, ssid, password):
     was_using_wifi_network = get_ip_and_mac(WIFI_INTERFACE)[0]
     try:
         shell_execute('start p2p_supplicant')
     except:
         LOGGER.exception('failed to start p2p_supplicant')
     if 'bcm' == wifi_chipset_family:
-        hotspot_interface = start_hotspot_on_bcm(ssid, password)
+        hotspot_interface = start_hotspot_on_bcm(wifi_chipset_model, ssid, password)
     elif 'wcnss' == wifi_chipset_family:
         hotspot_interface = start_hotspot_on_wcnss(ssid, password)
     elif 'wl12xx' == wifi_chipset_family:
@@ -380,10 +380,10 @@ def get_mediatek_wifi_chipset():
         return ''
 
 
-def start_hotspot_on_bcm(ssid, password):
+def start_hotspot_on_bcm(wifi_chipset_model, ssid, password):
     control_socket_dir = get_wpa_supplicant_control_socket_dir()
     load_p2p_firmware(control_socket_dir)
-    if 'p2p0' in list_wifi_ifaces():
+    if 'p2p0' in list_wifi_ifaces() and '4334' != wifi_chipset_model:
     # bcmdhd can optionally have p2p0 interface
         LOGGER.info('start p2p persistent group using p2p0')
         shell_execute('netcfg p2p0 up')
