@@ -200,22 +200,25 @@ def dump_wifi_status():
 
 def dump_wpa_supplicant(cmdline):
     pos_start = cmdline.find('-c')
+    if -1 == pos_start:
+        return
     pos_end = cmdline.find('\0', pos_start + 2)
-    if -1 != pos_start and -1 != pos_end:
-        cfg_path = cmdline[pos_start + 2: pos_end].replace('\0', '')
-        cfg_path_exists = os.path.exists(cfg_path) if cfg_path else False
-        LOGGER.info('cfg path: %s [%s]' % (cfg_path, cfg_path_exists))
-        if cfg_path_exists:
-            with open(cfg_path) as f:
-                content = f.read()
-                for line in content.splitlines():
-                    if 'psk=' in line:
-                        continue
-                    LOGGER.info(line)
-            control_socket_dir = parse_wpa_supplicant_conf(content)
-            LOGGER.info('parsed control socket dir: %s' % control_socket_dir)
-            dump_dir(control_socket_dir)
-        dump_wpa_supplicant(cmdline[pos_end:])
+    if -1 == pos_end:
+        return
+    cfg_path = cmdline[pos_start + 2: pos_end].replace('\0', '')
+    cfg_path_exists = os.path.exists(cfg_path) if cfg_path else False
+    LOGGER.info('cfg path: %s [%s]' % (cfg_path, cfg_path_exists))
+    if cfg_path_exists:
+        with open(cfg_path) as f:
+            content = f.read()
+            for line in content.splitlines():
+                if 'psk=' in line:
+                    continue
+                LOGGER.info(line)
+        control_socket_dir = parse_wpa_supplicant_conf(content)
+        LOGGER.info('parsed control socket dir: %s' % control_socket_dir)
+        dump_dir(control_socket_dir)
+    dump_wpa_supplicant(cmdline[pos_end:])
 
 
 def dump_dir(dir):
