@@ -282,6 +282,9 @@ def inject_ping_requests_to_find_right_ttl(dst):
 
 
 def handle_time_exceeded(ip_packet):
+    global MAX_TTL_TO_GFW
+    global MIN_TTL_TO_GFW
+    global RANGE_OF_TTL_TO_GFW
     time_exceed = ip_packet.icmp.data
     if not isinstance(time_exceed.data, dpkt.ip.IP):
         return
@@ -306,6 +309,11 @@ def handle_time_exceeded(ip_packet):
         ttl_to_gfw = pending_connection.get_ttl_to_gfw(dst_ip)
         if ttl_to_gfw:
             LOGGER.info('found ttl to gfw: %s %s' % (dst_ip, ttl_to_gfw - SAFETY_DELTA))
+            if ttl_to_gfw == MAX_TTL_TO_GFW:
+                MIN_TTL_TO_GFW += 2
+                MAX_TTL_TO_GFW += 2
+                LOGGER.info('slide ttl range to [%s ~ %s]' % (MIN_TTL_TO_GFW, MAX_TTL_TO_GFW))
+                RANGE_OF_TTL_TO_GFW = range(MIN_TTL_TO_GFW, MAX_TTL_TO_GFW + 1)
             add_international_ip(dst_ip, ttl_to_gfw - SAFETY_DELTA)
 
 
