@@ -7,7 +7,6 @@ import time
 import httplib
 import re
 import traceback
-import urllib
 import iptables
 import hostapd_template
 
@@ -143,7 +142,7 @@ def start_hotspot(ssid, password):
             wifi_chipset_family, wifi_chipset_model = get_wifi_chipset()
             if 'unsupported' == wifi_chipset_family:
                 return False, 'wifi chipset [%s] is not supported' % wifi_chipset_model
-            hotspot_interface = start_hotspot_interface(wifi_chipset_family, wifi_chipset_model, ssid, password)
+            hotspot_interface = start_hotspot_interface(wifi_chipset_family, ssid, password)
             setup_networking(hotspot_interface)
             LOGGER.info('=== Started Hotspot ===')
             dump_wifi_status()
@@ -239,9 +238,9 @@ def dump_unix_sockets():
 
 
 def get_working_hotspot_iface():
-    return get_working_hotspot_iface_using_nl80211() or \
-           get_working_hotspot_iface_using_wext() or \
-           get_p2p_persistent_iface()
+    return get_p2p_persistent_iface() or \
+           get_working_hotspot_iface_using_nl80211() or \
+           get_working_hotspot_iface_using_wext()
 
 
 def get_working_hotspot_iface_using_wext():
@@ -284,14 +283,14 @@ def list_wifi_ifaces():
     return ifaces
 
 
-def start_hotspot_interface(wifi_chipset_family, wifi_chipset_model, ssid, password):
+def start_hotspot_interface(wifi_chipset_family, ssid, password):
     was_using_wifi_network = get_ip_and_mac(WIFI_INTERFACE)[0]
     try:
         shell_execute('start p2p_supplicant')
     except:
         LOGGER.exception('failed to start p2p_supplicant')
     if 'bcm' == wifi_chipset_family:
-        hotspot_interface = start_hotspot_on_bcm(wifi_chipset_model, ssid, password)
+        hotspot_interface = start_hotspot_on_bcm(ssid, password)
     elif 'wcnss' == wifi_chipset_family:
         hotspot_interface = start_hotspot_on_wcnss(ssid, password)
     elif 'wl12xx' == wifi_chipset_family:
@@ -385,7 +384,7 @@ def get_mediatek_wifi_chipset():
         return ''
 
 
-def start_hotspot_on_bcm(wifi_chipset_model, ssid, password):
+def start_hotspot_on_bcm(ssid, password):
     control_socket_dir = get_wpa_supplicant_control_socket_dir()
     load_p2p_firmware(control_socket_dir)
     if 'p2p0' in list_wifi_ifaces():
