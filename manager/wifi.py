@@ -290,16 +290,17 @@ def start_hotspot_interface(wifi_chipset_family, ssid, password):
     except:
         LOGGER.exception('failed to start p2p_supplicant')
     if 'bcm' == wifi_chipset_family:
-        hotspot_interface = start_hotspot_on_bcm(ssid, password)
+        start_hotspot_on_bcm(ssid, password)
     elif 'wcnss' == wifi_chipset_family:
-        hotspot_interface = start_hotspot_on_wcnss(ssid, password)
+        start_hotspot_on_wcnss(ssid, password)
     elif 'wl12xx' == wifi_chipset_family:
-        hotspot_interface = start_hotspot_on_wl12xx(ssid, password)
+        start_hotspot_on_wl12xx(ssid, password)
     elif 'mtk' == wifi_chipset_family:
-        hotspot_interface = start_hotspot_on_mtk(ssid, password)
+        start_hotspot_on_mtk(ssid, password)
     else:
         raise Exception('wifi chipset family %s is not supported: %s' % wifi_chipset_family)
-    if not get_working_hotspot_iface():
+    hotspot_interface = get_working_hotspot_iface()
+    if not hotspot_interface:
         try:
             shell_execute('logcat -d -v time -s wpa_supplicant:V')
         except:
@@ -394,16 +395,12 @@ def start_hotspot_on_bcm(ssid, password):
         p2p_control_socket_dir = get_p2p_supplicant_control_socket_dir()
         delete_existing_p2p_persistent_networks('p2p0', p2p_control_socket_dir)
         start_p2p_persistent_network('p2p0', p2p_control_socket_dir, ssid, password)
-        p2p_persistent_iface = get_p2p_persistent_iface()
         log_upstream_wifi_status('after p2p persistent group created', control_socket_dir)
-        return p2p_persistent_iface
     else:
         LOGGER.info('start p2p persistent group using %s' % WIFI_INTERFACE)
         delete_existing_p2p_persistent_networks(WIFI_INTERFACE, control_socket_dir)
         start_p2p_persistent_network(WIFI_INTERFACE, control_socket_dir, ssid, password)
-        p2p_persistent_iface = get_p2p_persistent_iface()
         log_upstream_wifi_status('after p2p persistent group created', control_socket_dir)
-        return p2p_persistent_iface
 
 
 def load_p2p_firmware(control_socket_dir):
@@ -424,9 +421,7 @@ def start_hotspot_on_wcnss(ssid, password):
     load_p2p_firmware(control_socket_dir)
     delete_existing_p2p_persistent_networks(WIFI_INTERFACE, control_socket_dir)
     start_p2p_persistent_network(WIFI_INTERFACE, control_socket_dir, ssid, password)
-    p2p_persistent_iface = get_p2p_persistent_iface()
     log_upstream_wifi_status('after p2p persistent group created', control_socket_dir)
-    return p2p_persistent_iface
 
 
 def load_ap_firmware():
@@ -452,7 +447,6 @@ def start_hotspot_on_mtk(ssid, password):
     shell_execute('%s -p %s -i ap0 p2p_group_remove ap0' % (P2P_CLI_PATH, control_socket_dir))
     shell_execute('%s -p %s -i ap0 p2p_group_add persistent=%s' % (P2P_CLI_PATH, control_socket_dir, network_index))
     log_upstream_wifi_status('after p2p persistent group created', control_socket_dir)
-    return 'ap0'
 
 
 def start_hotspot_on_wl12xx(ssid, password):
@@ -479,7 +473,6 @@ def start_hotspot_on_wl12xx(ssid, password):
         raise Exception('hostapd failed')
     else:
         LOGGER.info('hostapd seems like started successfully')
-    return 'ap0'
 
 
 def get_upstream_frequency_and_channel():
@@ -557,6 +550,7 @@ def log_upstream_wifi_status(log, control_socket_dir):
 
 def start_p2p_persistent_network(iface, control_socket_dir, ssid, password, sets_channel=False):
     shell_execute('%s -p %s -i %s p2p_set disabled 0' % (P2P_CLI_PATH, control_socket_dir, iface))
+    shell_execute('%s -p %s -i %s set driver_param use_p2p_group_interface=1' % (P2P_CLI_PATH, control_socket_dir, iface))
     index = shell_execute('%s -p %s -i %s add_network' % (P2P_CLI_PATH, control_socket_dir, iface)).strip()
 
     def set_network(param):
