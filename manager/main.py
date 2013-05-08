@@ -89,10 +89,6 @@ def get_http_response(code):
     return '%s %s' % (code, httplib.responses[code])
 
 
-class MultiThreadedWSGIServer(ThreadingMixIn, wsgiref.simple_server.WSGIServer):
-    pass
-
-
 if '__main__' == __name__:
     LOGGER.info('environment: %s' % os.environ.items())
     dns_service.run()
@@ -103,8 +99,7 @@ if '__main__' == __name__:
     LOGGER.info('services started')
     try:
         httpd = wsgiref.simple_server.make_server(
-            '127.0.0.1', 8318, handle_request,
-            server_class=MultiThreadedWSGIServer)
+            '127.0.0.1', 8318, handle_request)
         LOGGER.info('serving HTTP on port 8318...')
     except:
         LOGGER.exception('failed to start HTTP server on port 8318')

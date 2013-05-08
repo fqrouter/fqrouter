@@ -12,9 +12,9 @@ public class ManagerProcess {
         }
         Log.i("fqrouter", "killall python");
         ShellUtils.sudo("/data/data/fq.router/busybox killall python");
-        for (int i = 0; i < 10; i++) {
+        for (int i = 0; i < 6; i++) {
             if (exists()) {
-                Thread.sleep(3000);
+                Thread.sleep(5000);
             } else {
                 Log.i("fqrouter", "killall python done cleanly");
                 return;
