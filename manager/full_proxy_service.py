@@ -32,7 +32,7 @@ def run():
     try:
         insert_iptables_rules()
         thread = threading.Thread(target=start_full_proxy)
-        thread.setDaemon(True)
+        thread.setDaemon(False)
         thread.start()
     except:
         LOGGER.exception('failed to start full proxy service')
@@ -98,7 +98,7 @@ def start_full_proxy():
     try:
         shutdown_hook.add(redsocks_monitor.kill_redsocks)
         thread = threading.Thread(target=refresh_proxies)
-        thread.setDaemon(True)
+        thread.setDaemon(False)
         thread.start()
     except:
         LOGGER.exception('failed to start keep proxies fresh thread')
@@ -131,9 +131,7 @@ def refresh_proxies():
         proxies.clear()
         redsocks_monitor.kill_redsocks()
         return False
-    if proxies:
-        can_access_twitter()
-    else:
+    if not proxies:
         LOGGER.info('still no proxies after redsocks started, retry in 120 seconds')
         time.sleep(120)
         return refresh_proxies()
@@ -247,23 +245,6 @@ def handle_proxy_error(local_port, proxy):
         proxy['error_penalty'] *= 2
 
 
-def can_access_twitter():
-    checkers = []
-    for i in range(PROXIES_COUNT * 2):
-        checker = TwitterAccessChecker()
-        checker.daemon = True
-        checker.start()
-        checkers.append(checker)
-        time.sleep(0.5)
-    success_count = 0
-    for checker in checkers:
-        checker.join()
-        if checker.success:
-            success_count += 1
-    LOGGER.info('twitter access success rate: %s/%s' % (success_count, len(checkers)))
-    return success_count
-
-
 class TwitterAccessChecker(threading.Thread):
     def __init__(self):
         super(TwitterAccessChecker, self).__init__()
@@ -284,6 +265,8 @@ def handle_nfqueue():
         nfqueue.run()
     except:
         LOGGER.exception('stopped handling nfqueue')
+    finally:
+        LOGGER.info('full proxy service stopped')
 
 
 def handle_packet(nfqueue_element):

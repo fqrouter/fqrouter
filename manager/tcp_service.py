@@ -22,7 +22,7 @@ def run():
     try:
         insert_iptables_rules()
         thread = threading.Thread(target=handle_nfqueue)
-        thread.setDaemon(True)
+        thread.setDaemon(False)
         thread.start()
     except:
         LOGGER.exception('failed to start tcp service')
@@ -134,6 +134,8 @@ def handle_nfqueue():
     except:
         LOGGER.exception('stopped handling nfqueue')
         tcp_service_status.error = traceback.format_exc()
+    finally:
+        LOGGER.info('tcp service stopped')
 
 
 def handle_packet(nfqueue_element):
