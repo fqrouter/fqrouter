@@ -7,6 +7,7 @@ import time
 import httplib
 import re
 import traceback
+
 import iptables
 import hostapd_template
 
@@ -35,6 +36,9 @@ DNSMASQ_PATH = '/data/data/fq.router/wifi-tools/dnsmasq'
 KILLALL_PATH = '/data/data/fq.router/busybox killall'
 IFCONFIG_PATH = '/data/data/fq.router/busybox ifconfig'
 FQROUTER_HOSTAPD_CONF_PATH = '/data/data/fq.router/hostapd.conf'
+BUSYBOX_PATH = '/data/data/fq.router/busybox'
+PYTHON_LAUNCHER_PATH = '/data/data/fq.router/python/bin/python-launcher.sh'
+MAIN_PY_PATH = os.path.join(os.path.dirname(__file__), 'main.py')
 CHANNELS = {
     '2412': 1, '2417': 2, '2422': 3, '2427': 4, '2432': 5, '2437': 6, '2442': 7,
     '2447': 8, '2452': 9, '2457': 10, '2462': 11, '2467': 12, '2472': 13, '2484': 14,
@@ -62,7 +66,7 @@ def clean():
 def handle_start(environ, start_response):
     ssid = environ['REQUEST_ARGUMENTS']['ssid'].value
     password = environ['REQUEST_ARGUMENTS']['password'].value
-    success, message = start_hotspot(ssid, password)
+    success, message = fqrouter_execute('wifi-start-hotspot', ssid, password)
     status = httplib.OK if success else httplib.BAD_GATEWAY
     start_response(status, [('Content-Type', 'text/plain')])
     yield message
@@ -70,7 +74,17 @@ def handle_start(environ, start_response):
 
 def handle_stop(environ, start_response):
     start_response(httplib.OK, [('Content-Type', 'text/plain')])
-    yield stop_hotspot()
+    yield fqrouter_execute('wifi-stop-hotspot')
+
+
+def fqrouter_execute(action, *args):
+    args = [BUSYBOX_PATH, 'sh', PYTHON_LAUNCHER_PATH, MAIN_PY_PATH, action] + list(args)
+    LOGGER.info('executing: %s' % str(args))
+    start_hotspot_process = subprocess.Popen(
+        args, stderr=subprocess.PIPE, stdout=subprocess.PIPE)
+    _, return_value = start_hotspot_process.communicate()
+    LOGGER.info('return value: %s' % return_value)
+    return eval(return_value)
 
 
 def handle_setup(environ, start_response):
@@ -560,7 +574,8 @@ def log_upstream_wifi_status(log, control_socket_dir):
 
 def start_p2p_persistent_network(iface, control_socket_dir, ssid, password, sets_channel=False):
     shell_execute('%s -p %s -i %s p2p_set disabled 0' % (P2P_CLI_PATH, control_socket_dir, iface))
-    shell_execute('%s -p %s -i %s set driver_param use_p2p_group_interface=1' % (P2P_CLI_PATH, control_socket_dir, iface))
+    shell_execute(
+        '%s -p %s -i %s set driver_param use_p2p_group_interface=1' % (P2P_CLI_PATH, control_socket_dir, iface))
     index = shell_execute('%s -p %s -i %s add_network' % (P2P_CLI_PATH, control_socket_dir, iface)).strip()
 
     def set_network(param):

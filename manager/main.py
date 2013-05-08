@@ -1,23 +1,24 @@
 import os
 import logging
 import logging.handlers
+import sys
+
 import lan_service
+import shutdown_hook
+
 
 ROOT_DIR = os.path.dirname(__file__)
 LOG_DIR = '/data/data/fq.router'
 LOG_FILE = os.path.join(LOG_DIR, 'manager.log')
 
 
-def setup_logging():
-    logging.basicConfig(level=logging.INFO, format='%(asctime)s %(levelname)s %(message)s')
+def setup_logging(log_file):
+    logging.basicConfig(stream=sys.stdout, level=logging.INFO, format='%(asctime)s %(levelname)s %(message)s')
     handler = logging.handlers.RotatingFileHandler(
-        LOG_FILE, maxBytes=1024 * 1024, backupCount=1)
+        log_file, maxBytes=1024 * 1024, backupCount=1)
     handler.setFormatter(logging.Formatter('%(asctime)s %(levelname)s %(message)s'))
     logging.getLogger('fqrouter').addHandler(handler)
 
-
-if '__main__' == __name__:
-    setup_logging()
 
 LOGGER = logging.getLogger('fqrouter.%s' % __name__)
 
@@ -26,11 +27,9 @@ import wifi
 import version
 import cgi
 import wsgiref.simple_server
-from SocketServer import ThreadingMixIn
 import dns_service
 import tcp_service
 import full_proxy_service
-import sys
 
 
 def handle_ping(environ, start_response):
@@ -90,18 +89,29 @@ def get_http_response(code):
 
 
 if '__main__' == __name__:
-    LOGGER.info('environment: %s' % os.environ.items())
-    dns_service.run()
-    tcp_service.run()
-    full_proxy_service.run()
-    lan_service.run()
-    wifi.setup_lo_alias()
-    LOGGER.info('services started')
-    try:
-        httpd = wsgiref.simple_server.make_server(
-            '127.0.0.1', 8318, handle_request)
-        LOGGER.info('serving HTTP on port 8318...')
-    except:
-        LOGGER.exception('failed to start HTTP server on port 8318')
-        sys.exit(1)
-    httpd.serve_forever()
+    if len(sys.argv) > 1:
+        shutdown_hook.shutdown_hooks = []
+        action = sys.argv[1]
+        if 'wifi-start-hotspot' == action:
+            setup_logging(os.path.join(LOG_DIR, 'wifi.log'))
+            sys.stderr.write(repr(wifi.start_hotspot(*sys.argv[2:])))
+        elif 'wifi-stop-hotspot' == action:
+            setup_logging(os.path.join(LOG_DIR, 'wifi.log'))
+            sys.stderr.write(repr(wifi.stop_hotspot()))
+    else:
+        LOGGER.info('environment: %s' % os.environ.items())
+        setup_logging(LOG_FILE)
+        dns_service.run()
+        tcp_service.run()
+        full_proxy_service.run()
+        lan_service.run()
+        wifi.setup_lo_alias()
+        LOGGER.info('services started')
+        try:
+            httpd = wsgiref.simple_server.make_server(
+                '127.0.0.1', 8318, handle_request)
+            LOGGER.info('serving HTTP on port 8318...')
+        except:
+            LOGGER.exception('failed to start HTTP server on port 8318')
+            sys.exit(1)
+        httpd.serve_forever()

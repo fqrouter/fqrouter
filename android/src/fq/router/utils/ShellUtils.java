@@ -43,8 +43,18 @@ public class ShellUtils {
             process.waitFor();
             int exitValue = process.exitValue();
             if (0 != exitValue) {
-                throw new Exception("failed to execute: " + Arrays.toString(command) + ", exit value: " + exitValue);
+                throw new Exception("failed to execute: " + Arrays.toString(command) + ", exit value: " +
+                        exitValue + ", output: " + readAllOutput(process).substring(0, 1000));
             }
+            return "";
+        }
+    }
+
+    private static String readAllOutput(Process process) throws Exception {
+        try {
+            return IOUtils.readAll(process.getInputStream());
+        } catch (Exception e) {
+            Log.e("fqrouter", "failed to read process output", e);
             return "";
         }
     }
