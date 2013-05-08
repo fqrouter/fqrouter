@@ -321,7 +321,7 @@ def wait_for_upstream_wifi_network_connected():
 
 def get_ip_and_mac(ifname):
     try:
-        output = shell_execute('/data/data/fq.router/busybox ifconfig %s' % ifname).lower()
+        output = shell_execute('%s %s' % (IFCONFIG_PATH, ifname)).lower()
         match = RE_MAC_ADDRESS.search(output)
         if match:
             mac = match.group(0)
@@ -426,19 +426,26 @@ def start_hotspot_on_wcnss(ssid, password):
 
 def load_ap_firmware():
     for i in range(3):
-        if 'ap0' not in list_wifi_ifaces():
-            netd_execute('softap fwreload %s AP' % WIFI_INTERFACE)
-            for i in range(5):
-                time.sleep(1)
-                if 'ap0' in list_wifi_ifaces():
-                    return
+        try:
+            shell_execute('%s ap0' % IFCONFIG_PATH)
+            return
+        except:
+            pass
+        netd_execute('softap fwreload %s AP' % WIFI_INTERFACE)
+        for i in range(5):
+            time.sleep(1)
+            try:
+                shell_execute('%s ap0' % IFCONFIG_PATH)
+                return
+            except:
+                pass
 
 
 def start_hotspot_on_mtk(ssid, password):
     control_socket_dir = get_wpa_supplicant_control_socket_dir()
     log_upstream_wifi_status('before load ap firmware', control_socket_dir)
     load_ap_firmware()
-    assert 'ap0' in list_wifi_ifaces()
+    shell_execute('%s ap0' % IFCONFIG_PATH)
     log_upstream_wifi_status('after loaded ap firmware', control_socket_dir)
     shell_execute('%s -p %s -i ap0 reconfigure' % (P2P_CLI_PATH, control_socket_dir))
     delete_existing_p2p_persistent_networks('ap0', control_socket_dir)
