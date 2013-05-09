@@ -4,6 +4,7 @@ import socket
 import time
 import urllib2
 import threading
+import thread
 import struct
 import subprocess
 
@@ -31,9 +32,7 @@ APPIDS_COUNT = 10
 def run():
     try:
         insert_iptables_rules()
-        thread = threading.Thread(target=start_full_proxy)
-        thread.setDaemon(False)
-        thread.start()
+        thread.start_new(start_full_proxy, ())
     except:
         LOGGER.exception('failed to start full proxy service')
 
@@ -97,9 +96,7 @@ def delete_iptables_rules():
 def start_full_proxy():
     try:
         shutdown_hook.add(redsocks_monitor.kill_redsocks)
-        thread = threading.Thread(target=refresh_proxies)
-        thread.setDaemon(False)
-        thread.start()
+        thread.start_new(refresh_proxies, ())
     except:
         LOGGER.exception('failed to start keep proxies fresh thread')
         proxies.clear()
