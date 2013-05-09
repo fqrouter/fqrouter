@@ -622,6 +622,8 @@ def get_p2p_persistent_iface():
     for line in shell_execute('netcfg').splitlines(False):
         if line.startswith('p2p-'):
             return line.split(' ')[0]
+        if line.startswith('ap0'):
+            return 'ap0'
     return None
 
 
