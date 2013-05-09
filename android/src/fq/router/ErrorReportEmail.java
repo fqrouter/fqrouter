@@ -29,7 +29,8 @@ public class ErrorReportEmail {
         String error = createLogFiles();
         i.putExtra(Intent.EXTRA_TEXT, getErrorMailBody() + error);
         attachLogFiles(i, "/sdcard/manager.log", "/sdcard/redsocks.log", "/sdcard/logcat.log",
-                "/sdcard/getprop.log", "/sdcard/dmesg.log", "/sdcard/iptables.log");
+                "/sdcard/getprop.log", "/sdcard/dmesg.log", "/sdcard/iptables.log",
+                "/sdcard/twitter.log", "/sdcard/wifi.log");
         return i;
     }
 

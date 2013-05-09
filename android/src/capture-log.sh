@@ -5,3 +5,5 @@ iptables -L -v -n > /sdcard/iptables.log
 iptables -t nat -L -v -n >> /sdcard/iptables.log
 /data/data/fq.router/busybox cp /data/data/fq.router/manager.log /sdcard/manager.log
 /data/data/fq.router/busybox cp /data/data/fq.router/redsocks.log /sdcard/redsocks.log
+/data/data/fq.router/busybox cp /data/data/fq.router/twitter.log /sdcard/twitter.log
+/data/data/fq.router/busybox cp /data/data/fq.router/wifi.log /sdcard/wifi.log

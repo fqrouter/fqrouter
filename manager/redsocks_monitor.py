@@ -20,7 +20,7 @@ handler = logging.handlers.RotatingFileHandler(
 handler.setFormatter(logging.Formatter('%(asctime)s %(message)s'))
 REDSOCKS_LOGGER.handlers = [handler]
 
-REFRESH_INTERVAL = 30
+REFRESH_INTERVAL = 60 * 30
 UPDATE_INTERVAL = 60 * 5
 
 RE_IP_PORT = r'(\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}):(\d+)'
@@ -120,7 +120,7 @@ def refresh_proxies_according_to_schedule():
     elif (time.time() - refreshed_at) > REFRESH_INTERVAL:
         refreshed_at = time.time()
         LOGGER.info('refresh proxies every %s seconds' % REFRESH_INTERVAL)
-        time.sleep(5)
+        time.sleep(15) # wait for current page
         kill_redsocks()
 
 

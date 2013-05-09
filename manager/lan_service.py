@@ -11,7 +11,7 @@ import dpkt
 from pynetfilter_conntrack.IPy import IP
 
 import wifi
-
+import shell
 
 RE_DEFAULT_GATEWAY = re.compile(r'default via (\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3})')
 RE_IP_RANGE = re.compile(r'(\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}/\d+)')
@@ -170,7 +170,7 @@ def handle_clear_scan_results(environ, start_response):
 
 
 def get_ip_range(ifname):
-    for line in wifi.shell_execute('ip route').splitlines():
+    for line in shell.execute('ip route').splitlines():
         if 'dev %s' % ifname in line:
             match = RE_IP_RANGE.search(line)
             if match:
@@ -180,7 +180,7 @@ def get_ip_range(ifname):
 
 def get_default_gateway(ifname):
     global previous_default_gateway
-    for line in wifi.shell_execute('/data/data/fq.router/busybox ip route').splitlines():
+    for line in shell.execute('/data/data/fq.router/busybox ip route').splitlines():
         if 'dev %s' % ifname not in line:
             continue
         match = RE_DEFAULT_GATEWAY.search(line)

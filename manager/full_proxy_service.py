@@ -23,6 +23,7 @@ import redsocks_monitor
 import goagent_monitor
 import dns_resolver
 import wifi
+import shell
 
 
 LOGGER = logging.getLogger('fqrouter.%s' % __name__)
@@ -126,7 +127,10 @@ def refresh_proxies():
         LOGGER.error('clear proxies, due to redsocks failed to start')
         proxies.clear()
         return False
-    if not proxies:
+    if proxies:
+        LOGGER.info('checking twitter access')
+        LOGGER.info('twitter access success rate: %s' % shell.fqrouter_execute('twitter-check'))
+    else:
         LOGGER.info('still no proxies after redsocks started, retry in 120 seconds')
         time.sleep(120)
         return refresh_proxies()
@@ -238,19 +242,6 @@ def handle_proxy_error(local_port, proxy):
         proxy['rank'] += error_penalty
         proxy['pre_rank'] += error_penalty
         proxy['error_penalty'] *= 2
-
-
-class TwitterAccessChecker(threading.Thread):
-    def __init__(self):
-        super(TwitterAccessChecker, self).__init__()
-        self.success = False
-
-    def run(self):
-        try:
-            urllib2.urlopen('https://www.twitter.com', timeout=10).read()
-            self.success = True
-        except:
-            pass
 
 
 def handle_nfqueue():

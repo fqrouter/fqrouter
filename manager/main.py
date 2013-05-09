@@ -4,7 +4,6 @@ import logging.handlers
 import sys
 
 import lan_service
-import shutdown_hook
 
 
 ROOT_DIR = os.path.dirname(__file__)
@@ -12,10 +11,10 @@ LOG_DIR = '/data/data/fq.router'
 LOG_FILE = os.path.join(LOG_DIR, 'manager.log')
 
 
-def setup_logging(log_file):
+def setup_logging(log_file, maxBytes=1024 * 512):
     logging.basicConfig(stream=sys.stdout, level=logging.INFO, format='%(asctime)s %(levelname)s %(message)s')
     handler = logging.handlers.RotatingFileHandler(
-        log_file, maxBytes=1024 * 1024, backupCount=1)
+        log_file, maxBytes=1024 * 1024, backupCount=0)
     handler.setFormatter(logging.Formatter('%(asctime)s %(levelname)s %(message)s'))
     logging.getLogger('fqrouter').addHandler(handler)
 
@@ -30,6 +29,8 @@ import wsgiref.simple_server
 import dns_service
 import tcp_service
 import full_proxy_service
+import shutdown_hook
+import twitter
 
 
 def handle_ping(environ, start_response):
@@ -93,11 +94,14 @@ if '__main__' == __name__:
         shutdown_hook.shutdown_hooks = []
         action = sys.argv[1]
         if 'wifi-start-hotspot' == action:
-            setup_logging(os.path.join(LOG_DIR, 'wifi.log'))
+            setup_logging(os.path.join(LOG_DIR, 'wifi.log'), maxBytes=1024 * 512)
             sys.stderr.write(repr(wifi.start_hotspot(*sys.argv[2:])))
         elif 'wifi-stop-hotspot' == action:
-            setup_logging(os.path.join(LOG_DIR, 'wifi.log'))
+            setup_logging(os.path.join(LOG_DIR, 'wifi.log'), maxBytes=1024 * 512)
             sys.stderr.write(repr(wifi.stop_hotspot()))
+        elif 'twitter-check' == action:
+            setup_logging(os.path.join(LOG_DIR, 'twitter.log'), maxBytes=1024 * 64)
+            sys.stderr.write(repr(twitter.check()))
     else:
         LOGGER.info('environment: %s' % os.environ.items())
         setup_logging(LOG_FILE)
