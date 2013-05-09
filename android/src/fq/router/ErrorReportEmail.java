@@ -38,7 +38,8 @@ public class ErrorReportEmail {
         String error = "";
         try {
             deployCaptureLogSh();
-            ShellUtils.sudo("sh", "/data/data/fq.router/capture-log.sh");
+            String output = ShellUtils.sudo("sh", "/data/data/fq.router/capture-log.sh");
+            error += "\n" + "capture-log.sh output:" + output;
         } catch (Exception e) {
             Log.e("fqrouter", "failed to execute capture-log.sh", e);
             error += "\n" + "failed to execute capture-log.sh" + "\n" + e;
