@@ -304,7 +304,7 @@ def start_hotspot_interface(wifi_chipset_family, ssid, password):
     else:
         raise Exception('wifi chipset family %s is not supported: %s' % wifi_chipset_family)
     hotspot_interface = get_working_hotspot_iface()
-    if not hotspot_interface:
+    if WIFI_INTERFACE == hotspot_interface or not hotspot_interface:
         try:
             shell.execute('logcat -d -v time -s wpa_supplicant:V')
         except:
