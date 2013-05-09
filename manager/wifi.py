@@ -289,7 +289,6 @@ def list_wifi_ifaces():
 
 
 def start_hotspot_interface(wifi_chipset_family, ssid, password):
-    was_using_wifi_network = get_ip_and_mac(WIFI_INTERFACE)[0]
     try:
         shell.execute('start p2p_supplicant')
     except:
@@ -311,8 +310,6 @@ def start_hotspot_interface(wifi_chipset_family, ssid, password):
         except:
             LOGGER.exception('failed to log wpa_supplicant')
         raise Exception('working hotspot iface not found after start')
-    if was_using_wifi_network and not wait_for_upstream_wifi_network_connected():
-        raise Exception('wifi interface can not reconnect')
     return hotspot_interface
 
 
@@ -409,10 +406,13 @@ def start_hotspot_on_bcm(ssid, password):
 
 
 def load_p2p_firmware(control_socket_dir):
+    was_using_wifi_network = get_ip_and_mac(WIFI_INTERFACE)[0]
     log_upstream_wifi_status('before load p2p firmware', control_socket_dir)
     netd_execute('softap fwreload %s P2P' % WIFI_INTERFACE)
     reset_wifi_interface()
     log_upstream_wifi_status('after loaded p2p firmware', control_socket_dir)
+    if was_using_wifi_network and not wait_for_upstream_wifi_network_connected():
+        raise Exception('wifi interface can not reconnect')
 
 
 def reset_wifi_interface():
