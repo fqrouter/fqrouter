@@ -18,7 +18,6 @@ public class Deployer {
     public static File PAYLOAD_CHECKSUM = new File(DATA_DIR, "payload.checksum");
     public static File PYTHON_DIR = new File(DATA_DIR, "python");
     public static File PYTHON_LAUNCHER = new File(PYTHON_DIR, "bin/python-launcher.sh");
-    public static File LINKER_FILE = new File(PYTHON_DIR, "bin/linker");
     public static File WIFI_TOOLS_DIR = new File(DATA_DIR, "wifi-tools");
     public static File PROXY_TOOLS_DIR = new File(DATA_DIR, "proxy-tools");
     public static File MANAGER_DIR = new File(DATA_DIR, "manager");
@@ -79,13 +78,6 @@ public class Deployer {
             unzipPayloadZip();
         } catch (Exception e) {
             statusUpdater.reportError("failed to unzip payload.zip", e);
-            return false;
-        }
-        try {
-            selectSystemLinker();
-            linkFile(new File("/data/data/fq.router/python/lib"), new File("/data/data/fq.router/lib"));
-        } catch (Exception e) {
-            statusUpdater.reportError("failed to select linker", e);
             return false;
         }
         try {
@@ -238,12 +230,6 @@ public class Deployer {
         }
     }
 
-    private void selectSystemLinker() throws Exception {
-        if (!LINKER_FILE.exists()) {
-            linkFile(new File("/system/bin/linker"), LINKER_FILE);
-        }
-    }
-
     private void makePayloadExecutable() throws Exception {
         File[] files = new File(PYTHON_DIR, "bin").listFiles();
         if (files == null) {
@@ -279,20 +265,6 @@ public class Deployer {
             statusUpdater.appendLog("successfully made " + file.getName() + " executable");
         } else {
             statusUpdater.appendLog("failed to make " + file.getName() + " executable");
-        }
-    }
-
-    private static void linkFile(File src, File dst) throws Exception {
-        if (dst.exists()) {
-            if (dst.getCanonicalPath().equals(src.getCanonicalPath())) {
-                return;
-            }
-            dst.delete();
-        }
-        try {
-            ShellUtils.sudo(BUSYBOX_FILE.getAbsolutePath(), "ln", "-s", src.getAbsolutePath(), dst.getAbsolutePath());
-        } catch (Exception e) {
-            Log.e("fqrouter", "failed to link " + src.getName(), e);
         }
     }
 }
