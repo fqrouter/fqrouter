@@ -104,10 +104,11 @@ def start_full_proxy():
 
 
 def refresh_proxies():
+    if redsocks_monitor.is_redsocks_live():
+        LOGGER.error('refresh proxies need to stop redsocks first')
+        return
     proxies.clear()
-    if redsocks_monitor.kill_redsocks():
-        LOGGER.info('existing redsocks killed')
-        time.sleep(2)
+    redsocks_monitor.kill_redsocks()
     appids = resolve_appids()
     if appids:
         try:
@@ -121,12 +122,9 @@ def refresh_proxies():
     for i, connection_info in enumerate(resolve_free_proxies()):
         add_free_proxy(19830 + i, connection_info)
     LOGGER.info('starting redsocks')
-    try:
-        start_redsocks()
-    except:
-        LOGGER.exception('failed to start redsocks')
+    if not start_redsocks():
+        LOGGER.error('clear proxies, due to redsocks failed to start')
         proxies.clear()
-        redsocks_monitor.kill_redsocks()
         return False
     if not proxies:
         LOGGER.info('still no proxies after redsocks started, retry in 120 seconds')
@@ -157,8 +155,7 @@ def resolve_appids():
 
 
 def start_goagent(appids):
-    if goagent_monitor.kill_goagent():
-        time.sleep(2)
+    goagent_monitor.kill_goagent()
     goagent_monitor.on_goagent_died = on_goagent_died
     goagent_monitor.start_goagent(appids)
     proxies[19830 + PROXIES_COUNT + 1] = {
@@ -222,11 +219,12 @@ def start_redsocks():
     redsocks_monitor.update_proxy = update_proxy
     redsocks_monitor.refresh_proxies = refresh_proxies
     wifi.on_wifi_hotspot_started = redsocks_monitor.kill_redsocks
-    redsocks_monitor.start_redsocks(proxies)
+    return redsocks_monitor.start_redsocks(proxies)
 
 
 def update_proxy(local_port, **kwargs):
-    proxies[local_port].update(kwargs)
+    if local_port in proxies:
+        proxies[local_port].update(kwargs)
 
 
 def handle_proxy_error(local_port, proxy):

@@ -20,7 +20,7 @@ handler = logging.handlers.RotatingFileHandler(
 handler.setFormatter(logging.Formatter('%(asctime)s %(message)s'))
 REDSOCKS_LOGGER.handlers = [handler]
 
-REFRESH_INTERVAL = 60 * 30
+REFRESH_INTERVAL = 30
 UPDATE_INTERVAL = 60 * 5
 
 RE_IP_PORT = r'(\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}):(\d+)'
@@ -39,7 +39,22 @@ refreshed_at = None
 
 
 def start_redsocks(proxies):
+    for i in range(3):
+        try:
+            start_redsocks_once(proxies)
+            return True
+        except:
+            LOGGER.exception('failed to start redsocks, retry')
+            kill_redsocks()
+    LOGGER.error('retry starting redsocks too many times, give up')
+    return False
+
+
+def start_redsocks_once(proxies):
     global redsocks_process
+    if is_redsocks_live():
+        LOGGER.error('another redsocks instace is running')
+        return
     cfg_path = '/data/data/fq.router/redsocks.conf'
     with open(cfg_path, 'w') as f:
         f.write(redsocks_template.render(proxies))
@@ -59,9 +74,10 @@ def start_redsocks(proxies):
 
 
 def monitor_redsocks():
+    the_process = redsocks_process
     try:
         while is_redsocks_live():
-            for line in iter(redsocks_process.stdout.readline, b''):
+            for line in iter(the_process.stdout.readline, b''):
                 REDSOCKS_LOGGER.info(line.strip())
                 if 'HTTP/' in line or 'No route to host' in line:
                     match = RE_REDSOCKS_CLIENT.search(line)
@@ -75,8 +91,8 @@ def monitor_redsocks():
                 update_proxies_according_to_schedule()
                 refresh_proxies_according_to_schedule()
             time.sleep(1)
-        LOGGER.error('redsocks died, clear proxies: %s' % redsocks_process.poll())
-        redsocks_process.communicate()
+        LOGGER.error('redsocks died, clear proxies: %s' % the_process.poll())
+        the_process.communicate()
         refresh_proxies()
     except:
         LOGGER.exception('failed to poll redsocks output')
@@ -104,14 +120,27 @@ def refresh_proxies_according_to_schedule():
     elif (time.time() - refreshed_at) > REFRESH_INTERVAL:
         refreshed_at = time.time()
         LOGGER.info('refresh proxies every %s seconds' % REFRESH_INTERVAL)
-        refresh_proxies()
+        time.sleep(5)
+        kill_redsocks()
 
 
 def kill_redsocks():
-    return not subprocess.call(['/data/data/fq.router/busybox', 'killall', '-SIGTERM', 'redsocks'])
+    try:
+        if redsocks_process:
+            LOGGER.info('found existing redsocks')
+            redsocks_process.terminate()
+            redsocks_process.communicate()
+        LOGGER.info('redsocks killed')
+    except:
+        LOGGER.exception('failed to kill redsocks')
+        time.sleep(2)
 
 
 def is_redsocks_live():
-    if not redsocks_process:
+    try:
+        if not redsocks_process:
+            return False
+        return redsocks_process.poll() is None
+    except:
+        LOGGER.exception('failed to tell if redsocks is live')
         return False
-    return redsocks_process.poll() is None
