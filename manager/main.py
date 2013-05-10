@@ -11,7 +11,7 @@ LOG_DIR = '/data/data/fq.router'
 LOG_FILE = os.path.join(LOG_DIR, 'manager.log')
 
 
-def setup_logging(log_file, maxBytes=1024 * 512):
+def setup_logging(log_file=LOG_FILE, maxBytes=1024 * 512):
     logging.basicConfig(stream=sys.stdout, level=logging.INFO, format='%(asctime)s %(levelname)s %(message)s')
     handler = logging.handlers.RotatingFileHandler(
         log_file, maxBytes=maxBytes, backupCount=0)

@@ -384,6 +384,3 @@ def add_to_white_list(ip):
         LOGGER.info('add white list ip: %s' % ip)
         white_list.add(ip)
     pending_list.pop(ip, None)
-
-
-dns_resolver.on_blacklist_ip_resolved = add_to_black_list
