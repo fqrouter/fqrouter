@@ -2,7 +2,6 @@ import os
 import logging
 import socket
 import subprocess
-import shlex
 import time
 import httplib
 import re
@@ -23,6 +22,7 @@ RE_CURRENT_FREQUENCY = re.compile(r'Current Frequency:(\d+\.\d+) GHz \(Channel (
 RE_FREQ = re.compile(r'freq: (\d+)')
 RE_IFCONFIG_IP = re.compile(r'inet addr:(\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3})')
 RE_MAC_ADDRESS = re.compile(r'[0-9a-f]+:[0-9a-f]+:[0-9a-f]+:[0-9a-f]+:[0-9a-f]+:[0-9a-f]+')
+RE_DEFAULT_GATEWAY_IFACE = re.compile('default via .+ dev (.+)')
 
 LOGGER = logging.getLogger('fqrouter.%s' % __name__)
 MODALIAS_PATH = '/sys/class/net/%s/device/modalias' % WIFI_INTERFACE
@@ -36,6 +36,7 @@ IWLIST_PATH = '/data/data/fq.router/wifi-tools/iwlist'
 DNSMASQ_PATH = '/data/data/fq.router/wifi-tools/dnsmasq'
 KILLALL_PATH = '/data/data/fq.router/busybox killall'
 IFCONFIG_PATH = '/data/data/fq.router/busybox ifconfig'
+IP_PATH = '/data/data/fq.router/busybox ip'
 FQROUTER_HOSTAPD_CONF_PATH = '/data/data/fq.router/hostapd.conf'
 CHANNELS = {
     '2412': 1, '2417': 2, '2422': 3, '2427': 4, '2432': 5, '2437': 6, '2442': 7,
@@ -309,6 +310,10 @@ def start_hotspot_interface(wifi_chipset_family, ssid, password):
             shell.execute('logcat -d -v time -s wpa_supplicant:V')
         except:
             LOGGER.exception('failed to log wpa_supplicant')
+        try:
+            shell.execute('logcat -d -v time -s p2p_supplicant:V')
+        except:
+            LOGGER.exception('failed to log p2p_supplicant')
         raise Exception('working hotspot iface not found after start')
     return hotspot_interface
 
@@ -318,7 +323,27 @@ def wait_for_upstream_wifi_network_connected():
         time.sleep(1)
         if get_ip_and_mac(WIFI_INTERFACE)[0]:
             return True
+        try:
+            default_gateway_iface = get_default_gateway_iface()
+            if default_gateway_iface \
+                and 'p2p' not in default_gateway_iface \
+                and 'ap0' not in default_gateway_iface \
+                and WIFI_INTERFACE not in default_gateway_iface:
+                shell.execute('netcfg %s down' % default_gateway_iface)
+                shell.execute('netcfg %s up' % default_gateway_iface)
+        except:
+            LOGGER.exception('failed to toggle 3G interface to force wlan reconnect')
     return False
+
+
+def get_default_gateway_iface():
+    try:
+        output = shell.execute('%s route' % IP_PATH)
+        match = RE_DEFAULT_GATEWAY_IFACE.search(output)
+        if match:
+            return match.group(1)
+    except:
+        LOGGER.exception('failed to get default gateway interface')
 
 
 def get_ip_and_mac(ifname):
