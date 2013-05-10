@@ -16,8 +16,9 @@ def handle_latest(environ, start_response):
 
 def resolve_latest_version():
     try:
-        answers = dns_resolver.resolve(dpkt.dns.DNS_TXT, [VER_DOMAIN])
+        answers = dns_resolver.resolve('TXT', [VER_DOMAIN])
         answer = answers.get(VER_DOMAIN)
+        answer = answer[0] if answer else ''
         if not answer:
             return None
         ver = ''.join(e for e in answer if e.isalnum() or e in {'.', '|', ':', '/', '-', '_'})

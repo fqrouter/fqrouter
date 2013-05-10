@@ -143,8 +143,9 @@ def resolve_appids():
     for i in range(6):
         try:
             domain_names = ['goagent%s.fqrouter.com' % i for i in range(1, 1 + APPIDS_COUNT)]
-            answers = dns_resolver.resolve(dpkt.dns.DNS_TXT, domain_names)
+            answers = dns_resolver.resolve('TXT', domain_names)
             for appid in answers.values():
+                appid = appid[0] if appid else ''
                 appid = ''.join(e for e in appid if e.isalnum())
                 if appid:
                     appids.append(appid)
@@ -185,10 +186,11 @@ def resolve_free_proxies():
         proxy_domain_names[19830 + i] = 'proxy%s.fqrouter.com' % i
     for i in range(6):
         try:
-            answers = dns_resolver.resolve(dpkt.dns.DNS_TXT, proxy_domain_names.values())
+            answers = dns_resolver.resolve('TXT', proxy_domain_names.values())
             if answers:
                 connection_infos = []
                 for connection_info in answers.values():
+                    connection_info = connection_info[0] if connection_info else ''
                     if not connection_info:
                         continue
                     connection_info = ''.join(e for e in connection_info if e.isalnum() or e in [':', '.', '-'])

@@ -1,6 +1,12 @@
 import socket
 import logging
+import subprocess
+import json
+
 import dpkt
+
+import shell
+
 
 on_blacklist_ip_resolved = None
 
@@ -54,28 +60,18 @@ GOOGLE_PLUS_WRONG_ANSWERS = {
 
 
 def resolve(record_type, domain_names):
-    requests = []
     try:
-        for i, domain_name in enumerate(domain_names):
-            requests.append(ResolveRequest(i, domain_name, record_type))
-        unresolved_domain_names = set(domain_names)
-        answers = {}
-        for request in requests:
-            try:
-                domain_name, answer = read_one_answer(request, requests)
-                if domain_name in unresolved_domain_names:
-                    unresolved_domain_names.remove(domain_name)
-                    LOGGER.info('dns resolved: %s => %s' % (domain_name, answer))
-                    answers[domain_name] = answer
-            except:
-                LOGGER.exception('failed to resolve: %s' % request.domain_name)
-        return answers
-    finally:
-        for request in requests:
-            try:
-                request.close()
-            except:
-                LOGGER.exception('failed to close socket')
+        args = [shell.PYTHON_PATH, '-m', 'fqdns', 'resolve',
+                '--retry', '3', '--timeout', '2',
+                '--record-type', record_type] + domain_names
+        LOGGER.info('executing: %s' % str(args))
+        proc = subprocess.Popen(args, stderr=subprocess.PIPE)
+        _, output = proc.communicate()
+        LOGGER.info('resolved: %s' % output)
+        return json.loads(output)
+    except:
+        LOGGER.exception('failed to resolve: %s' % domain_names)
+        return {}
 
 
 def read_one_answer(request, requests):

@@ -14,7 +14,7 @@ LOG_FILE = os.path.join(LOG_DIR, 'manager.log')
 def setup_logging(log_file, maxBytes=1024 * 512):
     logging.basicConfig(stream=sys.stdout, level=logging.INFO, format='%(asctime)s %(levelname)s %(message)s')
     handler = logging.handlers.RotatingFileHandler(
-        log_file, maxBytes=1024 * 1024, backupCount=0)
+        log_file, maxBytes=maxBytes, backupCount=0)
     handler.setFormatter(logging.Formatter('%(asctime)s %(levelname)s %(message)s'))
     logging.getLogger('fqrouter').addHandler(handler)
 
