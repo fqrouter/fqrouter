@@ -18,7 +18,6 @@ import android.view.View;
 import android.widget.TextView;
 import android.widget.Toast;
 import android.widget.ToggleButton;
-import fq.router.utils.HttpUtils;
 
 import java.io.File;
 import java.lang.reflect.Method;
@@ -58,6 +57,26 @@ public class MainActivity extends Activity implements StatusUpdater {
                 } else {
                     appendLog("starting supervisor thread");
                     new Thread(supervisor).start();
+                }
+            }
+        }).start();
+    }
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+        new Thread(new Runnable() {
+            @Override
+            public void run() {
+                if (!Supervisor.ping()) {
+                    updateStatus("Manage process died, restart");
+                    try {
+                        ManagerProcess.kill();
+                    } catch (Exception e) {
+                        Log.e("fqrouter", "failed to kill manager process before relaunch", e);
+                        appendLog("failed to kill manager process before relaunch");
+                    }
+                    new Thread(new Launcher(MainActivity.this)).start();
                 }
             }
         }).start();

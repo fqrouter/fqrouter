@@ -36,15 +36,6 @@ def run():
     thread.start_new(monitor_fqdns, ())
 
 
-def monitor_fqdns():
-    try:
-        output, _ = fqdns_process.communicate()
-        if fqdns_process.poll():
-            LOGGER.error('fqdns output: %s' % output[-200:])
-    except:
-        LOGGER.exception('fqdns died')
-
-
 def clean():
     delete_iptables_rules()
     try:
@@ -52,6 +43,12 @@ def clean():
             fqdns_process.terminate()
     except:
         LOGGER.exception('failed to terminate fqdns')
+
+
+def is_alive():
+    if fqdns_process:
+        return fqdns_process.poll() is None
+    return False
 
 
 RULES = [
@@ -70,6 +67,15 @@ def insert_iptables_rules():
 
 def delete_iptables_rules():
     iptables.delete_rules(RULES)
+
+
+def monitor_fqdns():
+    try:
+        output, _ = fqdns_process.communicate()
+        if fqdns_process.poll():
+            LOGGER.error('fqdns output: %s' % output[-200:])
+    except:
+        LOGGER.exception('fqdns died')
 
 
 def resolve(record_type, domain_names):

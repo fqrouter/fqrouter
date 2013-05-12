@@ -35,7 +35,10 @@ import twitter
 
 def handle_ping(environ, start_response):
     start_response(httplib.OK, [('Content-Type', 'text/plain')])
-    yield 'PONG'
+    if not dns_service.is_alive():
+        yield 'DNS SERVICE DIED'
+    else:
+        yield 'PONG'
 
 
 def handle_logs(environ, start_response):

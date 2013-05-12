@@ -33,7 +33,7 @@ public class ShellUtils {
                 stdin.write(c);
                 stdin.write(" ");
             }
-            stdin.write("\n");
+            stdin.write("\nexit\n");
         } finally {
             stdin.close();
         }
