@@ -105,11 +105,11 @@ if '__main__' == __name__:
     else:
         LOGGER.info('environment: %s' % os.environ.items())
         setup_logging(LOG_FILE)
+        wifi.setup_lo_alias()
         dns_service.run()
         tcp_service.run()
         full_proxy_service.run()
         lan_service.run()
-        wifi.setup_lo_alias()
         LOGGER.info('services started')
         try:
             httpd = wsgiref.simple_server.make_server(

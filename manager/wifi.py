@@ -55,6 +55,9 @@ RULES = [
     (
         {'target': 'MASQUERADE', 'source': '10.24.1.0/24', 'destination': '0.0.0.0/0'},
         ('nat', 'POSTROUTING', '-s 10.24.1.0/24 -j MASQUERADE')
+    ), (
+        {'target': 'MASQUERADE', 'source': '10.1.2.3', 'destination': '0.0.0.0/0'},
+        ('nat', 'POSTROUTING', '-s 10.1.2.3 -j MASQUERADE')
     )]
 
 
@@ -96,10 +99,6 @@ def stop_hotspot():
     try:
         working_hotspot_iface = get_working_hotspot_iface()
         try:
-            iptables.delete_rules(RULES)
-        except:
-            LOGGER.exception('failed to delete rules')
-        try:
             shell.execute('%s dnsmasq' % KILLALL_PATH)
         except:
             LOGGER.exception('failed to killall dnsmasq')
@@ -134,7 +133,6 @@ def stop_hotspot():
 
 def start_hotspot(ssid, password):
     try:
-        iptables.delete_rules(RULES)
         working_hotspot_iface = get_working_hotspot_iface()
         if working_hotspot_iface:
             return True, 'hotspot is already working, start skipped'
@@ -557,14 +555,14 @@ def setup_networking(hotspot_interface):
                   '--server=8.8.8.8 --dhcp-range=10.24.1.2,10.24.1.254,12h '
                   '--dhcp-leasefile=/data/data/fq.router/dnsmasq.leases '
                   '--pid-file=/data/data/fq.router/dnsmasq.pid' % (DNSMASQ_PATH, hotspot_interface))
-    enable_ipv4_forward()
-    shell.execute('iptables -P FORWARD ACCEPT')
-    iptables.insert_rules(RULES)
     log_upstream_wifi_status('after setup networking', control_socket_dir)
 
 
 def setup_lo_alias():
     setup_network_interface_ip('lo:1', '10.1.2.3', '255.255.255.255')
+    enable_ipv4_forward()
+    shell.execute('iptables -P FORWARD ACCEPT')
+    iptables.insert_rules(RULES)
 
 
 def setup_network_interface_ip(iface, ip, netmask):

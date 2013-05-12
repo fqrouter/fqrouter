@@ -32,7 +32,6 @@ def run():
 
 def start_lan_service():
     try:
-        wifi.enable_ipv4_forward()
         while True:
             if not picked_devices:
                 time.sleep(3)

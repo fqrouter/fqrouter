@@ -21,7 +21,7 @@ import iptables
 import china_ip
 import redsocks_monitor
 import goagent_monitor
-import dns_resolver
+import dns_service
 import wifi
 import shell
 
@@ -143,7 +143,7 @@ def resolve_appids():
     for i in range(6):
         try:
             domain_names = ['goagent%s.fqrouter.com' % i for i in range(1, 1 + APPIDS_COUNT)]
-            answers = dns_resolver.resolve('TXT', domain_names)
+            answers = dns_service.resolve('TXT', domain_names)
             for appid in answers.values():
                 appid = appid[0] if appid else ''
                 appid = ''.join(e for e in appid if e.isalnum())
@@ -186,7 +186,7 @@ def resolve_free_proxies():
         proxy_domain_names[19830 + i] = 'proxy%s.fqrouter.com' % i
     for i in range(6):
         try:
-            answers = dns_resolver.resolve('TXT', proxy_domain_names.values())
+            answers = dns_service.resolve('TXT', proxy_domain_names.values())
             if answers:
                 connection_infos = []
                 for connection_info in answers.values():

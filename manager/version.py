@@ -2,7 +2,7 @@ import logging
 import httplib
 
 import dpkt
-import dns_resolver
+import dns_service
 
 
 LOGGER = logging.getLogger('fqrouter.%s' % __name__)
@@ -16,7 +16,7 @@ def handle_latest(environ, start_response):
 
 def resolve_latest_version():
     try:
-        answers = dns_resolver.resolve('TXT', [VER_DOMAIN])
+        answers = dns_service.resolve('TXT', [VER_DOMAIN])
         answer = answers.get(VER_DOMAIN)
         answer = answer[0] if answer else ''
         if not answer:

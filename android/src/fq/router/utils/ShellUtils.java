@@ -43,8 +43,9 @@ public class ShellUtils {
             process.waitFor();
             int exitValue = process.exitValue();
             if (0 != exitValue) {
+                String output = readAllOutput(process);
                 throw new Exception("failed to execute: " + Arrays.toString(command) + ", exit value: " +
-                        exitValue + ", output: " + readAllOutput(process).substring(0, 1000));
+                        exitValue + ", output: " + output.substring(0, Math.min(1000, output.length())));
             }
             return "";
         }
