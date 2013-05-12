@@ -128,9 +128,8 @@ def refresh_proxies():
         proxies.clear()
         return False
     if proxies:
-        pass
-        # LOGGER.info('checking twitter access')
-        # LOGGER.info('twitter access success rate: %s' % shell.fqrouter_execute('twitter-check'))
+        LOGGER.info('checking twitter access')
+        LOGGER.info('twitter access success rate: %s' % shell.fqrouter_execute('twitter-check'))
     else:
         LOGGER.info('still no proxies after redsocks started, retry in 120 seconds')
         time.sleep(120)
