@@ -61,11 +61,6 @@ RULES = [
     )]
 
 
-def clean():
-    if get_working_hotspot_iface():
-        stop_hotspot()
-
-
 def handle_start(environ, start_response):
     ssid = environ['REQUEST_ARGUMENTS']['ssid'].value
     password = environ['REQUEST_ARGUMENTS']['password'].value

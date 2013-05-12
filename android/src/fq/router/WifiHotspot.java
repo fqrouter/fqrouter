@@ -133,6 +133,10 @@ public class WifiHotspot {
     }
 
     public boolean setup() {
+        if (null == wifiLock) {
+            wifiLock = getWifiManager().createWifiLock(WifiManager.WIFI_MODE_FULL_HIGH_PERF, "fqrouter wifi hotspot");
+        }
+        wifiLock.acquire();
         statusUpdater.hideWifiHotspotToggleButton();
         boolean success = doSetup();
         statusUpdater.showWifiHotspotToggleButton(success);
