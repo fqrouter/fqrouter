@@ -245,23 +245,16 @@ public class MainActivity extends Activity implements StatusUpdater {
     }
 
     private void onExitClicked() {
-        updateStatus("About to exit", false);
         try {
             EXITING_FLAG.createNewFile();
         } catch (Exception e) {
             Log.e("fqrouter", "failed to create .exit flag", e);
         }
         EXITING_FLAG.setLastModified(System.currentTimeMillis());
-        try {
-            Intent intent = new Intent(Intent.ACTION_MAIN);
-            intent.addCategory(Intent.CATEGORY_HOME);
-            startActivity(intent);
-        } catch (Exception e) {
-            Log.e("fqrouter", "failed to go back home screen", e);
-        }
         new Thread(new Runnable() {
             @Override
             public void run() {
+                updateStatus("About to exit", false);
                 if (started && WifiHotspot.isStarted()) {
                     wifiHotspot.stop();
                 }
