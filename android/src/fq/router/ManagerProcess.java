@@ -6,16 +6,13 @@ import fq.router.utils.ShellUtils;
 public class ManagerProcess {
 
     public static void kill() throws Exception {
-        boolean killedPython = _kill("python");
-        boolean killedRedsocks = _kill("redsocks");
-        boolean killedAll = killedPython && killedRedsocks;
-        if (!killedAll) {
-            ShellUtils.sudo("PYTHONHOME=" + Deployer.PYTHON_DIR + " " +
-                    Deployer.BUSYBOX_FILE + " sh " + Deployer.PYTHON_LAUNCHER + " " + Deployer.MANAGER_CLEAN_PY);
-        }
+        kill("python");
+        kill("redsocks");
+        ShellUtils.sudo("PYTHONHOME=" + Deployer.PYTHON_DIR + " " +
+                Deployer.BUSYBOX_FILE + " sh " + Deployer.PYTHON_LAUNCHER + " " + Deployer.MANAGER_MAIN_PY + " clean");
     }
 
-    private static boolean _kill(String executable) throws Exception {
+    private static boolean kill(String executable) throws Exception {
         if (!exists(executable)) {
             Log.i("fqrouter", "no " + executable + " process to kill");
             return true;

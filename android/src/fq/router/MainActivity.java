@@ -65,12 +65,16 @@ public class MainActivity extends Activity implements StatusUpdater {
     @Override
     protected void onResume() {
         super.onResume();
+        if (!started) {
+            return;
+        }
         new Thread(new Runnable() {
             @Override
             public void run() {
                 if (!Supervisor.ping()) {
                     updateStatus("Manage process died, restart");
                     try {
+                        updateStatus("Kill existing manager process");
                         ManagerProcess.kill();
                     } catch (Exception e) {
                         Log.e("fqrouter", "failed to kill manager process before relaunch", e);

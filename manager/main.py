@@ -92,6 +92,35 @@ def get_http_response(code):
     return '%s %s' % (code, httplib.responses[code])
 
 
+def run():
+    setup_logging(LOG_FILE)
+    LOGGER.info('environment: %s' % os.environ.items())
+    wifi.setup_lo_alias()
+    dns_service.run()
+    tcp_service.run()
+    full_proxy_service.run()
+    lan_service.run()
+    LOGGER.info('services started')
+    try:
+        httpd = wsgiref.simple_server.make_server(
+            '127.0.0.1', 8318, handle_request)
+        LOGGER.info('serving HTTP on port 8318...')
+    except:
+        LOGGER.exception('failed to start HTTP server on port 8318')
+        sys.exit(1)
+    httpd.serve_forever()
+
+
+def clean():
+    setup_logging(LOG_FILE)
+    LOGGER.info('clean...')
+    dns_service.clean()
+    tcp_service.clean()
+    full_proxy_service.clean()
+    lan_service.clean()
+    wifi.clean()
+
+
 if '__main__' == __name__:
     if len(sys.argv) > 1:
         shutdown_hook.shutdown_hooks = []
@@ -105,20 +134,7 @@ if '__main__' == __name__:
         elif 'twitter-check' == action:
             setup_logging(os.path.join(LOG_DIR, 'twitter.log'), maxBytes=1024 * 64)
             sys.stderr.write(repr(twitter.check()))
+        elif 'clean' == action:
+            clean()
     else:
-        LOGGER.info('environment: %s' % os.environ.items())
-        setup_logging(LOG_FILE)
-        wifi.setup_lo_alias()
-        dns_service.run()
-        tcp_service.run()
-        full_proxy_service.run()
-        lan_service.run()
-        LOGGER.info('services started')
-        try:
-            httpd = wsgiref.simple_server.make_server(
-                '127.0.0.1', 8318, handle_request)
-            LOGGER.info('serving HTTP on port 8318...')
-        except:
-            LOGGER.exception('failed to start HTTP server on port 8318')
-            sys.exit(1)
-        httpd.serve_forever()
+        run()

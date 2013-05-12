@@ -30,57 +30,63 @@ public class ErrorReportEmail {
         i.putExtra(Intent.EXTRA_TEXT, getErrorMailBody() + error);
         attachLogFiles(i, "/sdcard/manager.log", "/sdcard/redsocks.log", "/sdcard/logcat.log",
                 "/sdcard/getprop.log", "/sdcard/dmesg.log", "/sdcard/iptables.log",
-                "/sdcard/twitter.log", "/sdcard/wifi.log");
+                "/sdcard/twitter.log", "/sdcard/wifi.log", "/sdcard/dns.log", "/sdcard/current.log");
         return i;
     }
 
     private String createLogFiles() {
         String error = "";
         try {
-            deployCaptureLogSh();
-            String output = ShellUtils.sudo("sh", "/data/data/fq.router/capture-log.sh");
-            error += "\n" + "capture-log.sh output:" + output;
+            ShellUtils.sudo(ShellUtils.findCommand("getprop"), ">", "/sdcard/getprop.log");
         } catch (Exception e) {
-            Log.e("fqrouter", "failed to execute capture-log.sh", e);
-            error += "\n" + "failed to execute capture-log.sh" + "\n" + e;
-            try {
-                ShellUtils.sudo("getprop", ">", "/sdcard/getprop.log");
-            } catch (Exception e2) {
-                Log.e("fqrouter", "failed to execute getprop", e2);
-                error += "\n" + "failed to execute getprop" + "\n" + e2;
-            }
-            try {
-                ShellUtils.sudo("dmesg", ">", "/sdcard/dmesg.log");
-            } catch (Exception e2) {
-                Log.e("fqrouter", "failed to execute dmesg", e2);
-                error += "\n" + "failed to execute dmesg" + "\n" + e2;
-            }
-            try {
-                ShellUtils.sudo("logcat", "-d", "-v", "time", "-s", "fqrouter:V", ">", "/sdcard/logcat.log");
-            } catch (Exception e2) {
-                Log.e("fqrouter", "failed to execute logcat", e2);
-                error += "\n" + "failed to execute logcat" + "\n" + e2;
-            }
+            Log.e("fqrouter", "failed to execute getprop", e);
+            error += "\n" + "failed to execute getprop" + "\n" + e;
         }
+        try {
+            ShellUtils.sudo(ShellUtils.findCommand("dmesg"), ">", "/sdcard/dmesg.log");
+        } catch (Exception e) {
+            Log.e("fqrouter", "failed to execute dmesg", e);
+            error += "\n" + "failed to execute dmesg" + "\n" + e;
+        }
+        try {
+            ShellUtils.sudo(ShellUtils.findCommand("logcat"),
+                    "-d", "-v", "time", "-s", "fqrouter:V", ">", "/sdcard/logcat.log");
+        } catch (Exception e) {
+            Log.e("fqrouter", "failed to execute logcat", e);
+            error += "\n" + "failed to execute logcat" + "\n" + e;
+        }
+        try {
+            ShellUtils.sudo(ShellUtils.findCommand("iptables"),
+                    "-L", "-v", "-n", ">", "/sdcard/iptables.log");
+        } catch (Exception e) {
+            Log.e("fqrouter", "failed to execute iptables for filter table", e);
+            error += "\n" + "failed to execute iptables for filter table" + "\n" + e;
+        }
+        try {
+            ShellUtils.sudo(ShellUtils.findCommand("iptables"),
+                    "-t", "nat", "-L", "-v", "-n", ">>", "/sdcard/iptables.log");
+        } catch (Exception e) {
+            Log.e("fqrouter", "failed to execute iptables for nat table", e);
+            error += "\n" + "failed to execute iptables for nat table" + "\n" + e;
+        }
+        error += copyLog("manager.log");
+        error += copyLog("redsocks.log");
+        error += copyLog("twitter.log");
+        error += copyLog("wifi.log");
+        error += copyLog("dns.log");
+        error += copyLog("current.log");
         return error;
     }
 
-    private void deployCaptureLogSh() {
+    private String copyLog(String logFileName) {
         try {
-            InputStream inputStream = statusUpdater.getAssets().open("capture-log.sh");
-            try {
-                OutputStream outputStream = new FileOutputStream("/data/data/fq.router/capture-log.sh");
-                try {
-                    IOUtils.copy(inputStream, outputStream);
-                } finally {
-                    outputStream.close();
-                }
-            } finally {
-                inputStream.close();
-            }
+            ShellUtils.sudo(
+                    "/data/data/fq.router/busybox", "cp", "/data/data/fq.router/" + logFileName, "/sdcard/" + logFileName);
         } catch (Exception e) {
-            Log.e("fqrouter", "failed to deploy capture-log.sh", e);
+            Log.e("fqrouter", "failed to copy " + logFileName, e);
+            return "\n" + "failed to copy " + logFileName + "\n" + e;
         }
+        return "";
     }
 
     private void attachLogFiles(Intent i, String... logFilePaths) {

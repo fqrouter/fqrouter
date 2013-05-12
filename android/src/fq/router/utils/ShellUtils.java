@@ -3,11 +3,17 @@ package fq.router.utils;
 import android.util.Log;
 
 import java.io.BufferedReader;
+import java.io.File;
 import java.io.InputStreamReader;
 import java.io.OutputStreamWriter;
 import java.util.Arrays;
 
+
 public class ShellUtils {
+
+    private static final String[] BINARY_PLACES = {"/data/bin/", "/system/bin/", "/system/xbin/", "/sbin/",
+            "/data/local/xbin/", "/data/local/bin/", "/system/sd/xbin/", "/system/bin/failsafe/",
+            "/data/local/"};
 
     public static String execute(String... command) throws Exception {
         Process process = new ProcessBuilder(command)
@@ -16,14 +22,11 @@ public class ShellUtils {
         return waitFor(Arrays.toString(command), process);
     }
 
-    public static String sudo(String... command) throws Exception {
-        return sudo(true, command);
-    }
 
-    public static String sudo(boolean returnsOutput, String... command) throws Exception {
+    public static String sudo(String... command) throws Exception {
         Log.d("fqrouter", "sudo: " + Arrays.toString(command));
         Process process = new ProcessBuilder()
-                .command("su")
+                .command(findCommand("su"))
                 .redirectErrorStream(true)
                 .start();
         OutputStreamWriter stdin = new OutputStreamWriter(process.getOutputStream());
@@ -37,27 +40,17 @@ public class ShellUtils {
         } finally {
             stdin.close();
         }
-        if (returnsOutput) {
-            return waitFor(Arrays.toString(command), process);
-        } else {
-            process.waitFor();
-            int exitValue = process.exitValue();
-            if (0 != exitValue) {
-                String output = readAllOutput(process);
-                throw new Exception("failed to execute: " + Arrays.toString(command) + ", exit value: " +
-                        exitValue + ", output: " + output.substring(0, Math.min(1000, output.length())));
-            }
-            return "";
-        }
+        return waitFor(Arrays.toString(command), process);
     }
 
-    private static String readAllOutput(Process process) throws Exception {
-        try {
-            return IOUtils.readAll(process.getInputStream());
-        } catch (Exception e) {
-            Log.e("fqrouter", "failed to read process output", e);
-            return "";
+    public static String findCommand(String command) {
+        for (String binaryPlace : BINARY_PLACES) {
+            String path = binaryPlace + command;
+            if (new File(path).exists()) {
+                return path;
+            }
         }
+        return command;
     }
 
     public static String waitFor(String command, Process process) throws Exception {

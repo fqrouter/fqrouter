@@ -1,6 +1,5 @@
 package fq.router;
 
-import android.os.Build;
 import android.util.Log;
 import fq.router.utils.IOUtils;
 import fq.router.utils.ShellUtils;
@@ -86,33 +85,13 @@ public class Deployer {
             statusUpdater.reportError("failed to make payload executable", e);
             return false;
         }
-        try {
-            if (!testPython()) {
-                return false;
-            }
-        } catch (Exception e) {
-            statusUpdater.reportError("failed to test python", e);
-            return false;
-        }
         statusUpdater.updateStatus("Deployed payload");
         return true;
     }
 
-    private boolean testPython() {
-        try {
-            String output = new Launcher(statusUpdater).executePython(true, "-c \"print('hello')\"").trim();
-            Log.i("fqrouter", "test python output: " + output);
-            return output.contains("hello");
-        } catch (Exception e) {
-            Log.e("fqrouter", "test python failed", e);
-            return false;
-        }
-    }
-
     private boolean isRooted() {
         try {
-            ShellUtils.execute(BUSYBOX_FILE.getCanonicalPath(), "which", "su");
-            return true;
+            return ShellUtils.sudo("echo", "hello").contains("hello");
         } catch (Exception e) {
             return false;
         }

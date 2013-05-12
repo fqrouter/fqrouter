@@ -18,8 +18,6 @@ DPKT_TAR_GZ_FILE = os.path.join(PAYLOAD_DIR, 'dpkt-1.7.tar.gz')
 DPKT_DIR = os.path.join(PAYLOAD_DIR, 'dpkt-1.7')
 DPKT_PACKAGE_DIR = os.path.join(DPKT_DIR, 'dpkt')
 BUSYBOX_FILE = os.path.join(ASSETS_DIR, 'busybox')
-CAPTURE_LOG_SH = os.path.join(ASSETS_DIR, 'capture-log.sh')
-CAPTURE_LOG_SH_SRC = os.path.join(SRC_DIR, 'capture-log.sh')
 PROXY_TOOLS_DIR = os.path.join(PAYLOAD_DIR, 'proxy-tools')
 REDSOCKS_FILE = os.path.join(PROXY_TOOLS_DIR, 'redsocks')
 REDSOCKS_FILE_SRC = os.path.join(ROOT_DIR, 'libs', 'armeabi', 'redsocks')
@@ -57,7 +55,6 @@ def main():
     download_gevent()
     unzip_gevent()
     copy_fqdns()
-    copy_capture_log_sh()
     zip_payload()
 
 
@@ -120,10 +117,6 @@ def download_conntrack():
     if os.path.exists(CONNTRACK_FILE):
         return
     urllib.urlretrieve('http://cdn.fqrouter.com/android-utils/conntrack', CONNTRACK_FILE)
-
-
-def copy_capture_log_sh():
-    subprocess.check_call('cp %s %s' % (CAPTURE_LOG_SH_SRC, CAPTURE_LOG_SH), shell=True)
 
 
 def download_pynetfilter_conntrack():

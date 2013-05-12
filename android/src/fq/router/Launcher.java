@@ -16,7 +16,7 @@ public class Launcher implements Runnable {
         try {
             try {
                 statusUpdater.updateStatus("Launching manager");
-                executePython(false, Deployer.MANAGER_MAIN_PY.getAbsolutePath());
+                executeManager();
             } catch (Exception e) {
                 statusUpdater.appendLog("failed to launch manager");
                 Log.e("fqrouter", "failed to launch manager", e);
@@ -26,8 +26,10 @@ public class Launcher implements Runnable {
         }
     }
 
-    public String executePython(boolean returnsOutput, String command) throws Exception {
-        return ShellUtils.sudo(returnsOutput, "FQROUTER_VERSION=" + statusUpdater.getMyVersion() + " PYTHONHOME=" + Deployer.PYTHON_DIR + " " +
-                Deployer.BUSYBOX_FILE + " sh " + Deployer.PYTHON_LAUNCHER + " " + command);
+    private String executeManager() throws Exception {
+        String runCommand = Deployer.BUSYBOX_FILE + " sh " + Deployer.PYTHON_LAUNCHER + " " +
+                Deployer.MANAGER_MAIN_PY.getAbsolutePath() + " > /data/data/fq.router/current.log 2>&1";
+        return ShellUtils.sudo("FQROUTER_VERSION=" + statusUpdater.getMyVersion() +
+                " PYTHONHOME=" + Deployer.PYTHON_DIR + " " + runCommand);
     }
 }

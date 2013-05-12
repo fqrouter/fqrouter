@@ -62,7 +62,8 @@ RULES = [
 
 
 def clean():
-    stop_hotspot()
+    if get_working_hotspot_iface():
+        stop_hotspot()
 
 
 def handle_start(environ, start_response):

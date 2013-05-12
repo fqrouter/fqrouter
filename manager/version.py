@@ -20,10 +20,10 @@ def resolve_latest_version():
         answer = answers.get(VER_DOMAIN)
         answer = answer[0] if answer else ''
         if not answer:
-            return None
+            return ''
         ver = ''.join(e for e in answer if e.isalnum() or e in {'.', '|', ':', '/', '-', '_'})
         LOGGER.info('resolved latest version %s => %s' % (VER_DOMAIN, ver))
         return ver
     except:
         LOGGER.exception('failed to resolve latest version %s' % VER_DOMAIN)
-        return None
+        return ''
