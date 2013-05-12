@@ -149,7 +149,7 @@ def resolve_appids():
                 appid = ''.join(e for e in appid if e.isalnum())
                 if appid:
                     appids.append(appid)
-            if appids and len(appids) > (len(previously_resolved_results['appids']) / 2):
+            if answers and len(appids) >= (len(previously_resolved_results['appids']) / 2):
                 previously_resolved_results['appids'] = appids
                 return appids
         except:

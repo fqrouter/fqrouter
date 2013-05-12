@@ -9,7 +9,6 @@ PYTHON_PATH = '/data/data/fq.router/python/bin/python'
 GOAGENT_LAUNCHER_PATH = os.path.join(os.path.dirname(__file__), 'goagent_launcher.py')
 
 on_goagent_died = None
-shutting_down = False
 goagent_process = None
 
 
@@ -19,8 +18,6 @@ def start_goagent(appids):
         LOGGER.error('another goagent instance is running')
         return
     LOGGER.info('starting goagent with %s' % appids)
-    global shutting_down
-    shutting_down = False
     goagent_process = subprocess.Popen(
         [PYTHON_PATH, GOAGENT_LAUNCHER_PATH] + appids,
         stderr=subprocess.STDOUT, stdout=subprocess.PIPE)
@@ -42,9 +39,8 @@ def monitor_goagent():
     the_process = goagent_process
     try:
         output, _ = the_process.communicate()
-        LOGGER.info('goagent output: %s' % output)
-        if not shutting_down and the_process.poll():
-            LOGGER.error('goagent output: %s' % output)
+        if the_process.poll():
+            LOGGER.error('goagent output: %s' % output[-200:])
     except:
         LOGGER.exception('goagent died')
     finally:

@@ -2,6 +2,7 @@ import logging
 import subprocess
 import json
 import time
+import thread
 
 import shell
 import iptables
@@ -32,6 +33,16 @@ def run():
         except:
             LOGGER.exception('failed to log fqdns exit output')
         raise Exception('failed to start fqdns')
+    thread.start_new(monitor_fqdns, ())
+
+
+def monitor_fqdns():
+    try:
+        output, _ = fqdns_process.communicate()
+        if fqdns_process.poll():
+            LOGGER.error('fqdns output: %s' % output[-200:])
+    except:
+        LOGGER.exception('fqdns died')
 
 
 def clean():
