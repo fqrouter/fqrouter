@@ -78,5 +78,13 @@ public class HttpUtils {
             this.responseCode = responseCode;
             this.output = output;
         }
+
+        @Override
+        public String toString() {
+            return "Error{" +
+                    "responseCode=" + responseCode +
+                    ", output='" + output + '\'' +
+                    '}';
+        }
     }
 }

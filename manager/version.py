@@ -11,7 +11,7 @@ VER_DOMAIN = 'beta.android.ver.fqrouter.com'
 
 def handle_latest(environ, start_response):
     start_response(httplib.OK, [('Content-Type', 'text/plain')])
-    yield resolve_latest_version()
+    yield str(resolve_latest_version())
 
 
 def resolve_latest_version():
