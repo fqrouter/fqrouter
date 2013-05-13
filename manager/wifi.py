@@ -106,8 +106,16 @@ def stop_hotspot():
             LOGGER.exception('failed to killall hostapd')
         try:
             control_socket_dir = get_wpa_supplicant_control_socket_dir()
+            stop_p2p_persistent_network(control_socket_dir, WIFI_INTERFACE, WIFI_INTERFACE)
             delete_existing_p2p_persistent_networks(WIFI_INTERFACE, control_socket_dir)
             shell.execute('%s -p %s -i %s save_config' % (P2P_CLI_PATH, control_socket_dir, WIFI_INTERFACE))
+        except:
+            LOGGER.exception('failed to delete existing p2p persistent networks')
+        try:
+            control_socket_dir = get_p2p_supplicant_control_socket_dir()
+            stop_p2p_persistent_network(control_socket_dir, 'p2p0', 'p2p0')
+            delete_existing_p2p_persistent_networks('p2p0', control_socket_dir)
+            shell.execute('%s -p %s -i %s save_config' % (P2P_CLI_PATH, control_socket_dir, 'p2p0'))
         except:
             LOGGER.exception('failed to delete existing p2p persistent networks')
         try:

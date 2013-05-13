@@ -180,12 +180,12 @@ public class WifiHotspot {
             if (null != wifiLock) {
                 wifiLock.release();
             }
+            HttpUtils.post("http://127.0.0.1:8318/wifi/stop");
             try {
                 setWifiApEnabled(false);
             } catch (Exception e) {
                 Log.e("fqrouter", "failed to disable wifi ap", e);
             }
-            HttpUtils.post("http://127.0.0.1:8318/wifi/stop");
         } catch (Exception e) {
             statusUpdater.reportError("failed to stop wifi hotspot", e);
         }
