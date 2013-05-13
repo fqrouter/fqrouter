@@ -301,6 +301,10 @@ def handle_time_exceeded(ip_packet):
         LOGGER.info('treat ip as domestic as max ttl is still in china: %s, %s' %
                     (dst_ip, pending_connection.get_detected_routers(dst_ip)))
         add_domestic_ip(dst_ip)
+        MIN_TTL_TO_GFW += 2
+        MAX_TTL_TO_GFW += 2
+        LOGGER.info('slide ttl range to [%s ~ %s]' % (MIN_TTL_TO_GFW, MAX_TTL_TO_GFW))
+        RANGE_OF_TTL_TO_GFW = range(MIN_TTL_TO_GFW, MAX_TTL_TO_GFW + 1)
         return
     else:
         pending_connection.record_router(dst_ip, ttl, is_china_router)
