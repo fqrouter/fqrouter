@@ -65,6 +65,8 @@ def handle_start(environ, start_response):
     ssid = environ['REQUEST_ARGUMENTS']['ssid'].value
     password = environ['REQUEST_ARGUMENTS']['password'].value
     success, message = shell.fqrouter_execute('wifi-start-hotspot', ssid, password)
+    if on_wifi_hotspot_started:
+        on_wifi_hotspot_started()
     status = httplib.OK if success else httplib.BAD_GATEWAY
     start_response(status, [('Content-Type', 'text/plain')])
     yield message
@@ -143,8 +145,6 @@ def start_hotspot(ssid, password):
             setup_networking(hotspot_interface)
             LOGGER.info('=== Started Hotspot ===')
             dump_wifi_status()
-            if on_wifi_hotspot_started:
-                on_wifi_hotspot_started()
             return True, 'hotspot started successfully'
     except:
         LOGGER.exception('failed to start hotspot')
