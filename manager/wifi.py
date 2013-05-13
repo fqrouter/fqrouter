@@ -105,17 +105,17 @@ def stop_hotspot():
         except:
             LOGGER.exception('failed to killall hostapd')
         try:
-            netd_execute('softap fwreload %s STA' % WIFI_INTERFACE)
-            shell.execute('netcfg %s down' % WIFI_INTERFACE)
-            shell.execute('netcfg %s up' % WIFI_INTERFACE)
-        except:
-            LOGGER.exception('failed to reload STA firmware')
-        try:
             control_socket_dir = get_wpa_supplicant_control_socket_dir()
             delete_existing_p2p_persistent_networks(WIFI_INTERFACE, control_socket_dir)
             shell.execute('%s -p %s -i %s save_config' % (P2P_CLI_PATH, control_socket_dir, WIFI_INTERFACE))
         except:
             LOGGER.exception('failed to delete existing p2p persistent networks')
+        try:
+            netd_execute('softap fwreload %s STA' % WIFI_INTERFACE)
+            shell.execute('netcfg %s down' % WIFI_INTERFACE)
+            shell.execute('netcfg %s up' % WIFI_INTERFACE)
+        except:
+            LOGGER.exception('failed to reload STA firmware')
         if working_hotspot_iface:
             try:
                 shell.execute('%s dev %s del' % (IW_PATH, working_hotspot_iface))
