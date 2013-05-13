@@ -107,6 +107,7 @@ def stop_hotspot():
         try:
             control_socket_dir = get_wpa_supplicant_control_socket_dir()
             stop_p2p_persistent_network(control_socket_dir, WIFI_INTERFACE, WIFI_INTERFACE)
+            stop_p2p_persistent_network(control_socket_dir, working_hotspot_iface, working_hotspot_iface)
             delete_existing_p2p_persistent_networks(WIFI_INTERFACE, control_socket_dir)
             shell.execute('%s -p %s -i %s save_config' % (P2P_CLI_PATH, control_socket_dir, WIFI_INTERFACE))
         except:
@@ -481,6 +482,7 @@ def start_hotspot_on_mtk(ssid, password):
     shell.execute('netcfg ap0 up')
     time.sleep(2)
     log_upstream_wifi_status('after loaded ap firmware', control_socket_dir)
+    control_socket_dir = get_wpa_supplicant_control_socket_dir()
     shell.execute('%s -p %s -i ap0 reconfigure' % (P2P_CLI_PATH, control_socket_dir))
     delete_existing_p2p_persistent_networks('ap0', control_socket_dir)
     network_index = start_p2p_persistent_network('ap0', control_socket_dir, ssid, password)
