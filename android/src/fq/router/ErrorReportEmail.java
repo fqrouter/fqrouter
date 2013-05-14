@@ -8,13 +8,13 @@ import fq.router.utils.IOUtils;
 import fq.router.utils.ShellUtils;
 
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.FileOutputStream;
-import java.io.InputStream;
-import java.io.OutputStream;
 import java.util.ArrayList;
 
 public class ErrorReportEmail {
 
+    private final static String LOG_DIR = "/sdcard/fqrouter-log";
     private final StatusUpdater statusUpdater;
 
     public ErrorReportEmail(StatusUpdater statusUpdater) {
@@ -28,43 +28,46 @@ public class ErrorReportEmail {
         i.putExtra(Intent.EXTRA_SUBJECT, "android fqrouter error report for version " + statusUpdater.getMyVersion());
         String error = createLogFiles();
         i.putExtra(Intent.EXTRA_TEXT, getErrorMailBody() + error);
-        attachLogFiles(i, "/sdcard/manager.log", "/sdcard/redsocks.log", "/sdcard/logcat.log",
-                "/sdcard/getprop.log", "/sdcard/dmesg.log", "/sdcard/iptables.log",
-                "/sdcard/twitter.log", "/sdcard/wifi.log", "/sdcard/dns.log", "/sdcard/current.log");
+        attachLogFiles(i, "manager.log", "redsocks.log", "logcat.log",
+                "getprop.log", "dmesg.log", "iptables.log",
+                "twitter.log", "wifi.log", "dns.log", "current.log");
         return i;
     }
 
     private String createLogFiles() {
+        if (!new File(LOG_DIR).exists()) {
+            new File(LOG_DIR).mkdir();
+        }
         String error = "";
         try {
-            ShellUtils.sudo(ShellUtils.findCommand("getprop"), ">", "/sdcard/getprop.log");
+            ShellUtils.sudo(ShellUtils.findCommand("getprop"), ">", LOG_DIR + "/getprop.log");
         } catch (Exception e) {
             Log.e("fqrouter", "failed to execute getprop", e);
             error += "\n" + "failed to execute getprop" + "\n" + e;
         }
         try {
-            ShellUtils.sudo(ShellUtils.findCommand("dmesg"), ">", "/sdcard/dmesg.log");
+            ShellUtils.sudo(ShellUtils.findCommand("dmesg"), ">", LOG_DIR + "/dmesg.log");
         } catch (Exception e) {
             Log.e("fqrouter", "failed to execute dmesg", e);
             error += "\n" + "failed to execute dmesg" + "\n" + e;
         }
         try {
             ShellUtils.sudo(ShellUtils.findCommand("logcat"),
-                    "-d", "-v", "time", "-s", "fqrouter:V", ">", "/sdcard/logcat.log");
+                    "-d", "-v", "time", "-s", "fqrouter:V", ">", LOG_DIR + "/logcat.log");
         } catch (Exception e) {
             Log.e("fqrouter", "failed to execute logcat", e);
             error += "\n" + "failed to execute logcat" + "\n" + e;
         }
         try {
             ShellUtils.sudo(ShellUtils.findCommand("iptables"),
-                    "-L", "-v", "-n", ">", "/sdcard/iptables.log");
+                    "-L", "-v", "-n", ">", LOG_DIR + "/iptables.log");
         } catch (Exception e) {
             Log.e("fqrouter", "failed to execute iptables for filter table", e);
             error += "\n" + "failed to execute iptables for filter table" + "\n" + e;
         }
         try {
             ShellUtils.sudo(ShellUtils.findCommand("iptables"),
-                    "-t", "nat", "-L", "-v", "-n", ">>", "/sdcard/iptables.log");
+                    "-t", "nat", "-L", "-v", "-n", ">>", LOG_DIR + "/iptables.log");
         } catch (Exception e) {
             Log.e("fqrouter", "failed to execute iptables for nat table", e);
             error += "\n" + "failed to execute iptables for nat table" + "\n" + e;
@@ -80,8 +83,17 @@ public class ErrorReportEmail {
 
     private String copyLog(String logFileName) {
         try {
-            ShellUtils.sudo(
-                    "/data/data/fq.router/busybox", "cp", "/data/data/fq.router/" + logFileName, "/sdcard/" + logFileName);
+            FileInputStream inputStream = new FileInputStream("/data/data/fq.router/" + logFileName);
+            try {
+                FileOutputStream outputStream = new FileOutputStream(LOG_DIR + "/" + logFileName);
+                try {
+                    IOUtils.copy(inputStream, outputStream);
+                } finally {
+                    outputStream.close();
+                }
+            } finally {
+                inputStream.close();
+            }
         } catch (Exception e) {
             Log.e("fqrouter", "failed to copy " + logFileName, e);
             return "\n" + "failed to copy " + logFileName + "\n" + e;
@@ -89,10 +101,10 @@ public class ErrorReportEmail {
         return "";
     }
 
-    private void attachLogFiles(Intent i, String... logFilePaths) {
+    private void attachLogFiles(Intent i, String... logFileNames) {
         ArrayList<Uri> logFiles = new ArrayList<Uri>();
-        for (String logFilePath : logFilePaths) {
-            File logFile = new File(logFilePath);
+        for (String logFileName : logFileNames) {
+            File logFile = new File(LOG_DIR + "/" + logFileName);
             if (logFile.exists()) {
                 logFiles.add(Uri.fromFile(logFile));
             }
