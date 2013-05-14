@@ -1,7 +1,7 @@
 package fq.router;
 
-import android.util.Log;
 import fq.router.utils.HttpUtils;
+import fq.router.utils.LogUtils;
 
 public class Supervisor implements Runnable {
 
@@ -27,14 +27,14 @@ public class Supervisor implements Runnable {
             if ("PONG".equals(content)) {
                 return true;
             } else {
-                Log.e("fqrouter", "ping failed: " + content);
+                LogUtils.e("ping failed: " + content);
                 return false;
             }
         } catch (HttpUtils.Error e) {
-            Log.e("fqrouter", "ping failed: [" + e.responseCode + "] " + e.output);
+            LogUtils.e("ping failed: [" + e.responseCode + "] " + e.output);
             return false;
         } catch (Exception e) {
-            Log.e("fqrouter", "ping failed");
+            LogUtils.e("ping failed");
             return false;
         }
     }
@@ -48,7 +48,7 @@ public class Supervisor implements Runnable {
                 statusUpdater.appendLog("try to kill manager process before launch");
                 ManagerProcess.kill();
             } catch (Exception e) {
-                Log.e("fqrouter", "failed to kill manager process before launch", e);
+                LogUtils.e("failed to kill manager process before launch", e);
                 statusUpdater.appendLog("failed to kill manager process before launch");
             }
             if (!deployer.deploy()) {
@@ -102,7 +102,7 @@ public class Supervisor implements Runnable {
             return true;
         } catch (Exception e) {
             statusUpdater.appendLog("check updates failed");
-            Log.e("fqrouter", "check updates failed", e);
+            LogUtils.e("check updates failed", e);
             return false;
         }
     }

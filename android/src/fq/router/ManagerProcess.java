@@ -1,6 +1,6 @@
 package fq.router;
 
-import android.util.Log;
+import fq.router.utils.LogUtils;
 import fq.router.utils.ShellUtils;
 
 public class ManagerProcess {
@@ -14,20 +14,20 @@ public class ManagerProcess {
 
     private static boolean kill(String executable) throws Exception {
         if (!exists(executable)) {
-            Log.i("fqrouter", "no " + executable + " process to kill");
+            LogUtils.i("no " + executable + " process to kill");
             return true;
         }
-        Log.i("fqrouter", "killall " + executable);
+        LogUtils.i("killall " + executable);
         ShellUtils.sudo("/data/data/fq.router/busybox killall " + executable);
         for (int i = 0; i < 6; i++) {
             if (exists()) {
                 Thread.sleep(5000);
             } else {
-                Log.i("fqrouter", "killall " + executable + " done cleanly");
+                LogUtils.i("killall " + executable + " done cleanly");
                 return true;
             }
         }
-        Log.e("fqrouter", "killall " + executable + " by force");
+        LogUtils.e("killall " + executable + " by force");
         ShellUtils.sudo("/data/data/fq.router/busybox killall -KILL " + executable);
         return false;
     }

@@ -11,13 +11,13 @@ import android.os.Handler;
 import android.preference.PreferenceManager;
 import android.support.v4.app.NotificationCompat;
 import android.text.method.ScrollingMovementMethod;
-import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 import android.widget.TextView;
 import android.widget.Toast;
 import android.widget.ToggleButton;
+import fq.router.utils.LogUtils;
 
 import java.io.File;
 import java.lang.reflect.Method;
@@ -77,7 +77,7 @@ public class MainActivity extends Activity implements StatusUpdater {
                         updateStatus("Kill existing manager process");
                         ManagerProcess.kill();
                     } catch (Exception e) {
-                        Log.e("fqrouter", "failed to kill manager process before relaunch", e);
+                        LogUtils.e("failed to kill manager process before relaunch", e);
                         appendLog("failed to kill manager process before relaunch");
                     }
                     new Thread(new Launcher(MainActivity.this)).start();
@@ -248,7 +248,7 @@ public class MainActivity extends Activity implements StatusUpdater {
         try {
             EXITING_FLAG.createNewFile();
         } catch (Exception e) {
-            Log.e("fqrouter", "failed to create .exit flag", e);
+            LogUtils.e("failed to create .exit flag", e);
         }
         EXITING_FLAG.setLastModified(System.currentTimeMillis());
         new Thread(new Runnable() {
@@ -262,7 +262,7 @@ public class MainActivity extends Activity implements StatusUpdater {
                 try {
                     ManagerProcess.kill();
                 } catch (Exception e) {
-                    Log.e("fqrouter", "failed to kill manager process", e);
+                    LogUtils.e("failed to kill manager process", e);
                 }
                 EXITING_FLAG.delete();
                 handler.postDelayed(new Runnable() {
@@ -324,14 +324,14 @@ public class MainActivity extends Activity implements StatusUpdater {
                 try {
                     showNotification(status, hasIntent);
                 } catch (Exception e) {
-                    Log.e("fqrouter", "failed to show notification", e);
+                    LogUtils.e("failed to show notification", e);
                 }
             }
         }, 0);
     }
 
     public void appendLog(final String log) {
-        Log.i("fqrouter", log);
+        LogUtils.i(log);
         handler.postDelayed(new Runnable() {
             @Override
             public void run() {
@@ -356,9 +356,9 @@ public class MainActivity extends Activity implements StatusUpdater {
     @Override
     public void reportError(final String msg, Exception e) {
         if (null == e) {
-            Log.e("fqrouter", msg);
+            LogUtils.e(msg);
         } else {
-            Log.e("fqrouter", msg, e);
+            LogUtils.e(msg, e);
         }
         updateStatus("Error: " + msg);
     }
@@ -368,7 +368,7 @@ public class MainActivity extends Activity implements StatusUpdater {
             PackageInfo packageInfo = getPackageManager().getPackageInfo(getPackageName(), 0);
             return packageInfo.versionName;
         } catch (Exception e) {
-            Log.e("fqrouter", "failed to get package info", e);
+            LogUtils.e("failed to get package info", e);
             return "Unknown";
         }
     }

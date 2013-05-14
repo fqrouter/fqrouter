@@ -4,7 +4,6 @@ import android.app.ListActivity;
 import android.content.Context;
 import android.net.wifi.WifiManager;
 import android.os.Bundle;
-import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
@@ -13,6 +12,7 @@ import android.widget.ListView;
 import android.widget.TextView;
 import fq.router.utils.HttpUtils;
 import fq.router.utils.IOUtils;
+import fq.router.utils.LogUtils;
 
 import java.lang.reflect.Method;
 import java.net.URLEncoder;
@@ -53,17 +53,17 @@ public class PickAndPlayActivity extends ListActivity {
                                 if (4 == parts.length) {
                                     onNewDeviceDiscovered(parts[0], parts[1], parts[2], "TRUE".equals(parts[3]));
                                 } else {
-                                    Log.e("fqrouter", "unexpected line[" + parts.length + "]: " + line);
+                                    LogUtils.e("unexpected line[" + parts.length + "]: " + line);
                                 }
                             } catch (Exception e) {
-                                Log.e("fqrouter", "failed to read line", e);
+                                LogUtils.e("failed to read line", e);
                             }
                         }
                     }, 0);
                     updateStatus("scan completed!");
                 } catch (Exception e) {
                     updateStatus("scan failed");
-                    Log.e("fqrouter", "failed to scan lan", e);
+                    LogUtils.e("failed to scan lan", e);
                 }
             }
         }).start();
@@ -106,7 +106,7 @@ public class PickAndPlayActivity extends ListActivity {
                     HttpUtils.post("http://127.0.0.1:8318/lan/clear-scan-results");
                     scan();
                 } catch (Exception e) {
-                    Log.e("fqrouter", "failed to rescan", e);
+                    LogUtils.e("failed to rescan", e);
                 }
             }
         }).start();
@@ -168,7 +168,7 @@ public class PickAndPlayActivity extends ListActivity {
                         updateStatus("unpicked " + ip + ", network went back to normal");
                     }
                 } catch (Exception e) {
-                    Log.e("fqrouter", "failed to handle item click: " + ip, e);
+                    LogUtils.e("failed to handle item click: " + ip, e);
                 }
             }
         }).start();

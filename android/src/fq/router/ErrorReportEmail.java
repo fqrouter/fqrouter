@@ -3,8 +3,8 @@ package fq.router;
 import android.content.Intent;
 import android.net.Uri;
 import android.os.Build;
-import android.util.Log;
 import fq.router.utils.IOUtils;
+import fq.router.utils.LogUtils;
 import fq.router.utils.ShellUtils;
 
 import java.io.File;
@@ -30,7 +30,7 @@ public class ErrorReportEmail {
         i.putExtra(Intent.EXTRA_TEXT, getErrorMailBody() + error);
         attachLogFiles(i, "manager.log", "redsocks.log", "logcat.log",
                 "getprop.log", "dmesg.log", "iptables.log",
-                "twitter.log", "wifi.log", "dns.log", "current.log");
+                "twitter.log", "wifi.log", "dns.log", "current-java.log", "current-python.log");
         return i;
     }
 
@@ -42,34 +42,34 @@ public class ErrorReportEmail {
         try {
             ShellUtils.sudo(ShellUtils.findCommand("getprop"), ">", LOG_DIR + "/getprop.log");
         } catch (Exception e) {
-            Log.e("fqrouter", "failed to execute getprop", e);
+            LogUtils.e("failed to execute getprop", e);
             error += "\n" + "failed to execute getprop" + "\n" + e;
         }
         try {
             ShellUtils.sudo(ShellUtils.findCommand("dmesg"), ">", LOG_DIR + "/dmesg.log");
         } catch (Exception e) {
-            Log.e("fqrouter", "failed to execute dmesg", e);
+            LogUtils.e("failed to execute dmesg", e);
             error += "\n" + "failed to execute dmesg" + "\n" + e;
         }
         try {
             ShellUtils.sudo(ShellUtils.findCommand("logcat"),
                     "-d", "-v", "time", "-s", "fqrouter:V", ">", LOG_DIR + "/logcat.log");
         } catch (Exception e) {
-            Log.e("fqrouter", "failed to execute logcat", e);
+            LogUtils.e("failed to execute logcat", e);
             error += "\n" + "failed to execute logcat" + "\n" + e;
         }
         try {
             ShellUtils.sudo(ShellUtils.findCommand("iptables"),
                     "-L", "-v", "-n", ">", LOG_DIR + "/iptables.log");
         } catch (Exception e) {
-            Log.e("fqrouter", "failed to execute iptables for filter table", e);
+            LogUtils.e("failed to execute iptables for filter table", e);
             error += "\n" + "failed to execute iptables for filter table" + "\n" + e;
         }
         try {
             ShellUtils.sudo(ShellUtils.findCommand("iptables"),
                     "-t", "nat", "-L", "-v", "-n", ">>", LOG_DIR + "/iptables.log");
         } catch (Exception e) {
-            Log.e("fqrouter", "failed to execute iptables for nat table", e);
+            LogUtils.e("failed to execute iptables for nat table", e);
             error += "\n" + "failed to execute iptables for nat table" + "\n" + e;
         }
         error += copyLog("manager.log");
@@ -77,7 +77,8 @@ public class ErrorReportEmail {
         error += copyLog("twitter.log");
         error += copyLog("wifi.log");
         error += copyLog("dns.log");
-        error += copyLog("current.log");
+        error += copyLog("current-java.log");
+        error += copyLog("current-python.log");
         return error;
     }
 
@@ -95,7 +96,7 @@ public class ErrorReportEmail {
                 inputStream.close();
             }
         } catch (Exception e) {
-            Log.e("fqrouter", "failed to copy " + logFileName, e);
+            LogUtils.e("failed to copy " + logFileName, e);
             return "\n" + "failed to copy " + logFileName + "\n" + e;
         }
         return "";
@@ -112,7 +113,7 @@ public class ErrorReportEmail {
         try {
             i.putParcelableArrayListExtra(Intent.EXTRA_STREAM, logFiles);
         } catch (Exception e) {
-            Log.e("fqrouter", "failed to attach log", e);
+            LogUtils.e("failed to attach log", e);
         }
     }
 

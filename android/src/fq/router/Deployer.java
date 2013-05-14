@@ -1,7 +1,7 @@
 package fq.router;
 
-import android.util.Log;
 import fq.router.utils.IOUtils;
+import fq.router.utils.LogUtils;
 import fq.router.utils.ShellUtils;
 
 import java.io.File;
@@ -55,7 +55,7 @@ public class Deployer {
                 try {
                     ManagerProcess.kill();
                 } catch (Exception e) {
-                    Log.e("fqrouter", "failed to kill manager before redeploy", e);
+                    LogUtils.e("failed to kill manager before redeploy", e);
                     statusUpdater.appendLog("failed to kill manager before redeploy");
                     // ignore and continue
                 }
@@ -140,7 +140,7 @@ public class Deployer {
             ShellUtils.execute("/data/data/fq.router/busybox", "rm", "-rf", path);
         }
         if (new File(path).exists()) {
-            Log.e("fqrouter", "failed to delete " + path);
+            LogUtils.e("failed to delete " + path);
         }
     }
 
@@ -260,7 +260,7 @@ public class Deployer {
             }
             ShellUtils.sudo(BUSYBOX_FILE.getAbsolutePath(), "ln", "-s", linkTo, libDir.getPath());
         } catch (Exception e) {
-            Log.e("fqrouter", "failed to link libs");
+            LogUtils.e("failed to link libs");
         }
     }
 }

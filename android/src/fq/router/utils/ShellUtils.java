@@ -1,7 +1,5 @@
 package fq.router.utils;
 
-import android.util.Log;
-
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.InputStreamReader;
@@ -24,7 +22,7 @@ public class ShellUtils {
 
 
     public static String sudo(String... command) throws Exception {
-        Log.d("fqrouter", "sudo: " + Arrays.toString(command));
+        LogUtils.i("sudo: " + Arrays.toString(command));
         Process process = new ProcessBuilder()
                 .command(findCommand("su"))
                 .redirectErrorStream(true)

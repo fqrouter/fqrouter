@@ -7,8 +7,8 @@ import android.net.wifi.WifiConfiguration;
 import android.net.wifi.WifiManager;
 import android.os.Build;
 import android.preference.PreferenceManager;
-import android.util.Log;
 import fq.router.utils.HttpUtils;
+import fq.router.utils.LogUtils;
 
 import java.lang.reflect.Method;
 import java.net.URLEncoder;
@@ -28,7 +28,7 @@ public class WifiHotspot {
         try {
             return "TRUE".equals(HttpUtils.get("http://127.0.0.1:8318/wifi/started"));
         } catch (Exception e) {
-            Log.e("fqrouter", "failed to check wifi hotspot is started", e);
+            LogUtils.e("failed to check wifi hotspot is started", e);
             return false;
         }
     }
@@ -128,7 +128,7 @@ public class WifiHotspot {
                 (ip >> 8 & 0xff),
                 (ip >> 16 & 0xff),
                 (ip >> 24 & 0xff));
-        Log.i("fqrouter", "wifi ip: " + ip);
+        LogUtils.i("wifi ip: " + ip);
         return ipText;
     }
 
@@ -184,7 +184,7 @@ public class WifiHotspot {
             try {
                 setWifiApEnabled(false);
             } catch (Exception e) {
-                Log.e("fqrouter", "failed to disable wifi ap", e);
+                LogUtils.e("failed to disable wifi ap", e);
             }
         } catch (Exception e) {
             statusUpdater.reportError("failed to stop wifi hotspot", e);

@@ -1,7 +1,5 @@
 package fq.router.utils;
 
-import android.util.Log;
-
 import java.io.DataOutputStream;
 import java.net.HttpURLConnection;
 import java.net.URL;
@@ -12,7 +10,7 @@ public class HttpUtils {
     }
 
     public static String post(String request, String body) throws Exception {
-        Log.i("fqrouter", "HTTP POST " + request + ", body: " + body);
+        LogUtils.i("HTTP POST " + request + ", body: " + body);
         URL url = new URL(request);
         HttpURLConnection connection = (HttpURLConnection) url.openConnection();
         try {
