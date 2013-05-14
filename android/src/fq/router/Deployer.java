@@ -38,11 +38,6 @@ public class Deployer {
             statusUpdater.reportError("failed to copy busybox", e);
             return false;
         }
-        if (!isRooted()) {
-            statusUpdater.reportError("[ROOT] is required", null);
-            statusUpdater.appendLog("What is [ROOT]: http://en.wikipedia.org/wiki/Android_rooting");
-            return false;
-        }
         boolean foundPayloadUpdate;
         try {
             foundPayloadUpdate = shouldDeployPayload();
@@ -90,7 +85,7 @@ public class Deployer {
         return true;
     }
 
-    private boolean isRooted() {
+    public boolean isRooted() {
         try {
             return ShellUtils.sudo("echo", "hello").contains("hello");
         } catch (Exception e) {

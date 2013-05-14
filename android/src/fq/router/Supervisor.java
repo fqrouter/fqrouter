@@ -52,7 +52,12 @@ public class Supervisor implements Runnable {
                 statusUpdater.appendLog("failed to kill manager process before launch");
             }
             if (!deployer.deploy()) {
-                statusUpdater.reportError("failed to deploy", null);
+                if (deployer.isRooted()) {
+                    statusUpdater.reportError("failed to deploy", null);
+                } else {
+                    statusUpdater.reportError("[ROOT] is required", null);
+                    statusUpdater.appendLog("What is [ROOT]: http://en.wikipedia.org/wiki/Android_rooting");
+                }
                 return;
             }
             boolean shouldWait = launchManager();
