@@ -118,7 +118,6 @@ def clean():
     tcp_service.clean()
     full_proxy_service.clean()
     lan_service.clean()
-    wifi.clean()
 
 
 if '__main__' == __name__:

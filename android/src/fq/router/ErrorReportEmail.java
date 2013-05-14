@@ -72,6 +72,18 @@ public class ErrorReportEmail {
             LogUtils.e("failed to execute iptables for nat table", e);
             error += "\n" + "failed to execute iptables for nat table" + "\n" + e;
         }
+        try {
+            ShellUtils.sudo("/data/data/fq.router/busybox", "chmod", "0666", "/data/data/fq.router/*.log");
+        } catch (Exception e) {
+            LogUtils.e("failed to change log file permission", e);
+            error += "\n" + "failed to change log file permission using busybox chmod" + "\n" + e;
+            try {
+                ShellUtils.sudo(ShellUtils.findCommand("chmod"), "0666", "/data/data/fq.router/*.log");
+            } catch (Exception e2) {
+                LogUtils.e("failed to change log file permission", e2);
+                error += "\n" + "failed to change log file permission using system chmod" + "\n" + e2;
+            }
+        }
         error += copyLog("manager.log");
         error += copyLog("redsocks.log");
         error += copyLog("twitter.log");
