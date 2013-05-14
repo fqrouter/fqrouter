@@ -75,6 +75,7 @@ public class Deployer {
         }
         try {
             unzipPayloadZip();
+            linkLibs();
         } catch (Exception e) {
             statusUpdater.reportError("failed to unzip payload.zip", e);
             return false;
@@ -244,6 +245,22 @@ public class Deployer {
             statusUpdater.appendLog("successfully made " + file.getName() + " executable");
         } else {
             statusUpdater.appendLog("failed to make " + file.getName() + " executable");
+        }
+    }
+
+    private void linkLibs() throws Exception {
+        File libDir = new File("/data/data/fq.router/lib");
+        String linkTo = "/data/data/fq.router/python/lib";
+        if (libDir.exists() && libDir.getCanonicalPath().equals(linkTo)) {
+            return;
+        }
+        try {
+            if (libDir.exists()) {
+                ShellUtils.sudo(BUSYBOX_FILE.getAbsolutePath(), "rm", "-r", "-f", libDir.getPath());
+            }
+            ShellUtils.sudo(BUSYBOX_FILE.getAbsolutePath(), "ln", "-s", linkTo, libDir.getPath());
+        } catch (Exception e) {
+            Log.e("fqrouter", "failed to link libs");
         }
     }
 }
