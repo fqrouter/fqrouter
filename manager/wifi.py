@@ -592,6 +592,7 @@ def log_upstream_wifi_status(log, control_socket_dir):
 
 
 def start_p2p_persistent_network(iface, control_socket_dir, ssid, password):
+    wpa_supplicant_control_socket_dir = get_wpa_supplicant_control_socket_dir()
     try:
         shell.execute('%s -p %s -i %s p2p_set disabled 0' % (P2P_CLI_PATH, control_socket_dir, iface))
     except:
@@ -600,18 +601,10 @@ def start_p2p_persistent_network(iface, control_socket_dir, ssid, password):
         shell.execute('%s -p %s -i %s p2p_set disabled 0' % (P2P_CLI_PATH, control_socket_dir, WIFI_INTERFACE))
     except:
         LOGGER.exception('failed to p2p_set disabled')
-    try:
-        shell.execute(
-            '%s -p %s -i %s set driver_param use_p2p_group_interface=1' %
-            (P2P_CLI_PATH, control_socket_dir, iface))
-    except:
-        LOGGER.exception('failed to set driver_param use_p2p_group_interface=1')
-    try:
-        shell.execute(
-            '%s -p %s -i %s set driver_param use_p2p_group_interface=1' %
-            (P2P_CLI_PATH, control_socket_dir, WIFI_INTERFACE))
-    except:
-        LOGGER.exception('failed to set driver_param use_p2p_group_interface=1')
+    set_driver_param(control_socket_dir, iface, 'use_p2p_group_interface=1')
+    set_driver_param(wpa_supplicant_control_socket_dir, WIFI_INTERFACE, 'use_p2p_group_interface=1')
+    set_driver_param(control_socket_dir, iface, 'use_multi_chan_concurrent=0')
+    set_driver_param(wpa_supplicant_control_socket_dir, WIFI_INTERFACE, 'use_multi_chan_concurrent=0')
     index = shell.execute('%s -p %s -i %s add_network' % (P2P_CLI_PATH, control_socket_dir, iface)).strip()
 
     def set_network(param):
@@ -629,7 +622,7 @@ def start_p2p_persistent_network(iface, control_socket_dir, ssid, password):
         channel = channel
         reg_class = 81
         reset_p2p_channels(iface, control_socket_dir, channel, reg_class)
-        reset_p2p_channels(WIFI_INTERFACE, get_wpa_supplicant_control_socket_dir(), channel, reg_class)
+        reset_p2p_channels(WIFI_INTERFACE, wpa_supplicant_control_socket_dir, channel, reg_class)
     if frequency:
         shell.execute('%s -p %s -i %s p2p_group_add persistent=%s freq=%s ' %
                       (P2P_CLI_PATH, control_socket_dir, iface, index, frequency.replace('.', '')))
@@ -637,6 +630,15 @@ def start_p2p_persistent_network(iface, control_socket_dir, ssid, password):
         shell.execute('%s -p %s -i %s p2p_group_add persistent=%s' % (P2P_CLI_PATH, control_socket_dir, iface, index))
     time.sleep(2)
     return index
+
+
+def set_driver_param(control_socket_dir, iface, param):
+    try:
+        shell.execute(
+            '%s -p %s -i %s set driver_param %s' %
+            (P2P_CLI_PATH, control_socket_dir, iface, param))
+    except:
+        LOGGER.exception('failed to set driver_param %s' % param)
 
 
 def reset_p2p_channels(iface, control_socket_dir, channel, reg_class):
