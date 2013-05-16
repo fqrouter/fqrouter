@@ -7,7 +7,7 @@ import os
 import argparse
 
 sys.path.append(os.path.join(os.path.dirname(__file__), '..'))
-import manager.china_ip
+import fqsocks.china_ip
 
 argument_parser = argparse.ArgumentParser()
 argument_parser.add_argument('--proxy-list', action='append')
@@ -53,7 +53,7 @@ def add_proxy(line):
         return
     try:
         ip, port = line.split(':')
-        if manager.china_ip.is_china_ip(ip):
+        if fqsocks.china_ip.is_china_ip(ip):
             log('skip china ip: %s' % ip)
         elif ip in black_list:
             log('skip blacklisted ip: %s' % ip)

@@ -27,10 +27,8 @@ import version
 import cgi
 import wsgiref.simple_server
 import dns_service
-import tcp_service
-import full_proxy_service
+import socks_service
 import shutdown_hook
-import twitter
 
 
 def handle_ping(environ, start_response):
@@ -97,8 +95,7 @@ def run():
     LOGGER.info('environment: %s' % os.environ.items())
     wifi.setup_lo_alias()
     dns_service.run()
-    tcp_service.run()
-    full_proxy_service.run()
+    socks_service.run()
     lan_service.run()
     LOGGER.info('services started')
     try:
@@ -115,8 +112,7 @@ def clean():
     setup_logging(LOG_FILE)
     LOGGER.info('clean...')
     dns_service.clean()
-    tcp_service.clean()
-    full_proxy_service.clean()
+    socks_service.clean()
     lan_service.clean()
 
 
@@ -130,9 +126,6 @@ if '__main__' == __name__:
         elif 'wifi-stop-hotspot' == action:
             setup_logging(os.path.join(LOG_DIR, 'wifi.log'), maxBytes=1024 * 512)
             sys.stderr.write(repr(wifi.stop_hotspot()))
-        elif 'twitter-check' == action:
-            setup_logging(os.path.join(LOG_DIR, 'twitter.log'), maxBytes=1024 * 64)
-            sys.stderr.write(repr(twitter.check()))
         elif 'clean' == action:
             clean()
     else:
