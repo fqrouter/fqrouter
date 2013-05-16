@@ -28,9 +28,8 @@ public class ErrorReportEmail {
         i.putExtra(Intent.EXTRA_SUBJECT, "android fqrouter error report for version " + statusUpdater.getMyVersion());
         String error = createLogFiles();
         i.putExtra(Intent.EXTRA_TEXT, getErrorMailBody() + error);
-        attachLogFiles(i, "manager.log", "redsocks.log", "logcat.log",
-                "getprop.log", "dmesg.log", "iptables.log",
-                "twitter.log", "wifi.log", "dns.log", "current-java.log", "current-python.log");
+        attachLogFiles(i, "manager.log", "socks.log", "logcat.log", "getprop.log", "dmesg.log", "iptables.log",
+                "wifi.log", "dns.log", "current-java.log", "current-python.log");
         return i;
     }
 

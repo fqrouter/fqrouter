@@ -89,6 +89,8 @@ def handle_request(environ, start_response):
 def get_http_response(code):
     return '%s %s' % (code, httplib.responses[code])
 
+# TODO: make it optional
+# TODO: delete all matching iptables rules
 
 def run():
     setup_logging(LOG_FILE)

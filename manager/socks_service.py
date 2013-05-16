@@ -57,10 +57,10 @@ RULES = [
         {'target': 'ACCEPT', 'destination': '127.0.0.1'},
         ('nat', 'OUTPUT', '-p tcp -d 127.0.0.1 -j ACCEPT')
     ), (
-        {'target': 'DNAT', 'extra': 'tcp to:10.1.2.3:8319'},
+        {'target': 'DNAT', 'extra': 'to:10.1.2.3:8319'},
         ('nat', 'OUTPUT', '-p tcp ! -s 10.1.2.3 -j DNAT --to-destination 10.1.2.3:8319')
     ), (
-        {'target': 'DNAT', 'extra': 'tcp to:10.1.2.3:8319'},
+        {'target': 'DNAT', 'extra': 'to:10.1.2.3:8319'},
         ('nat', 'PREROUTING', '-p tcp ! -s 10.1.2.3 -j DNAT --to-destination 10.1.2.3:8319')
     )]
 
