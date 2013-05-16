@@ -7,12 +7,11 @@ import traceback
 
 import dpkt
 import iptables
-import pending_connection
 import shutdown_hook
-import china_ip
 import dns_service
-import full_proxy_service
 import lan_ip
+import fqsocks.china_ip
+import pending_connection
 
 
 LOGGER = logging.getLogger('fqrouter.%s' % __name__)
@@ -193,13 +192,6 @@ def handle_syn(syn):
     if dst not in pending_syn and dst not in domestic_zone and dst not in international_zone \
         and not pending_connection.is_ip_pending(dst):
         pending_syn[dst] = time.time()
-    for ip, sent_at in pending_syn.items():
-        elapsed_seconds = time.time() - sent_at
-        if elapsed_seconds > 2:
-            log_jamming_event(ip, 'syn packet drop')
-            del pending_syn[ip]
-            full_proxy_service.add_to_black_list(ip, syn=syn)
-            return False
     return True
 
 
@@ -217,7 +209,6 @@ def handle_psh_ack(psh_ack):
 
 def handle_syn_ack(syn_ack):
     uncertain_ip = socket.inet_ntoa(syn_ack.src)
-    full_proxy_service.add_to_white_list(uncertain_ip)
     if uncertain_ip in pending_syn:
         del pending_syn[uncertain_ip]
     expected_ttl = syn_ack_ttl.get((uncertain_ip, syn_ack.tcp.sport)) or 0
@@ -243,7 +234,7 @@ def handle_syn_ack(syn_ack):
                         (international_ip, ttl_to_gfw, pending_connection.get_detected_routers(international_ip)))
             add_international_ip(international_ip, (ttl_to_gfw or DEFAULT_TTL_TO_GFW) - SAFETY_DELTA)
         return False
-    elif china_ip.is_china_ip(uncertain_ip):
+    elif fqsocks.china_ip.is_china_ip(uncertain_ip):
         domestic_ip = uncertain_ip
         LOGGER.info('found domestic ip: %s' % domestic_ip)
         domestic_zone.add(domestic_ip)
@@ -296,7 +287,7 @@ def handle_time_exceeded(ip_packet):
     ttl = te_icmp_echo.id
     dst_ip = socket.inet_ntoa(te_ip_packet.dst)
     router_ip = socket.inet_ntoa(ip_packet.src)
-    is_china_router = china_ip.is_china_ip(router_ip)
+    is_china_router = fqsocks.china_ip.is_china_ip(router_ip)
     if is_china_router and MAX_TTL_TO_GFW == ttl:
         LOGGER.info('treat ip as domestic as max ttl is still in china: %s, %s' %
                     (dst_ip, pending_connection.get_detected_routers(dst_ip)))

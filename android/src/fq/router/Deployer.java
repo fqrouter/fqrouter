@@ -21,7 +21,6 @@ public class Deployer {
     public static File PROXY_TOOLS_DIR = new File(DATA_DIR, "proxy-tools");
     public static File MANAGER_DIR = new File(DATA_DIR, "manager");
     public static File MANAGER_MAIN_PY = new File(MANAGER_DIR, "main.py");
-    public static File MANAGER_CLEAN_PY = new File(MANAGER_DIR, "clean.py");
     private final StatusUpdater statusUpdater;
 
     public Deployer(StatusUpdater statusUpdater) {

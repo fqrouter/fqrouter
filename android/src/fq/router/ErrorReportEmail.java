@@ -85,8 +85,7 @@ public class ErrorReportEmail {
             }
         }
         error += copyLog("manager.log");
-        error += copyLog("redsocks.log");
-        error += copyLog("twitter.log");
+        error += copyLog("socks.log");
         error += copyLog("wifi.log");
         error += copyLog("dns.log");
         error += copyLog("current-java.log");
