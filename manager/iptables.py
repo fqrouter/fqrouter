@@ -25,10 +25,12 @@ def delete_rules(rules):
     for signature, rule_args in rules:
         try:
             table, chain, _ = rule_args
-            if contains_rule(table, chain, signature):
-                delete_rule(*rule_args)
-            else:
-                LOGGER.info('skip delete rule: -t %s -D %s %s' % rule_args)
+            for i in range(16):
+                if contains_rule(table, chain, signature):
+                    delete_rule(*rule_args)
+                else:
+                    LOGGER.info('skip delete rule: -t %s -D %s %s' % rule_args)
+                    break
         except:
             LOGGER.exception('failed to delete rule: -t %s -D %s %s' % rule_args)
 

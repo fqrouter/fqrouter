@@ -97,7 +97,7 @@ def run():
     LOGGER.info('environment: %s' % os.environ.items())
     wifi.setup_lo_alias()
     dns_service.run()
-    tcp_service.run()
+    # tcp_service.run()
     socks_service.run()
     lan_service.run()
     LOGGER.info('services started')
@@ -115,7 +115,7 @@ def clean():
     setup_logging(LOG_FILE)
     LOGGER.info('clean...')
     dns_service.clean()
-    tcp_service.clean()
+    # tcp_service.clean()
     socks_service.clean()
     lan_service.clean()
 
