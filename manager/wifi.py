@@ -482,6 +482,8 @@ def start_hotspot_on_mtk(ssid, password):
     shell.execute('netcfg ap0 up')
     time.sleep(2)
     log_upstream_wifi_status('after loaded ap firmware', control_socket_dir)
+    if 'ap0' == get_working_hotspot_iface_using_nl80211():
+        return
     control_socket_dir = get_wpa_supplicant_control_socket_dir()
     shell.execute('%s -p %s -i ap0 reconfigure' % (P2P_CLI_PATH, control_socket_dir))
     delete_existing_p2p_persistent_networks('ap0', control_socket_dir)
