@@ -6,9 +6,10 @@ import socket
 import httplib
 import threading
 import binascii
+import shutdown_hook
+import os
 
 import dpkt
-from pynetfilter_conntrack.IPy import IP
 
 import wifi
 import shell
@@ -18,16 +19,25 @@ RE_IP_RANGE = re.compile(r'(\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}/\d+)')
 CONCURRENT_CHECKERS_COUNT = 20
 
 LOGGER = logging.getLogger('fqrouter.%s' % __name__)
-
-scan_results = []
+RECENT_IPS_PATH = '/data/data/fq.router/recent-ips.txt'
+scan_results = {}
+recent_ips = []
 picked_devices = {}
 previous_default_gateway = ''
 
 
 def run():
-    thread = threading.Thread(target=start_lan_service)
-    thread.daemon = True
-    thread.start()
+    try:
+        shutdown_hook.add(clean)
+        if os.path.exists(RECENT_IPS_PATH):
+            with open(RECENT_IPS_PATH) as f:
+                recent_ips.extend(f.read().splitlines())
+                LOGGER.info('found recent ips: %s' % recent_ips)
+        thread = threading.Thread(target=start_lan_service)
+        thread.daemon = True
+        thread.start()
+    except:
+        LOGGER.exception('failed to start lan service')
 
 
 def start_lan_service():
@@ -53,9 +63,9 @@ def send_for_ten_minutes():
                 my_ip, my_mac = wifi.get_ip_and_mac(wifi.WIFI_INTERFACE)
                 default_gateway_ip = get_default_gateway(wifi.WIFI_INTERFACE)
                 default_gateway_mac = arping(default_gateway_ip)
-                for i in range(60):
+                for i in range(120):
                     send_forged_default_gateway(s, my_mac, default_gateway_ip, default_gateway_mac)
-                    time.sleep(10)
+                    time.sleep(5)
             finally:
                 s.close()
             return True
@@ -101,7 +111,9 @@ def eth_aton(buffer):
 
 
 def clean():
-    pass
+    if recent_ips:
+        with open(RECENT_IPS_PATH, 'w') as f:
+            f.write('\n'.join(recent_ips))
 
 
 def handle_forge_default_gateway(environ, start_response):
@@ -124,8 +136,8 @@ def handle_scan(environ, start_response):
     if scan_results:
         LOGGER.info('return cached scan results')
         start_response(httplib.OK, [('Content-Type', 'text/plain')])
-        for line in scan_results:
-            ip, mac, host_name = line
+        for ip in sorted(scan_results.keys()):
+            mac, host_name = scan_results[ip]
             yield '%s,%s,%s,%s\n' % (ip, mac, host_name, 'TRUE' if ip in picked_devices else 'FALSE')
         return
     try:
@@ -154,8 +166,12 @@ def handle_scan(environ, start_response):
             elif my_ip == ip:
                 LOGGER.info('skip my ip: %s' % my_ip)
             else:
-                scan_results.append((ip, mac, host_name))
-                yield '%s,%s,%s,%s\n' % (ip, mac, host_name, 'TRUE' if ip in picked_devices else 'FALSE')
+                if ip not in scan_results:
+                    yield '%s,%s,%s,%s\n' % (ip, mac, host_name, 'TRUE' if ip in picked_devices else 'FALSE')
+                if mac:
+                    scan_results[ip] = mac, host_name
+                    if ip not in recent_ips:
+                        recent_ips.append(ip)
     except:
         LOGGER.exception('failed to scan')
         return
@@ -166,6 +182,13 @@ def handle_clear_scan_results(environ, start_response):
     scan_results = []
     start_response(httplib.OK, [('Content-Type', 'text/plain')])
     return []
+
+
+def list_ip_range_address(ip_range):
+    assert ip_range.endswith('/24')
+    parts = ip_range.split('.')
+    for i in range(256):
+        yield '%s.%s.%s.%s' % (parts[0], parts[1], parts[2], i)
 
 
 def get_ip_range(ifname):
@@ -193,7 +216,7 @@ def get_default_gateway(ifname):
 
 
 def scan(ip_range):
-    unscanned_ip_addresses = list(IP(ip_range))
+    unscanned_ip_addresses = list(list_ip_range_address(ip_range)) + recent_ips
     checkers = []
     while len(unscanned_ip_addresses) + len(checkers):
         for checker in list(checkers):

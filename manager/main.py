@@ -2,6 +2,7 @@ import os
 import logging
 import logging.handlers
 import sys
+from SocketServer import ThreadingMixIn
 
 
 ROOT_DIR = os.path.dirname(__file__)
@@ -92,6 +93,13 @@ def get_http_response(code):
     return '%s %s' % (code, httplib.responses[code])
 
 # TODO: make tcp_service optional
+# TODO: redesign shutdown hook
+# TODO: put wifi operation into process
+# TODO: rewrite tcp service
+# TODO: rewrite lan service
+class MultiThreadedWSGIServer(ThreadingMixIn, wsgiref.simple_server.WSGIServer):
+    pass
+
 
 def run():
     setup_logging(LOG_FILE)
@@ -104,7 +112,8 @@ def run():
     LOGGER.info('services started')
     try:
         httpd = wsgiref.simple_server.make_server(
-            '127.0.0.1', 8318, handle_request)
+            '127.0.0.1', 8318, handle_request,
+            server_class=MultiThreadedWSGIServer)
         LOGGER.info('serving HTTP on port 8318...')
     except:
         LOGGER.exception('failed to start HTTP server on port 8318')
