@@ -239,6 +239,7 @@ public class Deployer {
             statusUpdater.appendLog("successfully made " + file.getName() + " executable");
         } else {
             statusUpdater.appendLog("failed to make " + file.getName() + " executable");
+            ShellUtils.execute(ShellUtils.findCommand("chmod"), "0700", file.getCanonicalPath());
         }
     }
 
