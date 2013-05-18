@@ -15,6 +15,7 @@ nfqueue_ipset_process = None
 
 
 def run():
+    insert_iptables_rules()
     start_fqsocks()
     start_nfqueue_ipset()
 
@@ -72,7 +73,6 @@ def delete_iptables_rules():
 def start_fqsocks():
     global fqsocks_process
     shutdown_hook.add(clean)
-    insert_iptables_rules()
     fqsocks_process = subprocess.Popen(
         [shell.PYTHON_PATH, '-m', 'fqsocks',
          '--log-level', 'INFO',
@@ -106,7 +106,6 @@ def monitor_fqsocks():
 def start_nfqueue_ipset():
     global nfqueue_ipset_process
     shutdown_hook.add(clean)
-    insert_iptables_rules()
     nfqueue_ipset_process = subprocess.Popen(
         [shell.PYTHON_PATH, '-m', 'nfqueue_ipset',
          '--log-level', 'INFO',

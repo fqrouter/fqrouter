@@ -9,7 +9,7 @@ import dpkt
 import iptables
 import shutdown_hook
 import dns_service
-import lan_ip
+import fqsocks.lan_ip
 import fqsocks.china_ip
 import pending_connection
 
@@ -141,7 +141,7 @@ def handle_packet(nfqueue_element):
             nfqueue_element.accept()
             return
         ip_packet = dpkt.ip.IP(nfqueue_element.get_payload())
-        if lan_ip.is_lan_traffic(ip_packet):
+        if fqsocks.lan_ip.is_lan_traffic(socket.inet_ntoa(ip_packet.src), socket.inet_ntoa(ip_packet.dst)):
             nfqueue_element.accept()
             return
         if hasattr(ip_packet, 'tcp'):
