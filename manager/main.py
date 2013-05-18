@@ -35,6 +35,8 @@ def handle_ping(environ, start_response):
     start_response(httplib.OK, [('Content-Type', 'text/plain')])
     if not dns_service.is_alive():
         yield 'DNS SERVICE DIED'
+    elif not socks_service.is_alive():
+        yield 'SOCKS SERVICE DIED'
     else:
         yield 'PONG'
 
@@ -90,14 +92,13 @@ def get_http_response(code):
     return '%s %s' % (code, httplib.responses[code])
 
 # TODO: make tcp_service optional
-# TODO: delete all matching iptables rules
 
 def run():
     setup_logging(LOG_FILE)
     LOGGER.info('environment: %s' % os.environ.items())
     wifi.setup_lo_alias()
     dns_service.run()
-    tcp_service.run()
+    # tcp_service.run()
     socks_service.run()
     lan_service.run()
     LOGGER.info('services started')
@@ -115,7 +116,7 @@ def clean():
     setup_logging(LOG_FILE)
     LOGGER.info('clean...')
     dns_service.clean()
-    tcp_service.clean()
+    # tcp_service.clean()
     socks_service.clean()
     lan_service.clean()
 
