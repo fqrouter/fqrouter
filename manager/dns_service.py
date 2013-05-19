@@ -25,7 +25,7 @@ def run():
          'serve', '--listen', '10.1.2.3:5353',
          '--enable-china-domain', '--enable-hosted-domain'],
         stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
-    time.sleep(2)
+    time.sleep(1)
     if fqdns_process.poll() is not None:
         try:
             output, _ = fqdns_process.communicate()
@@ -33,6 +33,7 @@ def run():
         except:
             LOGGER.exception('failed to log fqdns exit output')
         raise Exception('failed to start fqdns')
+    LOGGER.info('fqdns started: %s' % fqdns_process.pid)
     thread.start_new(monitor_fqdns, ())
 
 
@@ -40,6 +41,7 @@ def clean():
     delete_iptables_rules()
     try:
         if fqdns_process:
+            LOGGER.info('terminate fqdns: %s' % fqdns_process.pid)
             fqdns_process.terminate()
     except:
         LOGGER.exception('failed to terminate fqdns')

@@ -2,9 +2,7 @@ package fq.router.utils;
 
 import android.util.Log;
 
-import java.io.File;
-import java.io.FileOutputStream;
-import java.io.OutputStreamWriter;
+import java.io.*;
 import java.util.Date;
 
 public class LogUtils {
@@ -18,7 +16,15 @@ public class LogUtils {
 
     public static void e(String msg, Throwable exception) {
         Log.e("fqrouter", msg, exception);
-        writeLogFile("ERROR", msg + "\r\n" + exception.toString());
+        writeLogFile("ERROR", msg + "\r\n" + formatException(exception));
+    }
+
+    private static String formatException(Throwable e) {
+        ByteArrayOutputStream baos = new ByteArrayOutputStream();
+        PrintStream ps = new PrintStream(baos);
+        e.printStackTrace(ps);
+        ps.close();
+        return baos.toString();
     }
 
     public static void i(String msg) {

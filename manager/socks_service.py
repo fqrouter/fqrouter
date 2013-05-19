@@ -24,11 +24,13 @@ def clean():
     delete_iptables_rules()
     try:
         if fqsocks_process:
+            LOGGER.info('terminate fqsocks: %s' % fqsocks_process.pid)
             fqsocks_process.terminate()
     except:
         LOGGER.exception('failed to terminate fqsocks')
     try:
         if nfqueue_ipset_process:
+            LOGGER.info('terminate nfqueue-ipset: %s' % nfqueue_ipset_process.pid)
             nfqueue_ipset_process.terminate()
     except:
         LOGGER.exception('failed to terminate nfqueue-ipset')
@@ -91,6 +93,7 @@ def start_fqsocks():
         except:
             LOGGER.exception('failed to log fqsocks exit output')
         raise Exception('failed to start fqsocks')
+    LOGGER.info('fqsocks started: %s' % fqsocks_process.pid)
     thread.start_new(monitor_fqsocks, ())
 
 
@@ -122,6 +125,7 @@ def start_nfqueue_ipset():
         except:
             LOGGER.exception('failed to log nfqueue-ipset exit output')
         raise Exception('failed to start nfqueue-ipset')
+    LOGGER.info('nfqueue-ipset started: %s' % nfqueue_ipset_process.pid)
     thread.start_new(monitor_nfqueue_ipset, ())
 
 
