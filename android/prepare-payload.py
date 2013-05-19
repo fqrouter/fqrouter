@@ -19,8 +19,6 @@ DPKT_DIR = os.path.join(PAYLOAD_DIR, 'dpkt-1.7')
 DPKT_PACKAGE_DIR = os.path.join(DPKT_DIR, 'dpkt')
 BUSYBOX_FILE = os.path.join(ASSETS_DIR, 'busybox')
 PROXY_TOOLS_DIR = os.path.join(PAYLOAD_DIR, 'proxy-tools')
-REDSOCKS_FILE = os.path.join(PROXY_TOOLS_DIR, 'redsocks')
-REDSOCKS_FILE_SRC = os.path.join(ROOT_DIR, 'libs', 'armeabi', 'redsocks')
 GREENLET_FILE = os.path.join(PAYLOAD_DIR, 'python', 'lib', 'python2.7', 'lib-dynload', 'greenlet.so')
 GEVENT_ZIP_FILE = os.path.join(PAYLOAD_DIR, 'gevent.zip')
 GEVENT_DIR = os.path.join(PAYLOAD_DIR, 'gevent')
@@ -45,7 +43,6 @@ def main():
     download_dpkt()
     untargz_dpkt()
     download_busybox()
-    download_redsocks()
     download_greenlet()
     download_gevent()
     unzip_gevent()
@@ -78,8 +75,7 @@ def download_wifi_tools():
 def unzip_wifi_tools():
     if os.path.exists(WIFI_TOOLS_DIR):
         return
-    os.mkdir(WIFI_TOOLS_DIR)
-    subprocess.check_call('unzip %s' % WIFI_TOOLS_DIR, cwd=WIFI_TOOLS_DIR, shell=True)
+    subprocess.check_call('unzip %s' % WIFI_TOOLS_ZIP_FILE, cwd=PAYLOAD_DIR, shell=True)
 
 
 def download_dpkt():
@@ -101,12 +97,6 @@ def download_busybox():
     if os.path.exists(BUSYBOX_FILE):
         return
     urllib.urlretrieve('http://www.busybox.net/downloads/binaries/latest/busybox-armv6l', BUSYBOX_FILE)
-
-
-def download_redsocks():
-    if os.path.exists(REDSOCKS_FILE):
-        return
-    urllib.urlretrieve('http://cdn.fqrouter.com/android-utils/redsocks', REDSOCKS_FILE)
 
 
 def download_greenlet():

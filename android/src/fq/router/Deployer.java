@@ -69,7 +69,6 @@ public class Deployer {
         }
         try {
             unzipPayloadZip();
-            linkLibs();
         } catch (Exception e) {
             statusUpdater.reportError("failed to unzip payload.zip", e);
             return false;
@@ -195,13 +194,13 @@ public class Deployer {
         if (!new File("/data/data/fq.router/payload.zip").delete()) {
             statusUpdater.appendLog("failed to delete payload.zip after unzip");
         }
-        statusUpdater.appendLog("successfully unzipped payload.zip");
         for (int i = 0; i < 5; i++) {
             Thread.sleep(1000); // wait for the files written out
             if (MANAGER_MAIN_PY.exists()) {
                 break;
             }
         }
+        statusUpdater.appendLog("successfully unzipped payload.zip");
     }
 
     private void makePayloadExecutable() throws Exception {
@@ -221,14 +220,14 @@ public class Deployer {
                 makeExecutable(file);
             }
         }
-        files = PROXY_TOOLS_DIR.listFiles();
-        if (files == null) {
-            throw new Exception(PROXY_TOOLS_DIR + " not found");
-        } else {
-            for (File file : files) {
-                makeExecutable(file);
-            }
-        }
+//        files = PROXY_TOOLS_DIR.listFiles();
+//        if (files == null) {
+//            throw new Exception(PROXY_TOOLS_DIR + " not found");
+//        } else {
+//            for (File file : files) {
+//                makeExecutable(file);
+//            }
+//        }
     }
 
     private void makeExecutable(File file) throws Exception {
@@ -239,23 +238,7 @@ public class Deployer {
             statusUpdater.appendLog("successfully made " + file.getName() + " executable");
         } else {
             statusUpdater.appendLog("failed to make " + file.getName() + " executable");
-            ShellUtils.execute(ShellUtils.findCommand("chmod"), "0700", file.getCanonicalPath());
-        }
-    }
-
-    private void linkLibs() throws Exception {
-        File libDir = new File("/data/data/fq.router/lib");
-        String linkTo = "/data/data/fq.router/python/lib";
-        if (libDir.exists() && libDir.getCanonicalPath().equals(linkTo)) {
-            return;
-        }
-        try {
-            if (libDir.exists()) {
-                ShellUtils.sudo(BUSYBOX_FILE.getAbsolutePath(), "rm", "-r", "-f", libDir.getPath());
-            }
-            ShellUtils.sudo(BUSYBOX_FILE.getAbsolutePath(), "ln", "-s", linkTo, libDir.getPath());
-        } catch (Exception e) {
-            LogUtils.e("failed to link libs");
+            ShellUtils.sudo(ShellUtils.findCommand("chmod"), "0700", file.getCanonicalPath());
         }
     }
 }
