@@ -453,7 +453,7 @@ def start_hotspot_on_wcnss(ssid, password):
     control_socket_dir = get_wpa_supplicant_control_socket_dir()
     load_p2p_firmware(control_socket_dir)
     delete_existing_p2p_persistent_networks(WIFI_INTERFACE, control_socket_dir)
-    start_p2p_persistent_network(WIFI_INTERFACE, control_socket_dir, ssid, password)
+    start_p2p_persistent_network(WIFI_INTERFACE, control_socket_dir, ssid, password, sets_channel=True)
     log_upstream_wifi_status('after p2p persistent group created', control_socket_dir)
 
 
@@ -593,7 +593,7 @@ def log_upstream_wifi_status(log, control_socket_dir):
         LOGGER.exception('failed to log upstream wifi status')
 
 
-def start_p2p_persistent_network(iface, control_socket_dir, ssid, password):
+def start_p2p_persistent_network(iface, control_socket_dir, ssid, password, sets_channel=False):
     wpa_supplicant_control_socket_dir = get_wpa_supplicant_control_socket_dir()
     try:
         shell.execute('%s -p %s -i %s p2p_set disabled 0' % (P2P_CLI_PATH, control_socket_dir, iface))
@@ -621,8 +621,8 @@ def start_p2p_persistent_network(iface, control_socket_dir, ssid, password):
     set_network('psk \'"%s"\'' % password)
     frequency, channel = get_upstream_frequency_and_channel()
     if channel:
-        channel = channel
-        reg_class = 81
+        channel = channel if sets_channel else 0
+        reg_class = 81 if sets_channel else 0
         reset_p2p_channels(iface, control_socket_dir, channel, reg_class)
         reset_p2p_channels(WIFI_INTERFACE, wpa_supplicant_control_socket_dir, channel, reg_class)
     if frequency:
