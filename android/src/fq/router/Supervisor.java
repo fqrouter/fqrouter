@@ -2,6 +2,7 @@ package fq.router;
 
 import fq.router.utils.HttpUtils;
 import fq.router.utils.LogUtils;
+import fq.router.utils.ShellUtils;
 
 public class Supervisor implements Runnable {
 
@@ -60,13 +61,11 @@ public class Supervisor implements Runnable {
                 }
                 return;
             }
-            boolean shouldWait = launchManager();
-            if (shouldWait && !waitForManager()) {
-                return;
+            if (launchManager()) {
+                statusUpdater.updateStatus("Checking updates");
+                checkUpdates(statusUpdater);
+                statusUpdater.onStarted();
             }
-            statusUpdater.updateStatus("Checking updates");
-            checkUpdates(statusUpdater);
-            statusUpdater.onStarted();
         } finally {
             statusUpdater.appendLog("supervisor thread stopped");
         }
@@ -75,23 +74,42 @@ public class Supervisor implements Runnable {
     private boolean launchManager() {
         if (ping()) {
             statusUpdater.appendLog("manager is already running");
-            return false;
+            return true;
         }
-        statusUpdater.appendLog("starting launcher thread");
-        new Thread(new Launcher(statusUpdater)).start();
-        return true;
+        statusUpdater.appendLog("starting to launch");
+        try {
+            Process process = executeManager();
+            for (int i = 0; i < 30; i++) {
+                if (ping()) {
+                    return true;
+                }
+                if (hasProcessExited(process)) {
+                    statusUpdater.reportError("manager quit", null);
+                    return false;
+                }
+                sleepOneSecond();
+            }
+            statusUpdater.reportError("timed out", null);
+        } catch (Exception e) {
+            statusUpdater.reportError("failed to launch", e);
+        }
+        return false;
     }
 
-    private boolean waitForManager() {
-        for (int i = 0; i < 30; i++) {
-            sleepOneSecond();
-            sleepOneSecond();
-            if (ping()) {
-                return true;
-            }
+    private boolean hasProcessExited(Process process) {
+        try {
+            process.exitValue();
+            return true;
+        } catch (IllegalThreadStateException e) {
+            return false;
         }
-        statusUpdater.reportError("Timed out", null);
-        return false;
+    }
+
+    private Process executeManager() throws Exception {
+        String runCommand = Deployer.BUSYBOX_FILE + " sh " + Deployer.PYTHON_LAUNCHER + " " +
+                Deployer.MANAGER_MAIN_PY.getAbsolutePath() + " > /data/data/fq.router/current-python.log 2>&1";
+        return ShellUtils.sudoNotWait("FQROUTER_VERSION=" + statusUpdater.getMyVersion() +
+                " PYTHONHOME=" + Deployer.PYTHON_DIR + " " + runCommand);
     }
 
     public static boolean checkUpdates(StatusUpdater statusUpdater) {
@@ -138,5 +156,19 @@ public class Supervisor implements Runnable {
                 Integer.parseInt(parts[1]),
                 Integer.parseInt(parts[2])
         };
+    }
+
+    public void relaunch() {
+        statusUpdater.updateStatus("Manage process died, restart");
+        try {
+            statusUpdater.updateStatus("Kill existing manager process");
+            ManagerProcess.kill();
+        } catch (Exception e) {
+            LogUtils.e("failed to kill manager process before relaunch", e);
+            statusUpdater.appendLog("failed to kill manager process before relaunch");
+        }
+        if (launchManager()) {
+            statusUpdater.updateStatus("Relaunched");
+        }
     }
 }

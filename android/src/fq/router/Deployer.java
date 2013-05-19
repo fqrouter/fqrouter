@@ -195,8 +195,8 @@ public class Deployer {
             statusUpdater.appendLog("failed to delete payload.zip after unzip");
         }
         for (int i = 0; i < 5; i++) {
-            Thread.sleep(1000); // wait for the files written out
-            if (MANAGER_MAIN_PY.exists()) {
+            Thread.sleep(2000); // wait for the files written out
+            if (MANAGER_MAIN_PY.exists() && PYTHON_LAUNCHER.exists() && WIFI_TOOLS_DIR.exists()) {
                 break;
             }
         }

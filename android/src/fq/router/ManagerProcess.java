@@ -7,7 +7,6 @@ public class ManagerProcess {
 
     public static void kill() throws Exception {
         kill("python");
-        kill("redsocks");
         ShellUtils.sudo("PYTHONHOME=" + Deployer.PYTHON_DIR + " " +
                 Deployer.BUSYBOX_FILE + " sh " + Deployer.PYTHON_LAUNCHER + " " + Deployer.MANAGER_MAIN_PY + " clean");
     }

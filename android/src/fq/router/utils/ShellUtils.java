@@ -22,6 +22,12 @@ public class ShellUtils {
 
 
     public static String sudo(String... command) throws Exception {
+        Process process = sudoNotWait(command);
+        return waitFor(Arrays.toString(command), process);
+    }
+
+
+    public static Process sudoNotWait(String... command) throws Exception {
         LogUtils.i("sudo: " + Arrays.toString(command));
         Process process = new ProcessBuilder()
                 .command(findCommand("su"))
@@ -38,7 +44,7 @@ public class ShellUtils {
         } finally {
             stdin.close();
         }
-        return waitFor(Arrays.toString(command), process);
+        return process;
     }
 
     public static String findCommand(String command) {

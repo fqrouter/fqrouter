@@ -72,15 +72,7 @@ public class MainActivity extends Activity implements StatusUpdater {
             @Override
             public void run() {
                 if (!Supervisor.ping()) {
-                    updateStatus("Manage process died, restart");
-                    try {
-                        updateStatus("Kill existing manager process");
-                        ManagerProcess.kill();
-                    } catch (Exception e) {
-                        LogUtils.e("failed to kill manager process before relaunch", e);
-                        appendLog("failed to kill manager process before relaunch");
-                    }
-                    new Thread(new Launcher(MainActivity.this)).start();
+                    new Supervisor(MainActivity.this).relaunch();
                 }
             }
         }).start();
