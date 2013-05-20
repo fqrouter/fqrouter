@@ -41,16 +41,17 @@ def main():
 
 def handle_nfqueue(queue_number):
     from netfilterqueue import NetfilterQueue
-
-    try:
-        nfqueue = NetfilterQueue()
-        nfqueue.bind(queue_number, handle_packet)
-        LOGGER.info('handling nfqueue at queue number %s' % queue_number)
-        nfqueue.run()
-    except:
-        LOGGER.exception('failed to handle nfqueue')
-    finally:
-        LOGGER.info('stopped handling nfqueue')
+    while True:
+        try:
+            nfqueue = NetfilterQueue()
+            nfqueue.bind(queue_number, handle_packet)
+            LOGGER.info('handling nfqueue at queue number %s' % queue_number)
+            nfqueue.run()
+        except:
+            LOGGER.exception('failed to handle nfqueue')
+            return
+        finally:
+            LOGGER.info('stopped handling nfqueue')
 
 
 def handle_packet(nfqueue_element):

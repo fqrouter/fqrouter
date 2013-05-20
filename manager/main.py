@@ -26,9 +26,9 @@ import version
 import cgi
 import wsgiref.simple_server
 import dns_service
-import socks_service
+import proxy_service
+import scrambler_service
 import shutdown_hook
-import tcp_service
 import lan_service
 
 
@@ -36,8 +36,8 @@ def handle_ping(environ, start_response):
     start_response(httplib.OK, [('Content-Type', 'text/plain')])
     if not dns_service.is_alive():
         yield 'DNS SERVICE DIED'
-    elif not socks_service.is_alive():
-        yield 'SOCKS SERVICE DIED'
+    elif not proxy_service.is_alive():
+        yield 'PROXY SERVICE DIED'
     else:
         yield 'PONG'
 
@@ -106,8 +106,8 @@ def run():
     LOGGER.info('environment: %s' % os.environ.items())
     wifi.setup_lo_alias()
     dns_service.run()
-    tcp_service.run()
-    socks_service.run()
+    scrambler_service.run()
+    proxy_service.run()
     lan_service.run()
     LOGGER.info('services started')
     try:
@@ -125,8 +125,8 @@ def clean():
     setup_logging(LOG_FILE)
     LOGGER.info('clean...')
     dns_service.clean()
-    tcp_service.clean()
-    socks_service.clean()
+    scrambler_service.clean()
+    proxy_service.clean()
     lan_service.clean()
 
 

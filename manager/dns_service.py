@@ -20,7 +20,7 @@ def run():
     fqdns_process = subprocess.Popen(
         [shell.PYTHON_PATH, '-m', 'fqdns',
          '--log-level', 'INFO',
-         '--log-file', '/data/data/fq.router/dns.log',
+         '--log-file', '/data/data/fq.router/fqdns.log',
          '--outbound-ip', '10.1.2.3', # send from 10.1.2.3 so we can skip redirecting those traffic
          'serve', '--listen', '10.1.2.3:5353',
          '--enable-china-domain', '--enable-hosted-domain'],
@@ -55,6 +55,9 @@ def is_alive():
 
 RULES = [
     (
+        {'target': 'ACCEPT', 'extra': 'udp dpt:53 mark match 0xcafe'},
+        ('nat', 'OUTPUT', '-p udp --dport 53 -m mark --mark 0xcafe -j ACCEPT')
+    ), (
         {'target': 'DNAT', 'extra': 'udp dpt:53 to:10.1.2.3:5353'},
         ('nat', 'OUTPUT', '-p udp ! -s 10.1.2.3 --dport 53 -j DNAT --to-destination 10.1.2.3:5353')
     ), (

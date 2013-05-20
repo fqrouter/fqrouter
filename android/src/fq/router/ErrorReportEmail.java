@@ -28,8 +28,8 @@ public class ErrorReportEmail {
         i.putExtra(Intent.EXTRA_SUBJECT, "android fqrouter error report for version " + statusUpdater.getMyVersion());
         String error = createLogFiles();
         i.putExtra(Intent.EXTRA_TEXT, getErrorMailBody() + error);
-        attachLogFiles(i, "manager.log", "socks.log", "logcat.log", "getprop.log", "dmesg.log", "iptables.log",
-                "wifi.log", "dns.log", "current-java.log", "current-python.log");
+        attachLogFiles(i, "manager.log", "fqsocks.log", "nfqueue-ipset.log", "logcat.log", "getprop.log", "dmesg.log",
+                "iptables.log", "wifi.log", "fqdns.log", "fqting.log", "current-java.log", "current-python.log");
         return i;
     }
 
@@ -84,9 +84,11 @@ public class ErrorReportEmail {
             }
         }
         error += copyLog("manager.log");
-        error += copyLog("socks.log");
+        error += copyLog("fqsocks.log");
+        error += copyLog("nfqueue-ipset.log");
+        error += copyLog("fqdns.log");
+        error += copyLog("fqting.log");
         error += copyLog("wifi.log");
-        error += copyLog("dns.log");
         error += copyLog("current-java.log");
         error += copyLog("current-python.log");
         return error;

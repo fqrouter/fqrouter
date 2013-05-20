@@ -24,6 +24,8 @@ GEVENT_ZIP_FILE = os.path.join(PAYLOAD_DIR, 'gevent.zip')
 GEVENT_DIR = os.path.join(PAYLOAD_DIR, 'gevent')
 FQDNS_PY = os.path.join(PAYLOAD_DIR, 'python', 'lib', 'python2.7', 'site-packages', 'fqdns.py')
 FQDNS_PY_SRC = os.path.join(os.path.dirname(__file__), '..', '..', 'fqdns', 'fqdns.py')
+FQTING_PY = os.path.join(PAYLOAD_DIR, 'python', 'lib', 'python2.7', 'site-packages', 'fqting.py')
+FQTING_PY_SRC = os.path.join(os.path.dirname(__file__), '..', '..', 'fqting', 'fqting.py')
 FQSOCKS_DIR = os.path.join(PAYLOAD_DIR, 'python', 'lib', 'python2.7', 'site-packages', 'fqsocks')
 FQSOCKS_DIR_SRC = os.path.join(os.path.dirname(__file__), '..', '..', 'fqsocks', 'fqsocks')
 MANAGER_DIR = os.path.join(ROOT_DIR, '../manager')
@@ -47,6 +49,7 @@ def main():
     download_gevent()
     unzip_gevent()
     copy_fqdns()
+    copy_fqting()
     copy_fqsocks()
     zip_payload()
 
@@ -126,6 +129,10 @@ def unzip_gevent():
 
 def copy_fqdns():
     subprocess.check_call('cp %s %s' % (FQDNS_PY_SRC, FQDNS_PY), shell=True)
+
+
+def copy_fqting():
+    subprocess.check_call('cp %s %s' % (FQTING_PY_SRC, FQTING_PY), shell=True)
 
 
 def copy_fqsocks():
