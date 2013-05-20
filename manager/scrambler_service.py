@@ -71,17 +71,17 @@ def add_rules(is_forward):
         )
         RULES.append(RULE_INPUT_DNS_RESPONSE)
     RULE_INPUT_SYN_ACK = (
-        {'target': 'NFQUEUE', 'extra': 'tcpflags:0x3F/0x12 NFQUEUE num 2'},
+        {'target': 'NFQUEUE', 'extra': 'tcpflags: 0x3F/0x12 NFQUEUE num 2'},
         ('filter', 'FORWARD' if is_forward else 'INPUT', '-p tcp --tcp-flags ALL SYN,ACK -j NFQUEUE --queue-num 2')
     )
     RULES.append(RULE_INPUT_SYN_ACK)
     RULE_INPUT_RST = (
-        {'target': 'NFQUEUE', 'extra': 'tcpflags:0x3F/0x04 NFQUEUE num 2'},
+        {'target': 'NFQUEUE', 'extra': 'tcpflags: 0x3F/0x04 NFQUEUE num 2'},
         ('filter', 'FORWARD' if is_forward else 'INPUT', '-p tcp --tcp-flags ALL RST -j NFQUEUE --queue-num 2')
     )
     RULES.append(RULE_INPUT_RST)
     RULE_OUTPUT_SYN = (
-        {'target': 'NFQUEUE', 'extra': 'tcpflags:0x3F/0x18 NFQUEUE num 2'},
+        {'target': 'NFQUEUE', 'extra': 'tcpflags: 0x3F/0x02 NFQUEUE num 2'},
         ('filter', 'FORWARD' if is_forward else 'OUTPUT', '-p tcp --tcp-flags ALL SYN -j NFQUEUE --queue-num 2')
     )
     RULES.append(RULE_OUTPUT_SYN)
