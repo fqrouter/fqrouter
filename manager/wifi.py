@@ -487,7 +487,7 @@ def start_hotspot_on_mtk(ssid, password):
     control_socket_dir = get_wpa_supplicant_control_socket_dir()
     shell.execute('%s -p %s -i ap0 reconfigure' % (P2P_CLI_PATH, control_socket_dir))
     delete_existing_p2p_persistent_networks('ap0', control_socket_dir)
-    network_index = start_p2p_persistent_network('ap0', control_socket_dir, ssid, password)
+    network_index = start_p2p_persistent_network('ap0', control_socket_dir, ssid, password, sets_channel=True)
     # restart p2p persistent group otherwise the ssid is not usable
     shell.execute('%s -p %s -i ap0 p2p_group_remove ap0' % (P2P_CLI_PATH, control_socket_dir))
     shell.execute('%s -p %s -i ap0 p2p_group_add persistent=%s' % (P2P_CLI_PATH, control_socket_dir, network_index))
