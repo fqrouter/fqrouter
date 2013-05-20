@@ -76,7 +76,7 @@ public class Supervisor implements Runnable {
             statusUpdater.appendLog("manager is already running");
             return true;
         }
-        statusUpdater.appendLog("starting to launch");
+        statusUpdater.updateStatus("Launching...");
         try {
             Process process = executeManager();
             for (int i = 0; i < 30; i++) {

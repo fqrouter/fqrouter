@@ -55,7 +55,7 @@ def is_alive():
 
 RULES = [
     (
-        {'target': 'ACCEPT', 'extra': 'udp dpt:53 mark match 0xcafe'},
+        {'target': 'ACCEPT', 'extra': 'udp dpt:53 mark match 0xcafe', 'optional': True},
         ('nat', 'OUTPUT', '-p udp --dport 53 -m mark --mark 0xcafe -j ACCEPT')
     ), (
         {'target': 'DNAT', 'extra': 'udp dpt:53 to:10.1.2.3:5353'},

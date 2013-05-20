@@ -46,11 +46,10 @@ def is_alive():
 
 RULES = [
     (
-        {'target': 'NFQUEUE', 'extra': 'mark match ! 0xdead NFQUEUE num 1'},
+        {'target': 'NFQUEUE', 'extra': 'mark match ! 0xdead NFQUEUE num 1', 'optional': True},
         ('nat', 'OUTPUT', '-m mark ! --mark 0xdead -p tcp -j NFQUEUE --queue-num 1')
-    ),
-    (
-        {'target': 'NFQUEUE', 'extra': 'mark match ! 0xdead NFQUEUE num 1'},
+    ), (
+        {'target': 'NFQUEUE', 'extra': 'mark match ! 0xdead NFQUEUE num 1', 'optional': True},
         ('nat', 'PREROUTING', '-m mark ! --mark 0xdead -p tcp -j NFQUEUE --queue-num 1')
     ), (
         {'target': 'ACCEPT', 'destination': '127.0.0.1'},

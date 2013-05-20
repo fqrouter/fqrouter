@@ -18,7 +18,7 @@ def insert_rules(rules):
         if contains_rule(table, chain, signature):
             LOGGER.info('skip insert rule: -t %s -I %s %s' % rule_args)
         else:
-            insert_rule(*rule_args)
+            insert_rule(signature.get('optional'), *rule_args)
 
 
 def delete_rules(rules):
@@ -58,11 +58,16 @@ def delete_chain(target):
         subprocess.call(shlex.split('iptables -t %s -X %s' % (table, target)))
 
 
-def insert_rule(table, chain, rule_text):
+def insert_rule(optional, table, chain, rule_text):
     command = 'iptables -t %s -I %s %s' % (table, chain, rule_text)
-    LOGGER.info('insert rule: %s' % command)
-    subprocess.check_call(shlex.split(command))
-
+    LOGGER.info('insert %s rule: %s' % ('optional' if optional else 'mandatory', command))
+    try:
+        subprocess.check_call(shlex.split(command))
+    except:
+        if optional:
+            LOGGER.exception('skip optional iptables rule')
+        else:
+            raise
 
 def delete_rule(table, chain, rule_text):
     command = 'iptables -t %s -D %s %s' % (table, chain, rule_text)
@@ -74,6 +79,8 @@ def delete_rule(table, chain, rule_text):
 
 
 def contains_rule(table, chain, signature):
+    signature = dict(signature)
+    signature.pop('optional', None)
     rules = dump_table(table) if isinstance(table, basestring) else table
     rules = rules.get(chain, [])
     for rule in rules:
