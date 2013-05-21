@@ -38,10 +38,13 @@ SERVICES = [dns_service, scrambler_service, proxy_service, shortcut_service, lan
 def handle_ping(environ, start_response):
     start_response(httplib.OK, [('Content-Type', 'text/plain')])
     if not dns_service.is_alive():
+        LOGGER.error('DNS SERVICE DIED')
         yield 'DNS SERVICE DIED'
     elif not proxy_service.is_alive():
+        LOGGER.error('PROXY SERVICE DIED')
         yield 'PROXY SERVICE DIED'
     else:
+        LOGGER.info('PONG')
         yield 'PONG'
 
 

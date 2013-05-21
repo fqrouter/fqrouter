@@ -35,7 +35,7 @@ public class Supervisor implements Runnable {
             LogUtils.e("ping failed: [" + e.responseCode + "] " + e.output);
             return false;
         } catch (Exception e) {
-            LogUtils.e("ping failed");
+            LogUtils.e("ping failed: " + e);
             return false;
         }
     }
