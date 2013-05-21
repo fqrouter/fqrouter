@@ -35,8 +35,8 @@ def run():
         LOGGER.info('fqting started: %s' % fqting_process.pid)
         thread.start_new(monitor_fqting, ())
     except:
-        clean()
         LOGGER.exception('failed to start scrambler service')
+        clean()
 
 
 def clean():
@@ -70,6 +70,11 @@ def add_rules(is_forward):
             ('filter', 'INPUT', '-p udp --sport 53 --dport 1 -j NFQUEUE --queue-num 2')
         )
         RULES.append(RULE_INPUT_DNS_RESPONSE)
+        RULE_OUTPUT_HTTP_REQUST = (
+            {'target': 'NFQUEUE', 'extra': 'mark match 0xbabe NFQUEUE num 2'},
+            ('filter', 'OUTPUT', '-p tcp -m mark --mark 0xbabe -j NFQUEUE --queue-num 2')
+        )
+        RULES.append(RULE_OUTPUT_HTTP_REQUST)
     RULE_INPUT_SYN_ACK = (
         {'target': 'NFQUEUE', 'extra': 'tcpflags: 0x3F/0x12 NFQUEUE num 2'},
         ('filter', 'FORWARD' if is_forward else 'INPUT', '-p tcp --tcp-flags ALL SYN,ACK -j NFQUEUE --queue-num 2')
@@ -85,11 +90,6 @@ def add_rules(is_forward):
         ('filter', 'FORWARD' if is_forward else 'OUTPUT', '-p tcp --tcp-flags ALL SYN -j NFQUEUE --queue-num 2')
     )
     RULES.append(RULE_OUTPUT_SYN)
-    RULE_OUTPUT_HTTP_REQUST = (
-        {'target': 'NFQUEUE', 'extra': 'mark match 0xbabe NFQUEUE num 2'},
-        ('filter', 'FORWARD' if is_forward else 'OUTPUT', '-p tcp -m mark --mark 0xbabe -j NFQUEUE --queue-num 2')
-    )
-    RULES.append(RULE_OUTPUT_HTTP_REQUST)
 
 
 add_rules(is_forward=False)

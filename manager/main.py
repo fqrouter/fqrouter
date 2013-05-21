@@ -30,6 +30,9 @@ import proxy_service
 import scrambler_service
 import shutdown_hook
 import lan_service
+import shortcut_service
+
+SERVICES = [dns_service, scrambler_service, proxy_service, shortcut_service, lan_service]
 
 
 def handle_ping(environ, start_response):
@@ -101,10 +104,8 @@ def run():
     setup_logging(LOG_FILE)
     LOGGER.info('environment: %s' % os.environ.items())
     wifi.setup_lo_alias()
-    dns_service.run()
-    scrambler_service.run()
-    proxy_service.run()
-    lan_service.run()
+    for service in SERVICES:
+        service.run()
     LOGGER.info('services started')
     try:
         httpd = wsgiref.simple_server.make_server(
@@ -120,10 +121,11 @@ def run():
 def clean():
     setup_logging(LOG_FILE)
     LOGGER.info('clean...')
-    dns_service.clean()
-    scrambler_service.clean()
-    proxy_service.clean()
-    lan_service.clean()
+    for service in reversed(SERVICES):
+        try:
+            service.clean()
+        except:
+            LOGGER.exception('failed to clean: %s' % service)
 
 
 if '__main__' == __name__:
