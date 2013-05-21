@@ -93,25 +93,10 @@ public class PickAndPlayActivity extends ListActivity {
         if (ITEM_ID_RESCAN == item.getItemId()) {
             devices.clear();
             arrayAdapter.notifyDataSetChanged();
-            rescan();
+            scan();
         }
         return super.onMenuItemSelected(featureId, item);
     }
-
-    private void rescan() {
-        new Thread(new Runnable() {
-            @Override
-            public void run() {
-                try {
-                    HttpUtils.post("http://127.0.0.1:8318/lan/clear-scan-results");
-                    scan();
-                } catch (Exception e) {
-                    LogUtils.e("failed to rescan", e);
-                }
-            }
-        }).start();
-    }
-
 
     private void updateStatus(final String text) {
         handler.postDelayed(new Runnable() {

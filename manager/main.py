@@ -61,7 +61,6 @@ HANDLERS = {
     ('GET', 'wifi/started'): wifi.handle_started,
     ('POST', 'wifi/setup'): wifi.handle_setup,
     ('GET', 'lan/scan'): lan_service.handle_scan,
-    ('POST', 'lan/clear-scan-results'): lan_service.handle_clear_scan_results,
     ('POST', 'lan/forge-default-gateway'): lan_service.handle_forge_default_gateway,
     ('POST', 'lan/restore-default-gateway'): lan_service.handle_restore_default_gateway,
     ('GET', 'version/latest'): version.handle_latest
@@ -92,11 +91,8 @@ def handle_request(environ, start_response):
 def get_http_response(code):
     return '%s %s' % (code, httplib.responses[code])
 
-# TODO: make tcp_service optional
 # TODO: redesign shutdown hook
 # TODO: put wifi operation into process
-# TODO: rewrite tcp service
-# TODO: rewrite lan service
 class MultiThreadedWSGIServer(ThreadingMixIn, wsgiref.simple_server.WSGIServer):
     pass
 

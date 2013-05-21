@@ -26,6 +26,8 @@ FQDNS_PY = os.path.join(PAYLOAD_DIR, 'python', 'lib', 'python2.7', 'site-package
 FQDNS_PY_SRC = os.path.join(os.path.dirname(__file__), '..', '..', 'fqdns', 'fqdns.py')
 FQTING_PY = os.path.join(PAYLOAD_DIR, 'python', 'lib', 'python2.7', 'site-packages', 'fqting.py')
 FQTING_PY_SRC = os.path.join(os.path.dirname(__file__), '..', '..', 'fqting', 'fqting.py')
+FQLAN_PY = os.path.join(PAYLOAD_DIR, 'python', 'lib', 'python2.7', 'site-packages', 'fqlan.py')
+FQLAN_PY_SRC = os.path.join(os.path.dirname(__file__), '..', '..', 'fqlan', 'fqlan.py')
 FQSOCKS_DIR = os.path.join(PAYLOAD_DIR, 'python', 'lib', 'python2.7', 'site-packages', 'fqsocks')
 FQSOCKS_DIR_SRC = os.path.join(os.path.dirname(__file__), '..', '..', 'fqsocks', 'fqsocks')
 MANAGER_DIR = os.path.join(ROOT_DIR, '../manager')
@@ -50,6 +52,7 @@ def main():
     unzip_gevent()
     copy_fqdns()
     copy_fqting()
+    copy_fqlan()
     copy_fqsocks()
     zip_payload()
 
@@ -133,6 +136,10 @@ def copy_fqdns():
 
 def copy_fqting():
     subprocess.check_call('cp %s %s' % (FQTING_PY_SRC, FQTING_PY), shell=True)
+
+
+def copy_fqlan():
+    subprocess.check_call('cp %s %s' % (FQLAN_PY_SRC, FQLAN_PY), shell=True)
 
 
 def copy_fqsocks():
