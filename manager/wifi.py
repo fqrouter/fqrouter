@@ -455,6 +455,9 @@ def start_hotspot_on_wcnss(ssid, password):
     delete_existing_p2p_persistent_networks(WIFI_INTERFACE, control_socket_dir)
     start_p2p_persistent_network(WIFI_INTERFACE, control_socket_dir, ssid, password, sets_channel=True)
     log_upstream_wifi_status('after p2p persistent group created', control_socket_dir)
+    if not get_working_hotspot_iface():
+        LOGGER.info('try p2p_group_add without setting channel')
+        start_p2p_persistent_network(WIFI_INTERFACE, control_socket_dir, ssid, password)
 
 
 def load_ap_firmware():
