@@ -18,9 +18,9 @@ public class ManagerProcess {
         }
         LogUtils.i("killall " + executable);
         ShellUtils.sudo("/data/data/fq.router/busybox killall " + executable);
-        for (int i = 0; i < 6; i++) {
+        for (int i = 0; i < 10; i++) {
             if (exists()) {
-                Thread.sleep(5000);
+                Thread.sleep(3000);
             } else {
                 LogUtils.i("killall " + executable + " done cleanly");
                 return true;

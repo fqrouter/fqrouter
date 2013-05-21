@@ -86,7 +86,7 @@ def run():
             skipped_components.append(comp.__name__)
     LOGGER.info('all components started except: %s' % skipped_components)
     try:
-        httpd = WSGIServer(('', 8318), handle_request)
+        httpd = WSGIServer(('127.0.0.1', 8318), handle_request)
         LOGGER.info('serving HTTP on port 8318...')
     except:
         LOGGER.exception('failed to start HTTP server on port 8318')
