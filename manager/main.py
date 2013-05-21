@@ -7,15 +7,20 @@ from SocketServer import ThreadingMixIn
 
 ROOT_DIR = os.path.dirname(__file__)
 LOG_DIR = '/data/data/fq.router'
-LOG_FILE = os.path.join(LOG_DIR, 'manager.log')
+MANAGER_LOG_FILE = os.path.join(LOG_DIR, 'manager.log')
+WIFI_LOG_FILE = os.path.join(LOG_DIR, 'wifi.log')
 
 
-def setup_logging(log_file=LOG_FILE, maxBytes=1024 * 512):
+def setup_logging():
     logging.basicConfig(stream=sys.stdout, level=logging.INFO, format='%(asctime)s %(levelname)s %(message)s')
     handler = logging.handlers.RotatingFileHandler(
-        log_file, maxBytes=maxBytes, backupCount=0)
+        MANAGER_LOG_FILE, maxBytes=1024 * 256, backupCount=0)
     handler.setFormatter(logging.Formatter('%(asctime)s %(levelname)s %(message)s'))
     logging.getLogger('fqrouter').addHandler(handler)
+    handler = logging.handlers.RotatingFileHandler(
+        WIFI_LOG_FILE, maxBytes=1024 * 512, backupCount=0)
+    handler.setFormatter(logging.Formatter('%(asctime)s %(levelname)s %(message)s'))
+    logging.getLogger('wifi').addHandler(handler)
 
 
 LOGGER = logging.getLogger('fqrouter.%s' % __name__)
@@ -48,20 +53,8 @@ def handle_ping(environ, start_response):
         yield 'PONG'
 
 
-def handle_logs(environ, start_response):
-    start_response(httplib.OK, [('Content-Type', 'text/html')])
-    yield '<html><body><pre>'
-    lines = []
-    with open(LOG_FILE) as f:
-        lines.append(f.read())
-    for line in reversed(lines):
-        yield line
-    yield '</pre></body></html>'
-
-
 HANDLERS = {
     ('GET', 'ping'): handle_ping,
-    ('GET', 'logs'): handle_logs,
     ('POST', 'wifi/start'): wifi.handle_start,
     ('POST', 'wifi/stop'): wifi.handle_stop,
     ('GET', 'wifi/started'): wifi.handle_started,
@@ -98,13 +91,12 @@ def get_http_response(code):
     return '%s %s' % (code, httplib.responses[code])
 
 # TODO: redesign shutdown hook
-# TODO: put wifi operation into process
 class MultiThreadedWSGIServer(ThreadingMixIn, wsgiref.simple_server.WSGIServer):
     pass
 
 
 def run():
-    setup_logging(LOG_FILE)
+    setup_logging()
     LOGGER.info('environment: %s' % os.environ.items())
     wifi.setup_lo_alias()
     for service in SERVICES:
@@ -122,7 +114,7 @@ def run():
 
 
 def clean():
-    setup_logging(LOG_FILE)
+    setup_logging()
     LOGGER.info('clean...')
     for service in reversed(SERVICES):
         try:
@@ -135,13 +127,9 @@ if '__main__' == __name__:
     if len(sys.argv) > 1:
         shutdown_hook.shutdown_hooks = []
         action = sys.argv[1]
-        if 'wifi-start-hotspot' == action:
-            setup_logging(os.path.join(LOG_DIR, 'wifi.log'), maxBytes=1024 * 512)
-            sys.stderr.write(repr(wifi.start_hotspot(*sys.argv[2:])))
-        elif 'wifi-stop-hotspot' == action:
-            setup_logging(os.path.join(LOG_DIR, 'wifi.log'), maxBytes=1024 * 512)
-            sys.stderr.write(repr(wifi.stop_hotspot()))
-        elif 'clean' == action:
+        if 'clean' == action:
             clean()
+        else:
+            raise Exception('unknown action: %s' % action)
     else:
         run()

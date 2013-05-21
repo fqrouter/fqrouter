@@ -6,7 +6,7 @@ import time
 import httplib
 import re
 import traceback
-import shell
+import shlex
 
 import iptables
 import hostapd_template
@@ -24,7 +24,7 @@ RE_IFCONFIG_IP = re.compile(r'inet addr:(\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3})')
 RE_MAC_ADDRESS = re.compile(r'[0-9a-f]+:[0-9a-f]+:[0-9a-f]+:[0-9a-f]+:[0-9a-f]+:[0-9a-f]+')
 RE_DEFAULT_GATEWAY_IFACE = re.compile('default via .+ dev (.+)')
 
-LOGGER = logging.getLogger('fqrouter.%s' % __name__)
+LOGGER = logging.getLogger('wifi')
 MODALIAS_PATH = '/sys/class/net/%s/device/modalias' % WIFI_INTERFACE
 WPA_SUPPLICANT_CONF_PATH = '/data/misc/wifi/wpa_supplicant.conf'
 P2P_SUPPLICANT_CONF_PATH = '/data/misc/wifi/p2p_supplicant.conf'
@@ -64,7 +64,7 @@ RULES = [
 def handle_start(environ, start_response):
     ssid = environ['REQUEST_ARGUMENTS']['ssid'].value
     password = environ['REQUEST_ARGUMENTS']['password'].value
-    success, message = shell.fqrouter_execute('wifi-start-hotspot', ssid, password)
+    success, message = start_hotspot(ssid, password)
     if on_wifi_hotspot_started:
         on_wifi_hotspot_started()
     status = httplib.OK if success else httplib.BAD_GATEWAY
@@ -74,7 +74,7 @@ def handle_start(environ, start_response):
 
 def handle_stop(environ, start_response):
     start_response(httplib.OK, [('Content-Type', 'text/plain')])
-    yield shell.fqrouter_execute('wifi-stop-hotspot')
+    yield stop_hotspot()
 
 
 def handle_setup(environ, start_response):
@@ -97,11 +97,11 @@ def stop_hotspot():
     try:
         working_hotspot_iface = get_working_hotspot_iface()
         try:
-            shell.execute('%s dnsmasq' % KILLALL_PATH)
+            shell_execute('%s dnsmasq' % KILLALL_PATH)
         except:
             LOGGER.exception('failed to killall dnsmasq')
         try:
-            shell.execute('%s hostapd' % KILLALL_PATH)
+            shell_execute('%s hostapd' % KILLALL_PATH)
         except:
             LOGGER.exception('failed to killall hostapd')
         try:
@@ -109,25 +109,25 @@ def stop_hotspot():
             stop_p2p_persistent_network(control_socket_dir, WIFI_INTERFACE, WIFI_INTERFACE)
             stop_p2p_persistent_network(control_socket_dir, working_hotspot_iface, working_hotspot_iface)
             delete_existing_p2p_persistent_networks(WIFI_INTERFACE, control_socket_dir)
-            shell.execute('%s -p %s -i %s save_config' % (P2P_CLI_PATH, control_socket_dir, WIFI_INTERFACE))
+            shell_execute('%s -p %s -i %s save_config' % (P2P_CLI_PATH, control_socket_dir, WIFI_INTERFACE))
         except:
             LOGGER.exception('failed to delete existing p2p persistent networks')
         try:
             control_socket_dir = get_p2p_supplicant_control_socket_dir()
             stop_p2p_persistent_network(control_socket_dir, 'p2p0', 'p2p0')
             delete_existing_p2p_persistent_networks('p2p0', control_socket_dir)
-            shell.execute('%s -p %s -i %s save_config' % (P2P_CLI_PATH, control_socket_dir, 'p2p0'))
+            shell_execute('%s -p %s -i %s save_config' % (P2P_CLI_PATH, control_socket_dir, 'p2p0'))
         except:
             LOGGER.exception('failed to delete existing p2p persistent networks')
         try:
             netd_execute('softap fwreload %s STA' % WIFI_INTERFACE)
-            shell.execute('netcfg %s down' % WIFI_INTERFACE)
-            shell.execute('netcfg %s up' % WIFI_INTERFACE)
+            shell_execute('netcfg %s down' % WIFI_INTERFACE)
+            shell_execute('netcfg %s up' % WIFI_INTERFACE)
         except:
             LOGGER.exception('failed to reload STA firmware')
         if working_hotspot_iface:
             try:
-                shell.execute('%s dev %s del' % (IW_PATH, working_hotspot_iface))
+                shell_execute('%s dev %s del' % (IW_PATH, working_hotspot_iface))
             except:
                 LOGGER.exception('failed to delete wifi interface')
             return 'hotspot stopped successfully'
@@ -167,16 +167,16 @@ def start_hotspot(ssid, password):
 
 def dump_wifi_status():
     try:
-        shell.execute('netcfg')
+        shell_execute('netcfg')
         get_wifi_chipset()
-        shell.execute('%s phy' % IW_PATH)
+        shell_execute('%s phy' % IW_PATH)
         for iface in list_wifi_ifaces():
             try:
-                shell.execute('%s %s channel' % (IWLIST_PATH, iface))
+                shell_execute('%s %s channel' % (IWLIST_PATH, iface))
             except:
                 LOGGER.exception('failed to log iwlist channel')
             try:
-                shell.execute('%s dev %s link' % (IW_PATH, iface))
+                shell_execute('%s dev %s link' % (IW_PATH, iface))
             except:
                 LOGGER.exception('failed to log iw dev link')
             try:
@@ -184,8 +184,8 @@ def dump_wifi_status():
                     control_socket_dir = get_p2p_supplicant_control_socket_dir()
                 else:
                     control_socket_dir = get_wpa_supplicant_control_socket_dir()
-                shell.execute('%s -p %s -i %s status' % (P2P_CLI_PATH, control_socket_dir, iface))
-                shell.execute('%s -p %s -i %s list_network' % (P2P_CLI_PATH, control_socket_dir, iface))
+                shell_execute('%s -p %s -i %s status' % (P2P_CLI_PATH, control_socket_dir, iface))
+                shell_execute('%s -p %s -i %s list_network' % (P2P_CLI_PATH, control_socket_dir, iface))
             except:
                 LOGGER.exception('failed to log wpa_cli status')
         for pid in os.listdir('/proc'):
@@ -254,9 +254,9 @@ def get_working_hotspot_iface():
 
 def get_working_hotspot_iface_using_wext():
     try:
-        if 'Mode:Master' in shell.execute('%s %s' % (IWCONFIG_PATH, 'wl0.1')):
+        if 'Mode:Master' in shell_execute('%s %s' % (IWCONFIG_PATH, 'wl0.1')):
             return 'wl0.1'
-        if 'Mode:Master' in shell.execute('%s %s' % (IWCONFIG_PATH, WIFI_INTERFACE)):
+        if 'Mode:Master' in shell_execute('%s %s' % (IWCONFIG_PATH, WIFI_INTERFACE)):
             return WIFI_INTERFACE
         return None
     except:
@@ -279,7 +279,7 @@ def get_working_hotspot_iface_using_nl80211():
 def list_wifi_ifaces():
     ifaces = {}
     current_iface = None
-    for line in shell.execute('%s dev' % IW_PATH).splitlines(False):
+    for line in shell_execute('%s dev' % IW_PATH).splitlines(False):
         line = line.strip()
         if not line:
             continue
@@ -294,7 +294,7 @@ def list_wifi_ifaces():
 
 def start_hotspot_interface(wifi_chipset_family, ssid, password):
     try:
-        shell.execute('start p2p_supplicant')
+        shell_execute('start p2p_supplicant')
     except:
         LOGGER.exception('failed to start p2p_supplicant')
     if 'bcm' == wifi_chipset_family:
@@ -310,11 +310,11 @@ def start_hotspot_interface(wifi_chipset_family, ssid, password):
     hotspot_interface = get_working_hotspot_iface()
     if WIFI_INTERFACE == hotspot_interface or not hotspot_interface:
         try:
-            shell.execute('logcat -d -v time -s wpa_supplicant:V')
+            shell_execute('logcat -d -v time -s wpa_supplicant:V')
         except:
             LOGGER.exception('failed to log wpa_supplicant')
         try:
-            shell.execute('logcat -d -v time -s p2p_supplicant:V')
+            shell_execute('logcat -d -v time -s p2p_supplicant:V')
         except:
             LOGGER.exception('failed to log p2p_supplicant')
         raise Exception('working hotspot iface not found after start')
@@ -332,8 +332,8 @@ def wait_for_upstream_wifi_network_connected():
                 and 'p2p' not in default_gateway_iface \
                 and 'ap0' not in default_gateway_iface \
                 and WIFI_INTERFACE not in default_gateway_iface:
-                shell.execute('netcfg %s down' % default_gateway_iface)
-                shell.execute('netcfg %s up' % default_gateway_iface)
+                shell_execute('netcfg %s down' % default_gateway_iface)
+                shell_execute('netcfg %s up' % default_gateway_iface)
         except:
             LOGGER.exception('failed to toggle 3G interface to force wlan reconnect')
     return False
@@ -341,7 +341,7 @@ def wait_for_upstream_wifi_network_connected():
 
 def get_default_gateway_iface():
     try:
-        output = shell.execute('%s route' % IP_PATH)
+        output = shell_execute('%s route' % IP_PATH)
         match = RE_DEFAULT_GATEWAY_IFACE.search(output)
         if match:
             return match.group(1)
@@ -351,7 +351,7 @@ def get_default_gateway_iface():
 
 def get_ip_and_mac(ifname):
     try:
-        output = shell.execute('%s %s' % (IFCONFIG_PATH, ifname)).lower()
+        output = shell_execute('%s %s' % (IFCONFIG_PATH, ifname)).lower()
         match = RE_MAC_ADDRESS.search(output)
         if match:
             mac = match.group(0)
@@ -388,7 +388,7 @@ def get_wifi_chipset():
         if chipset.endswith('6628'):
             return 'mtk', '6628'
     else:
-        if shell.execute('getprop ro.mediatek.platform').strip():
+        if shell_execute('getprop ro.mediatek.platform').strip():
             return 'mtk', 'unknown'
         if os.path.exists('/sys/module/bcmdhd'):
             return 'bcm', 'unknown'
@@ -409,7 +409,7 @@ def get_wifi_modalias():
 
 def get_mediatek_wifi_chipset():
     try:
-        return shell.execute('getprop mediatek.wlan.chip').strip()
+        return shell_execute('getprop mediatek.wlan.chip').strip()
     except:
         LOGGER.exception('failed to get mediatek wifi chipset')
         return ''
@@ -421,7 +421,7 @@ def start_hotspot_on_bcm(ssid, password):
     if 'p2p0' in list_wifi_ifaces():
     # bcmdhd can optionally have p2p0 interface
         LOGGER.info('start p2p persistent group using p2p0')
-        shell.execute('netcfg p2p0 up')
+        shell_execute('netcfg p2p0 up')
         p2p_control_socket_dir = get_p2p_supplicant_control_socket_dir()
         delete_existing_p2p_persistent_networks('p2p0', p2p_control_socket_dir)
         start_p2p_persistent_network('p2p0', p2p_control_socket_dir, ssid, password)
@@ -444,8 +444,8 @@ def load_p2p_firmware(control_socket_dir):
 
 
 def reset_wifi_interface():
-    shell.execute('netcfg %s down' % WIFI_INTERFACE)
-    shell.execute('netcfg %s up' % WIFI_INTERFACE)
+    shell_execute('netcfg %s down' % WIFI_INTERFACE)
+    shell_execute('netcfg %s up' % WIFI_INTERFACE)
     time.sleep(1)
 
 
@@ -463,7 +463,7 @@ def start_hotspot_on_wcnss(ssid, password):
 def load_ap_firmware():
     for i in range(3):
         try:
-            shell.execute('%s ap0' % IFCONFIG_PATH)
+            shell_execute('%s ap0' % IFCONFIG_PATH)
             return
         except:
             pass
@@ -471,7 +471,7 @@ def load_ap_firmware():
         for i in range(5):
             time.sleep(1)
             try:
-                shell.execute('%s ap0' % IFCONFIG_PATH)
+                shell_execute('%s ap0' % IFCONFIG_PATH)
                 return
             except:
                 pass
@@ -482,24 +482,24 @@ def start_hotspot_on_mtk(ssid, password):
     control_socket_dir = get_wpa_supplicant_control_socket_dir()
     log_upstream_wifi_status('before load ap firmware', control_socket_dir)
     load_ap_firmware()
-    shell.execute('netcfg ap0 up')
+    shell_execute('netcfg ap0 up')
     time.sleep(2)
     log_upstream_wifi_status('after loaded ap firmware', control_socket_dir)
     if 'ap0' == get_working_hotspot_iface_using_nl80211():
         return
     control_socket_dir = get_wpa_supplicant_control_socket_dir()
-    shell.execute('%s -p %s -i ap0 reconfigure' % (P2P_CLI_PATH, control_socket_dir))
+    shell_execute('%s -p %s -i ap0 reconfigure' % (P2P_CLI_PATH, control_socket_dir))
     delete_existing_p2p_persistent_networks('ap0', control_socket_dir)
     network_index = start_p2p_persistent_network('ap0', control_socket_dir, ssid, password, sets_channel=True)
     # restart p2p persistent group otherwise the ssid is not usable
-    shell.execute('%s -p %s -i ap0 p2p_group_remove ap0' % (P2P_CLI_PATH, control_socket_dir))
-    shell.execute('%s -p %s -i ap0 p2p_group_add persistent=%s' % (P2P_CLI_PATH, control_socket_dir, network_index))
+    shell_execute('%s -p %s -i ap0 p2p_group_remove ap0' % (P2P_CLI_PATH, control_socket_dir))
+    shell_execute('%s -p %s -i ap0 p2p_group_add persistent=%s' % (P2P_CLI_PATH, control_socket_dir, network_index))
     log_upstream_wifi_status('after p2p persistent group created', control_socket_dir)
 
 
 def start_hotspot_on_wl12xx(ssid, password):
     if 'ap0' not in list_wifi_ifaces():
-        shell.execute(
+        shell_execute(
             '%s %s interface add ap0 type managed' % (IW_PATH, WIFI_INTERFACE))
     assert 'ap0' in list_wifi_ifaces()
     with open(FQROUTER_HOSTAPD_CONF_PATH, 'w') as f:
@@ -507,13 +507,13 @@ def start_hotspot_on_wl12xx(ssid, password):
         f.write(hostapd_template.render(WIFI_INTERFACE, channel=channel or 1, ssid=ssid, password=password))
     os.chmod(FQROUTER_HOSTAPD_CONF_PATH, 0666)
     try:
-        shell.execute('%s hostapd' % KILLALL_PATH)
+        shell_execute('%s hostapd' % KILLALL_PATH)
     except:
         LOGGER.exception('failed to killall hostapd')
     LOGGER.info('start hostapd')
     if start_hostapd():
         return
-    shell.execute('%s dev ap0 del' % IW_PATH)
+    shell_execute('%s dev ap0 del' % IW_PATH)
     LOGGER.info('try start hostapd without ap0')
     if not start_hostapd():
         raise Exception('failed to start hotspot on wl12xx')
@@ -526,7 +526,7 @@ def start_hostapd():
     time.sleep(2)
     if proc.poll():
         LOGGER.error('hostapd failed: %s' % str(proc.communicate()))
-        shell.execute('logcat -d -v time -s hostapd:V')
+        shell_execute('logcat -d -v time -s hostapd:V')
         return False
     else:
         LOGGER.info('hostapd seems like started successfully')
@@ -535,7 +535,7 @@ def start_hostapd():
 
 def get_upstream_frequency_and_channel():
     try:
-        output = shell.execute('%s %s channel' % (IWLIST_PATH, WIFI_INTERFACE))
+        output = shell_execute('%s %s channel' % (IWLIST_PATH, WIFI_INTERFACE))
         for line in output.splitlines():
             line = line.strip()
             if not line:
@@ -552,7 +552,7 @@ def get_upstream_frequency_and_channel():
 
 def get_upstream_frequency():
     try:
-        output = shell.execute('%s dev %s link' % (IW_PATH, WIFI_INTERFACE))
+        output = shell_execute('%s dev %s link' % (IW_PATH, WIFI_INTERFACE))
         for line in output.splitlines():
             if not line:
                 continue
@@ -569,10 +569,10 @@ def setup_networking(hotspot_interface):
     control_socket_dir = get_wpa_supplicant_control_socket_dir()
     setup_network_interface_ip(hotspot_interface, '10.24.1.1', '255.255.255.0')
     try:
-        shell.execute('%s dnsmasq' % KILLALL_PATH)
+        shell_execute('%s dnsmasq' % KILLALL_PATH)
     except:
         LOGGER.exception('failed to killall dnsmasq')
-    shell.execute('%s -i %s --dhcp-authoritative --no-negcache --user=root --no-resolv --no-hosts '
+    shell_execute('%s -i %s --dhcp-authoritative --no-negcache --user=root --no-resolv --no-hosts '
                   '--server=8.8.8.8 --dhcp-range=10.24.1.2,10.24.1.254,12h '
                   '--dhcp-leasefile=/data/data/fq.router/dnsmasq.leases '
                   '--pid-file=/data/data/fq.router/dnsmasq.pid' % (DNSMASQ_PATH, hotspot_interface))
@@ -582,12 +582,12 @@ def setup_networking(hotspot_interface):
 def setup_lo_alias():
     setup_network_interface_ip('lo:1', '10.1.2.3', '255.255.255.255')
     enable_ipv4_forward()
-    shell.execute('iptables -P FORWARD ACCEPT')
+    shell_execute('iptables -P FORWARD ACCEPT')
     iptables.insert_rules(RULES)
 
 
 def setup_network_interface_ip(iface, ip, netmask):
-    shell.execute('%s %s %s netmask %s' % (IFCONFIG_PATH, iface, ip, netmask))
+    shell_execute('%s %s %s netmask %s' % (IFCONFIG_PATH, iface, ip, netmask))
 
 
 def enable_ipv4_forward():
@@ -599,9 +599,9 @@ def enable_ipv4_forward():
 def log_upstream_wifi_status(log, control_socket_dir):
     try:
         LOGGER.info('=== %s ===' % log)
-        shell.execute('%s -p %s -i %s status' % (P2P_CLI_PATH, control_socket_dir, WIFI_INTERFACE))
-        shell.execute('%s dev %s link' % (IW_PATH, WIFI_INTERFACE))
-        shell.execute('netcfg')
+        shell_execute('%s -p %s -i %s status' % (P2P_CLI_PATH, control_socket_dir, WIFI_INTERFACE))
+        shell_execute('%s dev %s link' % (IW_PATH, WIFI_INTERFACE))
+        shell_execute('netcfg')
     except:
         LOGGER.exception('failed to log upstream wifi status')
 
@@ -609,21 +609,21 @@ def log_upstream_wifi_status(log, control_socket_dir):
 def start_p2p_persistent_network(iface, control_socket_dir, ssid, password, sets_channel=False):
     wpa_supplicant_control_socket_dir = get_wpa_supplicant_control_socket_dir()
     try:
-        shell.execute('%s -p %s -i %s p2p_set disabled 0' % (P2P_CLI_PATH, control_socket_dir, iface))
+        shell_execute('%s -p %s -i %s p2p_set disabled 0' % (P2P_CLI_PATH, control_socket_dir, iface))
     except:
         LOGGER.exception('failed to p2p_set disabled')
     try:
-        shell.execute('%s -p %s -i %s p2p_set disabled 0' % (P2P_CLI_PATH, control_socket_dir, WIFI_INTERFACE))
+        shell_execute('%s -p %s -i %s p2p_set disabled 0' % (P2P_CLI_PATH, control_socket_dir, WIFI_INTERFACE))
     except:
         LOGGER.exception('failed to p2p_set disabled')
     set_driver_param(control_socket_dir, iface, 'use_p2p_group_interface=1')
     set_driver_param(wpa_supplicant_control_socket_dir, WIFI_INTERFACE, 'use_p2p_group_interface=1')
     set_driver_param(control_socket_dir, iface, 'use_multi_chan_concurrent=0')
     set_driver_param(wpa_supplicant_control_socket_dir, WIFI_INTERFACE, 'use_multi_chan_concurrent=0')
-    index = shell.execute('%s -p %s -i %s add_network' % (P2P_CLI_PATH, control_socket_dir, iface)).strip()
+    index = shell_execute('%s -p %s -i %s add_network' % (P2P_CLI_PATH, control_socket_dir, iface)).strip()
 
     def set_network(param):
-        shell.execute('%s -p %s -i %s set_network %s %s' % (P2P_CLI_PATH, control_socket_dir, iface, index, param))
+        shell_execute('%s -p %s -i %s set_network %s %s' % (P2P_CLI_PATH, control_socket_dir, iface, index, param))
 
     set_network('mode 3')
     set_network('disabled 2')
@@ -639,17 +639,17 @@ def start_p2p_persistent_network(iface, control_socket_dir, ssid, password, sets
         reset_p2p_channels(iface, control_socket_dir, channel, reg_class)
         reset_p2p_channels(WIFI_INTERFACE, wpa_supplicant_control_socket_dir, channel, reg_class)
     if frequency:
-        shell.execute('%s -p %s -i %s p2p_group_add persistent=%s freq=%s ' %
+        shell_execute('%s -p %s -i %s p2p_group_add persistent=%s freq=%s ' %
                       (P2P_CLI_PATH, control_socket_dir, iface, index, frequency.replace('.', '')))
     else:
-        shell.execute('%s -p %s -i %s p2p_group_add persistent=%s' % (P2P_CLI_PATH, control_socket_dir, iface, index))
+        shell_execute('%s -p %s -i %s p2p_group_add persistent=%s' % (P2P_CLI_PATH, control_socket_dir, iface, index))
     time.sleep(2)
     return index
 
 
 def set_driver_param(control_socket_dir, iface, param):
     try:
-        shell.execute(
+        shell_execute(
             '%s -p %s -i %s set driver_param %s' %
             (P2P_CLI_PATH, control_socket_dir, iface, param))
     except:
@@ -658,21 +658,21 @@ def set_driver_param(control_socket_dir, iface, param):
 
 def reset_p2p_channels(iface, control_socket_dir, channel, reg_class):
     try:
-        shell.execute('%s -p %s -i %s set p2p_oper_channel %s' %
+        shell_execute('%s -p %s -i %s set p2p_oper_channel %s' %
                       (P2P_CLI_PATH, control_socket_dir, iface, channel))
-        shell.execute('%s -p %s -i %s set p2p_oper_reg_class %s' %
+        shell_execute('%s -p %s -i %s set p2p_oper_reg_class %s' %
                       (P2P_CLI_PATH, control_socket_dir, iface, reg_class))
-        shell.execute('%s -p %s -i %s set p2p_listen_channel %s' %
+        shell_execute('%s -p %s -i %s set p2p_listen_channel %s' %
                       (P2P_CLI_PATH, control_socket_dir, iface, channel))
-        shell.execute('%s -p %s -i %s set p2p_listen_reg_class %s' %
+        shell_execute('%s -p %s -i %s set p2p_listen_reg_class %s' %
                       (P2P_CLI_PATH, control_socket_dir, iface, reg_class))
-        shell.execute('%s -p %s -i %s save_config' % (P2P_CLI_PATH, control_socket_dir, iface))
+        shell_execute('%s -p %s -i %s save_config' % (P2P_CLI_PATH, control_socket_dir, iface))
     except:
         LOGGER.exception('failed to reset p2p channels')
 
 
 def get_p2p_persistent_iface():
-    for line in shell.execute('netcfg').splitlines(False):
+    for line in shell_execute('netcfg').splitlines(False):
         if line.startswith('p2p-'):
             return line.split(' ')[0]
         if line.startswith('ap0'):
@@ -682,7 +682,7 @@ def get_p2p_persistent_iface():
 
 def stop_p2p_persistent_network(control_socket_dir, control_iface, iface):
     try:
-        shell.execute(
+        shell_execute(
             '%s -p %s -i %s p2p_group_remove %s' %
             (P2P_CLI_PATH, control_socket_dir, control_iface, iface))
     except:
@@ -699,13 +699,13 @@ def delete_existing_p2p_persistent_networks(iface, control_socket_dir):
 
 
 def delete_network(iface, control_socket_dir, index):
-    shell.execute(
+    shell_execute(
         '%s -p %s -i %s remove_network %s' %
         (P2P_CLI_PATH, control_socket_dir, iface, index))
 
 
 def list_existing_networks(iface, control_socket_dir):
-    output = shell.execute('%s -p %s -i %s list_network' % (P2P_CLI_PATH, control_socket_dir, iface))
+    output = shell_execute('%s -p %s -i %s list_network' % (P2P_CLI_PATH, control_socket_dir, iface))
     LOGGER.info('existing networks: %s' % output)
     existing_networks = {}
     for line in output.splitlines(False)[1:]:
@@ -790,3 +790,12 @@ def netd_execute(command):
         netd_execute(command)
 
 
+def shell_execute(command):
+    LOGGER.info('execute: %s' % command)
+    try:
+        output = subprocess.check_output(shlex.split(command), stderr=subprocess.STDOUT)
+        LOGGER.info('succeed, output: %s' % output)
+    except subprocess.CalledProcessError, e:
+        LOGGER.error('failed, output: %s' % e.output)
+        raise
+    return output
