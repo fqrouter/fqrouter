@@ -1,6 +1,7 @@
 import atexit
 import signal
 import logging
+import sys
 
 import gevent
 
@@ -21,6 +22,7 @@ def execute():
         except:
             LOGGER.exception('failed to execute shutdown hook: %s' % hook)
     LOGGER.info('shutdown hook completed')
+    sys.exit(0)
 
 
 atexit.register(execute)

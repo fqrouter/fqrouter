@@ -36,7 +36,7 @@ def resolve_latest_version():
         answer = answers.get(VER_DOMAIN)
         answer = answer[0] if answer else ''
         LOGGER.info('resolved latest version %s => %s' % (VER_DOMAIN, answer))
-        return answer or ''
+        return answer.strip() or ''
     except:
         LOGGER.exception('failed to resolve latest version %s' % VER_DOMAIN)
         return ''
