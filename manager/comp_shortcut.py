@@ -4,25 +4,19 @@ import os
 from gevent import subprocess
 import gevent
 
-import shell
-import iptables
-import shutdown_hook
-
+from utils import shell
+from utils import iptables
 
 LOGGER = logging.getLogger('fqrouter.%s' % __name__)
 nfqueue_ipset_process = None
 
 
-def run():
-    try:
-        insert_iptables_rules()
-        start_nfqueue_ipset()
-    except:
-        LOGGER.exception('failed to start shortcut service')
-        clean()
+def start():
+    insert_iptables_rules()
+    start_nfqueue_ipset()
 
 
-def clean():
+def stop():
     delete_iptables_rules()
     try:
         if nfqueue_ipset_process:
@@ -58,7 +52,6 @@ def delete_iptables_rules():
 
 def start_nfqueue_ipset():
     global nfqueue_ipset_process
-    shutdown_hook.add(clean)
     nfqueue_ipset_process = subprocess.Popen(
         [shell.PYTHON_PATH, '-m', 'fqsocks.nfqueue_ipset',
          '--log-level', 'INFO',

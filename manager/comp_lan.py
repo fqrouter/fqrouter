@@ -5,8 +5,8 @@ import json
 from gevent import subprocess
 import gevent
 
-import wifi
-import shell
+import comp_wifi
+from utils import shell
 
 
 LOGGER = logging.getLogger('fqrouter.%s' % __name__)
@@ -15,11 +15,15 @@ picked_devices = {}
 fqlan_process = None
 
 
-def run():
-    pass
+def start():
+    return [
+        ('GET', 'lan/scan', handle_scan),
+        ('POST', 'lan/forge-default-gateway', handle_forge_default_gateway),
+        ('POST', 'lan/restore-default-gateway', handle_restore_default_gateway)
+    ]
 
 
-def clean():
+def stop():
     global fqlan_process
     try:
         if fqlan_process:
@@ -28,6 +32,12 @@ def clean():
     except:
         LOGGER.exception('failed to terminate fqlan')
     fqlan_process = None
+
+
+def is_alive():
+    if fqlan_process:
+        return fqlan_process.poll() is None
+    return False
 
 
 def handle_forge_default_gateway(environ, start_response):
@@ -54,7 +64,7 @@ def handle_scan(environ, start_response):
             [shell.PYTHON_PATH, '-m', 'fqlan',
              '--log-level', 'INFO',
              '--log-file', '/data/data/fq.router/scan.log',
-             '--lan-interface', wifi.WIFI_INTERFACE,
+             '--lan-interface', comp_wifi.WIFI_INTERFACE,
              '--ifconfig-command', '/data/data/fq.router/busybox',
              '--ip-command', '/data/data/fq.router/busybox',
              'scan', '--hostname', '--mark', '0xcafe'],
@@ -75,7 +85,7 @@ def handle_scan(environ, start_response):
 
 def restart_fqlan():
     global fqlan_process
-    clean()
+    stop()
     if not picked_devices:
         LOGGER.info('no picked devices, fqlan will not start')
         return
@@ -83,7 +93,7 @@ def restart_fqlan():
         [shell.PYTHON_PATH, '-m', 'fqlan',
          '--log-level', 'INFO',
          '--log-file', '/data/data/fq.router/fqlan.log',
-         '--lan-interface', wifi.WIFI_INTERFACE,
+         '--lan-interface', comp_wifi.WIFI_INTERFACE,
          '--ifconfig-command', '/data/data/fq.router/busybox',
          '--ip-command', '/data/data/fq.router/busybox',
          'forge'] + ['%s,%s' % (ip, mac) for ip, mac in picked_devices.items()],

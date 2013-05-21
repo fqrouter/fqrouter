@@ -1,14 +1,15 @@
-adb push dns_service.py /sdcard/manager/dns_service.py
-adb push iptables.py /sdcard/manager/iptables.py
-adb push shutdown_hook.py /sdcard/manager/shutdown_hook.py
 adb push main.py /sdcard/manager/main.py
-adb push wifi.py /sdcard/manager/wifi.py
-adb push hostapd_template.py /sdcard/manager/hostapd_template.py
-adb push lan_service.py /sdcard/manager/lan_service.py
-adb push version.py /sdcard/manager/version.py
-adb push shell.py /sdcard/manager/shell.py
-adb push proxy_service.py /sdcard/manager/proxy_service.py
-adb push shortcut_service.py /sdcard/manager/shortcut_service.py
-adb push scrambler_service.py /sdcard/manager/scrambler_service.py
-adb shell su -c "rm /sdcard/manager/*.pyc"
+adb push comp_dns.py /sdcard/manager/comp_dns.py
+adb push comp_lan.py /sdcard/manager/comp_lan.py
+adb push comp_version.py /sdcard/manager/comp_version.py
+adb push comp_proxy.py /sdcard/manager/comp_proxy.py
+adb push comp_shortcut.py /sdcard/manager/comp_shortcut.py
+adb push comp_scrambler.py /sdcard/manager/comp_scrambler.py
+adb push comp_wifi/__init__.py /sdcard/manager/comp_wifi/__init__.py
+adb push comp_wifi/wifi.py /sdcard/manager/comp_wifi/wifi.py
+adb push comp_wifi/hostapd_template.py /sdcard/manager/comp_wifi/hostapd_template.py
+adb push utils/__init__.py /sdcard/manager/utils/__init__.py
+adb push utils/iptables.py /sdcard/manager/utils/iptables.py
+adb push utils/shutdown_hook.py /sdcard/manager/utils/shutdown_hook.py
+adb push utils/shell.py /sdcard/manager/utils/shell.py
 adb shell su -c "PYTHONHOME=/data/data/fq.router/python /data/data/fq.router/busybox sh /data/data/fq.router/python/bin/python-launcher.sh /sdcard/manager/main.py"

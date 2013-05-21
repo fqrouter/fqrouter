@@ -1,7 +1,6 @@
 import os
 import logging
 import socket
-import httplib
 import re
 import traceback
 import shlex
@@ -9,7 +8,7 @@ import shlex
 from gevent import subprocess
 import gevent
 
-import iptables
+from utils import iptables
 import hostapd_template
 
 
@@ -50,7 +49,6 @@ CHANNELS = {
 netd_socket = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
 netd_socket.connect('/dev/socket/netd')
 netd_sequence_number = None # turn off by default
-on_wifi_hotspot_started = None
 
 RULES = [
     (
@@ -60,38 +58,6 @@ RULES = [
         {'target': 'MASQUERADE', 'source': '10.1.2.3', 'destination': '0.0.0.0/0'},
         ('nat', 'POSTROUTING', '-s 10.1.2.3 -j MASQUERADE')
     )]
-
-
-def handle_start(environ, start_response):
-    ssid = environ['REQUEST_ARGUMENTS']['ssid'].value
-    password = environ['REQUEST_ARGUMENTS']['password'].value
-    success, message = start_hotspot(ssid, password)
-    if on_wifi_hotspot_started:
-        on_wifi_hotspot_started()
-    status = httplib.OK if success else httplib.BAD_GATEWAY
-    start_response(status, [('Content-Type', 'text/plain')])
-    yield message
-
-
-def handle_stop(environ, start_response):
-    start_response(httplib.OK, [('Content-Type', 'text/plain')])
-    yield stop_hotspot()
-
-
-def handle_setup(environ, start_response):
-    for i in range(10):
-        iface = get_working_hotspot_iface()
-        if not iface:
-            gevent.sleep(2)
-            continue
-        setup_networking(iface)
-        start_response(httplib.OK, [('Content-Type', 'text/plain')])
-        return []
-
-
-def handle_started(environ, start_response):
-    start_response(httplib.OK, [('Content-Type', 'text/plain')])
-    yield 'TRUE' if get_working_hotspot_iface() else 'FALSE'
 
 
 def stop_hotspot():

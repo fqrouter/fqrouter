@@ -87,6 +87,11 @@ def contains_rule(table, chain, signature):
         signature_parts = set(signature.items())
         if not (signature_parts - set(rule.items())): # all parts matched
             return True
+        if 'tcpflags: ' in signature.get('extra', ''):
+            signature['extra'] = signature['extra'].replace('tcpflags: ', 'tcp flags:')
+            signature_parts = set(signature.items())
+        if not (signature_parts - set(rule.items())): # all parts matched
+            return True
     return False
 
 

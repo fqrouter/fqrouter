@@ -3,43 +3,36 @@ import logging
 from gevent import subprocess
 import gevent
 
-import shell
-import iptables
-import shutdown_hook
-
+from utils import shell
+from utils import iptables
 
 LOGGER = logging.getLogger('fqrouter.%s' % __name__)
 fqting_process = None
 
 
-def run():
+def start():
     global fqting_process
-    try:
-        shutdown_hook.add(clean)
-        insert_iptables_rules()
-        fqting_process = subprocess.Popen(
-            [shell.PYTHON_PATH, '-m', 'fqting',
-             '--log-level', 'INFO',
-             '--log-file', '/data/data/fq.router/fqting.log',
-             '--queue-number', '2',
-             '--mark', '0xcafe'],
-            stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
-        gevent.sleep(1)
-        if fqting_process.poll() is not None:
-            try:
-                output, _ = fqting_process.communicate()
-                LOGGER.error('fqting exit output: %s' % output)
-            except:
-                LOGGER.exception('failed to log fqting exit output')
-            raise Exception('failed to start fqting')
-        LOGGER.info('fqting started: %s' % fqting_process.pid)
-        gevent.spawn(monitor_fqting)
-    except:
-        LOGGER.exception('failed to start scrambler service')
-        clean()
+    insert_iptables_rules()
+    fqting_process = subprocess.Popen(
+        [shell.PYTHON_PATH, '-m', 'fqting',
+         '--log-level', 'INFO',
+         '--log-file', '/data/data/fq.router/fqting.log',
+         '--queue-number', '2',
+         '--mark', '0xcafe'],
+        stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
+    gevent.sleep(1)
+    if fqting_process.poll() is not None:
+        try:
+            output, _ = fqting_process.communicate()
+            LOGGER.error('fqting exit output: %s' % output)
+        except:
+            LOGGER.exception('failed to log fqting exit output')
+        raise Exception('failed to start fqting')
+    LOGGER.info('fqting started: %s' % fqting_process.pid)
+    gevent.spawn(monitor_fqting)
 
 
-def clean():
+def stop():
     delete_iptables_rules()
     try:
         if fqting_process:

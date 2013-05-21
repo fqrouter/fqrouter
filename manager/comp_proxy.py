@@ -3,21 +3,20 @@ import logging
 from gevent import subprocess
 import gevent
 
-import shell
-import iptables
-import shutdown_hook
+from utils import shell
+from utils import iptables
 
-
+__MANDATORY__ = True
 LOGGER = logging.getLogger('fqrouter.%s' % __name__)
 fqsocks_process = None
 
 
-def run():
+def start():
     insert_iptables_rules()
     start_fqsocks()
 
 
-def clean():
+def stop():
     delete_iptables_rules()
     try:
         if fqsocks_process:
@@ -56,7 +55,6 @@ def delete_iptables_rules():
 
 def start_fqsocks():
     global fqsocks_process
-    shutdown_hook.add(clean)
     fqsocks_process = subprocess.Popen(
         [shell.PYTHON_PATH, '-m', 'fqsocks',
          '--log-level', 'INFO',

@@ -4,18 +4,16 @@ import json
 from gevent import subprocess
 import gevent
 
-import shell
-import iptables
-import shutdown_hook
+from utils import shell
+from utils import iptables
 
-
+__MANDATORY__ = True
 LOGGER = logging.getLogger('fqrouter.%s' % __name__)
 fqdns_process = None
 
 
-def run():
+def start():
     global fqdns_process
-    shutdown_hook.add(clean)
     insert_iptables_rules()
     fqdns_process = subprocess.Popen(
         [shell.PYTHON_PATH, '-m', 'fqdns',
@@ -37,7 +35,7 @@ def run():
     gevent.spawn(monitor_fqdns)
 
 
-def clean():
+def stop():
     delete_iptables_rules()
     try:
         if fqdns_process:
@@ -82,21 +80,3 @@ def monitor_fqdns():
     except:
         LOGGER.exception('fqdns died')
 
-
-def resolve(record_type, domain_names):
-    try:
-        args = [shell.PYTHON_PATH, '-m', 'fqdns', 'resolve',
-                '--retry', '3', '--timeout', '2',
-                '--record-type', record_type] + domain_names
-        LOGGER.info('executing: %s' % str(args))
-        proc = subprocess.Popen(args, stderr=subprocess.PIPE)
-        _, output = proc.communicate()
-        LOGGER.info('resolved: %s' % output)
-        return json.loads(output)
-    except:
-        LOGGER.exception('failed to resolve: %s' % domain_names)
-        return {}
-
-
-def get_domain(ip):
-    return None

@@ -1,0 +1,59 @@
+import httplib
+
+import gevent
+
+from wifi import WIFI_INTERFACE
+from wifi import get_working_hotspot_iface
+from wifi import setup_lo_alias
+from wifi import start_hotspot
+from wifi import stop_hotspot
+from wifi import setup_networking
+
+
+def start():
+    setup_lo_alias()
+    return [
+        ('POST', 'wifi/start', handle_start),
+        ('POST', 'wifi/stop', handle_stop),
+        ('GET', 'wifi/started', handle_started),
+        ('POST', 'wifi/setup', handle_setup)
+    ]
+
+
+def stop():
+    if get_working_hotspot_iface():
+        stop_hotspot()
+
+
+def is_alive():
+    return get_working_hotspot_iface()
+
+
+def handle_start(environ, start_response):
+    ssid = environ['REQUEST_ARGUMENTS']['ssid'].value
+    password = environ['REQUEST_ARGUMENTS']['password'].value
+    success, message = start_hotspot(ssid, password)
+    status = httplib.OK if success else httplib.BAD_GATEWAY
+    start_response(status, [('Content-Type', 'text/plain')])
+    yield message
+
+
+def handle_stop(environ, start_response):
+    start_response(httplib.OK, [('Content-Type', 'text/plain')])
+    yield stop_hotspot()
+
+
+def handle_setup(environ, start_response):
+    for i in range(10):
+        iface = get_working_hotspot_iface()
+        if not iface:
+            gevent.sleep(2)
+            continue
+        setup_networking(iface)
+        start_response(httplib.OK, [('Content-Type', 'text/plain')])
+        return []
+
+
+def handle_started(environ, start_response):
+    start_response(httplib.OK, [('Content-Type', 'text/plain')])
+    yield 'TRUE' if get_working_hotspot_iface() else 'FALSE'

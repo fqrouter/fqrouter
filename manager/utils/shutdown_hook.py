@@ -1,7 +1,8 @@
-import os
 import atexit
 import signal
 import logging
+
+import gevent
 
 
 LOGGER = logging.getLogger('fqrouter.%s' % __name__)
@@ -23,15 +24,5 @@ def execute():
 
 
 atexit.register(execute)
-
-
-def handle_exit_signals(signum, frame):
-    try:
-        execute()
-    finally:
-        signal.signal(signum, signal.SIG_DFL)
-        os.kill(os.getpid(), signum) # Rethrow signal
-
-
-signal.signal(signal.SIGTERM, handle_exit_signals)
-signal.signal(signal.SIGINT, handle_exit_signals)
+gevent.signal(signal.SIGTERM, execute)
+gevent.signal(signal.SIGINT, execute)
