@@ -1,7 +1,7 @@
 import logging
-import subprocess
-import time
-import thread
+
+from gevent import subprocess
+import gevent
 
 import shell
 import iptables
@@ -24,7 +24,7 @@ def run():
              '--queue-number', '2',
              '--mark', '0xcafe'],
             stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
-        time.sleep(1)
+        gevent.sleep(1)
         if fqting_process.poll() is not None:
             try:
                 output, _ = fqting_process.communicate()
@@ -33,7 +33,7 @@ def run():
                 LOGGER.exception('failed to log fqting exit output')
             raise Exception('failed to start fqting')
         LOGGER.info('fqting started: %s' % fqting_process.pid)
-        thread.start_new(monitor_fqting, ())
+        gevent.spawn(monitor_fqting)
     except:
         LOGGER.exception('failed to start scrambler service')
         clean()

@@ -1,7 +1,7 @@
 import logging
-import subprocess
-import time
-import thread
+
+from gevent import subprocess
+import gevent
 
 import shell
 import iptables
@@ -68,7 +68,7 @@ def start_fqsocks():
          '--proxy', 'dynamic,n=10,type=goagent,dns_record=goagent#n#.fqrouter.com',
          '--google-host', 'goagent-google-ip.fqrouter.com'],
         stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
-    time.sleep(1)
+    gevent.sleep(1)
     if fqsocks_process.poll() is not None:
         try:
             output, _ = fqsocks_process.communicate()
@@ -77,7 +77,7 @@ def start_fqsocks():
             LOGGER.exception('failed to log fqsocks exit output')
         raise Exception('failed to start fqsocks')
     LOGGER.info('fqsocks started: %s' % fqsocks_process.pid)
-    thread.start_new(monitor_fqsocks, ())
+    gevent.spawn(monitor_fqsocks)
 
 
 def monitor_fqsocks():

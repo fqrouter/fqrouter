@@ -1,8 +1,8 @@
 import logging
-import subprocess
-import time
-import thread
 import os
+
+from gevent import subprocess
+import gevent
 
 import shell
 import iptables
@@ -66,7 +66,7 @@ def start_nfqueue_ipset():
          '--rule', 'dst,china,ACCEPT',
          '--default', '0xdead'],
         stdout=subprocess.PIPE, stderr=subprocess.STDOUT, cwd=os.path.dirname(__file__))
-    time.sleep(1)
+    gevent.sleep(1)
     if nfqueue_ipset_process.poll() is not None:
         try:
             output, _ = nfqueue_ipset_process.communicate()
@@ -75,7 +75,7 @@ def start_nfqueue_ipset():
             LOGGER.exception('failed to log nfqueue-ipset exit output')
         raise Exception('failed to start nfqueue-ipset')
     LOGGER.info('nfqueue-ipset started: %s' % nfqueue_ipset_process.pid)
-    thread.start_new(monitor_nfqueue_ipset, ())
+    gevent.spawn(monitor_nfqueue_ipset)
 
 
 def monitor_nfqueue_ipset():

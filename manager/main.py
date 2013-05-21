@@ -2,8 +2,8 @@ import os
 import logging
 import logging.handlers
 import sys
-from SocketServer import ThreadingMixIn
-
+from gevent.wsgi import WSGIServer
+import gevent.monkey
 
 ROOT_DIR = os.path.dirname(__file__)
 LOG_DIR = '/data/data/fq.router'
@@ -29,11 +29,9 @@ import httplib
 import wifi
 import version
 import cgi
-import wsgiref.simple_server
 import dns_service
 import proxy_service
 import scrambler_service
-import shutdown_hook
 import lan_service
 import shortcut_service
 
@@ -90,22 +88,15 @@ def handle_request(environ, start_response):
 def get_http_response(code):
     return '%s %s' % (code, httplib.responses[code])
 
-# TODO: redesign shutdown hook
-class MultiThreadedWSGIServer(ThreadingMixIn, wsgiref.simple_server.WSGIServer):
-    pass
-
 
 def run():
-    setup_logging()
     LOGGER.info('environment: %s' % os.environ.items())
     wifi.setup_lo_alias()
     for service in SERVICES:
         service.run()
     LOGGER.info('services started')
     try:
-        httpd = wsgiref.simple_server.make_server(
-            '127.0.0.1', 8318, handle_request,
-            server_class=MultiThreadedWSGIServer)
+        httpd = WSGIServer(('', 8318), handle_request)
         LOGGER.info('serving HTTP on port 8318...')
     except:
         LOGGER.exception('failed to start HTTP server on port 8318')
@@ -114,7 +105,6 @@ def run():
 
 
 def clean():
-    setup_logging()
     LOGGER.info('clean...')
     for service in reversed(SERVICES):
         try:
@@ -124,8 +114,9 @@ def clean():
 
 
 if '__main__' == __name__:
+    gevent.monkey.patch_all()
+    setup_logging()
     if len(sys.argv) > 1:
-        shutdown_hook.shutdown_hooks = []
         action = sys.argv[1]
         if 'clean' == action:
             clean()

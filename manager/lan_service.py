@@ -1,9 +1,9 @@
-import subprocess
 import logging
 import httplib
 import json
-import time
-import thread
+
+from gevent import subprocess
+import gevent
 
 import wifi
 import shell
@@ -88,7 +88,7 @@ def restart_fqlan():
          '--ip-command', '/data/data/fq.router/busybox',
          'forge'] + ['%s,%s' % (ip, mac) for ip, mac in picked_devices.items()],
         stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
-    time.sleep(1)
+    gevent.sleep(1)
     if fqlan_process.poll() is not None:
         try:
             output, _ = fqlan_process.communicate()
@@ -97,7 +97,7 @@ def restart_fqlan():
             LOGGER.exception('failed to log fqlan exit output')
         raise Exception('failed to start fqlan')
     LOGGER.info('fqlan started: %s' % fqlan_process.pid)
-    thread.start_new(monitor_fqlan, ())
+    gevent.spawn(monitor_fqlan)
 
 
 def monitor_fqlan():

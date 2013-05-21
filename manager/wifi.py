@@ -1,12 +1,13 @@
 import os
 import logging
 import socket
-import subprocess
-import time
 import httplib
 import re
 import traceback
 import shlex
+
+from gevent import subprocess
+import gevent
 
 import iptables
 import hostapd_template
@@ -81,7 +82,7 @@ def handle_setup(environ, start_response):
     for i in range(10):
         iface = get_working_hotspot_iface()
         if not iface:
-            time.sleep(2)
+            gevent.sleep(2)
             continue
         setup_networking(iface)
         start_response(httplib.OK, [('Content-Type', 'text/plain')])
@@ -323,7 +324,7 @@ def start_hotspot_interface(wifi_chipset_family, ssid, password):
 
 def wait_for_upstream_wifi_network_connected():
     for i in range(15):
-        time.sleep(1)
+        gevent.sleep(1)
         if get_ip_and_mac(WIFI_INTERFACE)[0]:
             return True
         try:
@@ -446,7 +447,7 @@ def load_p2p_firmware(control_socket_dir):
 def reset_wifi_interface():
     shell_execute('netcfg %s down' % WIFI_INTERFACE)
     shell_execute('netcfg %s up' % WIFI_INTERFACE)
-    time.sleep(1)
+    gevent.sleep(1)
 
 
 def start_hotspot_on_wcnss(ssid, password):
@@ -469,7 +470,7 @@ def load_ap_firmware():
             pass
         netd_execute('softap fwreload %s AP' % WIFI_INTERFACE)
         for i in range(5):
-            time.sleep(1)
+            gevent.sleep(1)
             try:
                 shell_execute('%s ap0' % IFCONFIG_PATH)
                 return
@@ -483,7 +484,7 @@ def start_hotspot_on_mtk(ssid, password):
     log_upstream_wifi_status('before load ap firmware', control_socket_dir)
     load_ap_firmware()
     shell_execute('netcfg ap0 up')
-    time.sleep(2)
+    gevent.sleep(2)
     log_upstream_wifi_status('after loaded ap firmware', control_socket_dir)
     if 'ap0' == get_working_hotspot_iface_using_nl80211():
         return
@@ -523,7 +524,7 @@ def start_hostapd():
     proc = subprocess.Popen(
         [HOSTAPD_PATH, '-dd', FQROUTER_HOSTAPD_CONF_PATH],
         cwd='/data/misc/wifi', stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
-    time.sleep(2)
+    gevent.sleep(2)
     if proc.poll():
         LOGGER.error('hostapd failed: %s' % str(proc.communicate()))
         shell_execute('logcat -d -v time -s hostapd:V')
@@ -643,7 +644,7 @@ def start_p2p_persistent_network(iface, control_socket_dir, ssid, password, sets
                       (P2P_CLI_PATH, control_socket_dir, iface, index, frequency.replace('.', '')))
     else:
         shell_execute('%s -p %s -i %s p2p_group_add persistent=%s' % (P2P_CLI_PATH, control_socket_dir, iface, index))
-    time.sleep(2)
+    gevent.sleep(2)
     return index
 
 

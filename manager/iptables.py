@@ -1,6 +1,6 @@
 import logging
 import re
-import subprocess
+from gevent import subprocess
 import shlex
 
 LOGGER = logging.getLogger('fqrouter.%s' % __name__)

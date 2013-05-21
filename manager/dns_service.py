@@ -1,8 +1,8 @@
 import logging
-import subprocess
 import json
-import time
-import thread
+
+from gevent import subprocess
+import gevent
 
 import shell
 import iptables
@@ -25,7 +25,7 @@ def run():
          'serve', '--listen', '10.1.2.3:5353',
          '--enable-china-domain', '--enable-hosted-domain'],
         stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
-    time.sleep(1)
+    gevent.sleep(1)
     if fqdns_process.poll() is not None:
         try:
             output, _ = fqdns_process.communicate()
@@ -34,7 +34,7 @@ def run():
             LOGGER.exception('failed to log fqdns exit output')
         raise Exception('failed to start fqdns')
     LOGGER.info('fqdns started: %s' % fqdns_process.pid)
-    thread.start_new(monitor_fqdns, ())
+    gevent.spawn(monitor_fqdns)
 
 
 def clean():
