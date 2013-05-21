@@ -508,6 +508,15 @@ def start_hotspot_on_wl12xx(ssid, password):
     except:
         LOGGER.exception('failed to killall hostapd')
     LOGGER.info('start hostapd')
+    if start_hostapd():
+        return
+    shell.execute('%s dev ap0 del' % IW_PATH)
+    LOGGER.info('try start hostapd without ap0')
+    if not start_hostapd():
+        raise Exception('failed to start hotspot on wl12xx')
+
+
+def start_hostapd():
     proc = subprocess.Popen(
         [HOSTAPD_PATH, '-dd', FQROUTER_HOSTAPD_CONF_PATH],
         cwd='/data/misc/wifi', stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
@@ -515,9 +524,10 @@ def start_hotspot_on_wl12xx(ssid, password):
     if proc.poll():
         LOGGER.error('hostapd failed: %s' % str(proc.communicate()))
         shell.execute('logcat -d -v time -s hostapd:V')
-        raise Exception('hostapd failed')
+        return False
     else:
         LOGGER.info('hostapd seems like started successfully')
+        return True
 
 
 def get_upstream_frequency_and_channel():
