@@ -14,8 +14,8 @@ PYTHON_ZIP_FILE = os.path.join(PAYLOAD_DIR, 'python.zip')
 PYTHON_DIR = os.path.join(PAYLOAD_DIR, 'python')
 WIFI_TOOLS_ZIP_FILE = os.path.join(PAYLOAD_DIR, 'wifi-tools.zip')
 WIFI_TOOLS_DIR = os.path.join(PAYLOAD_DIR, 'wifi-tools')
-DPKT_TAR_GZ_FILE = os.path.join(PAYLOAD_DIR, 'dpkt-1.7.tar.gz')
-DPKT_DIR = os.path.join(PAYLOAD_DIR, 'dpkt-1.7')
+DPKT_ZIP_FILE = os.path.join(PAYLOAD_DIR, 'dpkt.zip')
+DPKT_DIR = os.path.join(PAYLOAD_DIR, 'dpkt-fqrouter')
 DPKT_PACKAGE_DIR = os.path.join(DPKT_DIR, 'dpkt')
 BUSYBOX_FILE = os.path.join(ASSETS_DIR, 'busybox')
 PROXY_TOOLS_DIR = os.path.join(PAYLOAD_DIR, 'proxy-tools')
@@ -85,17 +85,17 @@ def unzip_wifi_tools():
 
 
 def download_dpkt():
-    if os.path.exists(DPKT_TAR_GZ_FILE):
+    if os.path.exists(DPKT_ZIP_FILE):
         return
-    urllib.urlretrieve('http://dpkt.googlecode.com/files/dpkt-1.7.tar.gz', DPKT_TAR_GZ_FILE)
+    urllib.urlretrieve('https://github.com/fqrouter/dpkt/archive/fqrouter.zip', DPKT_ZIP_FILE)
 
 
 def untargz_dpkt():
     if os.path.exists(DPKT_DIR):
         return
-    subprocess.check_call('tar xvzf %s' % DPKT_TAR_GZ_FILE, cwd=PAYLOAD_DIR, shell=True)
+    subprocess.check_call('unzip %s' % DPKT_ZIP_FILE, cwd=PAYLOAD_DIR, shell=True)
     if not os.path.exists(os.path.join(DPKT_DIR, 'setup.py')):
-        print('tar.gz file not as expected')
+        print('dpkt.zip file not as expected')
         sys.exit(1)
 
 
