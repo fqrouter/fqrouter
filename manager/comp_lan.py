@@ -3,7 +3,6 @@ import httplib
 import json
 
 from gevent import subprocess
-import gevent
 
 import comp_wifi
 from utils import shell
@@ -89,31 +88,10 @@ def restart_fqlan():
     if not picked_devices:
         LOGGER.info('no picked devices, fqlan will not start')
         return
-    fqlan_process = subprocess.Popen(
-        [shell.PYTHON_PATH, '-m', 'fqlan',
-         '--log-level', 'INFO',
-         '--log-file', '/data/data/fq.router/fqlan.log',
-         '--lan-interface', comp_wifi.WIFI_INTERFACE,
-         '--ifconfig-command', '/data/data/fq.router/busybox',
-         '--ip-command', '/data/data/fq.router/busybox',
-         'forge'] + ['%s,%s' % (ip, mac) for ip, mac in picked_devices.items()],
-        stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
-    gevent.sleep(1)
-    if fqlan_process.poll() is not None:
-        try:
-            output, _ = fqlan_process.communicate()
-            LOGGER.error('fqlan exit output: %s' % output)
-        except:
-            LOGGER.exception('failed to log fqlan exit output')
-        raise Exception('failed to start fqlan')
-    LOGGER.info('fqlan started: %s' % fqlan_process.pid)
-    gevent.spawn(monitor_fqlan)
-
-
-def monitor_fqlan():
-    try:
-        output, _ = fqlan_process.communicate()
-        if fqlan_process.poll():
-            LOGGER.error('fqdns output: %s' % output[-200:])
-    except:
-        LOGGER.exception('fqdns died')
+    fqlan_process = shell.launch_python(
+        'fqlan', '--log-level', 'INFO',
+        '--log-file', '/data/data/fq.router/fqlan.log',
+        '--lan-interface', comp_wifi.WIFI_INTERFACE,
+        '--ifconfig-command', '/data/data/fq.router/busybox',
+        '--ip-command', '/data/data/fq.router/busybox',
+        'forge', *['%s,%s' % (ip, mac) for ip, mac in picked_devices.items()])

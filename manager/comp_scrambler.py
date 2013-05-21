@@ -1,8 +1,5 @@
 import logging
 
-from gevent import subprocess
-import gevent
-
 from utils import shell
 from utils import iptables
 
@@ -13,23 +10,11 @@ fqting_process = None
 def start():
     global fqting_process
     insert_iptables_rules()
-    fqting_process = subprocess.Popen(
-        [shell.PYTHON_PATH, '-m', 'fqting',
-         '--log-level', 'INFO',
-         '--log-file', '/data/data/fq.router/fqting.log',
-         '--queue-number', '2',
-         '--mark', '0xcafe'],
-        stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
-    gevent.sleep(1)
-    if fqting_process.poll() is not None:
-        try:
-            output, _ = fqting_process.communicate()
-            LOGGER.error('fqting exit output: %s' % output)
-        except:
-            LOGGER.exception('failed to log fqting exit output')
-        raise Exception('failed to start fqting')
-    LOGGER.info('fqting started: %s' % fqting_process.pid)
-    gevent.spawn(monitor_fqting)
+    fqting_process = shell.launch_python(
+        'fqting', '--log-level', 'INFO',
+        '--log-file', '/data/data/fq.router/fqting.log',
+        '--queue-number', '2',
+        '--mark', '0xcafe')
 
 
 def stop():
@@ -95,12 +80,3 @@ def insert_iptables_rules():
 
 def delete_iptables_rules():
     iptables.delete_rules(RULES)
-
-
-def monitor_fqting():
-    try:
-        output, _ = fqting_process.communicate()
-        if fqting_process.poll():
-            LOGGER.error('fqting output: %s' % output[-200:])
-    except:
-        LOGGER.exception('fqting died')

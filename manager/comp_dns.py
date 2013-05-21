@@ -1,11 +1,8 @@
 import logging
-import json
-
-from gevent import subprocess
-import gevent
 
 from utils import shell
 from utils import iptables
+
 
 __MANDATORY__ = True
 LOGGER = logging.getLogger('fqrouter.%s' % __name__)
@@ -15,24 +12,12 @@ fqdns_process = None
 def start():
     global fqdns_process
     insert_iptables_rules()
-    fqdns_process = subprocess.Popen(
-        [shell.PYTHON_PATH, '-m', 'fqdns',
-         '--log-level', 'INFO',
-         '--log-file', '/data/data/fq.router/fqdns.log',
-         '--outbound-ip', '10.1.2.3', # send from 10.1.2.3 so we can skip redirecting those traffic
-         'serve', '--listen', '10.1.2.3:5353',
-         '--enable-china-domain', '--enable-hosted-domain'],
-        stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
-    gevent.sleep(1)
-    if fqdns_process.poll() is not None:
-        try:
-            output, _ = fqdns_process.communicate()
-            LOGGER.error('fqdns exit output: %s' % output)
-        except:
-            LOGGER.exception('failed to log fqdns exit output')
-        raise Exception('failed to start fqdns')
-    LOGGER.info('fqdns started: %s' % fqdns_process.pid)
-    gevent.spawn(monitor_fqdns)
+    fqdns_process = shell.launch_python(
+        'fqdns', '--log-level', 'INFO',
+        '--log-file', '/data/data/fq.router/fqdns.log',
+        '--outbound-ip', '10.1.2.3', # send from 10.1.2.3 so we can skip redirecting those traffic
+        'serve', '--listen', '10.1.2.3:5353',
+        '--enable-china-domain', '--enable-hosted-domain')
 
 
 def stop():
@@ -70,13 +55,4 @@ def insert_iptables_rules():
 
 def delete_iptables_rules():
     iptables.delete_rules(RULES)
-
-
-def monitor_fqdns():
-    try:
-        output, _ = fqdns_process.communicate()
-        if fqdns_process.poll():
-            LOGGER.error('fqdns output: %s' % output[-200:])
-    except:
-        LOGGER.exception('fqdns died')
 

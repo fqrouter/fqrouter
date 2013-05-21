@@ -1,8 +1,4 @@
 import logging
-import os
-
-from gevent import subprocess
-import gevent
 
 from utils import shell
 from utils import iptables
@@ -52,29 +48,9 @@ def delete_iptables_rules():
 
 def start_nfqueue_ipset():
     global nfqueue_ipset_process
-    nfqueue_ipset_process = subprocess.Popen(
-        [shell.PYTHON_PATH, '-m', 'fqsocks.nfqueue_ipset',
-         '--log-level', 'INFO',
-         '--queue-number', '1',
-         '--rule', 'dst,china,ACCEPT',
-         '--default', '0xdead'],
-        stdout=subprocess.PIPE, stderr=subprocess.STDOUT, cwd=os.path.dirname(__file__))
-    gevent.sleep(1)
-    if nfqueue_ipset_process.poll() is not None:
-        try:
-            output, _ = nfqueue_ipset_process.communicate()
-            LOGGER.error('nfqueue-ipset exit output: %s' % output)
-        except:
-            LOGGER.exception('failed to log nfqueue-ipset exit output')
-        raise Exception('failed to start nfqueue-ipset')
-    LOGGER.info('nfqueue-ipset started: %s' % nfqueue_ipset_process.pid)
-    gevent.spawn(monitor_nfqueue_ipset)
-
-
-def monitor_nfqueue_ipset():
-    try:
-        output, _ = nfqueue_ipset_process.communicate()
-        if nfqueue_ipset_process.poll():
-            LOGGER.error('nfqueue-ipset output: %s' % output[-200:])
-    except:
-        LOGGER.exception('nfqueue-ipset died')
+    nfqueue_ipset_process = shell.launch_python(
+        'fqsocks.nfqueue_ipset',
+        '--log-level', 'INFO',
+        '--queue-number', '1',
+        '--rule', 'dst,china,ACCEPT',
+        '--default', '0xdead')
