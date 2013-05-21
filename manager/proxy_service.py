@@ -110,9 +110,8 @@ def start_nfqueue_ipset():
     global nfqueue_ipset_process
     shutdown_hook.add(clean)
     nfqueue_ipset_process = subprocess.Popen(
-        [shell.PYTHON_PATH, '-m', 'nfqueue_ipset',
+        [shell.PYTHON_PATH, '-m', 'fqsocks.nfqueue_ipset',
          '--log-level', 'INFO',
-         '--log-file', '/data/data/fq.router/nfqueue-ipset.log',
          '--queue-number', '1',
          '--rule', 'dst,china,ACCEPT',
          '--default', '0xdead'],
