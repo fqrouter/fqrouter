@@ -577,14 +577,14 @@ def start_p2p_persistent_network(iface, control_socket_dir, ssid, password, sets
         shell_execute('%s -p %s -i %s p2p_set disabled 0' % (P2P_CLI_PATH, control_socket_dir, iface))
     except:
         LOGGER.exception('failed to p2p_set disabled')
-    try:
-        shell_execute('%s -p %s -i %s p2p_set disabled 0' % (P2P_CLI_PATH, control_socket_dir, WIFI_INTERFACE))
-    except:
-        LOGGER.exception('failed to p2p_set disabled')
     set_driver_param(control_socket_dir, iface, 'use_p2p_group_interface=1')
-    set_driver_param(wpa_supplicant_control_socket_dir, WIFI_INTERFACE, 'use_p2p_group_interface=1')
-    set_driver_param(control_socket_dir, iface, 'use_multi_chan_concurrent=0')
-    set_driver_param(wpa_supplicant_control_socket_dir, WIFI_INTERFACE, 'use_multi_chan_concurrent=0')
+    if iface != WIFI_INTERFACE:
+        try:
+            shell_execute('%s -p %s -i %s p2p_set disabled 0' %
+                          (P2P_CLI_PATH, wpa_supplicant_control_socket_dir, WIFI_INTERFACE))
+        except:
+            LOGGER.exception('failed to p2p_set disabled')
+        set_driver_param(wpa_supplicant_control_socket_dir, WIFI_INTERFACE, 'use_p2p_group_interface=1')
     index = shell_execute('%s -p %s -i %s add_network' % (P2P_CLI_PATH, control_socket_dir, iface)).strip()
 
     def set_network(param):
@@ -602,7 +602,8 @@ def start_p2p_persistent_network(iface, control_socket_dir, ssid, password, sets
         channel = channel if sets_channel else 0
         reg_class = 81 if sets_channel else 0
         reset_p2p_channels(iface, control_socket_dir, channel, reg_class)
-        reset_p2p_channels(WIFI_INTERFACE, wpa_supplicant_control_socket_dir, channel, reg_class)
+        if iface != WIFI_INTERFACE:
+            reset_p2p_channels(WIFI_INTERFACE, wpa_supplicant_control_socket_dir, channel, reg_class)
     if frequency:
         shell_execute('%s -p %s -i %s p2p_group_add persistent=%s freq=%s ' %
                       (P2P_CLI_PATH, control_socket_dir, iface, index, frequency.replace('.', '')))
