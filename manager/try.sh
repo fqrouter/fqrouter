@@ -12,4 +12,5 @@ adb push utils/__init__.py /sdcard/manager/utils/__init__.py
 adb push utils/iptables.py /sdcard/manager/utils/iptables.py
 adb push utils/shutdown_hook.py /sdcard/manager/utils/shutdown_hook.py
 adb push utils/shell.py /sdcard/manager/utils/shell.py
+adb push utils/config.py /sdcard/manager/utils/config.py
 adb shell su -c "PYTHONHOME=/data/data/fq.router/python /data/data/fq.router/busybox sh /data/data/fq.router/python/bin/python-launcher.sh /sdcard/manager/main.py"

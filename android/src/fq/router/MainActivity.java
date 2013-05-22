@@ -48,7 +48,7 @@ public class MainActivity extends Activity implements
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.main);
-        PreferenceManager.setDefaultValues(this, R.xml.preferences, false);
+        PreferenceManager.setDefaultValues(this, R.xml.preferences, true);
         setupUI();
         UpdateStatusIntent.register(this);
         AppendLogIntent.register(this);
