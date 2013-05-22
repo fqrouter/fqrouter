@@ -47,7 +47,7 @@ public class SettingsActivity extends PreferenceActivity implements SharedPrefer
 
     @Override
     public void onSharedPreferenceChanged(SharedPreferences sharedPreferences, String key) {
-        if (key.startsWith("WifiHotspot")) {
+        if (key.startsWith("WifiHotspotHelper")) {
             showToast("You need to restart wifi hotspot to apply the changes");
         }
     }

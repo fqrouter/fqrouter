@@ -1,5 +1,6 @@
-package fq.router;
+package fq.router.life;
 
+import fq.router.life.Deployer;
 import fq.router.utils.LogUtils;
 import fq.router.utils.ShellUtils;
 

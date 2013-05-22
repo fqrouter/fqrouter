@@ -4,10 +4,8 @@ import android.app.*;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.SharedPreferences;
-import android.content.pm.PackageInfo;
 import android.net.Uri;
 import android.os.Bundle;
-import android.os.Handler;
 import android.preference.PreferenceManager;
 import android.support.v4.app.NotificationCompat;
 import android.text.method.ScrollingMovementMethod;
@@ -17,13 +15,24 @@ import android.view.View;
 import android.widget.TextView;
 import android.widget.Toast;
 import android.widget.ToggleButton;
+import fq.router.feedback.*;
+import fq.router.life.ExitService;
+import fq.router.life.ExitedIntent;
+import fq.router.life.LaunchService;
+import fq.router.life.LaunchedIntent;
 import fq.router.utils.LogUtils;
+import fq.router.wifi.*;
 
-import java.io.File;
 import java.lang.reflect.Method;
 
 
-public class MainActivity extends Activity implements StatusUpdater {
+public class MainActivity extends Activity implements
+        UpdateStatusIntent.Handler,
+        AppendLogIntent.Handler,
+        LaunchedIntent.Handler,
+        UpdateFoundIntent.Handler,
+        ExitedIntent.Handler,
+        WifiHotspotChangedIntent.Handler {
 
     public final static int SHOW_AS_ACTION_IF_ROOM = 1;
     private final static int ITEM_ID_EXIT = 1;
@@ -31,11 +40,7 @@ public class MainActivity extends Activity implements StatusUpdater {
     private final static int ITEM_ID_CHECK_UPDATES = 3;
     private final static int ITEM_ID_SETTINGS = 4;
     private final static int ITEM_ID_PICK_AND_PLAY = 5;
-    private final static File EXITING_FLAG = new File("/data/data/fq.router/.exiting");
-    private Handler handler = new Handler();
-    private boolean started = false;
-    private final Supervisor supervisor = new Supervisor(this);
-    private final WifiHotspot wifiHotspot = new WifiHotspot(this);
+    private boolean started;
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
@@ -43,24 +48,15 @@ public class MainActivity extends Activity implements StatusUpdater {
         setContentView(R.layout.main);
         PreferenceManager.setDefaultValues(this, R.xml.preferences, false);
         setupUI();
-        new Thread(new Runnable() {
-            @Override
-            public void run() {
-                appendLog("ver: " + getMyVersion());
-                if (!shouldStart()) {
-                    finish();
-                    return;
-                }
-                if (Supervisor.ping() || Supervisor.ping() || Supervisor.ping()) {
-                    appendLog("found manager is already running");
-                    onStarted();
-                } else {
-                    appendLog("starting supervisor thread");
-                    new Thread(supervisor).start();
-                }
-            }
-        }).start();
+        UpdateStatusIntent.register(this);
+        AppendLogIntent.register(this);
+        LaunchedIntent.register(this);
+        UpdateFoundIntent.register(this);
+        ExitedIntent.register(this);
+        WifiHotspotChangedIntent.register(this);
+        LaunchService.execute(this);
     }
+
 
     @Override
     protected void onResume() {
@@ -68,127 +64,19 @@ public class MainActivity extends Activity implements StatusUpdater {
         if (!started) {
             return;
         }
-        new Thread(new Runnable() {
-            @Override
-            public void run() {
-                if (!Supervisor.ping()) {
-                    new Supervisor(MainActivity.this).relaunch();
-                }
-            }
-        }).start();
-    }
-
-    private boolean shouldStart() {
-        if (!EXITING_FLAG.exists()) {
-            appendLog("exiting flag not found");
-            return true;
-        }
-        long delta = System.currentTimeMillis() - EXITING_FLAG.lastModified();
-        int threeMinutes = 3 * 60 * 1000;
-        if (delta > threeMinutes) {
-            appendLog("exiting flag expired: " + (delta - threeMinutes));
-            EXITING_FLAG.delete();
-            return true;
-        }
-        if (ManagerProcess.exists()) {
-            updateStatus("Another instance is still running, exit in 3 seconds");
-            try {
-                Thread.sleep(3000);
-            } catch (InterruptedException e) {
-                // ignore
-            }
-            return false;
-        }
-        appendLog("exiting flag found and ignored due to manager process missing");
-        EXITING_FLAG.delete();
-        return true;
+        LaunchService.execute(this);
     }
 
     private void setupUI() {
         TextView textView = (TextView) findViewById(R.id.logTextView);
         textView.setMovementMethod(new ScrollingMovementMethod());
-        final ToggleButton wifiHotspotToggleButton = (ToggleButton) findViewById(R.id.wifiHotspotToggleButton);
-        wifiHotspotToggleButton.setOnClickListener(new View.OnClickListener() {
+        final ToggleButton button = (ToggleButton) findViewById(R.id.wifiHotspotToggleButton);
+        button.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                final boolean checked = wifiHotspotToggleButton.isChecked();
-                applyWifiHotspotIsStarted(checked);
+                toggleWifiHotspot((ToggleButton) view);
             }
         });
-    }
-
-    public void hideWifiHotspotToggleButton() {
-        handler.postDelayed(new Runnable() {
-            @Override
-            public void run() {
-                findViewById(R.id.wifiHotspotPanel).setVisibility(View.INVISIBLE);
-            }
-        }, 0);
-    }
-
-    private void applyWifiHotspotIsStarted(final boolean isStarted) {
-        new Thread(new Runnable() {
-            @Override
-            public void run() {
-                if (isStarted) {
-                    startWifiHotspot();
-                } else {
-                    wifiHotspot.stop();
-                }
-            }
-        }).start();
-    }
-
-    private void startWifiHotspot() {
-        SharedPreferences preferences = PreferenceManager.getDefaultSharedPreferences(this);
-        String mode = preferences.getString("WifiHotspotMode", WifiHotspot.MODE_WIFI_REPEATER);
-        boolean started = wifiHotspot.start(mode);
-        if (!started && WifiHotspot.MODE_WIFI_REPEATER.equals(mode)) {
-            askIfStartTraditionalWifiHotspot();
-        }
-    }
-
-    private void askIfStartTraditionalWifiHotspot() {
-        handler.postDelayed(new Runnable() {
-            @Override
-            public void run() {
-                new AlertDialog.Builder(MainActivity.this)
-                        .setIcon(android.R.drawable.ic_dialog_alert)
-                        .setTitle("Failed to start wifi repeater")
-                        .setMessage("Do you want to start traditional wifi hotspot sharing 3G connection? " +
-                                "It will consume your 3G data traffic volume. " +
-                                "Or you can try 'Pick & Play' from the menu, " +
-                                "it can share free internet to devices in your current wifi network")
-
-                        .setPositiveButton("Yes", new DialogInterface.OnClickListener() {
-
-                            @Override
-                            public void onClick(DialogInterface dialog, int which) {
-                                new Thread(new Runnable() {
-                                    @Override
-                                    public void run() {
-                                        wifiHotspot.start(WifiHotspot.MODE_TRADITIONAL_WIFI_HOTSPOT);
-                                    }
-                                }).start();
-                            }
-
-                        })
-                        .setNegativeButton("No, thanks", null)
-                        .show();
-            }
-        }, 2000);
-    }
-
-    public void showWifiHotspotToggleButton(final boolean isStarted) {
-        handler.postDelayed(new Runnable() {
-            @Override
-            public void run() {
-                final ToggleButton wifiHotspotToggleButton = (ToggleButton) findViewById(R.id.wifiHotspotToggleButton);
-                wifiHotspotToggleButton.setChecked(isStarted);
-                final View wifiHotspotPanel = findViewById(R.id.wifiHotspotPanel);
-                wifiHotspotPanel.setVisibility(View.VISIBLE);
-            }
-        }, 0);
     }
 
     @Override
@@ -217,17 +105,11 @@ public class MainActivity extends Activity implements StatusUpdater {
     @Override
     public boolean onMenuItemSelected(int featureId, MenuItem item) {
         if (ITEM_ID_EXIT == item.getItemId()) {
-            onExitClicked();
+            exit();
         } else if (ITEM_ID_REPORT_ERROR == item.getItemId()) {
-            onReportErrorClicked();
+            reportError();
         } else if (ITEM_ID_CHECK_UPDATES == item.getItemId()) {
-            new Thread(new Runnable() {
-                @Override
-                public void run() {
-                    appendLog("checking updates");
-                    Supervisor.checkUpdates(MainActivity.this);
-                }
-            }).start();
+            checkUpdate();
         } else if (ITEM_ID_SETTINGS == item.getItemId()) {
             startActivity(new Intent(this, SettingsActivity.class));
         } else if (ITEM_ID_PICK_AND_PLAY == item.getItemId()) {
@@ -236,45 +118,16 @@ public class MainActivity extends Activity implements StatusUpdater {
         return super.onMenuItemSelected(featureId, item);
     }
 
-    private void onExitClicked() {
-        try {
-            EXITING_FLAG.createNewFile();
-        } catch (Exception e) {
-            LogUtils.e("failed to create .exit flag", e);
-        }
-        EXITING_FLAG.setLastModified(System.currentTimeMillis());
-        new Thread(new Runnable() {
-            @Override
-            public void run() {
-                updateStatus("About to exit", false);
-                if (started && WifiHotspot.isStarted()) {
-                    wifiHotspot.stop();
-                }
-                updateStatus("Exiting...", false);
-                try {
-                    ManagerProcess.kill();
-                } catch (Exception e) {
-                    LogUtils.e("failed to kill manager process", e);
-                }
-                EXITING_FLAG.delete();
-                handler.postDelayed(new Runnable() {
-                    @Override
-                    public void run() {
-                        clearNotification();
-                        finish();
-                    }
 
-                }, 0);
-            }
-        }).start();
+    public void showWifiHotspotToggleButton(final boolean isStarted) {
+        final ToggleButton wifiHotspotToggleButton = (ToggleButton) findViewById(R.id.wifiHotspotToggleButton);
+        wifiHotspotToggleButton.setChecked(isStarted);
+        final View wifiHotspotPanel = findViewById(R.id.wifiHotspotPanel);
+        wifiHotspotPanel.setVisibility(View.VISIBLE);
     }
 
-    private void showNotification(String text, boolean hasIntent) {
+    private void showNotification(String text) {
         Intent intent = new Intent(this, MainActivity.class);
-        if (!hasIntent) {
-            intent = new Intent(Intent.ACTION_MAIN);
-            intent.addCategory(Intent.CATEGORY_HOME);
-        }
         PendingIntent pIntent = PendingIntent.getActivity(this, 0, intent, 0);
         Notification notification = new NotificationCompat.Builder(this)
                 .setSmallIcon(R.drawable.wall_green)
@@ -294,7 +147,25 @@ public class MainActivity extends Activity implements StatusUpdater {
         notificationManager.cancel(0);
     }
 
-    private void onReportErrorClicked() {
+    private void checkUpdate() {
+        CheckUpdateService.execute(this);
+    }
+
+    @Override
+    public void updateStatus(String status) {
+        appendLog("status updated to: " + status);
+        TextView textView = (TextView) findViewById(R.id.statusTextView);
+        textView.setText(status);
+        showNotification(status);
+    }
+
+    public void appendLog(final String log) {
+        LogUtils.i(log);
+        TextView textView = (TextView) findViewById(R.id.logTextView);
+        textView.setText(log + "\n" + textView.getText());
+    }
+
+    private void reportError() {
         try {
             startActivity(Intent.createChooser(new ErrorReportEmail(this).prepare(), "Send mail..."));
         } catch (android.content.ActivityNotFoundException ex) {
@@ -302,90 +173,89 @@ public class MainActivity extends Activity implements StatusUpdater {
         }
     }
 
-    public void updateStatus(final String status) {
-        updateStatus(status, true);
+    private void exit() {
+        hideWifiHotspotToggleButton();
+        ToggleButton button = (ToggleButton) findViewById(R.id.wifiHotspotToggleButton);
+        ExitService.execute(this, button.isChecked());
     }
 
-    public void updateStatus(final String status, final boolean hasIntent) {
-        appendLog("status updated to: " + status);
-        handler.postDelayed(new Runnable() {
-            @Override
-            public void run() {
-                TextView textView = (TextView) findViewById(R.id.statusTextView);
-                textView.setText(status);
-                try {
-                    showNotification(status, hasIntent);
-                } catch (Exception e) {
-                    LogUtils.e("failed to show notification", e);
-                }
-            }
-        }, 0);
-    }
-
-    public void appendLog(final String log) {
-        LogUtils.i(log);
-        handler.postDelayed(new Runnable() {
-            @Override
-            public void run() {
-                TextView textView = (TextView) findViewById(R.id.logTextView);
-                textView.setText(log + "\n" + textView.getText());
-            }
-        }, 0);
-    }
-
-    @Override
-    public void onStarted() {
-        started = true;
-        updateStatus("Checking if wifi hotspot is started");
-        boolean isStarted = WifiHotspot.isStarted();
-        showWifiHotspotToggleButton(isStarted);
-        if (isStarted) {
-            wifiHotspot.setup();
-        }
-        updateStatus("Started, f**k censorship");
-    }
-
-    @Override
-    public void reportError(final String msg, Exception e) {
-        if (null == e) {
-            LogUtils.e(msg);
+    private void toggleWifiHotspot(ToggleButton button) {
+        if (button.isChecked()) {
+            SharedPreferences preferences = PreferenceManager.getDefaultSharedPreferences(this);
+            String mode = preferences.getString("WifiHotspotMode", WifiHotspotHelper.MODE_WIFI_REPEATER);
+            startWifiHotspot(mode);
         } else {
-            LogUtils.e(msg, e);
+            hideWifiHotspotToggleButton();
+            StopWifiHotspotService.execute(this);
         }
-        updateStatus("Error: " + msg);
     }
 
-    public String getMyVersion() {
-        try {
-            PackageInfo packageInfo = getPackageManager().getPackageInfo(getPackageName(), 0);
-            return packageInfo.versionName;
-        } catch (Exception e) {
-            LogUtils.e("failed to get package info", e);
-            return "Unknown";
-        }
+    private void startWifiHotspot(String mode) {
+        hideWifiHotspotToggleButton();
+        StartWifiHotspotService.execute(this, mode);
+    }
+
+    public void hideWifiHotspotToggleButton() {
+        findViewById(R.id.wifiHotspotPanel).setVisibility(View.INVISIBLE);
     }
 
     @Override
-    public void notifyNewerVersion(String latestVersion, final String upgradeUrl) {
-        appendLog("latest version is: " + latestVersion);
-        handler.postDelayed(new Runnable() {
-            @Override
-            public void run() {
-                new AlertDialog.Builder(MainActivity.this)
-                        .setIcon(android.R.drawable.ic_dialog_alert)
-                        .setTitle("There are newer version")
-                        .setMessage("Do you want to upgrade now?")
-                        .setPositiveButton("Yes", new DialogInterface.OnClickListener() {
+    public void onLaunched() {
+        started = true;
+        checkUpdate();
+        CheckWifiHotspotService.execute(this);
+    }
 
-                            @Override
-                            public void onClick(DialogInterface dialog, int which) {
-                                startActivity(new Intent(Intent.ACTION_VIEW, Uri.parse(upgradeUrl)));
-                            }
+    @Override
+    public void onUpdateFound(String latestVersion, final String upgradeUrl) {
+        new AlertDialog.Builder(this)
+                .setIcon(android.R.drawable.ic_dialog_alert)
+                .setTitle("There are newer version")
+                .setMessage("Do you want to upgrade now?")
+                .setPositiveButton("Yes", new DialogInterface.OnClickListener() {
 
-                        })
-                        .setNegativeButton("No", null)
-                        .show();
-            }
-        }, 0);
+                    @Override
+                    public void onClick(DialogInterface dialog, int which) {
+                        startActivity(new Intent(Intent.ACTION_VIEW, Uri.parse(upgradeUrl)));
+                    }
+
+                })
+                .setNegativeButton("No", null)
+                .show();
+    }
+
+    @Override
+    public void onExited() {
+        clearNotification();
+        finish();
+    }
+
+    @Override
+    public void onWifiHotspotChanged(boolean isStarted, boolean wasStartingWifiRepeater) {
+        showWifiHotspotToggleButton(isStarted);
+        if (!isStarted && wasStartingWifiRepeater) {
+            askIfStartTraditionalWifiHotspot();
+        }
+    }
+
+    private void askIfStartTraditionalWifiHotspot() {
+        new AlertDialog.Builder(MainActivity.this)
+                .setIcon(android.R.drawable.ic_dialog_alert)
+                .setTitle("Failed to start wifi repeater")
+                .setMessage("Do you want to start traditional wifi hotspot sharing 3G connection? " +
+                        "It will consume your 3G data traffic volume. " +
+                        "Or you can try 'Pick & Play' from the menu, " +
+                        "it can share free internet to devices in your current wifi network")
+
+                .setPositiveButton("Yes", new DialogInterface.OnClickListener() {
+
+                    @Override
+                    public void onClick(DialogInterface dialog, int which) {
+                        startWifiHotspot(WifiHotspotHelper.MODE_TRADITIONAL_WIFI_HOTSPOT);
+                    }
+
+                })
+                .setNegativeButton("No, thanks", null)
+                .show();
     }
 }

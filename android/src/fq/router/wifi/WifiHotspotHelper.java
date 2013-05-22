@@ -1,30 +1,30 @@
-package fq.router;
+package fq.router.wifi;
 
 import android.content.Context;
 import android.content.SharedPreferences;
-import android.net.wifi.SupplicantState;
 import android.net.wifi.WifiConfiguration;
 import android.net.wifi.WifiManager;
 import android.os.Build;
 import android.preference.PreferenceManager;
+import fq.router.feedback.AppendLogIntent;
+import fq.router.feedback.UpdateStatusIntent;
 import fq.router.utils.HttpUtils;
 import fq.router.utils.LogUtils;
 
 import java.lang.reflect.Method;
 import java.net.URLEncoder;
 
-public class WifiHotspot {
+public class WifiHotspotHelper {
 
     public static final String MODE_WIFI_REPEATER = "wifi-repeater";
     public static final String MODE_TRADITIONAL_WIFI_HOTSPOT = "traditional-wifi-hotspot";
-    private final StatusUpdater statusUpdater;
-    private WifiManager.WifiLock wifiLock = null;
+    private final Context context;
 
-    public WifiHotspot(StatusUpdater statusUpdater) {
-        this.statusUpdater = statusUpdater;
+    public WifiHotspotHelper(Context context) {
+        this.context = context;
     }
 
-    public static boolean isStarted() {
+    public boolean isStarted() {
         try {
             return "TRUE".equals(HttpUtils.get("http://127.0.0.1:8318/wifi/started"));
         } catch (Exception e) {
@@ -33,19 +33,12 @@ public class WifiHotspot {
         }
     }
 
-    public boolean start(String wifiHotspotMode) {
-        statusUpdater.hideWifiHotspotToggleButton();
-        statusUpdater.appendLog("wifi hotspot mode: " + wifiHotspotMode);
-        boolean success = doStart(wifiHotspotMode);
-        statusUpdater.showWifiHotspotToggleButton(success);
-        return success;
-    }
 
-    private boolean doStart(String wifiHotspotMode) {
+    public boolean start(String wifiHotspotMode) {
         try {
             if (MODE_WIFI_REPEATER.equals(wifiHotspotMode)) {
                 if (Build.VERSION.SDK_INT < 14) {
-                    statusUpdater.appendLog("Android 4.0 or above is required to start wifi repeater, " +
+                    appendLog("Android 4.0 or above is required to start wifi repeater, " +
                             "you may use 'Pick & Play' or traditional wifi hotspot instead.");
                     return false;
                 }
@@ -53,16 +46,12 @@ public class WifiHotspot {
             } else {
                 startTraditionalWifiHotspot();
             }
-            statusUpdater.updateStatus("Started wifi hotspot");
-            statusUpdater.appendLog("SSID: " + getSSID());
-            statusUpdater.appendLog("PASSWORD: " + getPassword());
-            if (null == wifiLock) {
-                wifiLock = getWifiManager().createWifiLock(WifiManager.WIFI_MODE_FULL_HIGH_PERF, "fqrouter wifi hotspot");
-            }
-            wifiLock.acquire();
+            updateStatus("Started wifi hotspot");
+            appendLog("SSID: " + getSSID());
+            appendLog("PASSWORD: " + getPassword());
             return true;
         } catch (HttpUtils.Error e) {
-            statusUpdater.appendLog("error: " + e.output);
+            appendLog("error: " + e.output);
             reportStartFailure(wifiHotspotMode, e);
         } catch (Exception e) {
             reportStartFailure(wifiHotspotMode, e);
@@ -71,12 +60,12 @@ public class WifiHotspot {
     }
 
     private void reportStartFailure(String wifiHotspotMode, Exception e) {
-        statusUpdater.reportError("failed to start wifi hotspot as " + wifiHotspotMode, e);
+        reportError("failed to start wifi hotspot as " + wifiHotspotMode, e);
         stop();
     }
 
     private void startWifiRepeater() throws Exception {
-        statusUpdater.updateStatus("Starting wifi hotspot");
+        updateStatus("Starting wifi hotspot");
         HttpUtils.post("http://127.0.0.1:8318/wifi/start",
                 "ssid=" + URLEncoder.encode(getSSID(), "UTF-8") +
                         "&password=" + URLEncoder.encode(getPassword(), "UTF-8"));
@@ -107,52 +96,22 @@ public class WifiHotspot {
     }
 
     private String getSSID() {
-        SharedPreferences preferences = PreferenceManager.getDefaultSharedPreferences(statusUpdater.getBaseContext());
+        SharedPreferences preferences = PreferenceManager.getDefaultSharedPreferences(context);
         return preferences.getString("WifiHotspotSSID", "fqrouter");
     }
 
     private String getPassword() {
-        SharedPreferences preferences = PreferenceManager.getDefaultSharedPreferences(statusUpdater.getBaseContext());
+        SharedPreferences preferences = PreferenceManager.getDefaultSharedPreferences(context);
         return preferences.getString("WifiHotspotPassword", "12345678");
     }
 
-    public boolean isConnected() {
-        SupplicantState state = getWifiManager().getConnectionInfo().getSupplicantState();
-        return SupplicantState.ASSOCIATED.equals(state) || SupplicantState.COMPLETED.equals(state);
-    }
-
-    private String getWifiIp() {
-        int ip = getWifiManager().getConnectionInfo().getIpAddress();
-        String ipText = String.format("%d.%d.%d.%d",
-                (ip & 0xff),
-                (ip >> 8 & 0xff),
-                (ip >> 16 & 0xff),
-                (ip >> 24 & 0xff));
-        LogUtils.i("wifi ip: " + ip);
-        return ipText;
-    }
-
     public boolean setup() {
-        if (null == wifiLock) {
-            wifiLock = getWifiManager().createWifiLock(WifiManager.WIFI_MODE_FULL_HIGH_PERF, "fqrouter wifi hotspot");
-        }
-        wifiLock.acquire();
-        statusUpdater.hideWifiHotspotToggleButton();
-        boolean success = doSetup();
-        statusUpdater.showWifiHotspotToggleButton(success);
-        return success;
-    }
-
-    private boolean doSetup() {
         try {
-            if ("10.24.1.1".equals(getWifiIp())) {
-                return false;
-            }
-            statusUpdater.updateStatus("Setup wifi hotspot network");
+            appendLog("Setup wifi hotspot network");
             HttpUtils.post("http://127.0.0.1:8318/wifi/setup");
             return true;
         } catch (HttpUtils.Error e) {
-            statusUpdater.appendLog("error: " + e.output);
+            appendLog("error: " + e.output);
             reportSetupFailure(e);
         } catch (Exception e) {
             reportSetupFailure(e);
@@ -161,25 +120,13 @@ public class WifiHotspot {
     }
 
     private void reportSetupFailure(Exception e) {
-        statusUpdater.reportError("failed to setup existing wifi hotspot", e);
+        reportError("failed to setup existing wifi hotspot", e);
         stop();
     }
 
     public void stop() {
-        statusUpdater.hideWifiHotspotToggleButton();
         try {
-            doStop();
-        } finally {
-            statusUpdater.showWifiHotspotToggleButton(false);
-        }
-    }
-
-    private void doStop() {
-        try {
-            statusUpdater.updateStatus("Stopping wifi hotspot");
-            if (null != wifiLock) {
-                wifiLock.release();
-            }
+            updateStatus("Stopping wifi hotspot");
             HttpUtils.post("http://127.0.0.1:8318/wifi/stop");
             try {
                 setWifiApEnabled(false);
@@ -187,15 +134,33 @@ public class WifiHotspot {
                 LogUtils.e("failed to disable wifi ap", e);
             }
         } catch (Exception e) {
-            statusUpdater.reportError("failed to stop wifi hotspot", e);
+            reportError("failed to stop wifi hotspot", e);
         }
         WifiManager wifiManager = getWifiManager();
         wifiManager.setWifiEnabled(false);
         wifiManager.setWifiEnabled(true);
-        statusUpdater.updateStatus("Stopped wifi hotspot");
+        updateStatus("Stopped wifi hotspot");
     }
 
     private WifiManager getWifiManager() {
-        return (WifiManager) statusUpdater.getBaseContext().getSystemService(Context.WIFI_SERVICE);
+        return (WifiManager) context.getSystemService(Context.WIFI_SERVICE);
+    }
+
+    private void reportError(final String msg, Exception e) {
+        if (null == e) {
+            LogUtils.e(msg);
+        } else {
+            LogUtils.e(msg, e);
+        }
+        updateStatus("Error: " + msg);
+    }
+
+
+    private void appendLog(String log) {
+        context.sendBroadcast(new AppendLogIntent(log));
+    }
+
+    private void updateStatus(String status) {
+        context.sendBroadcast(new UpdateStatusIntent(status));
     }
 }

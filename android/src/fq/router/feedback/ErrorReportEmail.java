@@ -1,8 +1,10 @@
-package fq.router;
+package fq.router.feedback;
 
+import android.content.Context;
 import android.content.Intent;
 import android.net.Uri;
 import android.os.Build;
+import fq.router.life.LaunchService;
 import fq.router.utils.IOUtils;
 import fq.router.utils.LogUtils;
 import fq.router.utils.ShellUtils;
@@ -15,17 +17,17 @@ import java.util.ArrayList;
 public class ErrorReportEmail {
 
     private final static String LOG_DIR = "/sdcard/fqrouter-log";
-    private final StatusUpdater statusUpdater;
+    private final Context context;
 
-    public ErrorReportEmail(StatusUpdater statusUpdater) {
-        this.statusUpdater = statusUpdater;
+    public ErrorReportEmail(Context context) {
+        this.context = context;
     }
 
     public Intent prepare() {
         Intent i = new Intent(Intent.ACTION_SEND_MULTIPLE);
         i.setType("text/plain");
         i.putExtra(Intent.EXTRA_EMAIL, new String[]{"fqrouter@gmail.com"});
-        i.putExtra(Intent.EXTRA_SUBJECT, "android fqrouter error report for version " + statusUpdater.getMyVersion());
+        i.putExtra(Intent.EXTRA_SUBJECT, "android fqrouter error report for version " + LaunchService.getMyVersion(context));
         String error = createLogFiles();
         i.putExtra(Intent.EXTRA_TEXT, getErrorMailBody() + error);
         attachLogFiles(i, "manager.log", "fqsocks.log", "logcat.log", "getprop.log", "dmesg.log",
@@ -136,7 +138,7 @@ public class ErrorReportEmail {
         body.append("phone model: " + Build.MODEL + "\n");
         body.append("android version: " + Build.VERSION.RELEASE + "\n");
         body.append("kernel version: " + System.getProperty("os.version") + "\n");
-        body.append("fqrouter version: " + statusUpdater.getMyVersion() + "\n");
+        body.append("fqrouter version: " + LaunchService.getMyVersion(context) + "\n");
         return body.toString();
     }
 }

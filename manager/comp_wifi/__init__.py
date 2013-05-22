@@ -8,6 +8,7 @@ from wifi import setup_lo_alias
 from wifi import start_hotspot
 from wifi import stop_hotspot
 from wifi import setup_networking
+from wifi import get_ip_and_mac
 
 
 def start():
@@ -49,7 +50,9 @@ def handle_setup(environ, start_response):
         if not iface:
             gevent.sleep(2)
             continue
-        setup_networking(iface)
+        ip, _ = get_ip_and_mac(iface)
+        if '10.24.1.1' != ip:
+            setup_networking(iface)
         start_response(httplib.OK, [('Content-Type', 'text/plain')])
         return []
 

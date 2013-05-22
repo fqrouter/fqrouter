@@ -1,5 +1,8 @@
-package fq.router;
+package fq.router.life;
 
+import android.content.Context;
+import fq.router.feedback.AppendLogIntent;
+import fq.router.feedback.UpdateStatusIntent;
 import fq.router.utils.IOUtils;
 import fq.router.utils.LogUtils;
 import fq.router.utils.ShellUtils;
@@ -21,27 +24,27 @@ public class Deployer {
     public static File PROXY_TOOLS_DIR = new File(DATA_DIR, "proxy-tools");
     public static File MANAGER_DIR = new File(DATA_DIR, "manager");
     public static File MANAGER_MAIN_PY = new File(MANAGER_DIR, "main.py");
-    private final StatusUpdater statusUpdater;
+    private final Context context;
 
-    public Deployer(StatusUpdater statusUpdater) {
-        this.statusUpdater = statusUpdater;
+    public Deployer(Context context) {
+        this.context = context;
 
     }
 
     public boolean deploy() {
-        statusUpdater.updateStatus("Deploying payload");
+        updateStatus("Deploying payload");
         try {
             copyBusybox();
             makeExecutable(BUSYBOX_FILE);
         } catch (Exception e) {
-            statusUpdater.reportError("failed to copy busybox", e);
+            reportError("failed to copy busybox", e);
             return false;
         }
         boolean foundPayloadUpdate;
         try {
             foundPayloadUpdate = shouldDeployPayload();
         } catch (Exception e) {
-            statusUpdater.reportError("failed to check update", e);
+            reportError("failed to check update", e);
             return false;
         }
         if (foundPayloadUpdate) {
@@ -50,12 +53,12 @@ public class Deployer {
                     ManagerProcess.kill();
                 } catch (Exception e) {
                     LogUtils.e("failed to kill manager before redeploy", e);
-                    statusUpdater.appendLog("failed to kill manager before redeploy");
+                    appendLog("failed to kill manager before redeploy");
                     // ignore and continue
                 }
                 clearDataDirectory();
             } catch (Exception e) {
-                statusUpdater.reportError("failed to clear data directory", e);
+                reportError("failed to clear data directory", e);
                 return false;
             }
         }
@@ -64,22 +67,22 @@ public class Deployer {
             makeExecutable(BUSYBOX_FILE);
             copyPayloadZip();
         } catch (Exception e) {
-            statusUpdater.reportError("failed to copy payload.zip", e);
+            reportError("failed to copy payload.zip", e);
             return false;
         }
         try {
             unzipPayloadZip();
         } catch (Exception e) {
-            statusUpdater.reportError("failed to unzip payload.zip", e);
+            reportError("failed to unzip payload.zip", e);
             return false;
         }
         try {
             makePayloadExecutable();
         } catch (Exception e) {
-            statusUpdater.reportError("failed to make payload executable", e);
+            reportError("failed to make payload executable", e);
             return false;
         }
-        statusUpdater.updateStatus("Deployed payload");
+        updateStatus("Deployed payload");
         return true;
     }
 
@@ -93,22 +96,22 @@ public class Deployer {
 
     private boolean shouldDeployPayload() throws Exception {
         if (!PAYLOAD_CHECKSUM.exists()) {
-            statusUpdater.appendLog("no checksum, assume it is old");
+            appendLog("no checksum, assume it is old");
             return true;
         }
         if (!MANAGER_MAIN_PY.exists()) {
-            statusUpdater.appendLog("payload is corrupted");
+            appendLog("payload is corrupted");
             return true;
         }
         String oldChecksum = IOUtils.readFromFile(PAYLOAD_CHECKSUM);
-        InputStream inputStream = statusUpdater.getAssets().open("payload.zip");
+        InputStream inputStream = context.getAssets().open("payload.zip");
         try {
             String newChecksum = IOUtils.copy(inputStream, null);
             if (oldChecksum.equals(newChecksum)) {
-                statusUpdater.appendLog("no payload update found");
+                appendLog("no payload update found");
                 return false;
             } else {
-                statusUpdater.appendLog("found payload update");
+                appendLog("found payload update");
                 return true;
             }
         } finally {
@@ -118,7 +121,7 @@ public class Deployer {
 
     private void clearDataDirectory() throws Exception {
         if (DATA_DIR.exists()) {
-            statusUpdater.appendLog("clear data dir");
+            appendLog("clear data dir");
             deleteDirectory(DATA_DIR + "/python");
             deleteDirectory(DATA_DIR + "/wifi-tools");
             deleteDirectory(DATA_DIR + "/proxy-tools");
@@ -139,15 +142,15 @@ public class Deployer {
 
     private void copyPayloadZip() throws Exception {
         if (PAYLOAD_ZIP.exists()) {
-            statusUpdater.appendLog("skip copy payload.zip as it already exists");
+            appendLog("skip copy payload.zip as it already exists");
             return;
         }
         if (PYTHON_DIR.exists()) {
-            statusUpdater.appendLog("skip copy payload.zip as it has already been unzipped");
+            appendLog("skip copy payload.zip as it has already been unzipped");
             return;
         }
-        statusUpdater.appendLog("copying payload.zip to data directory");
-        InputStream inputStream = statusUpdater.getAssets().open("payload.zip");
+        appendLog("copying payload.zip to data directory");
+        InputStream inputStream = context.getAssets().open("payload.zip");
         try {
             OutputStream outputStream = new FileOutputStream(PAYLOAD_ZIP);
             try {
@@ -159,16 +162,16 @@ public class Deployer {
         } finally {
             inputStream.close();
         }
-        statusUpdater.appendLog("successfully copied payload.zip");
+        appendLog("successfully copied payload.zip");
     }
 
     private void copyBusybox() throws Exception {
         if (BUSYBOX_FILE.exists()) {
-            statusUpdater.appendLog("skip copy busybox as it already exists");
+            appendLog("skip copy busybox as it already exists");
             return;
         }
-        statusUpdater.appendLog("copying busybox to data directory");
-        InputStream inputStream = statusUpdater.getAssets().open("busybox");
+        appendLog("copying busybox to data directory");
+        InputStream inputStream = context.getAssets().open("busybox");
         try {
             OutputStream outputStream = new FileOutputStream(BUSYBOX_FILE);
             try {
@@ -179,20 +182,20 @@ public class Deployer {
         } finally {
             inputStream.close();
         }
-        statusUpdater.appendLog("successfully copied busybox");
+        appendLog("successfully copied busybox");
     }
 
     private void unzipPayloadZip() throws Exception {
         if (PYTHON_DIR.exists()) {
-            statusUpdater.appendLog("skip unzip payload.zip as it has already been unzipped");
+            appendLog("skip unzip payload.zip as it has already been unzipped");
             return;
         }
-        statusUpdater.appendLog("unzipping payload.zip");
+        appendLog("unzipping payload.zip");
         Process process = Runtime.getRuntime().exec(
                 BUSYBOX_FILE + " unzip -o -q payload.zip", new String[0], new File("/data/data/fq.router"));
         ShellUtils.waitFor("unzip", process);
         if (!new File("/data/data/fq.router/payload.zip").delete()) {
-            statusUpdater.appendLog("failed to delete payload.zip after unzip");
+            appendLog("failed to delete payload.zip after unzip");
         }
         for (int i = 0; i < 5; i++) {
             Thread.sleep(2000); // wait for the files written out
@@ -200,7 +203,7 @@ public class Deployer {
                 break;
             }
         }
-        statusUpdater.appendLog("successfully unzipped payload.zip");
+        appendLog("successfully unzipped payload.zip");
     }
 
     private void makePayloadExecutable() throws Exception {
@@ -235,10 +238,27 @@ public class Deployer {
             return;
         }
         if (file.setExecutable(true, true)) {
-            statusUpdater.appendLog("successfully made " + file.getName() + " executable");
+            appendLog("successfully made " + file.getName() + " executable");
         } else {
-            statusUpdater.appendLog("failed to make " + file.getName() + " executable");
+            appendLog("failed to make " + file.getName() + " executable");
             ShellUtils.sudo(ShellUtils.findCommand("chmod"), "0700", file.getCanonicalPath());
         }
+    }
+
+    private void reportError(final String msg, Exception e) {
+        if (null == e) {
+            LogUtils.e(msg);
+        } else {
+            LogUtils.e(msg, e);
+        }
+        updateStatus("Error: " + msg);
+    }
+
+    private void appendLog(String log) {
+        context.sendBroadcast(new AppendLogIntent(log));
+    }
+
+    private void updateStatus(String status) {
+        context.sendBroadcast(new UpdateStatusIntent(status));
     }
 }
