@@ -12,7 +12,6 @@ import fq.router.utils.HttpUtils;
 import fq.router.utils.LogUtils;
 
 import java.lang.reflect.Method;
-import java.net.URLEncoder;
 
 public class WifiHotspotHelper {
 
@@ -66,9 +65,7 @@ public class WifiHotspotHelper {
 
     private void startWifiRepeater() throws Exception {
         updateStatus("Starting wifi hotspot");
-        HttpUtils.post("http://127.0.0.1:8318/wifi/start",
-                "ssid=" + URLEncoder.encode(getSSID(), "UTF-8") +
-                        "&password=" + URLEncoder.encode(getPassword(), "UTF-8"));
+        HttpUtils.post("http://127.0.0.1:8318/wifi/start");
     }
 
     private void startTraditionalWifiHotspot() {

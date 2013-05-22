@@ -9,6 +9,7 @@ from wifi import start_hotspot
 from wifi import stop_hotspot
 from wifi import setup_networking
 from wifi import get_ip_and_mac
+from utils import config
 
 
 def start():
@@ -31,8 +32,9 @@ def is_alive():
 
 
 def handle_start(environ, start_response):
-    ssid = environ['REQUEST_ARGUMENTS']['ssid'].value
-    password = environ['REQUEST_ARGUMENTS']['password'].value
+    cfg = config.read()
+    ssid = cfg.get('fqrouter', 'WifiHotspotSSID')
+    password = cfg.get('fqrouter', 'WifiHotspotPassword')
     success, message = start_hotspot(ssid, password)
     status = httplib.OK if success else httplib.BAD_GATEWAY
     start_response(status, [('Content-Type', 'text/plain')])

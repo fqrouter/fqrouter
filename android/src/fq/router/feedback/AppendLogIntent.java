@@ -1,9 +1,9 @@
 package fq.router.feedback;
 
-import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
+import fq.router.utils.LoggedBroadcastReceiver;
 
 public class AppendLogIntent extends Intent {
     private final static String ACTION_APPEND_LOG = "AppendLog";
@@ -14,9 +14,9 @@ public class AppendLogIntent extends Intent {
     }
 
     public static void register(final Handler handler) {
-        handler.getBaseContext().registerReceiver(new BroadcastReceiver() {
+        handler.getBaseContext().registerReceiver(new LoggedBroadcastReceiver() {
             @Override
-            public void onReceive(Context context, Intent intent) {
+            public void handle(Context context, Intent intent) {
                 handler.appendLog(intent.getStringExtra("log"));
             }
         }, new IntentFilter(ACTION_APPEND_LOG));

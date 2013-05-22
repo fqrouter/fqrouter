@@ -5,6 +5,7 @@ import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.net.Uri;
+import android.net.wifi.WifiManager;
 import android.os.Bundle;
 import android.preference.PreferenceManager;
 import android.support.v4.app.NotificationCompat;
@@ -41,6 +42,7 @@ public class MainActivity extends Activity implements
     private final static int ITEM_ID_SETTINGS = 4;
     private final static int ITEM_ID_PICK_AND_PLAY = 5;
     private boolean started;
+    private WifiManager.WifiLock wifiLock;
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
@@ -232,9 +234,24 @@ public class MainActivity extends Activity implements
 
     @Override
     public void onWifiHotspotChanged(boolean isStarted, boolean wasStartingWifiRepeater) {
+        updateWifiLock(isStarted);
         showWifiHotspotToggleButton(isStarted);
         if (!isStarted && wasStartingWifiRepeater) {
             askIfStartTraditionalWifiHotspot();
+        }
+    }
+
+    private void updateWifiLock(boolean isStarted) {
+        WifiManager wifiManager = (WifiManager) getSystemService(WIFI_SERVICE);
+        if (null == wifiLock) {
+            wifiLock = wifiManager.createWifiLock(WifiManager.WIFI_MODE_FULL_HIGH_PERF, "fqrouter wifi hotspot");
+        }
+        if (isStarted) {
+            wifiLock.acquire();
+        } else {
+            if (wifiLock.isHeld()) {
+                wifiLock.release();
+            }
         }
     }
 

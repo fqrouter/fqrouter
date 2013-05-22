@@ -6,6 +6,12 @@ import android.preference.Preference;
 import android.preference.PreferenceActivity;
 import android.preference.PreferenceManager;
 import android.widget.Toast;
+import fq.router.life.LaunchService;
+import fq.router.utils.IOUtils;
+import fq.router.utils.LogUtils;
+
+import java.io.File;
+import java.util.Map;
 
 public class SettingsActivity extends PreferenceActivity implements SharedPreferences.OnSharedPreferenceChangeListener {
     @Override
@@ -47,9 +53,13 @@ public class SettingsActivity extends PreferenceActivity implements SharedPrefer
 
     @Override
     public void onSharedPreferenceChanged(SharedPreferences sharedPreferences, String key) {
-        if (key.startsWith("WifiHotspotHelper")) {
+        if (key.startsWith("WifiHotspot")) {
             showToast("You need to restart wifi hotspot to apply the changes");
+        } else {
+            showToast("You need to restart fqrouter to apply the changes");
         }
+        Map<String, ?> settings = sharedPreferences.getAll();
+        LaunchService.updateConfigFile(settings);
     }
 
     private void showToast(String text) {

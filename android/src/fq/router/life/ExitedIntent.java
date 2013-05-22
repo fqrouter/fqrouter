@@ -1,9 +1,9 @@
 package fq.router.life;
 
-import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
+import fq.router.utils.LoggedBroadcastReceiver;
 
 public class ExitedIntent extends Intent {
     private final static String ACTION_EXITED = "Exited";
@@ -13,9 +13,9 @@ public class ExitedIntent extends Intent {
     }
 
     public static void register(final Handler handler) {
-        handler.getBaseContext().registerReceiver(new BroadcastReceiver() {
+        handler.getBaseContext().registerReceiver(new LoggedBroadcastReceiver() {
             @Override
-            public void onReceive(Context context, Intent intent) {
+            public void handle(Context context, Intent intent) {
                 handler.onExited();
             }
         }, new IntentFilter(ACTION_EXITED));

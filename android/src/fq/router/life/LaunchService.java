@@ -3,14 +3,22 @@ package fq.router.life;
 import android.app.IntentService;
 import android.content.Context;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.content.pm.PackageInfo;
+import android.preference.PreferenceManager;
 import fq.router.feedback.AppendLogIntent;
 import fq.router.feedback.UpdateStatusIntent;
 import fq.router.utils.HttpUtils;
+import fq.router.utils.IOUtils;
 import fq.router.utils.LogUtils;
 import fq.router.utils.ShellUtils;
 
+import java.io.File;
+import java.util.Map;
+
 public class LaunchService extends IntentService {
+    private final static String CONFIG_FILE_PATH = "/data/data/fq.router/config";
+
     public LaunchService() {
         super("Launch");
     }
@@ -24,6 +32,7 @@ public class LaunchService extends IntentService {
     }
 
     private boolean launch() {
+        appendLog("ver: " + getMyVersion(this));
         if (ping()) {
             appendLog("manager is already running");
             return true;
@@ -77,6 +86,8 @@ public class LaunchService extends IntentService {
     }
 
     private Process executeManager() throws Exception {
+        SharedPreferences preferences = PreferenceManager.getDefaultSharedPreferences(this);
+        updateConfigFile(preferences.getAll());
         String runCommand = Deployer.BUSYBOX_FILE + " sh " + Deployer.PYTHON_LAUNCHER + " " +
                 Deployer.MANAGER_MAIN_PY.getAbsolutePath() + " > /data/data/fq.router/current-python.log 2>&1";
         return ShellUtils.sudoNotWait("FQROUTER_VERSION=" + getMyVersion(this) +
@@ -127,6 +138,23 @@ public class LaunchService extends IntentService {
             LogUtils.e(msg, e);
         }
         updateStatus("Error: " + msg);
+    }
+
+    public static void updateConfigFile(Map<String, ?> settings) {
+        try {
+            File configFile = new File(CONFIG_FILE_PATH);
+            if (configFile.exists()) {
+                configFile.delete();
+            }
+            StringBuilder s = new StringBuilder();
+            s.append("[fqrouter]\r\n");
+            for (String k : settings.keySet()) {
+                s.append(k).append("=").append(settings.get(k)).append("\r\n");
+            }
+            IOUtils.writeToFile(configFile, s.toString());
+        } catch (Exception e) {
+            LogUtils.e("failed to update config file", e);
+        }
     }
 
     private void appendLog(String log) {

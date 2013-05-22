@@ -18,5 +18,13 @@
                 android:key="WifiHotspotPassword"
                 android:title="Password"
                 android:defaultValue="12345678"/>
+
+    </PreferenceCategory>
+    <PreferenceCategory
+            android:title="Proxy">
+        <CheckBoxPreference
+                android:key="BypassDirectlyEnabled"
+                android:title="Bypass GFW Directly Without Proxy Server"
+                android:defaultValue="true"/>
     </PreferenceCategory>
 </PreferenceScreen>

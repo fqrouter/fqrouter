@@ -9,6 +9,7 @@ from gevent.wsgi import WSGIServer
 import gevent.monkey
 
 from utils import shutdown_hook
+from utils import config
 
 import comp_wifi
 import comp_dns
@@ -69,8 +70,11 @@ def get_http_response(code):
 
 
 def run():
-    LOGGER.info('environment: %s' % os.environ.items())
     skipped_components = []
+    LOGGER.info('environment: %s' % os.environ.items())
+    if not config.read().getboolean('fqrouter', 'BypassDirectlyEnabled'):
+        LOGGER.info('scrambler component disabled by config')
+        COMPONENTS.remove(comp_scrambler)
     for comp in COMPONENTS:
         try:
             shutdown_hook.add(comp.stop)

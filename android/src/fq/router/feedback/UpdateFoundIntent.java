@@ -1,9 +1,9 @@
 package fq.router.feedback;
 
-import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
+import fq.router.utils.LoggedBroadcastReceiver;
 
 public class UpdateFoundIntent extends Intent {
     private final static String ACTION_UPDATE_FOUND = "UpdateFound";
@@ -15,9 +15,9 @@ public class UpdateFoundIntent extends Intent {
     }
 
     public static void register(final Handler handler) {
-        handler.getBaseContext().registerReceiver(new BroadcastReceiver() {
+        handler.getBaseContext().registerReceiver(new LoggedBroadcastReceiver() {
             @Override
-            public void onReceive(Context context, Intent intent) {
+            public void handle(Context context, Intent intent) {
                 handler.onUpdateFound(intent.getStringExtra("latestVersion"), intent.getStringExtra("upgradeUrl"));
             }
         }, new IntentFilter(ACTION_UPDATE_FOUND));
