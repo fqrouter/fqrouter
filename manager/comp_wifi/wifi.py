@@ -605,13 +605,41 @@ def start_p2p_persistent_network(iface, control_socket_dir, ssid, password, sets
         reset_p2p_channels(iface, control_socket_dir, channel, reg_class)
         if iface != WIFI_INTERFACE:
             reset_p2p_channels(WIFI_INTERFACE, wpa_supplicant_control_socket_dir, channel, reg_class)
+    do_p2p_group_add(iface, control_socket_dir, index, frequency)
+    gevent.sleep(2)
+    if get_working_hotspot_iface():
+        return index
+    LOGGER.error('restart p2p_supplicant to fix unexpected GO creation')
+    restart_service('p2p_supplicant')
+    do_p2p_group_add(iface, control_socket_dir, index, frequency)
+    if get_working_hotspot_iface():
+        return index
+    LOGGER.error('restart wpa_supplicant to fix unexpected GO creation')
+    do_p2p_group_add(iface, control_socket_dir, index, frequency)
+    if get_working_hotspot_iface():
+        return index
+    LOGGER.error('restart *_supplicant did not fix the problem')
+    return index
+
+
+def do_p2p_group_add(iface, control_socket_dir, index, frequency):
     if frequency:
         shell_execute('%s -p %s -i %s p2p_group_add persistent=%s freq=%s ' %
                       (P2P_CLI_PATH, control_socket_dir, iface, index, frequency.replace('.', '')))
     else:
         shell_execute('%s -p %s -i %s p2p_group_add persistent=%s' % (P2P_CLI_PATH, control_socket_dir, iface, index))
-    gevent.sleep(2)
-    return index
+
+
+def restart_service(name):
+    try:
+        shell_execute('stop %s' % name)
+    except:
+        LOGGER.exception('failed to stop %s' % name)
+    try:
+        shell_execute('start %s' % name)
+    except:
+        LOGGER.exception('failed to start %s' % name)
+    gevent.sleep(1)
 
 
 def set_driver_param(control_socket_dir, iface, param):
