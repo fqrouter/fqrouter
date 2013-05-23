@@ -24,7 +24,8 @@
             android:title="Proxy">
         <CheckBoxPreference
                 android:key="BypassDirectlyEnabled"
-                android:title="Bypass GFW Directly Without Proxy Server"
+                android:title="Scrambler Enabled"
+                android:summary="Bypass GFW Directly Without Proxy Server"
                 android:defaultValue="true"/>
     </PreferenceCategory>
 </PreferenceScreen>
