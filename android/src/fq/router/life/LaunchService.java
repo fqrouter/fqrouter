@@ -47,7 +47,7 @@ public class LaunchService extends IntentService {
         }
         Deployer deployer = new Deployer(this);
         if (!deployer.deploy()) {
-            if (deployer.isRooted()) {
+            if (isRooted()) {
                 reportError("failed to deploy", null);
             } else {
                 reportError("[ROOT] is required", null);
@@ -75,6 +75,14 @@ public class LaunchService extends IntentService {
         return false;
     }
 
+
+    private static boolean isRooted() {
+        try {
+            return ShellUtils.sudo("echo", "hello").contains("hello");
+        } catch (Exception e) {
+            return false;
+        }
+    }
 
     private boolean hasProcessExited(Process process) {
         try {

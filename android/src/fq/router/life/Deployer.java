@@ -86,14 +86,6 @@ public class Deployer {
         return true;
     }
 
-    public boolean isRooted() {
-        try {
-            return ShellUtils.sudo("echo", "hello").contains("hello");
-        } catch (Exception e) {
-            return false;
-        }
-    }
-
     private boolean shouldDeployPayload() throws Exception {
         if (!PAYLOAD_CHECKSUM.exists()) {
             appendLog("no checksum, assume it is old");
