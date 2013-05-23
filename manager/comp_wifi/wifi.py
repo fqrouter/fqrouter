@@ -8,7 +8,7 @@ import shlex
 from gevent import subprocess
 import gevent
 
-from utils import iptables
+from ..utils import iptables
 import hostapd_template
 
 
@@ -428,8 +428,7 @@ def start_hotspot_on_wcnss(ssid, password):
     control_socket_dir = get_wpa_supplicant_control_socket_dir()
     load_p2p_firmware(control_socket_dir)
     delete_existing_p2p_persistent_networks(WIFI_INTERFACE, control_socket_dir)
-    sets_channel = False if shell_execute('getprop ro.product.model').strip() == 'ZTE N970' else True
-    start_p2p_persistent_network(WIFI_INTERFACE, control_socket_dir, ssid, password, sets_channel=sets_channel)
+    start_p2p_persistent_network(WIFI_INTERFACE, control_socket_dir, ssid, password, sets_channel=True)
     log_upstream_wifi_status('after p2p persistent group created', control_socket_dir)
 
 
