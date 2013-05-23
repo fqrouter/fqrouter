@@ -177,8 +177,7 @@ public class MainActivity extends Activity implements
 
     private void exit() {
         hideWifiHotspotToggleButton();
-        ToggleButton button = (ToggleButton) findViewById(R.id.wifiHotspotToggleButton);
-        ExitService.execute(this, button.isChecked());
+        ExitService.execute(this);
     }
 
     private void toggleWifiHotspot(ToggleButton button) {

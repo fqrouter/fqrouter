@@ -8,7 +8,7 @@ import shlex
 from gevent import subprocess
 import gevent
 
-from ..utils import iptables
+from utils import iptables
 import hostapd_template
 
 

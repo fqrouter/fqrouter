@@ -23,8 +23,7 @@ def start():
 
 
 def stop():
-    if get_working_hotspot_iface():
-        stop_hotspot()
+    pass
 
 
 def is_alive():

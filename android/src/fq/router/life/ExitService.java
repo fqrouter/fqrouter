@@ -5,7 +5,6 @@ import android.content.Context;
 import android.content.Intent;
 import fq.router.feedback.UpdateStatusIntent;
 import fq.router.utils.LogUtils;
-import fq.router.wifi.WifiHotspotHelper;
 
 public class ExitService extends IntentService {
 
@@ -15,14 +14,10 @@ public class ExitService extends IntentService {
 
     @Override
     protected void onHandleIntent(Intent intent) {
-        boolean shouldStopWifiHotspot = intent.getBooleanExtra("shouldStopWifiHotspot", false);
-        exit(shouldStopWifiHotspot);
+        exit();
     }
 
-    private void exit(boolean shouldStopWifiHotspot) {
-        if (shouldStopWifiHotspot) {
-            new WifiHotspotHelper(this).stop();
-        }
+    private void exit() {
         updateStatus("Exiting...");
         try {
             ManagerProcess.kill();
@@ -36,9 +31,7 @@ public class ExitService extends IntentService {
         sendBroadcast(new UpdateStatusIntent(status));
     }
 
-    public static void execute(Context context, boolean shouldStopWifiHotspot) {
-        Intent intent = new Intent(context, ExitService.class);
-        intent.putExtra("shouldStopWifiHotspot", shouldStopWifiHotspot);
-        context.startService(intent);
+    public static void execute(Context context) {
+        context.startService(new Intent(context, ExitService.class));
     }
 }
