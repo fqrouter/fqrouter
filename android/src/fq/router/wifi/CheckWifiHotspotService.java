@@ -11,12 +11,7 @@ public class CheckWifiHotspotService extends IntentService {
 
     @Override
     protected void onHandleIntent(Intent intent) {
-        WifiHotspotHelper wifiHotspotHelper = new WifiHotspotHelper(this);
-        boolean isStarted = wifiHotspotHelper.isStarted();
-        if (isStarted) {
-            wifiHotspotHelper.setup();
-        }
-        sendBroadcast(new WifiHotspotChangedIntent(isStarted));
+        sendBroadcast(new WifiHotspotChangedIntent(new WifiHotspotHelper(this).isStarted()));
     }
 
     public static void execute(Context context) {
