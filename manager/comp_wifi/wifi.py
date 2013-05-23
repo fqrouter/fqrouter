@@ -396,12 +396,12 @@ def start_hotspot_on_bcm(ssid, password):
         shell_execute('netcfg p2p0 up')
         p2p_control_socket_dir = get_p2p_supplicant_control_socket_dir()
         delete_existing_p2p_persistent_networks('p2p0', p2p_control_socket_dir)
-        start_p2p_persistent_network('p2p0', p2p_control_socket_dir, ssid, password)
+        start_p2p_persistent_network('p2p0', p2p_control_socket_dir, ssid, password, sets_channel=True)
         log_upstream_wifi_status('after p2p persistent group created', control_socket_dir)
     else:
         LOGGER.info('start p2p persistent group using %s' % WIFI_INTERFACE)
         delete_existing_p2p_persistent_networks(WIFI_INTERFACE, control_socket_dir)
-        start_p2p_persistent_network(WIFI_INTERFACE, control_socket_dir, ssid, password)
+        start_p2p_persistent_network(WIFI_INTERFACE, control_socket_dir, ssid, password, sets_channel=True)
         log_upstream_wifi_status('after p2p persistent group created', control_socket_dir)
 
 
