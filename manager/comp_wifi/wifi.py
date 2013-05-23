@@ -290,7 +290,7 @@ def start_hotspot_interface(wifi_chipset_family, ssid, password):
 
 
 def wait_for_upstream_wifi_network_connected():
-    for i in range(15):
+    for i in range(5):
         gevent.sleep(1)
         if get_ip_and_mac(WIFI_INTERFACE)[0]:
             return True
@@ -407,8 +407,11 @@ def load_p2p_firmware(control_socket_dir):
     netd_execute('softap fwreload %s P2P' % WIFI_INTERFACE)
     reset_wifi_interface()
     log_upstream_wifi_status('after loaded p2p firmware', control_socket_dir)
-    if was_using_wifi_network and not wait_for_upstream_wifi_network_connected():
-        raise Exception('wifi interface can not reconnect')
+    if was_using_wifi_network:
+        if wait_for_upstream_wifi_network_connected():
+            LOGGER.info('wifi reconnected')
+        else:
+            LOGGER.error('wifi failed to reconnect')
 
 
 def reset_wifi_interface():
