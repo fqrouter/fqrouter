@@ -215,9 +215,13 @@ def dump_unix_sockets():
 
 
 def get_working_hotspot_iface():
-    return get_p2p_persistent_iface() or \
+    hotspot_iface = get_p2p_persistent_iface() or \
            get_working_hotspot_iface_using_nl80211() or \
            get_working_hotspot_iface_using_wext()
+    if WIFI_INTERFACE == hotspot_iface:
+        return None
+    else:
+        return hotspot_iface
 
 
 def get_working_hotspot_iface_using_wext():
@@ -276,7 +280,7 @@ def start_hotspot_interface(wifi_chipset_family, ssid, password):
     else:
         raise Exception('wifi chipset family %s is not supported: %s' % wifi_chipset_family)
     hotspot_interface = get_working_hotspot_iface()
-    if WIFI_INTERFACE == hotspot_interface or not hotspot_interface:
+    if not hotspot_interface:
         try:
             shell_execute('logcat -d -v time -s wpa_supplicant:V')
         except:
