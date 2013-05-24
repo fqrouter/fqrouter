@@ -39,7 +39,7 @@ public class MainActivity extends Activity implements
     public final static int SHOW_AS_ACTION_IF_ROOM = 1;
     private final static int ITEM_ID_EXIT = 1;
     private final static int ITEM_ID_REPORT_ERROR = 2;
-    private final static int ITEM_ID_CHECK_UPDATES = 3;
+    private final static int ITEM_ID_RESET_WIFI = 3;
     private final static int ITEM_ID_SETTINGS = 4;
     private final static int ITEM_ID_PICK_AND_PLAY = 5;
     private boolean started;
@@ -89,7 +89,7 @@ public class MainActivity extends Activity implements
     public boolean onCreateOptionsMenu(Menu menu) {
         menu.add(Menu.NONE, ITEM_ID_PICK_AND_PLAY, Menu.NONE, "Pick & Play");
         menu.add(Menu.NONE, ITEM_ID_SETTINGS, Menu.NONE, "Settings");
-        menu.add(Menu.NONE, ITEM_ID_CHECK_UPDATES, Menu.NONE, "Check Updates");
+        menu.add(Menu.NONE, ITEM_ID_RESET_WIFI, Menu.NONE, "Reset Wifi");
         addMenuItem(menu, ITEM_ID_REPORT_ERROR, "Report Error");
         addMenuItem(menu, ITEM_ID_EXIT, "Exit");
         return super.onCreateOptionsMenu(menu);
@@ -114,8 +114,8 @@ public class MainActivity extends Activity implements
             exit();
         } else if (ITEM_ID_REPORT_ERROR == item.getItemId()) {
             reportError();
-        } else if (ITEM_ID_CHECK_UPDATES == item.getItemId()) {
-            checkUpdate();
+        } else if (ITEM_ID_RESET_WIFI == item.getItemId()) {
+            resetWifi();
         } else if (ITEM_ID_SETTINGS == item.getItemId()) {
             startActivity(new Intent(this, SettingsActivity.class));
         } else if (ITEM_ID_PICK_AND_PLAY == item.getItemId()) {
@@ -153,8 +153,9 @@ public class MainActivity extends Activity implements
         notificationManager.cancel(0);
     }
 
-    private void checkUpdate() {
-        CheckUpdateService.execute(this);
+    private void resetWifi() {
+        hideWifiHotspotToggleButton();
+        StopWifiHotspotService.execute(this);
     }
 
     @Override
@@ -191,8 +192,7 @@ public class MainActivity extends Activity implements
             String mode = preferences.getString("WifiHotspotMode", WifiHotspotHelper.MODE_WIFI_REPEATER);
             startWifiHotspot(mode);
         } else {
-            hideWifiHotspotToggleButton();
-            StopWifiHotspotService.execute(this);
+            resetWifi();
         }
     }
 
@@ -208,7 +208,7 @@ public class MainActivity extends Activity implements
     @Override
     public void onLaunched() {
         started = true;
-        checkUpdate();
+        CheckUpdateService.execute(this);
         CheckWifiHotspotService.execute(this);
     }
 
