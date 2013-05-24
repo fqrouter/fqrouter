@@ -7,6 +7,7 @@ import android.content.SharedPreferences;
 import android.net.Uri;
 import android.net.wifi.WifiManager;
 import android.os.Bundle;
+import android.os.Handler;
 import android.preference.PreferenceManager;
 import android.support.v4.app.NotificationCompat;
 import android.text.method.ScrollingMovementMethod;
@@ -17,10 +18,7 @@ import android.widget.TextView;
 import android.widget.Toast;
 import android.widget.ToggleButton;
 import fq.router.feedback.*;
-import fq.router.life.ExitService;
-import fq.router.life.ExitedIntent;
-import fq.router.life.LaunchService;
-import fq.router.life.LaunchedIntent;
+import fq.router.life.*;
 import fq.router.utils.LogUtils;
 import fq.router.wifi.*;
 
@@ -33,7 +31,10 @@ public class MainActivity extends Activity implements
         LaunchedIntent.Handler,
         UpdateFoundIntent.Handler,
         ExitedIntent.Handler,
-        WifiHotspotChangedIntent.Handler {
+        WifiHotspotChangedIntent.Handler,
+        DownloadingIntent.Handler,
+        DownloadedIntent.Handler,
+        DownloadFailedIntent.Handler {
 
     public final static int SHOW_AS_ACTION_IF_ROOM = 1;
     private final static int ITEM_ID_EXIT = 1;
@@ -56,6 +57,9 @@ public class MainActivity extends Activity implements
         UpdateFoundIntent.register(this);
         ExitedIntent.register(this);
         WifiHotspotChangedIntent.register(this);
+        DownloadingIntent.register(this);
+        DownloadedIntent.register(this);
+        DownloadFailedIntent.register(this);
         LaunchService.execute(this);
     }
 
@@ -176,6 +180,7 @@ public class MainActivity extends Activity implements
     }
 
     private void exit() {
+        started = false;
         hideWifiHotspotToggleButton();
         ExitService.execute(this);
     }
@@ -217,7 +222,9 @@ public class MainActivity extends Activity implements
 
                     @Override
                     public void onClick(DialogInterface dialog, int which) {
-                        startActivity(new Intent(Intent.ACTION_VIEW, Uri.parse(upgradeUrl)));
+                        updateStatus("Downloading " + Uri.parse(upgradeUrl).getLastPathSegment());
+                        DownloadService.execute(
+                                MainActivity.this, upgradeUrl.replace("http", "https"), "/sdcard/fqrouter-latest.apk");
                     }
 
                 })
@@ -273,5 +280,32 @@ public class MainActivity extends Activity implements
                 })
                 .setNegativeButton("No, thanks", null)
                 .show();
+    }
+
+    @Override
+    public void onDownloadFailed(final String url, String downloadTo) {
+        updateStatus("Error: download " + Uri.parse(url).getLastPathSegment() + " failed");
+        Toast.makeText(this, "Open browser and download the update manually", 3000).show();
+        new Handler().postDelayed(new Runnable() {
+            @Override
+            public void run() {
+                startActivity(new Intent(Intent.ACTION_VIEW, Uri.parse(url)));
+            }
+        }, 3000);
+    }
+
+    @Override
+    public void onDownloaded(String url, String downloadTo) {
+        updateStatus("Downloaded " + Uri.parse(url).getLastPathSegment());
+        Intent intent = new Intent(Intent.ACTION_VIEW);
+        intent.setDataAndType(Uri.parse("file://" + downloadTo), "application/vnd.android.package-archive");
+        startActivity(intent);
+    }
+
+    @Override
+    public void onDownloading(String url, String downloadTo, int percent) {
+        showNotification("Downloading " + Uri.parse(url).getLastPathSegment() + ": " + percent + "%");
+        TextView textView = (TextView) findViewById(R.id.statusTextView);
+        textView.setText("Downloaded: " + percent + "%");
     }
 }

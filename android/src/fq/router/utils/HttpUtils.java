@@ -42,7 +42,7 @@ public class HttpUtils {
         return get(request, null, 3000);
     }
 
-    public static String get(String request, IOUtils.Callback callback, int timeout) throws Exception {
+    public static String get(String request, IOUtils.LineRead callback, int timeout) throws Exception {
         URL url = new URL(request);
         HttpURLConnection connection = (HttpURLConnection) url.openConnection();
         try {
@@ -59,7 +59,7 @@ public class HttpUtils {
         }
     }
 
-    private static String handleResponse(HttpURLConnection connection, IOUtils.Callback callback) throws Exception {
+    private static String handleResponse(HttpURLConnection connection, IOUtils.LineRead callback) throws Exception {
         int responseCode = connection.getResponseCode();
         if (responseCode >= 200 && responseCode < 300) {
             return IOUtils.readAll(connection.getInputStream(), callback);

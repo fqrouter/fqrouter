@@ -7,15 +7,19 @@ import java.security.MessageDigest;
 public class IOUtils {
 
 
-    public static interface Callback {
+    public static interface LineRead {
         void onLineRead(String line);
+    }
+
+    public static interface ChunkCopied {
+        void onChunkCopied(byte[] buffer, int length) throws Exception;
     }
 
     public static String readAll(InputStream inputStream) throws Exception {
         return readAll(inputStream, null);
     }
 
-    public static String readAll(InputStream inputStream, Callback callback) throws Exception {
+    public static String readAll(InputStream inputStream, LineRead callback) throws Exception {
         try {
             BufferedReader reader = new BufferedReader(new InputStreamReader(inputStream));
             StringBuilder stringBuilder = new StringBuilder();
@@ -33,13 +37,20 @@ public class IOUtils {
     }
 
     public static String copy(InputStream inputStream, OutputStream outputStream) throws Exception {
+        return copy(inputStream, outputStream, null);
+    }
+
+    public static String copy(InputStream inputStream, OutputStream outputStream, ChunkCopied callback) throws Exception {
         MessageDigest md5 = MessageDigest.getInstance("MD5");
-        byte[] buffer = new byte[1024];
+        byte[] buffer = new byte[1024 * 32];
         int length;
         while ((length = inputStream.read(buffer)) > 0) {
             md5.update(buffer, 0, length);
             if (outputStream != null) {
                 outputStream.write(buffer, 0, length);
+            }
+            if (null != callback) {
+                callback.onChunkCopied(buffer, length);
             }
         }
         return new BigInteger(1, md5.digest()).toString(16);

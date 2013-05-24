@@ -45,7 +45,7 @@ public class PickAndPlayActivity extends ListActivity {
             public void run() {
                 try {
                     updateStatus("scanning...");
-                    HttpUtils.get("http://127.0.0.1:8318/lan/scan", new IOUtils.Callback() {
+                    HttpUtils.get("http://127.0.0.1:8318/lan/scan", new IOUtils.LineRead() {
                         @Override
                         public void onLineRead(String line) {
                             try {

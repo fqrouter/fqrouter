@@ -32,9 +32,11 @@
         </activity>
         <service android:name=".life.LaunchService">
         </service>
-        <service android:name=".feedback.CheckUpdateService">
-        </service>
         <service android:name=".life.ExitService">
+        </service>
+        <service android:name=".life.DownloadService">
+        </service>
+        <service android:name=".feedback.CheckUpdateService">
         </service>
         <service android:name=".wifi.CheckWifiHotspotService">
         </service>

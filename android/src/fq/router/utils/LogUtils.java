@@ -10,13 +10,22 @@ public class LogUtils {
     private static File logFile;
 
     public static void e(String msg) {
-        Log.e("fqrouter", msg);
-        writeLogFile("ERROR", msg);
+        try {
+            Log.e("fqrouter", msg);
+            writeLogFile("ERROR", msg);
+        } catch (Exception e) {
+            System.out.println(msg);
+        }
     }
 
     public static void e(String msg, Throwable exception) {
-        Log.e("fqrouter", msg, exception);
-        writeLogFile("ERROR", msg + "\r\n" + formatException(exception));
+        try {
+            Log.e("fqrouter", msg, exception);
+            writeLogFile("ERROR", msg + "\r\n" + formatException(exception));
+        } catch (Exception e) {
+            System.out.println(msg);
+            exception.printStackTrace();
+        }
     }
 
     private static String formatException(Throwable e) {
