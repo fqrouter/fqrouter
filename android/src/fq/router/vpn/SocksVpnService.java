@@ -13,6 +13,8 @@ import java.io.*;
 import java.net.DatagramSocket;
 import java.net.InetSocketAddress;
 import java.net.Socket;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 public class SocksVpnService extends VpnService {
 
@@ -58,12 +60,7 @@ public class SocksVpnService extends VpnService {
                 @Override
                 public void run() {
                     try {
-                        LocalSocket fdSocket = fdServerSocket.accept();
-                        try {
-                            passFileDescriptors(fdSocket, tunPFD.getFileDescriptor());
-                        } finally {
-                            fdSocket.close();
-                        }
+                        listenFdServerSocket(tunPFD);
                     } catch (Exception e) {
                         LogUtils.e("fdsock failed " + e, e);
                     }
@@ -76,25 +73,60 @@ public class SocksVpnService extends VpnService {
         }
     }
 
+    private void listenFdServerSocket(final ParcelFileDescriptor tunPFD) {
+        ExecutorService executorService = Executors.newFixedThreadPool(16);
+        while (fdServerSocket != null) {
+            try {
+                final LocalSocket fdSocket = fdServerSocket.accept();
+                executorService.submit(new Runnable() {
+                    @Override
+                    public void run() {
+                        try {
+                            passFileDescriptors(fdSocket, tunPFD.getFileDescriptor());
+                        } catch (Exception e) {
+                            LogUtils.e("failed to handle fdsock", e);
+                        }
+                    }
+                });
+            } catch (Exception e) {
+                LogUtils.e("failed to handle fdsock", e);
+            }
+        }
+        executorService.shutdown();
+    }
+
     private void passFileDescriptors(LocalSocket fdSocket, FileDescriptor tunFD) throws Exception {
         OutputStream outputStream = fdSocket.getOutputStream();
         InputStream inputStream = fdSocket.getInputStream();
-        BufferedReader reader = new BufferedReader(new InputStreamReader(inputStream), 1);
-        fdSocket.setFileDescriptorsForSend(new FileDescriptor[]{tunFD});
-        outputStream.write('*');
-        while (isRunning()) {
+        try {
+            BufferedReader reader = new BufferedReader(new InputStreamReader(inputStream), 1);
             String request = reader.readLine();
-            LogUtils.i("fdsock request: " + request);
             String[] parts = request.split(",");
-            if ("UDP".equals(parts[0])) {
+            if ("TUN".equals(parts[0])) {
+                fdSocket.setFileDescriptorsForSend(new FileDescriptor[]{tunFD});
+                outputStream.write('*');
+            } else if ("UDP".equals(parts[0])) {
                 passUdpFileDescriptor(fdSocket, outputStream);
             } else if ("TCP".equals(parts[0])) {
                 String dstIp = parts[1];
                 int dstPort = Integer.parseInt(parts[2]);
-                passTcpFileDescriptor(fdSocket, outputStream, dstIp, dstPort);
+                int connectTimeout = Integer.parseInt(parts[3]);
+                passTcpFileDescriptor(fdSocket, outputStream, dstIp, dstPort, connectTimeout);
             } else {
                 throw new UnsupportedOperationException("fdsock unable to handle: " + request);
             }
+        } finally {
+            try {
+                inputStream.close();
+            } catch (Exception e) {
+                LogUtils.e("failed to close input stream", e);
+            }
+            try {
+                outputStream.close();
+            } catch (Exception e) {
+                LogUtils.e("failed to close output stream", e);
+            }
+            fdSocket.close();
         }
     }
 
@@ -104,14 +136,12 @@ public class SocksVpnService extends VpnService {
 
     private void passTcpFileDescriptor(
             LocalSocket fdSocket, OutputStream outputStream,
-            String dstIp, int dstPort) throws Exception {
+            String dstIp, int dstPort, int connectTimeout) throws Exception {
         Socket sock = new Socket();
         sock.setTcpNoDelay(true); // force file descriptor being created
         if (protect(sock)) {
             try {
-                LogUtils.i("connecting " + dstIp + ":" + dstPort);
-                sock.connect(new InetSocketAddress(dstIp, dstPort), 5000);
-                LogUtils.i("connected " + dstIp + ":" + dstPort);
+                sock.connect(new InetSocketAddress(dstIp, dstPort), connectTimeout);
                 ParcelFileDescriptor fd = ParcelFileDescriptor.fromSocket(sock);
                 fdSocket.setFileDescriptorsForSend(new FileDescriptor[]{fd.getFileDescriptor()});
                 outputStream.write('*');

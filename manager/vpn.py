@@ -7,6 +7,7 @@ import socket
 import httplib
 import fqdns
 import fqsocks.fqsocks
+import contextlib
 
 import gevent
 import gevent.monkey
@@ -21,7 +22,6 @@ LOGGER = logging.getLogger('fqrouter.%s' % __name__)
 LOG_DIR = '/data/data/fq.router'
 MANAGER_LOG_FILE = os.path.join(LOG_DIR, 'manager.log')
 
-fdsock = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
 nat_map = {} # sport => (dst, dport), src always be 10.25.1.1
 
 
@@ -112,29 +112,35 @@ def handle_tcp(downstream_sock, address):
         dst_ip, dst_port = nat_map.get(src_port)
         LOGGER.info('tcp handler %s:%s => %s:%s' % (src_ip, src_port, dst_ip, dst_port))
         client = fqsocks.fqsocks.ProxyClient(downstream_sock, src_ip, src_port, dst_ip, dst_port)
-        sock = create_tcp_socket(dst_ip, dst_port, -1)
+        sock = create_tcp_socket(dst_ip, dst_port, 3)
         client.forward(sock)
     except:
         LOGGER.exception('handle tcp failed')
 
 
 def create_tcp_socket(server_ip, server_port, connect_timeout):
-    fdsock.sendall('TCP,%s,%s,%s\n' % (server_ip, server_port, connect_timeout * 1000))
-    gevent.socket.wait_read(fdsock.fileno())
-    fd = _multiprocessing.recvfd(fdsock.fileno())
-    sock = socket.fromfd(fd, socket.AF_INET, socket.SOCK_STREAM)
-    sock.connect((server_ip, server_port))
-    return sock
+    fdsock = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
+    with contextlib.closing(fdsock):
+        fdsock.connect('\0fdsock')
+        fdsock.sendall('TCP,%s,%s,%s\n' % (server_ip, server_port, connect_timeout * 1000))
+        gevent.socket.wait_read(fdsock.fileno())
+        fd = _multiprocessing.recvfd(fdsock.fileno())
+        sock = socket.fromfd(fd, socket.AF_INET, socket.SOCK_STREAM)
+        sock.connect((server_ip, server_port))
+        return sock
 
 
 fqdns.SPI['create_tcp_socket'] = create_tcp_socket
 
 
 def create_udp_socket():
-    fdsock.sendall('UDP\n')
-    gevent.socket.wait_read(fdsock.fileno())
-    fd = _multiprocessing.recvfd(fdsock.fileno())
-    return socket.fromfd(fd, socket.AF_INET, socket.SOCK_DGRAM)
+    fdsock = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
+    with contextlib.closing(fdsock):
+        fdsock.connect('\0fdsock')
+        fdsock.sendall('UDP\n')
+        gevent.socket.wait_read(fdsock.fileno())
+        fd = _multiprocessing.recvfd(fdsock.fileno())
+        return socket.fromfd(fd, socket.AF_INET, socket.SOCK_DGRAM)
 
 
 fqdns.SPI['create_udp_socket'] = create_udp_socket
@@ -154,14 +160,10 @@ def handle_ping(environ, start_response):
     yield 'VPN PONG'
 
 
-if '__main__' == __name__:
-    LOGGER.info('environment: %s' % os.environ.items())
-    gevent.monkey.patch_all()
-    setup_logging()
-    httpd.HANDLERS[('GET', 'ping')] = handle_ping
-    greenlets = [gevent.spawn(httpd.serve_forever)]
-    try:
-        LOGGER.info('connecting to fdsock')
+def read_tun_fd():
+    LOGGER.info('connecting to fdsock')
+    fdsock = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
+    with contextlib.closing(fdsock):
         while True:
             try:
                 fdsock.connect('\0fdsock')
@@ -170,8 +172,19 @@ if '__main__' == __name__:
                 LOGGER.info('retry in 5 seconds')
                 gevent.sleep(5)
         LOGGER.info('connected to fdsock')
+        fdsock.sendall('TUN\n')
         gevent.socket.wait_read(fdsock.fileno())
-        tun_fd = _multiprocessing.recvfd(fdsock.fileno())
+        return _multiprocessing.recvfd(fdsock.fileno())
+
+
+if '__main__' == __name__:
+    LOGGER.info('environment: %s' % os.environ.items())
+    gevent.monkey.patch_all()
+    setup_logging()
+    httpd.HANDLERS[('GET', 'ping')] = handle_ping
+    greenlets = [gevent.spawn(httpd.serve_forever)]
+    try:
+        tun_fd = read_tun_fd()
         LOGGER.info('tun fd: %s' % tun_fd)
     except:
         LOGGER.exception('failed to get tun fd')
