@@ -16,7 +16,7 @@
     <application android:label="@string/app_name" android:icon="@drawable/wall_green">
         <activity android:name=".MainActivity"
                   android:label="@string/app_name"
-                  android:launchMode="singleInstance"
+                  android:launchMode="singleTask"
                   android:configChanges="keyboard|keyboardHidden|orientation|screenSize">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN"/>
@@ -25,7 +25,7 @@
         </activity>
         <activity android:name=".PickAndPlayActivity"
                   android:label="Pick &amp; Play"
-                  android:launchMode="singleInstance"
+                  android:launchMode="singleTask"
                   android:configChanges="keyboard|keyboardHidden|orientation|screenSize">
         </activity>
         <activity android:name=".SettingsActivity">
@@ -43,6 +43,15 @@
         <service android:name=".wifi.StartWifiHotspotService">
         </service>
         <service android:name=".wifi.StopWifiHotspotService">
+        </service>
+        <service
+                android:name=".vpn.SocksVpnService"
+                android:label="@string/app_name"
+                android:permission="android.permission.BIND_VPN_SERVICE"
+                android:exported="false">
+            <intent-filter>
+                <action android:name="android.net.VpnService"/>
+            </intent-filter>
         </service>
     </application>
 </manifest> 

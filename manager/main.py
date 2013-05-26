@@ -3,13 +3,12 @@ import logging
 import logging.handlers
 import sys
 import httplib
-import cgi
 
-from gevent.wsgi import WSGIServer
 import gevent.monkey
 
 from utils import shutdown_hook
 from utils import config
+from utils import httpd
 
 import comp_wifi
 import comp_dns
@@ -39,36 +38,6 @@ def handle_ping(environ, start_response):
     yield 'PONG'
 
 
-HANDLERS = {
-    ('GET', 'ping'): handle_ping
-}
-
-
-def handle_request(environ, start_response):
-    method = environ.get('REQUEST_METHOD')
-    path = environ.get('PATH_INFO', '').strip('/')
-    environ['REQUEST_ARGUMENTS'] = cgi.FieldStorage(
-        fp=environ['wsgi.input'],
-        environ=environ,
-        keep_blank_values=True)
-    handler = HANDLERS.get((method, path))
-    if handler:
-        try:
-            lines = handler(environ, lambda status, headers: start_response(get_http_response(status), headers))
-        except:
-            LOGGER.exception('failed to handle request: %s %s' % (method, path))
-            raise
-    else:
-        start_response(get_http_response(httplib.NOT_FOUND), [('Content-Type', 'text/plain')])
-        lines = []
-    for line in lines:
-        yield line
-
-
-def get_http_response(code):
-    return '%s %s' % (code, httplib.responses[code])
-
-
 def run():
     skipped_components = []
     LOGGER.info('environment: %s' % os.environ.items())
@@ -80,7 +49,7 @@ def run():
             shutdown_hook.add(comp.stop)
             handlers = comp.start()
             for method, url, handler in handlers or []:
-                HANDLERS[(method, url)] = handler
+                httpd.HANDLERS[(method, url)] = handler
             LOGGER.info('started component: %s' % comp.__name__)
         except:
             LOGGER.exception('failed to start component: %s' % comp.__name__)
@@ -89,12 +58,7 @@ def run():
                 raise
             skipped_components.append(comp.__name__)
     LOGGER.info('all components started except: %s' % skipped_components)
-    try:
-        httpd = WSGIServer(('127.0.0.1', 8318), handle_request)
-        LOGGER.info('serving HTTP on port 8318...')
-    except:
-        LOGGER.exception('failed to start HTTP server on port 8318')
-        sys.exit(1)
+    httpd[('GET', 'ping')] = handle_ping
     httpd.serve_forever()
 
 

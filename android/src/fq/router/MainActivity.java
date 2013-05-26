@@ -5,6 +5,7 @@ import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.net.Uri;
+import android.net.VpnService;
 import android.net.wifi.WifiManager;
 import android.os.Bundle;
 import android.os.Handler;
@@ -20,6 +21,7 @@ import android.widget.ToggleButton;
 import fq.router.feedback.*;
 import fq.router.life.*;
 import fq.router.utils.LogUtils;
+import fq.router.vpn.SocksVpnService;
 import fq.router.wifi.*;
 
 import java.lang.reflect.Method;
@@ -34,7 +36,8 @@ public class MainActivity extends Activity implements
         WifiHotspotChangedIntent.Handler,
         DownloadingIntent.Handler,
         DownloadedIntent.Handler,
-        DownloadFailedIntent.Handler {
+        DownloadFailedIntent.Handler,
+        LaunchVpnIntent.Handler {
 
     public final static int SHOW_AS_ACTION_IF_ROOM = 1;
     private final static int ITEM_ID_EXIT = 1;
@@ -42,6 +45,7 @@ public class MainActivity extends Activity implements
     private final static int ITEM_ID_RESET_WIFI = 3;
     private final static int ITEM_ID_SETTINGS = 4;
     private final static int ITEM_ID_PICK_AND_PLAY = 5;
+    private final static int ASK_VPN_PERMISSION = 1;
     private boolean started;
     private WifiManager.WifiLock wifiLock;
 
@@ -60,9 +64,25 @@ public class MainActivity extends Activity implements
         DownloadingIntent.register(this);
         DownloadedIntent.register(this);
         DownloadFailedIntent.register(this);
+        LaunchVpnIntent.register(this);
         LaunchService.execute(this);
     }
 
+    @Override
+    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+        if (ASK_VPN_PERMISSION == requestCode) {
+            if (resultCode == RESULT_OK) {
+                updateStatus("Launch Socks Vpn Service");
+                stopService(new Intent(this, SocksVpnService.class));
+                startService(new Intent(this, SocksVpnService.class));
+            } else {
+                updateStatus("Error: vpn permission rejected");
+                LogUtils.e("failed to start vpn service: " + resultCode);
+            }
+        } else {
+            super.onActivityResult(requestCode, resultCode, data);
+        }
+    }
 
     @Override
     protected void onResume() {
@@ -181,6 +201,10 @@ public class MainActivity extends Activity implements
     }
 
     private void exit() {
+        if (SocksVpnService.isRunning()) {
+            Toast.makeText(this, "Use notification bar to stop VPN first", 5000).show();
+            return;
+        }
         started = false;
         hideWifiHotspotToggleButton();
         ExitService.execute(this);
@@ -206,10 +230,12 @@ public class MainActivity extends Activity implements
     }
 
     @Override
-    public void onLaunched() {
+    public void onLaunched(boolean isVpnMode) {
         started = true;
         CheckUpdateService.execute(this);
-        CheckWifiHotspotService.execute(this);
+        if (!isVpnMode) {
+            CheckWifiHotspotService.execute(this);
+        }
     }
 
     @Override
@@ -307,5 +333,15 @@ public class MainActivity extends Activity implements
         showNotification("Downloading " + Uri.parse(url).getLastPathSegment() + ": " + percent + "%");
         TextView textView = (TextView) findViewById(R.id.statusTextView);
         textView.setText("Downloaded: " + percent + "%");
+    }
+
+    @Override
+    public void onLaunchVpn() {
+        Intent intent = VpnService.prepare(MainActivity.this);
+        if (intent == null) {
+            onActivityResult(ASK_VPN_PERMISSION, RESULT_OK, null);
+        } else {
+            startActivityForResult(intent, ASK_VPN_PERMISSION);
+        }
     }
 }

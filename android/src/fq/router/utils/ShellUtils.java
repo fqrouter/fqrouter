@@ -1,10 +1,9 @@
 package fq.router.utils;
 
-import java.io.BufferedReader;
-import java.io.File;
-import java.io.InputStreamReader;
-import java.io.OutputStreamWriter;
+import java.io.*;
 import java.util.Arrays;
+import java.util.HashMap;
+import java.util.Map;
 
 
 public class ShellUtils {
@@ -12,24 +11,40 @@ public class ShellUtils {
     private static final String[] BINARY_PLACES = {"/data/bin/", "/system/bin/", "/system/xbin/", "/sbin/",
             "/data/local/xbin/", "/data/local/bin/", "/system/sd/xbin/", "/system/bin/failsafe/",
             "/data/local/"};
+    private static boolean NO_SUDO = false;
 
     public static String execute(String... command) throws Exception {
-        Process process = new ProcessBuilder(command)
+        Process process = executeNoWait(new HashMap<String, String>(), command);
+        return waitFor(Arrays.toString(command), process);
+    }
+
+    public static Process executeNoWait(Map<String, String> env, String... command) throws IOException {
+        LogUtils.i("command: " + Arrays.toString(command));
+        ProcessBuilder processBuilder = new ProcessBuilder(command);
+        processBuilder.environment().putAll(env);
+        return processBuilder
                 .redirectErrorStream(true)
                 .start();
-        return waitFor(Arrays.toString(command), process);
     }
 
 
     public static String sudo(String... command) throws Exception {
-        Process process = sudoNotWait(command);
+        if (NO_SUDO) {
+            return execute(command);
+        }
+        Process process = sudoNoWait(new HashMap<String, String>(), command);
         return waitFor(Arrays.toString(command), process);
     }
 
 
-    public static Process sudoNotWait(String... command) throws Exception {
+    public static Process sudoNoWait(Map<String, String> env, String... command) throws Exception {
+        if (NO_SUDO) {
+            return executeNoWait(env, command);
+        }
         LogUtils.i("sudo: " + Arrays.toString(command));
-        Process process = new ProcessBuilder()
+        ProcessBuilder processBuilder = new ProcessBuilder();
+        processBuilder.environment().putAll(env);
+        Process process = processBuilder
                 .command(findCommand("su"))
                 .redirectErrorStream(true)
                 .start();
@@ -76,5 +91,17 @@ public class ShellUtils {
             throw new Exception("failed to execute: " + command + ", exit value: " + exitValue + ", output: " + output);
         }
         return output.toString();
+    }
+
+    public static boolean isRooted() {
+        NO_SUDO = false;
+        boolean isRooted;
+        try {
+            isRooted = sudo("echo", "hello").contains("hello");
+        } catch (Exception e) {
+            isRooted = false;
+        }
+        NO_SUDO = !isRooted;
+        return isRooted;
     }
 }

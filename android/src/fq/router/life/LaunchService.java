@@ -5,6 +5,7 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.pm.PackageInfo;
+import android.os.Build;
 import android.preference.PreferenceManager;
 import fq.router.feedback.AppendLogIntent;
 import fq.router.feedback.UpdateStatusIntent;
@@ -14,6 +15,8 @@ import fq.router.utils.LogUtils;
 import fq.router.utils.ShellUtils;
 
 import java.io.File;
+import java.io.OutputStreamWriter;
+import java.util.HashMap;
 import java.util.Map;
 
 public class LaunchService extends IntentService {
@@ -25,18 +28,28 @@ public class LaunchService extends IntentService {
 
     @Override
     protected void onHandleIntent(Intent intent) {
-        if (launch()) {
-            updateStatus("Started, f**k censorship");
-            sendBroadcast(new LaunchedIntent());
+        appendLog("ver: " + getMyVersion(this));
+        if (ping(false)) {
+            appendLog("manager is already running");
+            reportStated(false);
+            return;
+        }
+        if (ping(true)) {
+            appendLog("manager is already running");
+            reportStated(true);
+            return;
+        }
+        if (deployAndLaunch()) {
+            reportStated(false);
         }
     }
 
-    private boolean launch() {
-        appendLog("ver: " + getMyVersion(this));
-        if (ping()) {
-            appendLog("manager is already running");
-            return true;
-        }
+    private void reportStated(boolean isVpnMode) {
+        updateStatus("Started, f**k censorship");
+        sendBroadcast(new LaunchedIntent(isVpnMode));
+    }
+
+    private boolean deployAndLaunch() {
         try {
             updateStatus("Kill existing manager process");
             appendLog("try to kill manager process before launch");
@@ -47,19 +60,32 @@ public class LaunchService extends IntentService {
         }
         Deployer deployer = new Deployer(this);
         if (!deployer.deploy()) {
-            if (isRooted()) {
-                reportError("failed to deploy", null);
-            } else {
+            reportError("failed to deploy", null);
+            return false;
+        }
+        SharedPreferences preferences = PreferenceManager.getDefaultSharedPreferences(this);
+        updateConfigFile(preferences.getAll());
+        updateStatus("Launching...");
+        if (ShellUtils.isRooted()) {
+            return launch(false);
+        } else {
+            if (Build.VERSION.SDK_INT < 14) {
                 reportError("[ROOT] is required", null);
                 appendLog("What is [ROOT]: http://en.wikipedia.org/wiki/Android_rooting");
+                return false;
+            }
+            if (launch(true)) {
+                sendBroadcast(new LaunchVpnIntent());
             }
             return false;
         }
-        updateStatus("Launching...");
+    }
+
+    private boolean launch(boolean isVpnMode) {
         try {
-            Process process = executeManager();
+            Process process = executeManager(isVpnMode);
             for (int i = 0; i < 30; i++) {
-                if (ping()) {
+                if (ping(isVpnMode)) {
                     return true;
                 }
                 if (hasProcessExited(process)) {
@@ -76,14 +102,6 @@ public class LaunchService extends IntentService {
     }
 
 
-    private static boolean isRooted() {
-        try {
-            return ShellUtils.sudo("echo", "hello").contains("hello");
-        } catch (Exception e) {
-            return false;
-        }
-    }
-
     private boolean hasProcessExited(Process process) {
         try {
             process.exitValue();
@@ -93,13 +111,26 @@ public class LaunchService extends IntentService {
         }
     }
 
-    private Process executeManager() throws Exception {
-        SharedPreferences preferences = PreferenceManager.getDefaultSharedPreferences(this);
-        updateConfigFile(preferences.getAll());
-        String runCommand = Deployer.BUSYBOX_FILE + " sh " + Deployer.PYTHON_LAUNCHER + " " +
-                Deployer.MANAGER_MAIN_PY.getAbsolutePath() + " > /data/data/fq.router/current-python.log 2>&1";
-        return ShellUtils.sudoNotWait("FQROUTER_VERSION=" + getMyVersion(this) +
-                " PYTHONHOME=" + Deployer.PYTHON_DIR + " " + runCommand);
+    private Process executeManager(boolean isVpnMode) throws Exception {
+        Map<String, String> env = new HashMap<String, String>() {{
+            put("FQROUTER_VERSION", getMyVersion(LaunchService.this));
+            put("PYTHONHOME", Deployer.PYTHON_DIR.getCanonicalPath());
+        }};
+        if (isVpnMode) {
+            Process process = ShellUtils.executeNoWait(env, Deployer.BUSYBOX_FILE.getCanonicalPath(), "sh");
+            OutputStreamWriter stdin = new OutputStreamWriter(process.getOutputStream());
+            try {
+                stdin.write(Deployer.PYTHON_LAUNCHER + " " + Deployer.MANAGER_VPN_PY.getAbsolutePath() +
+                        " > /data/data/fq.router/current-python.log 2>&1");
+                stdin.write("\nexit\n");
+            } finally {
+                stdin.close();
+            }
+            return process;
+        } else {
+            return ShellUtils.sudoNoWait(env, Deployer.BUSYBOX_FILE + " sh " + Deployer.PYTHON_LAUNCHER + " " +
+                    Deployer.MANAGER_MAIN_PY.getAbsolutePath() + " > /data/data/fq.router/current-python.log 2>&1");
+        }
     }
 
     public static String getMyVersion(Context context) {
@@ -121,10 +152,10 @@ public class LaunchService extends IntentService {
         }
     }
 
-    public static boolean ping() {
+    public static boolean ping(boolean isVpnMode) {
         try {
             String content = HttpUtils.get("http://127.0.0.1:8318/ping");
-            if ("PONG".equals(content)) {
+            if (isVpnMode ? "VPN PONG".equals(content) : "PONG".equals(content)) {
                 return true;
             } else {
                 LogUtils.e("ping failed: " + content);
