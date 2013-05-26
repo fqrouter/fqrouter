@@ -58,7 +58,7 @@ def run():
                 raise
             skipped_components.append(comp.__name__)
     LOGGER.info('all components started except: %s' % skipped_components)
-    httpd[('GET', 'ping')] = handle_ping
+    httpd.HANDLERS[('GET', 'ping')] = handle_ping
     httpd.serve_forever()
 
 

@@ -20,6 +20,7 @@ from utils import httpd
 LOGGER = logging.getLogger('fqrouter.%s' % __name__)
 LOG_DIR = '/data/data/fq.router'
 MANAGER_LOG_FILE = os.path.join(LOG_DIR, 'manager.log')
+FQDNS_LOG_FILE = os.path.join(LOG_DIR, 'fqdns.log')
 
 nat_map = {} # sport => (dst, dport), src always be 10.25.1.1
 DNS_HANDLER = fqdns.DnsHandler(enable_china_domain=True, enable_hosted_domain=True)
@@ -84,6 +85,7 @@ def handle_udp(sendto, request, address):
         src_ip, src_port = address
         dst_ip, dst_port = nat_map.get(src_port)
         if 53 == dst_port:
+            LOGGER.info('pass to DNS_HANDLER')
             DNS_HANDLER(sendto, request, address)
         else:
             sock = create_udp_socket()
@@ -142,6 +144,10 @@ def setup_logging():
         MANAGER_LOG_FILE, maxBytes=1024 * 256, backupCount=0)
     handler.setFormatter(logging.Formatter('%(asctime)s %(levelname)s %(message)s'))
     logging.getLogger('fqrouter').addHandler(handler)
+    handler = logging.handlers.RotatingFileHandler(
+        FQDNS_LOG_FILE, maxBytes=1024 * 256, backupCount=0)
+    handler.setFormatter(logging.Formatter('%(asctime)s %(levelname)s %(message)s'))
+    logging.getLogger('fqdns').addHandler(handler)
 
 
 def handle_ping(environ, start_response):

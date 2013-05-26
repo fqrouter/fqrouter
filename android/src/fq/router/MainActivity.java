@@ -48,6 +48,15 @@ public class MainActivity extends Activity implements
     private final static int ASK_VPN_PERMISSION = 1;
     private boolean started;
     private WifiManager.WifiLock wifiLock;
+    private static Class SOCKS_VPN_SERVICE_CLASS;
+
+    static {
+        try {
+            SOCKS_VPN_SERVICE_CLASS = MainActivity.class.forName("fq.router.vpn.SocksVpnService");
+        } catch (ClassNotFoundException e) {
+            LogUtils.e("failed to load SocksVpnService.class", e);
+        }
+    }
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
@@ -72,9 +81,13 @@ public class MainActivity extends Activity implements
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
         if (ASK_VPN_PERMISSION == requestCode) {
             if (resultCode == RESULT_OK) {
-                updateStatus("Launch Socks Vpn Service");
-                stopService(new Intent(this, SocksVpnService.class));
-                startService(new Intent(this, SocksVpnService.class));
+                if (SOCKS_VPN_SERVICE_CLASS == null) {
+                    updateStatus("Error: vpn class not loaded");
+                } else {
+                    updateStatus("Launch Socks Vpn Service");
+                    stopService(new Intent(this, SOCKS_VPN_SERVICE_CLASS));
+                    startService(new Intent(this, SOCKS_VPN_SERVICE_CLASS));
+                }
             } else {
                 updateStatus("Error: vpn permission rejected");
                 LogUtils.e("failed to start vpn service: " + resultCode);
@@ -201,7 +214,7 @@ public class MainActivity extends Activity implements
     }
 
     private void exit() {
-        if (SocksVpnService.isRunning()) {
+        if (SOCKS_VPN_SERVICE_CLASS != null && SocksVpnService.isRunning()) {
             Toast.makeText(this, "Use notification bar to stop VPN first", 5000).show();
             return;
         }

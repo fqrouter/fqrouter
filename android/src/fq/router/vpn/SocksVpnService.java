@@ -66,7 +66,7 @@ public class SocksVpnService extends VpnService {
                     }
                 }
             }).start();
-            updateStatus("Started Vpn Mode with Limited Functions");
+            updateStatus("Started in VPN mode with limited functions");
             sendBroadcast(new LaunchedIntent(true));
         } catch (Exception e) {
             LogUtils.e("establish failed", e);
