@@ -75,14 +75,14 @@ public class SocksVpnService extends VpnService {
 
     private void listenFdServerSocket(final ParcelFileDescriptor tunPFD) {
         ExecutorService executorService = Executors.newFixedThreadPool(16);
-        while (fdServerSocket != null) {
+        while (isRunning()) {
             try {
                 final LocalSocket fdSocket = fdServerSocket.accept();
                 executorService.submit(new Runnable() {
                     @Override
                     public void run() {
                         try {
-                            passFileDescriptors(fdSocket, tunPFD.getFileDescriptor());
+                            passFileDescriptor(fdSocket, tunPFD.getFileDescriptor());
                         } catch (Exception e) {
                             LogUtils.e("failed to handle fdsock", e);
                         }
@@ -95,7 +95,11 @@ public class SocksVpnService extends VpnService {
         executorService.shutdown();
     }
 
-    private void passFileDescriptors(LocalSocket fdSocket, FileDescriptor tunFD) throws Exception {
+    public static boolean isRunning() {
+        return fdServerSocket != null;
+    }
+
+    private void passFileDescriptor(LocalSocket fdSocket, FileDescriptor tunFD) throws Exception {
         OutputStream outputStream = fdSocket.getOutputStream();
         InputStream inputStream = fdSocket.getInputStream();
         try {
@@ -128,10 +132,6 @@ public class SocksVpnService extends VpnService {
             }
             fdSocket.close();
         }
-    }
-
-    public static boolean isRunning() {
-        return fdServerSocket != null;
     }
 
     private void passTcpFileDescriptor(

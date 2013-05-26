@@ -23,6 +23,7 @@ LOG_DIR = '/data/data/fq.router'
 MANAGER_LOG_FILE = os.path.join(LOG_DIR, 'manager.log')
 
 nat_map = {} # sport => (dst, dport), src always be 10.25.1.1
+DNS_HANDLER = fqdns.DnsHandler(enable_china_domain=True, enable_hosted_domain=True)
 
 
 def redirect_tun_traffic(tun_fd):
@@ -83,13 +84,16 @@ def handle_udp(sendto, request, address):
     try:
         src_ip, src_port = address
         dst_ip, dst_port = nat_map.get(src_port)
-        sock = create_udp_socket()
-        try:
-            sock.sendto(request, (dst_ip, dst_port))
-            response = sock.recv(8192)
-            sendto(response, address)
-        finally:
-            sock.close()
+        if 53 == dst_port:
+            DNS_HANDLER(sendto, request, address)
+        else:
+            sock = create_udp_socket()
+            try:
+                sock.sendto(request, (dst_ip, dst_port))
+                response = sock.recv(8192)
+                sendto(response, address)
+            finally:
+                sock.close()
     except:
         LOGGER.exception('failed to handle udp')
 
