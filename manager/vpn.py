@@ -11,7 +11,6 @@ import contextlib
 
 import gevent
 import gevent.monkey
-import gevent.server
 import gevent.socket
 import dpkt
 
@@ -98,28 +97,13 @@ def handle_udp(sendto, request, address):
         LOGGER.exception('failed to handle udp')
 
 
-def serve_tcp():
-    address = ('10.25.1.1', 12345)
-    server = gevent.server.StreamServer(address, handle_tcp)
-    LOGGER.info('tcp server started at %r', address)
-    try:
-        server.serve_forever()
-    except:
-        LOGGER.exception('tcp server failed')
-    finally:
-        LOGGER.info('tcp server stopped')
+def get_original_destination(sock, src_ip, src_port):
+    if src_ip != '10.25.1.100': # fake connection from 10.25.1.100
+        raise Exception('unexpected src ip: %s' % src_ip)
+    return nat_map.get(src_port)
 
 
-def handle_tcp(downstream_sock, address):
-    try:
-        src_ip, src_port = address
-        dst_ip, dst_port = nat_map.get(src_port)
-        LOGGER.info('tcp handler %s:%s => %s:%s' % (src_ip, src_port, dst_ip, dst_port))
-        client = fqsocks.fqsocks.ProxyClient(downstream_sock, src_ip, src_port, dst_ip, dst_port)
-        sock = create_tcp_socket(dst_ip, dst_port, 3)
-        client.forward(sock)
-    except:
-        LOGGER.exception('handle tcp failed')
+fqsocks.fqsocks.SPI['get_original_destination'] = get_original_destination
 
 
 def create_tcp_socket(server_ip, server_port, connect_timeout):
@@ -135,6 +119,7 @@ def create_tcp_socket(server_ip, server_port, connect_timeout):
 
 
 fqdns.SPI['create_tcp_socket'] = create_tcp_socket
+fqsocks.fqsocks.SPI['create_tcp_socket'] = create_tcp_socket
 
 
 def create_udp_socket():
@@ -148,6 +133,7 @@ def create_udp_socket():
 
 
 fqdns.SPI['create_udp_socket'] = create_udp_socket
+fqsocks.fqsocks.SPI['create_udp_socket'] = create_udp_socket
 
 
 def setup_logging():
@@ -173,8 +159,8 @@ def read_tun_fd():
                 fdsock.connect('\0fdsock')
                 break
             except:
-                LOGGER.info('retry in 5 seconds')
-                gevent.sleep(5)
+                LOGGER.info('retry in 3 seconds')
+                gevent.sleep(3)
         LOGGER.info('connected to fdsock')
         fdsock.sendall('TUN\n')
         gevent.socket.wait_read(fdsock.fileno())
@@ -194,6 +180,13 @@ if '__main__' == __name__:
         LOGGER.exception('failed to get tun fd')
     greenlets.append(gevent.spawn(redirect_tun_traffic, tun_fd))
     greenlets.append(gevent.spawn(serve_udp))
-    greenlets.append(gevent.spawn(serve_tcp))
+    greenlets.append(gevent.spawn(fqsocks.fqsocks.main, [
+        '--log-level', 'INFO',
+        '--log-file', '/data/data/fq.router/fqsocks.log',
+        '--listen', '10.25.1.1:12345',
+        '--proxy', 'dynamic,n=20,dns_record=proxy#n#.fqrouter.com',
+        '--proxy', 'dynamic,n=10,type=goagent,dns_record=goagent#n#.fqrouter.com',
+        '--google-host', 'goagent-google-ip.fqrouter.com'
+    ]))
     for greenlet in greenlets:
         greenlet.join()
