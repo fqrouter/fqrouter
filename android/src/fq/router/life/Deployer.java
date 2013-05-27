@@ -227,9 +227,6 @@ public class Deployer {
     }
 
     private void makeExecutable(File file) throws Exception {
-        if (file.canExecute()) {
-            return;
-        }
         if (file.setExecutable(true, true)) {
             appendLog("successfully made " + file.getName() + " executable");
         } else {

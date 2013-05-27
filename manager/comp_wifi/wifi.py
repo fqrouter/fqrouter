@@ -46,8 +46,6 @@ CHANNELS = {
     '5600': 120, '5620': 124, '5640': 128, '5660': 132, '5680': 136, '5700': 140,
     '5745': 149, '5765': 153, '5785': 157, '5805': 161, '5825': 165
 }
-netd_socket = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
-netd_socket.connect('/dev/socket/netd')
 netd_sequence_number = None # turn off by default
 
 RULES = [
@@ -116,6 +114,7 @@ def start_hotspot(ssid, password):
             dump_wifi_status()
             LOGGER.info('=== Start Hotspot ===')
             wifi_chipset_family, wifi_chipset_model = get_wifi_chipset()
+            LOGGER.info('chipset is: %s %s' % (wifi_chipset_family, wifi_chipset_model))
             if 'unsupported' == wifi_chipset_family:
                 return False, 'wifi chipset [%s] is not supported' % wifi_chipset_model
             hotspot_interface = start_hotspot_interface(wifi_chipset_family, ssid, password)
@@ -776,19 +775,24 @@ def parse_wpa_supplicant_conf(content):
 
 def netd_execute(command):
     global netd_sequence_number
-    if netd_sequence_number:
-        netd_sequence_number += 1
-        LOGGER.info('send: %s %s' % (netd_sequence_number, command))
-        netd_socket.send('%s %s\0' % (netd_sequence_number, command))
-    else:
-        LOGGER.info('send: %s' % command)
-        netd_socket.send('%s\0' % command)
-    output = netd_socket.recv(1024)
-    LOGGER.info('received: %s' % output)
-    if not netd_sequence_number and 'Invalid sequence number' in output:
-        LOGGER.info('resend command to netd with sequence number')
-        netd_sequence_number = 1
-        netd_execute(command)
+    netd_socket = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
+    try:
+        netd_socket.connect('/dev/socket/netd')
+        if netd_sequence_number:
+            netd_sequence_number += 1
+            LOGGER.info('send: %s %s' % (netd_sequence_number, command))
+            netd_socket.send('%s %s\0' % (netd_sequence_number, command))
+        else:
+            LOGGER.info('send: %s' % command)
+            netd_socket.send('%s\0' % command)
+        output = netd_socket.recv(1024)
+        LOGGER.info('received: %s' % output)
+        if not netd_sequence_number and 'Invalid sequence number' in output:
+            LOGGER.info('resend command to netd with sequence number')
+            netd_sequence_number = 1
+            netd_execute(command)
+    finally:
+        netd_socket.close()
 
 
 def shell_execute(command):
