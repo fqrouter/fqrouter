@@ -116,8 +116,8 @@ def create_tcp_socket(server_ip, server_port, connect_timeout):
         fdsock.sendall('TCP,%s,%s,%s\n' % (server_ip, server_port, connect_timeout * 1000))
         gevent.socket.wait_read(fdsock.fileno())
         fd = _multiprocessing.recvfd(fdsock.fileno())
+        LOGGER.info('created tcp socket: %s %s:%s' % (fd, server_ip, server_port))
         sock = socket.fromfd(fd, socket.AF_INET, socket.SOCK_STREAM)
-        sock.connect((server_ip, server_port))
         return sock
 
 
@@ -132,6 +132,7 @@ def create_udp_socket():
         fdsock.sendall('UDP\n')
         gevent.socket.wait_read(fdsock.fileno())
         fd = _multiprocessing.recvfd(fdsock.fileno())
+        LOGGER.info('created udp socket: %s' % fd)
         return socket.fromfd(fd, socket.AF_INET, socket.SOCK_DGRAM)
 
 
