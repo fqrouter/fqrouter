@@ -31,3 +31,5 @@ def monitor_process(name, proc):
             LOGGER.error('%s output: %s' % (name, output[-200:]))
     except:
         LOGGER.exception('%s died' % name)
+    finally:
+        LOGGER.info('%s exited' % name)

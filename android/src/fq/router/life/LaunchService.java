@@ -46,7 +46,7 @@ public class LaunchService extends IntentService {
 
     private void reportStated(boolean isVpnMode) {
         if (isVpnMode) {
-            updateStatus("Started in VPN mode with limited functions");
+            updateStatus("Started in VPN mode");
         } else {
             updateStatus("Started, f**k censorship");
         }
