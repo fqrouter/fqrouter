@@ -89,9 +89,9 @@ def restart_fqlan():
         LOGGER.info('no picked devices, fqlan will not start')
         return
     fqlan_process = shell.launch_python(
-        'fqlan', '--log-level', 'INFO',
+        'fqlan', ['--log-level', 'INFO',
         '--log-file', '/data/data/fq.router/fqlan.log',
         '--lan-interface', comp_wifi.WIFI_INTERFACE,
         '--ifconfig-command', '/data/data/fq.router/busybox',
         '--ip-command', '/data/data/fq.router/busybox',
-        'forge', *['%s,%s' % (ip, mac) for ip, mac in picked_devices.items()])
+        'forge'] + ['%s,%s' % (ip, mac) for ip, mac in picked_devices.items()], on_exit=stop)

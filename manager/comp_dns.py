@@ -13,11 +13,11 @@ def start():
     global fqdns_process
     insert_iptables_rules()
     fqdns_process = shell.launch_python(
-        'fqdns', '--log-level', 'INFO',
+        'fqdns', ('--log-level', 'INFO',
         '--log-file', '/data/data/fq.router/fqdns.log',
         '--outbound-ip', '10.1.2.3', # send from 10.1.2.3 so we can skip redirecting those traffic
         'serve', '--listen', '10.1.2.3:5353',
-        '--enable-china-domain', '--enable-hosted-domain')
+        '--enable-china-domain', '--enable-hosted-domain'), on_exit=stop)
 
 
 def stop():

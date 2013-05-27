@@ -49,8 +49,7 @@ def delete_iptables_rules():
 def start_nfqueue_ipset():
     global nfqueue_ipset_process
     nfqueue_ipset_process = shell.launch_python(
-        'fqsocks.nfqueue_ipset',
-        '--log-level', 'INFO',
+        'fqsocks.nfqueue_ipset', ('--log-level', 'INFO',
         '--queue-number', '1',
         '--rule', 'dst,china,ACCEPT',
-        '--default', '0xdead')
+        '--default', '0xdead'), on_exit=stop)
