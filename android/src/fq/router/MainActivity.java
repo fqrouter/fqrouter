@@ -21,6 +21,7 @@ import android.widget.ToggleButton;
 import fq.router.feedback.*;
 import fq.router.life.*;
 import fq.router.utils.LogUtils;
+import fq.router.utils.ShellUtils;
 import fq.router.vpn.SocksVpnService;
 import fq.router.wifi.*;
 
@@ -37,7 +38,7 @@ public class MainActivity extends Activity implements
         DownloadingIntent.Handler,
         DownloadedIntent.Handler,
         DownloadFailedIntent.Handler,
-        LaunchVpnIntent.Handler {
+        StartVpnIntent.Handler {
 
     public final static int SHOW_AS_ACTION_IF_ROOM = 1;
     private final static int ITEM_ID_EXIT = 1;
@@ -75,7 +76,7 @@ public class MainActivity extends Activity implements
         DownloadingIntent.register(this);
         DownloadedIntent.register(this);
         DownloadFailedIntent.register(this);
-        LaunchVpnIntent.register(this);
+        StartVpnIntent.register(this);
         LaunchService.execute(this);
     }
 
@@ -99,7 +100,6 @@ public class MainActivity extends Activity implements
         }
     }
 
-    // TODO: do not show notification bar for VPN
     @Override
     protected void onResume() {
         super.onResume();
@@ -134,9 +134,11 @@ public class MainActivity extends Activity implements
 
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
-        menu.add(Menu.NONE, ITEM_ID_PICK_AND_PLAY, Menu.NONE, "Pick & Play");
-        menu.add(Menu.NONE, ITEM_ID_SETTINGS, Menu.NONE, "Settings");
-        menu.add(Menu.NONE, ITEM_ID_RESET_WIFI, Menu.NONE, "Reset Wifi");
+        if (ShellUtils.isRooted()) {
+            menu.add(Menu.NONE, ITEM_ID_PICK_AND_PLAY, Menu.NONE, "Pick & Play");
+            menu.add(Menu.NONE, ITEM_ID_SETTINGS, Menu.NONE, "Settings");
+            menu.add(Menu.NONE, ITEM_ID_RESET_WIFI, Menu.NONE, "Reset Wifi");
+        }
         addMenuItem(menu, ITEM_ID_REPORT_ERROR, "Report Error");
         addMenuItem(menu, ITEM_ID_EXIT, "Exit");
         return super.onCreateOptionsMenu(menu);
@@ -210,7 +212,11 @@ public class MainActivity extends Activity implements
         appendLog("status updated to: " + status);
         TextView textView = (TextView) findViewById(R.id.statusTextView);
         textView.setText(status);
-        showNotification(status);
+        if (isVpnRunning()) {
+            clearNotification();
+        } else {
+            showNotification(status);
+        }
     }
 
     public void appendLog(final String log) {
@@ -228,13 +234,17 @@ public class MainActivity extends Activity implements
     }
 
     private void exit() {
-        if (SOCKS_VPN_SERVICE_CLASS != null && SocksVpnService.isRunning()) {
+        if (isVpnRunning()) {
             Toast.makeText(this, "Use notification bar to stop VPN first", 5000).show();
             return;
         }
         started = false;
         hideWifiHotspotToggleButton();
         ExitService.execute(this);
+    }
+
+    private boolean isVpnRunning() {
+        return SOCKS_VPN_SERVICE_CLASS != null && SocksVpnService.isRunning();
     }
 
     private void toggleWifiHotspot(ToggleButton button) {
@@ -262,6 +272,7 @@ public class MainActivity extends Activity implements
         started = true;
         CheckUpdateService.execute(this);
         if (!isVpnMode) {
+            invalidateOptionsMenu(); // enable root required menu items
             CheckWifiHotspotService.execute(this);
         }
     }
@@ -363,9 +374,12 @@ public class MainActivity extends Activity implements
         textView.setText("Downloaded: " + percent + "%");
     }
 
-    // TODO: remove laucnh vpn to start vpn
     @Override
-    public void onLaunchVpn() {
+    public void onStartVpn() {
+        if (isVpnRunning()) {
+            LogUtils.e("vpn is already running, do not start it again");
+            return;
+        }
         Intent intent = VpnService.prepare(MainActivity.this);
         if (intent == null) {
             onActivityResult(ASK_VPN_PERMISSION, RESULT_OK, null);

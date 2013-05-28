@@ -7,6 +7,7 @@ import android.net.VpnService;
 import android.os.ParcelFileDescriptor;
 import fq.router.MainActivity;
 import fq.router.feedback.UpdateStatusIntent;
+import fq.router.life.ExitService;
 import fq.router.life.LaunchedIntent;
 import fq.router.life.ManagerProcess;
 import fq.router.utils.LogUtils;
@@ -209,6 +210,7 @@ public class SocksVpnService extends VpnService {
         }
         fdServerSocket = null;
         MainActivity.setShouldExit();
+        ExitService.execute(this);
     }
 
     private void updateStatus(String status) {

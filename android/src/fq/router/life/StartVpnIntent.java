@@ -5,24 +5,24 @@ import android.content.Intent;
 import android.content.IntentFilter;
 import fq.router.utils.LoggedBroadcastReceiver;
 
-public class LaunchVpnIntent extends Intent {
-    private final static String ACTION_LAUNCH_VPN = "LaunchVpn";
+public class StartVpnIntent extends Intent {
+    private final static String ACTION_START_VPN = "StartVpn";
 
-    public LaunchVpnIntent() {
-        setAction(ACTION_LAUNCH_VPN);
+    public StartVpnIntent() {
+        setAction(ACTION_START_VPN);
     }
 
     public static void register(final Handler handler) {
         handler.getBaseContext().registerReceiver(new LoggedBroadcastReceiver() {
             @Override
             public void handle(Context context, Intent intent) {
-                handler.onLaunchVpn();
+                handler.onStartVpn();
             }
-        }, new IntentFilter(ACTION_LAUNCH_VPN));
+        }, new IntentFilter(ACTION_START_VPN));
     }
 
     public static interface Handler {
-        void onLaunchVpn();
+        void onStartVpn();
 
         Context getBaseContext();
     }

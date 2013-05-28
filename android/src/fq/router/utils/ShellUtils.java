@@ -11,7 +11,7 @@ public class ShellUtils {
     private static final String[] BINARY_PLACES = {"/data/bin/", "/system/bin/", "/system/xbin/", "/sbin/",
             "/data/local/xbin/", "/data/local/bin/", "/system/sd/xbin/", "/system/bin/failsafe/",
             "/data/local/"};
-    private static boolean NO_SUDO = false;
+    private static Boolean IS_ROOTED = null;
 
     public static String execute(String... command) throws Exception {
         Process process = executeNoWait(new HashMap<String, String>(), command);
@@ -29,7 +29,7 @@ public class ShellUtils {
 
 
     public static String sudo(String... command) throws Exception {
-        if (NO_SUDO) {
+        if (Boolean.FALSE.equals(IS_ROOTED)) {
             return execute(command);
         }
         Process process = sudoNoWait(new HashMap<String, String>(), command);
@@ -38,7 +38,7 @@ public class ShellUtils {
 
 
     public static Process sudoNoWait(Map<String, String> env, String... command) throws Exception {
-        if (NO_SUDO) {
+        if (Boolean.FALSE.equals(IS_ROOTED)) {
             return executeNoWait(env, command);
         }
         LogUtils.i("sudo: " + Arrays.toString(command));
@@ -93,15 +93,19 @@ public class ShellUtils {
         return output.toString();
     }
 
-    public static boolean isRooted() {
-        NO_SUDO = false;
-        boolean isRooted;
-        try {
-            isRooted = sudo("echo", "hello").contains("hello");
-        } catch (Exception e) {
-            isRooted = false;
+    public static boolean CheckRooted() {
+        if (IS_ROOTED != null) {
+            return IS_ROOTED;
         }
-        NO_SUDO = !isRooted;
-        return isRooted;
+        try {
+            IS_ROOTED = sudo("echo", "hello").contains("hello");
+        } catch (Exception e) {
+            IS_ROOTED = false;
+        }
+        return IS_ROOTED;
+    }
+
+    public static boolean isRooted() {
+        return Boolean.TRUE.equals(IS_ROOTED);
     }
 }

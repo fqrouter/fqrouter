@@ -228,7 +228,7 @@ public class Deployer {
 
     private void makeExecutable(File file) throws Exception {
         if (file.setExecutable(true, true)) {
-            appendLog("successfully made " + file.getName() + " executable");
+            LogUtils.i("successfully made " + file.getName() + " executable");
         } else {
             appendLog("failed to make " + file.getName() + " executable");
             ShellUtils.sudo(ShellUtils.findCommand("chmod"), "0700", file.getCanonicalPath());

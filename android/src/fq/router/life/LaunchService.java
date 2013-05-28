@@ -70,7 +70,7 @@ public class LaunchService extends IntentService {
         SharedPreferences preferences = PreferenceManager.getDefaultSharedPreferences(this);
         updateConfigFile(preferences.getAll());
         updateStatus("Launching...");
-        if (ShellUtils.isRooted()) {
+        if (ShellUtils.CheckRooted()) {
             return launch(false);
         } else {
             if (Build.VERSION.SDK_INT < 14) {
@@ -79,7 +79,7 @@ public class LaunchService extends IntentService {
                 return false;
             }
             if (launch(true)) {
-                sendBroadcast(new LaunchVpnIntent());
+                sendBroadcast(new StartVpnIntent());
             }
             return false;
         }
