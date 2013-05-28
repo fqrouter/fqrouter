@@ -473,6 +473,7 @@ def start_hotspot_on_wl12xx(ssid, password):
         shell_execute(
             '%s %s interface add ap0 type managed' % (IW_PATH, WIFI_INTERFACE))
     assert 'ap0' in list_wifi_ifaces()
+    shell_execute('netcfg ap0 up')
     with open(FQROUTER_HOSTAPD_CONF_PATH, 'w') as f:
         frequency, channel = get_upstream_frequency_and_channel()
         f.write(hostapd_template.render(WIFI_INTERFACE, channel=channel or 1, ssid=ssid, password=password))
