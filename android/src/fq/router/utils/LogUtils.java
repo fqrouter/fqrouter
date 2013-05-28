@@ -37,8 +37,12 @@ public class LogUtils {
     }
 
     public static void i(String msg) {
-        Log.i("fqrouter", msg);
-        writeLogFile("INFO", msg);
+        try {
+            Log.i("fqrouter", msg);
+            writeLogFile("INFO", msg);
+        }  catch (Exception e) {
+            System.out.println(msg);
+        }
     }
 
     private static void writeLogFile(String level, String line) {

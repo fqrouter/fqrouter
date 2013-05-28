@@ -47,9 +47,12 @@ public class MainActivity extends Activity implements
     private final static int ITEM_ID_RESET_WIFI = 3;
     private final static int ITEM_ID_SETTINGS = 4;
     private final static int ITEM_ID_PICK_AND_PLAY = 5;
+    private final static int ITEM_ID_UPGRADE_MANUALLY = 6;
     private final static int ASK_VPN_PERMISSION = 1;
     private boolean started;
     private static boolean shouldExit;
+    private String upgradeUrl;
+    private boolean downloaded;
     private WifiManager.WifiLock wifiLock;
     private static Class SOCKS_VPN_SERVICE_CLASS;
 
@@ -141,6 +144,9 @@ public class MainActivity extends Activity implements
             menu.add(Menu.NONE, ITEM_ID_SETTINGS, Menu.NONE, "Settings");
             menu.add(Menu.NONE, ITEM_ID_RESET_WIFI, Menu.NONE, "Reset Wifi");
         }
+        if (upgradeUrl != null) {
+            menu.add(Menu.NONE, ITEM_ID_UPGRADE_MANUALLY, Menu.NONE, "Upgrade Manually");
+        }
         addMenuItem(menu, ITEM_ID_REPORT_ERROR, "Report Error");
         addMenuItem(menu, ITEM_ID_EXIT, "Exit");
         return super.onCreateOptionsMenu(menu);
@@ -171,6 +177,8 @@ public class MainActivity extends Activity implements
             startActivity(new Intent(this, SettingsActivity.class));
         } else if (ITEM_ID_PICK_AND_PLAY == item.getItemId()) {
             startActivity(new Intent(this, PickAndPlayActivity.class));
+        } else if (ITEM_ID_UPGRADE_MANUALLY == item.getItemId()) {
+            startActivity(new Intent(Intent.ACTION_VIEW, Uri.parse(upgradeUrl)));
         }
         return super.onMenuItemSelected(featureId, item);
     }
@@ -279,11 +287,20 @@ public class MainActivity extends Activity implements
     }
 
     private void checkUpdate() {
-        CheckUpdateService.execute(this);
+        if (upgradeUrl == null) {
+            CheckUpdateService.execute(this);
+        }
     }
 
     @Override
     public void onUpdateFound(String latestVersion, final String upgradeUrl) {
+        final String downloadTo = "/sdcard/fqrouter-latest.apk";
+        if (downloaded) {
+            onDownloaded(upgradeUrl, downloadTo);
+            return;
+        }
+        this.upgradeUrl = upgradeUrl;
+        invalidateOptionsMenu();
         new AlertDialog.Builder(this)
                 .setIcon(android.R.drawable.ic_dialog_alert)
                 .setTitle("There are newer version")
@@ -294,7 +311,7 @@ public class MainActivity extends Activity implements
                     public void onClick(DialogInterface dialog, int which) {
                         updateStatus("Downloading " + Uri.parse(upgradeUrl).getLastPathSegment());
                         DownloadService.execute(
-                                MainActivity.this, upgradeUrl.replace("http", "https"), "/sdcard/fqrouter-latest.apk");
+                                MainActivity.this, upgradeUrl, downloadTo);
                     }
 
                 })
@@ -355,6 +372,7 @@ public class MainActivity extends Activity implements
 
     @Override
     public void onDownloadFailed(final String url, String downloadTo) {
+        invalidateOptionsMenu();
         onHandleFatalError("download " + Uri.parse(url).getLastPathSegment() + " failed");
         Toast.makeText(this, "Open browser and download the update manually", 3000).show();
         new Handler().postDelayed(new Runnable() {
@@ -367,6 +385,8 @@ public class MainActivity extends Activity implements
 
     @Override
     public void onDownloaded(String url, String downloadTo) {
+        downloaded = true;
+        invalidateOptionsMenu();
         updateStatus("Downloaded " + Uri.parse(url).getLastPathSegment());
         Intent intent = new Intent(Intent.ACTION_VIEW);
         intent.setDataAndType(Uri.parse("file://" + downloadTo), "application/vnd.android.package-archive");
@@ -375,7 +395,9 @@ public class MainActivity extends Activity implements
 
     @Override
     public void onDownloading(String url, String downloadTo, int percent) {
-        showNotification("Downloading " + Uri.parse(url).getLastPathSegment() + ": " + percent + "%");
+        if (System.currentTimeMillis() % 10 == 0) {
+            showNotification("Downloading " + Uri.parse(url).getLastPathSegment() + ": " + percent + "%");
+        }
         TextView textView = (TextView) findViewById(R.id.statusTextView);
         textView.setText("Downloaded: " + percent + "%");
     }

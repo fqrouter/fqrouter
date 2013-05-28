@@ -1,102 +1,85 @@
 package fq.router.utils;
 
-import javax.net.ssl.HostnameVerifier;
-import javax.net.ssl.HttpsURLConnection;
-import javax.net.ssl.SSLSession;
-import javax.net.ssl.SSLSocketFactory;
+import org.apache.http.HttpHost;
+import org.apache.http.HttpResponse;
+import org.apache.http.client.methods.HttpGet;
+import org.apache.http.client.methods.HttpUriRequest;
+import org.apache.http.conn.ClientConnectionManager;
+import org.apache.http.conn.ClientConnectionOperator;
+import org.apache.http.conn.OperatedClientConnection;
+import org.apache.http.conn.scheme.PlainSocketFactory;
+import org.apache.http.conn.scheme.Scheme;
+import org.apache.http.conn.scheme.SchemeRegistry;
+import org.apache.http.conn.scheme.SocketFactory;
+import org.apache.http.impl.client.DefaultHttpClient;
+import org.apache.http.impl.conn.DefaultClientConnectionOperator;
+import org.apache.http.impl.conn.tsccm.ThreadSafeClientConnManager;
+import org.apache.http.params.BasicHttpParams;
+import org.apache.http.params.HttpParams;
+import org.apache.http.protocol.HttpContext;
+
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
-import java.net.*;
+import java.net.InetAddress;
+import java.net.Socket;
 
 public class HttpsUtils {
 
-    public static int getTotalLength(URL url, Inet4Address staticAddress) throws Exception {
-        HttpsURLConnection connection = createConnection(url, staticAddress);
-        connection.connect();
-        try {
-            return connection.getContentLength();
-        } finally {
-            connection.disconnect();
-        }
+    public static long getTotalLength(String url, final String staticAddress) throws Exception {
+        return execute(staticAddress, new HttpGet(url)).getEntity().getContentLength();
+    }
+
+    private static HttpResponse execute(final String staticAddress, HttpUriRequest request) throws IOException {
+        return new DefaultHttpClient() {
+            @Override
+            protected ClientConnectionManager createClientConnectionManager() {
+                SchemeRegistry schreg = new SchemeRegistry();
+                org.apache.http.conn.ssl.SSLSocketFactory sslSocketFactory = org.apache.http.conn.ssl.SSLSocketFactory.getSocketFactory();
+                sslSocketFactory.setHostnameVerifier(org.apache.http.conn.ssl.SSLSocketFactory.ALLOW_ALL_HOSTNAME_VERIFIER);
+                schreg.register(new Scheme("https", sslSocketFactory, 443));
+                PlainSocketFactory plainSocketFactory = PlainSocketFactory.getSocketFactory();
+                schreg.register(new Scheme("http", plainSocketFactory, 80));
+                return new ThreadSafeClientConnManager(new BasicHttpParams(), schreg) {
+                    @Override
+                    protected ClientConnectionOperator createConnectionOperator(final SchemeRegistry schreg) {
+                        try {
+                            return new DefaultClientConnectionOperator(schreg) {
+                                @Override
+                                public void openConnection(OperatedClientConnection conn, HttpHost target, InetAddress local, HttpContext context, HttpParams params) throws IOException {
+                                    Scheme scheme = schreg.getScheme(target);
+                                    SocketFactory sf = scheme.getSocketFactory();
+                                    Socket socket = sf.createSocket();
+                                    conn.opening(socket, target);
+                                    int port = target.getPort() == -1 ? scheme.getDefaultPort() : target.getPort();
+                                    Socket newSocket = sf.connectSocket(socket, staticAddress, port, local, 0, params);
+                                    if (newSocket != socket) {
+                                        conn.opening(newSocket, target);
+                                    }
+                                    conn.openCompleted(sf.isSecure(socket), params);
+                                }
+                            };
+                        } catch (Exception e) {
+                            throw new RuntimeException(e);
+                        }
+                    }
+                };
+            }
+        }.execute(request);
     }
 
     public static void download(
-            URL url, Inet4Address staticAddress,
-            OutputStream outputStream, int from, int to, IOUtils.ChunkCopied chunkCopied) throws Exception {
-        HttpsURLConnection connection = createConnection(url, staticAddress);
-        connection.setRequestProperty("Range", "bytes=" + from + "-" + to);
-        connection.connect();
+            String url, String staticAddress,
+            OutputStream outputStream, long from, long to, IOUtils.ChunkCopied chunkCopied) throws Exception {
+        HttpGet request = new HttpGet(url);
+        request.addHeader("Range", "bytes=" + from + "-" + to);
+        HttpResponse response = execute(staticAddress, request);
+        InputStream inputStream = response.getEntity().getContent();
         try {
-            InputStream inputStream = connection.getInputStream();
-            try {
-                IOUtils.copy(inputStream, outputStream, chunkCopied);
-            } finally {
-                inputStream.close();
-            }
+            IOUtils.copy(inputStream, outputStream, chunkCopied);
         } finally {
-            connection.disconnect();
+            inputStream.close();
         }
     }
 
-    private static HttpsURLConnection createConnection(URL url, Inet4Address staticAddress) throws IOException {
-        HttpsURLConnection urlConnection = (HttpsURLConnection) url.openConnection();
-        urlConnection.setConnectTimeout(5);
-        urlConnection.setSSLSocketFactory(new StaticAddressSSLSocketFactory(staticAddress));
-        urlConnection.setHostnameVerifier(new HostnameVerifier() {
-            @Override
-            public boolean verify(String s, SSLSession sslSession) {
-                return true;
-            }
-        });
-        return urlConnection;
-    }
-
-    private static class StaticAddressSSLSocketFactory extends SSLSocketFactory {
-
-        private final SSLSocketFactory delegatedTo;
-        private final Inet4Address staticAddress;
-
-        public StaticAddressSSLSocketFactory(Inet4Address staticAddress) {
-            this.staticAddress = staticAddress;
-            delegatedTo = (SSLSocketFactory) SSLSocketFactory.getDefault();
-        }
-
-        @Override
-        public String[] getDefaultCipherSuites() {
-            return delegatedTo.getDefaultCipherSuites();
-        }
-
-        @Override
-        public String[] getSupportedCipherSuites() {
-            return delegatedTo.getSupportedCipherSuites();
-        }
-
-        @Override
-        public Socket createSocket(Socket socket, String host, int port, boolean autoClose) throws IOException {
-            return delegatedTo.createSocket(staticAddress, port);
-        }
-
-        @Override
-        public Socket createSocket(String host, int port) throws IOException, UnknownHostException {
-            return delegatedTo.createSocket(staticAddress, port);
-        }
-
-        @Override
-        public Socket createSocket(String host, int port, InetAddress localHost, int localPort)
-                throws IOException, UnknownHostException {
-            return delegatedTo.createSocket(staticAddress, port);
-        }
-
-        @Override
-        public Socket createSocket(InetAddress host, int port) throws IOException {
-            return delegatedTo.createSocket(staticAddress, port);
-        }
-
-        @Override
-        public Socket createSocket(InetAddress host, int port, InetAddress localHost, int localPort)
-                throws IOException {
-            return delegatedTo.createSocket(staticAddress, port);
-        }
-    }
 }
