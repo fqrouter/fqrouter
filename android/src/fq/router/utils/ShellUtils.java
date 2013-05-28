@@ -8,9 +8,10 @@ import java.util.Map;
 
 public class ShellUtils {
 
-    private static final String[] BINARY_PLACES = {"/data/bin/", "/system/bin/", "/system/xbin/", "/sbin/",
+    private final static String[] BINARY_PLACES = {"/data/bin/", "/system/bin/", "/system/xbin/", "/sbin/",
             "/data/local/xbin/", "/data/local/bin/", "/system/sd/xbin/", "/system/bin/failsafe/",
             "/data/local/"};
+    private final static String PYTHON_HOME = "/data/data/fq.router/python";
     private static Boolean IS_ROOTED = null;
 
     public static String execute(String... command) throws Exception {
@@ -27,13 +28,16 @@ public class ShellUtils {
                 .start();
     }
 
+    public static String sudo(Map<String, String> env, String... command) throws Exception {
+        if (Boolean.FALSE.equals(IS_ROOTED)) {
+            return waitFor(Arrays.toString(command), executeNoWait(env, command));
+        }
+        Process process = sudoNoWait(env, command);
+        return waitFor(Arrays.toString(command), process);
+    }
 
     public static String sudo(String... command) throws Exception {
-        if (Boolean.FALSE.equals(IS_ROOTED)) {
-            return execute(command);
-        }
-        Process process = sudoNoWait(new HashMap<String, String>(), command);
-        return waitFor(Arrays.toString(command), process);
+        return sudo(new HashMap<String, String>(), command);
     }
 
 
@@ -91,6 +95,15 @@ public class ShellUtils {
             throw new Exception("failed to execute: " + command + ", exit value: " + exitValue + ", output: " + output);
         }
         return output.toString();
+    }
+
+    public static Map<String, String> pythonEnv() {
+        return new HashMap<String, String>() {{
+            put("PYTHONHOME", PYTHON_HOME);
+            put("PYTHONPATH", PYTHON_HOME + "/lib/python2.7/lib-dynload:" + PYTHON_HOME + "/lib/python2.7");
+            put("PATH", PYTHON_HOME + "/bin:" + System.getenv("PATH"));
+            put("LD_LIBRARY_PATH", System.getenv("LD_LIBRARY_PATH") + ":" + PYTHON_HOME + "/lib:" + PYTHON_HOME + "/lib/python2.7/lib-dynload");
+        }};
     }
 
     public static boolean checkRooted() {

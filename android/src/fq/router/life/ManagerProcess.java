@@ -7,8 +7,7 @@ public class ManagerProcess {
 
     public static void kill() throws Exception {
         try {
-            ShellUtils.sudo("PYTHONHOME=" + Deployer.PYTHON_DIR + " " +
-                    Deployer.BUSYBOX_FILE + " sh " + Deployer.PYTHON_LAUNCHER + " " + Deployer.MANAGER_MAIN_PY + " clean");
+            ShellUtils.sudo(ShellUtils.pythonEnv(), Deployer.PYTHON_LAUNCHER + " " + Deployer.MANAGER_MAIN_PY + " clean");
         } catch (Exception e) {
             LogUtils.e("failed to clean", e);
         }

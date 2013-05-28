@@ -38,7 +38,12 @@ def redirect_tun_traffic(tun_fd):
 
 def redirect_ip_packet(tun_fd):
     gevent.socket.wait_read(tun_fd)
-    ip_packet = dpkt.ip.IP(os.read(tun_fd, 8192))
+    try:
+        ip_packet = dpkt.ip.IP(os.read(tun_fd, 8192))
+    except OSError, e:
+        LOGGER.error('read packet failed: %s' % e)
+        gevent.sleep(3)
+        return
     src = socket.inet_ntoa(ip_packet.src)
     dst = socket.inet_ntoa(ip_packet.dst)
     if hasattr(ip_packet, 'udp'):
@@ -195,19 +200,22 @@ def handle_ping(environ, start_response):
 
 def read_tun_fd():
     LOGGER.info('connecting to fdsock')
-    fdsock = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
-    with contextlib.closing(fdsock):
-        while True:
+    while True:
+        fdsock = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
+        with contextlib.closing(fdsock):
             try:
                 fdsock.connect('\0fdsock')
-                break
+                LOGGER.info('connected to fdsock')
+                fdsock.sendall('TUN\n')
+                gevent.socket.wait_read(fdsock.fileno())
+                tun_fd=_multiprocessing.recvfd(fdsock.fileno())
+                if tun_fd == 1:
+                    LOGGER.error('received invalid tun fd')
+                    continue
+                return tun_fd
             except:
                 LOGGER.info('retry in 3 seconds')
                 gevent.sleep(3)
-        LOGGER.info('connected to fdsock')
-        fdsock.sendall('TUN\n')
-        gevent.socket.wait_read(fdsock.fileno())
-        return _multiprocessing.recvfd(fdsock.fileno())
 
 
 if '__main__' == __name__:
@@ -222,6 +230,7 @@ if '__main__' == __name__:
         LOGGER.info('tun fd: %s' % tun_fd)
     except:
         LOGGER.exception('failed to get tun fd')
+        sys.exit(1)
     greenlets.append(gevent.spawn(redirect_tun_traffic, tun_fd))
     greenlets.append(gevent.spawn(serve_udp))
     greenlets.append(gevent.spawn(fqsocks.fqsocks.main, [

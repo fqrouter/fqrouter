@@ -118,8 +118,8 @@ public class LaunchService extends IntentService {
     private Process executeManager(boolean isVpnMode) throws Exception {
         Map<String, String> env = new HashMap<String, String>() {{
             put("FQROUTER_VERSION", getMyVersion(LaunchService.this));
-            put("PYTHONHOME", Deployer.PYTHON_DIR.getCanonicalPath());
         }};
+        env.putAll(ShellUtils.pythonEnv());
         if (isVpnMode) {
             Process process = ShellUtils.executeNoWait(env, Deployer.BUSYBOX_FILE.getCanonicalPath(), "sh");
             OutputStreamWriter stdin = new OutputStreamWriter(process.getOutputStream());
@@ -132,7 +132,7 @@ public class LaunchService extends IntentService {
             }
             return process;
         } else {
-            return ShellUtils.sudoNoWait(env, Deployer.BUSYBOX_FILE + " sh " + Deployer.PYTHON_LAUNCHER + " " +
+            return ShellUtils.sudoNoWait(env, Deployer.PYTHON_LAUNCHER + " " +
                     Deployer.MANAGER_MAIN_PY.getAbsolutePath() + " > /data/data/fq.router/current-python.log 2>&1");
         }
     }

@@ -237,7 +237,7 @@ public class MainActivity extends Activity implements
 
     private void exit() {
         if (isVpnRunning()) {
-            Toast.makeText(this, "Use notification bar to stop VPN first", 5000).show();
+            Toast.makeText(this, "Use notification bar to stop VPN", 5000).show();
             return;
         }
         started = false;
@@ -268,7 +268,6 @@ public class MainActivity extends Activity implements
         findViewById(R.id.wifiHotspotPanel).setVisibility(View.INVISIBLE);
     }
 
-    // TODO: check update on failure
     @Override
     public void onLaunched(boolean isVpnMode) {
         started = true;
@@ -305,6 +304,7 @@ public class MainActivity extends Activity implements
 
     @Override
     public void onExited() {
+        shouldExit = false;
         clearNotification();
         finish();
     }

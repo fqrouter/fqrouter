@@ -9,7 +9,6 @@ import fq.router.MainActivity;
 import fq.router.feedback.UpdateStatusIntent;
 import fq.router.life.ExitService;
 import fq.router.life.LaunchedIntent;
-import fq.router.life.ManagerProcess;
 import fq.router.utils.LogUtils;
 
 import java.io.*;
@@ -21,7 +20,7 @@ import java.util.concurrent.Executors;
 
 public class SocksVpnService extends VpnService {
 
-    private static LocalServerSocket fdServerSocket;
+    private static ParcelFileDescriptor tunPFD;
     private Map<String, Socket> tcpSockets = new ConcurrentHashMap<String, Socket>();
     private Map<String, DatagramSocket> udpSockets = new ConcurrentHashMap<String, DatagramSocket>();
 
@@ -49,7 +48,10 @@ public class SocksVpnService extends VpnService {
 
     private void startVpn() {
         try {
-            final ParcelFileDescriptor tunPFD = new Builder()
+            if (tunPFD != null) {
+                throw new RuntimeException("another VPN is still running");
+            }
+            tunPFD = new Builder()
                     .setSession("fqrouter")
                     .addAddress("10.25.1.1", 24)
                     .addRoute("0.0.0.0", 0)
@@ -61,7 +63,6 @@ public class SocksVpnService extends VpnService {
             }
             final int tunFD = tunPFD.getFd();
             LogUtils.i("tunFD is " + tunFD);
-            fdServerSocket = new LocalServerSocket("fdsock");
             new Thread(new Runnable() {
                 @Override
                 public void run() {
@@ -79,30 +80,36 @@ public class SocksVpnService extends VpnService {
         }
     }
 
-    private void listenFdServerSocket(final ParcelFileDescriptor tunPFD) {
-        ExecutorService executorService = Executors.newFixedThreadPool(16);
-        while (isRunning()) {
-            try {
-                final LocalSocket fdSocket = fdServerSocket.accept();
-                executorService.submit(new Runnable() {
-                    @Override
-                    public void run() {
-                        try {
-                            passFileDescriptor(fdSocket, tunPFD.getFileDescriptor());
-                        } catch (Exception e) {
-                            LogUtils.e("failed to handle fdsock", e);
+    private void listenFdServerSocket(final ParcelFileDescriptor tunPFD) throws Exception {
+        final LocalServerSocket fdServerSocket = new LocalServerSocket("fdsock");
+        try {
+
+            ExecutorService executorService = Executors.newFixedThreadPool(16);
+            while (isRunning()) {
+                try {
+                    final LocalSocket fdSocket = fdServerSocket.accept();
+                    executorService.submit(new Runnable() {
+                        @Override
+                        public void run() {
+                            try {
+                                passFileDescriptor(fdSocket, tunPFD.getFileDescriptor());
+                            } catch (Exception e) {
+                                LogUtils.e("failed to handle fdsock", e);
+                            }
                         }
-                    }
-                });
-            } catch (Exception e) {
-                LogUtils.e("failed to handle fdsock", e);
+                    });
+                } catch (Exception e) {
+                    LogUtils.e("failed to handle fdsock", e);
+                }
             }
+            executorService.shutdown();
+        } finally {
+            fdServerSocket.close();
         }
-        executorService.shutdown();
     }
 
     public static boolean isRunning() {
-        return fdServerSocket != null;
+        return tunPFD != null;
     }
 
     private void passFileDescriptor(LocalSocket fdSocket, FileDescriptor tunFD) throws Exception {
@@ -204,11 +211,11 @@ public class SocksVpnService extends VpnService {
 
     private void stopVpn() {
         try {
-            fdServerSocket.close();
+            tunPFD.close();
         } catch (IOException e) {
-            LogUtils.e("failed to stop fdsock", e);
+            LogUtils.e("failed to stop tunPFD", e);
         }
-        fdServerSocket = null;
+        tunPFD = null;
         MainActivity.setShouldExit();
         ExitService.execute(this);
     }

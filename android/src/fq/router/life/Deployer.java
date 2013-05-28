@@ -20,7 +20,7 @@ public class Deployer {
     public static File PAYLOAD_ZIP = new File(DATA_DIR, "payload.zip");
     public static File PAYLOAD_CHECKSUM = new File(DATA_DIR, "payload.checksum");
     public static File PYTHON_DIR = new File(DATA_DIR, "python");
-    public static File PYTHON_LAUNCHER = new File(PYTHON_DIR, "bin/python-launcher.sh");
+    public static File PYTHON_LAUNCHER = new File(PYTHON_DIR, "bin/python");
     public static File WIFI_TOOLS_DIR = new File(DATA_DIR, "wifi-tools");
     public static File PROXY_TOOLS_DIR = new File(DATA_DIR, "proxy-tools");
     public static File MANAGER_DIR = new File(DATA_DIR, "manager");
