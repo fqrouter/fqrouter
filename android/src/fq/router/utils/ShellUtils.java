@@ -93,7 +93,7 @@ public class ShellUtils {
         return output.toString();
     }
 
-    public static boolean CheckRooted() {
+    public static boolean checkRooted() {
         if (IS_ROOTED != null) {
             return IS_ROOTED;
         }

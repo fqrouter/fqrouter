@@ -161,7 +161,7 @@ public class DownloadService extends IntentService {
         public boolean download() {
             LogUtils.i("download " + url + " started");
             try {
-                addresses = DnsUtils.resolve(url.getHost());
+                addresses = DnsUtils.resolveA(url.getHost());
                 LogUtils.i("resolved " + url.getHost() + " => " + addresses);
                 if (0 == addresses.size()) {
                     return false;

@@ -7,6 +7,7 @@ import android.net.wifi.WifiManager;
 import android.os.Build;
 import android.preference.PreferenceManager;
 import fq.router.feedback.AppendLogIntent;
+import fq.router.feedback.HandleFatalErrorIntent;
 import fq.router.feedback.UpdateStatusIntent;
 import fq.router.utils.HttpUtils;
 import fq.router.utils.LogUtils;
@@ -59,7 +60,7 @@ public class WifiHotspotHelper {
     }
 
     private void reportStartFailure(String wifiHotspotMode, Exception e) {
-        reportError("failed to start wifi hotspot as " + wifiHotspotMode, e);
+        handleFatalError("failed to start wifi hotspot as " + wifiHotspotMode, e);
         stop();
     }
 
@@ -117,7 +118,7 @@ public class WifiHotspotHelper {
     }
 
     private void reportSetupFailure(Exception e) {
-        reportError("failed to setup existing wifi hotspot", e);
+        handleFatalError("failed to setup existing wifi hotspot", e);
         stop();
     }
 
@@ -131,7 +132,7 @@ public class WifiHotspotHelper {
                 LogUtils.e("failed to disable wifi ap", e);
             }
         } catch (Exception e) {
-            reportError("failed to stop wifi hotspot", e);
+            handleFatalError("failed to stop wifi hotspot", e);
         }
         WifiManager wifiManager = getWifiManager();
         wifiManager.setWifiEnabled(false);
@@ -143,13 +144,8 @@ public class WifiHotspotHelper {
         return (WifiManager) context.getSystemService(Context.WIFI_SERVICE);
     }
 
-    private void reportError(final String msg, Exception e) {
-        if (null == e) {
-            LogUtils.e(msg);
-        } else {
-            LogUtils.e(msg, e);
-        }
-        updateStatus("Error: " + msg);
+    private void handleFatalError(String message, Exception e) {
+        context.sendBroadcast(new HandleFatalErrorIntent(message, e));
     }
 
 

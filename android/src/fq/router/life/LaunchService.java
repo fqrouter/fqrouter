@@ -8,6 +8,7 @@ import android.content.pm.PackageInfo;
 import android.os.Build;
 import android.preference.PreferenceManager;
 import fq.router.feedback.AppendLogIntent;
+import fq.router.feedback.HandleFatalErrorIntent;
 import fq.router.feedback.UpdateStatusIntent;
 import fq.router.utils.HttpUtils;
 import fq.router.utils.IOUtils;
@@ -64,17 +65,16 @@ public class LaunchService extends IntentService {
         }
         Deployer deployer = new Deployer(this);
         if (!deployer.deploy()) {
-            reportError("failed to deploy", null);
             return false;
         }
         SharedPreferences preferences = PreferenceManager.getDefaultSharedPreferences(this);
         updateConfigFile(preferences.getAll());
         updateStatus("Launching...");
-        if (ShellUtils.CheckRooted()) {
+        if (ShellUtils.checkRooted()) {
             return launch(false);
         } else {
             if (Build.VERSION.SDK_INT < 14) {
-                reportError("[ROOT] is required", null);
+                handleFatalError("[ROOT] is required", null);
                 appendLog("What is [ROOT]: http://en.wikipedia.org/wiki/Android_rooting");
                 return false;
             }
@@ -93,14 +93,14 @@ public class LaunchService extends IntentService {
                     return true;
                 }
                 if (hasProcessExited(process)) {
-                    reportError("manager quit", null);
+                    handleFatalError("manager quit", null);
                     return false;
                 }
                 sleepOneSecond();
             }
-            reportError("timed out", null);
+            handleFatalError("timed out", null);
         } catch (Exception e) {
-            reportError("failed to launch", e);
+            handleFatalError("failed to launch", e);
         }
         return false;
     }
@@ -174,13 +174,8 @@ public class LaunchService extends IntentService {
         }
     }
 
-    private void reportError(final String msg, Exception e) {
-        if (null == e) {
-            LogUtils.e(msg);
-        } else {
-            LogUtils.e(msg, e);
-        }
-        updateStatus("Error: " + msg);
+    private void handleFatalError(String message, Exception e) {
+        sendBroadcast(new HandleFatalErrorIntent(message, e));
     }
 
     public static void updateConfigFile(Map<String, ?> settings) {

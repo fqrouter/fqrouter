@@ -4,6 +4,7 @@ import android.app.IntentService;
 import android.content.Context;
 import android.content.Intent;
 import fq.router.life.LaunchService;
+import fq.router.utils.DnsUtils;
 import fq.router.utils.HttpUtils;
 import fq.router.utils.LogUtils;
 
@@ -22,7 +23,7 @@ public class CheckUpdateService extends IntentService {
     public void checkUpdate() {
         try {
             appendLog("checking update...");
-            String versionInfo = HttpUtils.get("http://127.0.0.1:8318/version/latest");
+            String versionInfo = DnsUtils.resolveTXT("beta.android.ver.fqrouter.com");
             String latestVersion = versionInfo.split("\\|")[0];
             String upgradeUrl = versionInfo.split("\\|")[1];
             if (isNewer(latestVersion, LaunchService.getMyVersion(this))) {

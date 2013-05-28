@@ -2,6 +2,7 @@ package fq.router.life;
 
 import android.content.Context;
 import fq.router.feedback.AppendLogIntent;
+import fq.router.feedback.HandleFatalErrorIntent;
 import fq.router.feedback.UpdateStatusIntent;
 import fq.router.utils.IOUtils;
 import fq.router.utils.LogUtils;
@@ -38,14 +39,14 @@ public class Deployer {
             copyBusybox();
             makeExecutable(BUSYBOX_FILE);
         } catch (Exception e) {
-            reportError("failed to copy busybox", e);
+            handleFatalError("failed to copy busybox", e);
             return false;
         }
         boolean foundPayloadUpdate;
         try {
             foundPayloadUpdate = shouldDeployPayload();
         } catch (Exception e) {
-            reportError("failed to check update", e);
+            handleFatalError("failed to check update", e);
             return false;
         }
         if (foundPayloadUpdate) {
@@ -59,7 +60,7 @@ public class Deployer {
                 }
                 clearDataDirectory();
             } catch (Exception e) {
-                reportError("failed to clear data directory", e);
+                handleFatalError("failed to clear data directory", e);
                 return false;
             }
         }
@@ -68,19 +69,19 @@ public class Deployer {
             makeExecutable(BUSYBOX_FILE);
             copyPayloadZip();
         } catch (Exception e) {
-            reportError("failed to copy payload.zip", e);
+            handleFatalError("failed to copy payload.zip", e);
             return false;
         }
         try {
             unzipPayloadZip();
         } catch (Exception e) {
-            reportError("failed to unzip payload.zip", e);
+            handleFatalError("failed to unzip payload.zip", e);
             return false;
         }
         try {
             makePayloadExecutable();
         } catch (Exception e) {
-            reportError("failed to make payload executable", e);
+            handleFatalError("failed to make payload executable", e);
             return false;
         }
         updateStatus("Deployed payload");
@@ -235,13 +236,8 @@ public class Deployer {
         }
     }
 
-    private void reportError(final String msg, Exception e) {
-        if (null == e) {
-            LogUtils.e(msg);
-        } else {
-            LogUtils.e(msg, e);
-        }
-        updateStatus("Error: " + msg);
+    private void handleFatalError(String message, Exception e) {
+        context.sendBroadcast(new HandleFatalErrorIntent(message, e));
     }
 
     private void appendLog(String log) {

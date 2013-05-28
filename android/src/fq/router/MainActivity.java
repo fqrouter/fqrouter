@@ -38,7 +38,8 @@ public class MainActivity extends Activity implements
         DownloadingIntent.Handler,
         DownloadedIntent.Handler,
         DownloadFailedIntent.Handler,
-        StartVpnIntent.Handler {
+        StartVpnIntent.Handler,
+        HandleFatalErrorIntent.Handler {
 
     public final static int SHOW_AS_ACTION_IF_ROOM = 1;
     private final static int ITEM_ID_EXIT = 1;
@@ -77,6 +78,7 @@ public class MainActivity extends Activity implements
         DownloadedIntent.register(this);
         DownloadFailedIntent.register(this);
         StartVpnIntent.register(this);
+        HandleFatalErrorIntent.register(this);
         LaunchService.execute(this);
     }
 
@@ -85,14 +87,14 @@ public class MainActivity extends Activity implements
         if (ASK_VPN_PERMISSION == requestCode) {
             if (resultCode == RESULT_OK) {
                 if (SOCKS_VPN_SERVICE_CLASS == null) {
-                    updateStatus("Error: vpn class not loaded");
+                    onHandleFatalError("vpn class not loaded");
                 } else {
                     updateStatus("Launch Socks Vpn Service");
                     stopService(new Intent(this, SOCKS_VPN_SERVICE_CLASS));
                     startService(new Intent(this, SOCKS_VPN_SERVICE_CLASS));
                 }
             } else {
-                updateStatus("Error: vpn permission rejected");
+                onHandleFatalError("vpn permission rejected");
                 LogUtils.e("failed to start vpn service: " + resultCode);
             }
         } else {
@@ -270,11 +272,15 @@ public class MainActivity extends Activity implements
     @Override
     public void onLaunched(boolean isVpnMode) {
         started = true;
-        CheckUpdateService.execute(this);
+        checkUpdate();
         if (!isVpnMode) {
             invalidateOptionsMenu(); // enable root required menu items
             CheckWifiHotspotService.execute(this);
         }
+    }
+
+    private void checkUpdate() {
+        CheckUpdateService.execute(this);
     }
 
     @Override
@@ -349,7 +355,7 @@ public class MainActivity extends Activity implements
 
     @Override
     public void onDownloadFailed(final String url, String downloadTo) {
-        updateStatus("Error: download " + Uri.parse(url).getLastPathSegment() + " failed");
+        onHandleFatalError("download " + Uri.parse(url).getLastPathSegment() + " failed");
         Toast.makeText(this, "Open browser and download the update manually", 3000).show();
         new Handler().postDelayed(new Runnable() {
             @Override
@@ -390,5 +396,11 @@ public class MainActivity extends Activity implements
 
     public static void setShouldExit() {
         shouldExit = true;
+    }
+
+    @Override
+    public void onHandleFatalError(String message) {
+        updateStatus("Error: " + message);
+        checkUpdate();
     }
 }
