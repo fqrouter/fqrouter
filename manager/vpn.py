@@ -8,6 +8,7 @@ import httplib
 import fqdns
 import fqsocks.fqsocks
 import contextlib
+from uuid import uuid4
 
 import gevent
 import gevent.monkey
@@ -86,7 +87,6 @@ def handle_udp(sendto, request, address):
         src_ip, src_port = address
         dst_ip, dst_port = nat_map.get(src_port)
         if 53 == dst_port:
-            LOGGER.info('pass to DNS_HANDLER')
             DNS_HANDLER(sendto, request, address)
         else:
             sock = create_udp_socket()
@@ -113,11 +113,26 @@ def create_tcp_socket(server_ip, server_port, connect_timeout):
     fdsock = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
     with contextlib.closing(fdsock):
         fdsock.connect('\0fdsock')
-        fdsock.sendall('TCP,%s,%s,%s\n' % (server_ip, server_port, connect_timeout * 1000))
+        socket_id = generate_socket_id()
+        fdsock.sendall('OPEN TCP,%s,%s,%s,%s\n' % (socket_id, server_ip, server_port, connect_timeout * 1000))
         gevent.socket.wait_read(fdsock.fileno())
         fd = _multiprocessing.recvfd(fdsock.fileno())
-        LOGGER.info('created tcp socket: %s %s:%s' % (fd, server_ip, server_port))
+        if fd == 1:
+            LOGGER.error('failed to create tcp socket: %s:%s' % (server_ip, server_port))
+            raise Exception('failed to create tcp socket: %s:%s' % (server_ip, server_port))
         sock = socket.fromfd(fd, socket.AF_INET, socket.SOCK_STREAM)
+        orig_close = sock.close
+
+        def close():
+            try:
+                return orig_close()
+            finally:
+                fdsock = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
+                with contextlib.closing(fdsock):
+                    fdsock.connect('\0fdsock')
+                    fdsock.sendall('CLOSE TCP,%s\n' % socket_id)
+
+        sock.close = close
         return sock
 
 
@@ -129,15 +144,35 @@ def create_udp_socket():
     fdsock = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
     with contextlib.closing(fdsock):
         fdsock.connect('\0fdsock')
-        fdsock.sendall('UDP\n')
+        socket_id = generate_socket_id()
+        fdsock.sendall('OPEN UDP,%s\n' % socket_id)
         gevent.socket.wait_read(fdsock.fileno())
         fd = _multiprocessing.recvfd(fdsock.fileno())
-        LOGGER.info('created udp socket: %s' % fd)
-        return socket.fromfd(fd, socket.AF_INET, socket.SOCK_DGRAM)
+        if fd == 1:
+            LOGGER.error('failed to create udp socket')
+            raise Exception('failed to create udp socket')
+        sock = socket.fromfd(fd, socket.AF_INET, socket.SOCK_DGRAM)
+        orig_close = sock.close
+
+        def close():
+            try:
+                return orig_close()
+            finally:
+                fdsock = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
+                with contextlib.closing(fdsock):
+                    fdsock.connect('\0fdsock')
+                    fdsock.sendall('CLOSE UDP,%s\n' % socket_id)
+
+        sock.close = close
+        return sock
 
 
 fqdns.SPI['create_udp_socket'] = create_udp_socket
 fqsocks.fqsocks.SPI['create_udp_socket'] = create_udp_socket
+
+
+def generate_socket_id():
+    return str(uuid4()).replace('-', '')[:5]
 
 
 def setup_logging():

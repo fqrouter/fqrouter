@@ -5,20 +5,24 @@ import android.net.LocalServerSocket;
 import android.net.LocalSocket;
 import android.net.VpnService;
 import android.os.ParcelFileDescriptor;
+import fq.router.MainActivity;
 import fq.router.feedback.UpdateStatusIntent;
 import fq.router.life.LaunchedIntent;
+import fq.router.life.ManagerProcess;
 import fq.router.utils.LogUtils;
 
 import java.io.*;
-import java.net.DatagramSocket;
-import java.net.InetSocketAddress;
-import java.net.Socket;
+import java.net.*;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
 public class SocksVpnService extends VpnService {
 
     private static LocalServerSocket fdServerSocket;
+    private Map<String, Socket> tcpSockets = new ConcurrentHashMap<String, Socket>();
+    private Map<String, DatagramSocket> udpSockets = new ConcurrentHashMap<String, DatagramSocket>();
 
     @Override
     public void onStart(Intent intent, int startId) {
@@ -106,16 +110,34 @@ public class SocksVpnService extends VpnService {
             BufferedReader reader = new BufferedReader(new InputStreamReader(inputStream), 1);
             String request = reader.readLine();
             String[] parts = request.split(",");
+            LogUtils.i("current open tcp sockets: " + tcpSockets.size());
+            LogUtils.i("current open udp sockets: " + udpSockets.size());
             if ("TUN".equals(parts[0])) {
                 fdSocket.setFileDescriptorsForSend(new FileDescriptor[]{tunFD});
                 outputStream.write('*');
-            } else if ("UDP".equals(parts[0])) {
-                passUdpFileDescriptor(fdSocket, outputStream);
-            } else if ("TCP".equals(parts[0])) {
-                String dstIp = parts[1];
-                int dstPort = Integer.parseInt(parts[2]);
-                int connectTimeout = Integer.parseInt(parts[3]);
-                passTcpFileDescriptor(fdSocket, outputStream, dstIp, dstPort, connectTimeout);
+            } else if ("OPEN UDP".equals(parts[0])) {
+                String socketId = parts[1];
+                passUdpFileDescriptor(fdSocket, outputStream, socketId);
+            } else if ("OPEN TCP".equals(parts[0])) {
+                String socketId = parts[1];
+                String dstIp = parts[2];
+                int dstPort = Integer.parseInt(parts[3]);
+                int connectTimeout = Integer.parseInt(parts[4]);
+                passTcpFileDescriptor(fdSocket, outputStream, socketId, dstIp, dstPort, connectTimeout);
+            } else if ("CLOSE UDP".equals(parts[0])) {
+                String socketId = parts[1];
+                DatagramSocket sock = udpSockets.get(socketId);
+                if (sock != null) {
+                    udpSockets.remove(socketId);
+                    sock.close();
+                }
+            } else if ("CLOSE TCP".equals(parts[0])) {
+                String socketId = parts[1];
+                Socket sock = tcpSockets.get(socketId);
+                if (sock != null) {
+                    tcpSockets.remove(socketId);
+                    sock.close();
+                }
             } else {
                 throw new UnsupportedOperationException("fdsock unable to handle: " + request);
             }
@@ -136,18 +158,26 @@ public class SocksVpnService extends VpnService {
 
     private void passTcpFileDescriptor(
             LocalSocket fdSocket, OutputStream outputStream,
-            String dstIp, int dstPort, int connectTimeout) throws Exception {
+            String socketId, String dstIp, int dstPort, int connectTimeout) throws Exception {
         Socket sock = new Socket();
         sock.setTcpNoDelay(true); // force file descriptor being created
         if (protect(sock)) {
             try {
                 sock.connect(new InetSocketAddress(dstIp, dstPort), connectTimeout);
                 ParcelFileDescriptor fd = ParcelFileDescriptor.fromSocket(sock);
+                tcpSockets.put(socketId, sock);
                 fdSocket.setFileDescriptorsForSend(new FileDescriptor[]{fd.getFileDescriptor()});
                 outputStream.write('*');
-            } catch (Exception e) {
-                LogUtils.e("connect failed", e);
+                outputStream.flush();
+                fd.detachFd();
+            } catch (ConnectException e) {
+                LogUtils.e("connect " + dstIp + ":" + dstPort + " failed");
                 outputStream.write('!');
+                sock.close();
+            } catch (SocketTimeoutException e) {
+                LogUtils.e("connect " + dstIp + ":" + dstPort + " failed");
+                outputStream.write('!');
+                sock.close();
             } finally {
                 outputStream.flush();
             }
@@ -156,12 +186,15 @@ public class SocksVpnService extends VpnService {
         }
     }
 
-    private void passUdpFileDescriptor(LocalSocket fdSocket, OutputStream outputStream) throws Exception {
+    private void passUdpFileDescriptor(LocalSocket fdSocket, OutputStream outputStream, String socketId) throws Exception {
         DatagramSocket sock = new DatagramSocket();
         if (protect(sock)) {
             ParcelFileDescriptor fd = ParcelFileDescriptor.fromDatagramSocket(sock);
+            udpSockets.put(socketId, sock);
             fdSocket.setFileDescriptorsForSend(new FileDescriptor[]{fd.getFileDescriptor()});
             outputStream.write('*');
+            outputStream.flush();
+            fd.detachFd();
         } else {
             LogUtils.e("protect udp socket failed");
         }
@@ -174,6 +207,7 @@ public class SocksVpnService extends VpnService {
             LogUtils.e("failed to stop fdsock", e);
         }
         fdServerSocket = null;
+        MainActivity.setShouldExit();
     }
 
     private void updateStatus(String status) {

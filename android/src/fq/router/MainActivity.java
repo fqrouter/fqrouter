@@ -47,6 +47,7 @@ public class MainActivity extends Activity implements
     private final static int ITEM_ID_PICK_AND_PLAY = 5;
     private final static int ASK_VPN_PERMISSION = 1;
     private boolean started;
+    private static boolean shouldExit;
     private WifiManager.WifiLock wifiLock;
     private static Class SOCKS_VPN_SERVICE_CLASS;
 
@@ -57,6 +58,7 @@ public class MainActivity extends Activity implements
             LogUtils.e("failed to load SocksVpnService.class", e);
         }
     }
+
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
@@ -97,9 +99,21 @@ public class MainActivity extends Activity implements
         }
     }
 
+    // TODO: do not show notification bar for VPN
     @Override
     protected void onResume() {
         super.onResume();
+        if (shouldExit) {
+            shouldExit = false;
+            Toast.makeText(this, "VPN stopped...", 3000).show();
+            new Handler().postDelayed(new Runnable() {
+                @Override
+                public void run() {
+                    exit();
+                }
+            }, 3000);
+            return;
+        }
         if (!started) {
             return;
         }
@@ -242,6 +256,7 @@ public class MainActivity extends Activity implements
         findViewById(R.id.wifiHotspotPanel).setVisibility(View.INVISIBLE);
     }
 
+    // TODO: check update on failure
     @Override
     public void onLaunched(boolean isVpnMode) {
         started = true;
@@ -348,6 +363,7 @@ public class MainActivity extends Activity implements
         textView.setText("Downloaded: " + percent + "%");
     }
 
+    // TODO: remove laucnh vpn to start vpn
     @Override
     public void onLaunchVpn() {
         Intent intent = VpnService.prepare(MainActivity.this);
@@ -356,5 +372,9 @@ public class MainActivity extends Activity implements
         } else {
             startActivityForResult(intent, ASK_VPN_PERMISSION);
         }
+    }
+
+    public static void setShouldExit() {
+        shouldExit = true;
     }
 }
