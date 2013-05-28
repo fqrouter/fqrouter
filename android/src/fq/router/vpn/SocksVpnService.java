@@ -52,6 +52,7 @@ public class SocksVpnService extends VpnService {
                     .setSession("fqrouter")
                     .addAddress("10.25.1.1", 24)
                     .addRoute("0.0.0.0", 0)
+                    .addDnsServer("8.8.8.8")
                     .establish();
             if (tunPFD == null) {
                 stopSelf();
