@@ -395,7 +395,7 @@ public class MainActivity extends Activity implements
 
     @Override
     public void onDownloading(String url, String downloadTo, int percent) {
-        if (System.currentTimeMillis() % 10 == 0) {
+        if (System.currentTimeMillis() % (2 * 1000) == 0) {
             showNotification("Downloading " + Uri.parse(url).getLastPathSegment() + ": " + percent + "%");
         }
         TextView textView = (TextView) findViewById(R.id.statusTextView);

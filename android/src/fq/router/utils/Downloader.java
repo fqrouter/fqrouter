@@ -8,6 +8,8 @@ import java.util.Date;
 import java.util.List;
 import java.util.Queue;
 import java.util.concurrent.ConcurrentLinkedQueue;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 public class Downloader {
 
@@ -41,20 +43,22 @@ public class Downloader {
         void onChunkDownloadFailed(long from, long failedAtOffset, long to);
     }
 
-    private static class ChunkDownloader extends Thread {
+    private static class ChunkDownloader implements Runnable {
         private final BlockWriter blockWriter;
         private final ChunkCallback chunkCallback;
-        private final String url;
+        private final URL url;
         private final String staticAddress;
+        private final boolean isSecure;
         private final long from;
         private final long to;
         private long offset;
 
         private ChunkDownloader(BlockWriter blockWriter, ChunkCallback chunkCallback,
-                                String url, String staticAddress, long from, long to) {
+                                URL url, String staticAddress, boolean isSecure, long from, long to) {
             this.chunkCallback = chunkCallback;
             this.blockWriter = blockWriter;
             this.url = url;
+            this.isSecure = isSecure;
             this.staticAddress = staticAddress;
             this.from = from;
             this.to = to;
@@ -64,7 +68,7 @@ public class Downloader {
         @Override
         public void run() {
             try {
-                HttpsUtils.download(url, staticAddress, null, from, to, new IOUtils.ChunkCopied() {
+                HttpsUtils.download(url, staticAddress, isSecure, null, from, to, new IOUtils.ChunkCopied() {
                     @Override
                     public void onChunkCopied(byte[] buffer, int length) throws Exception {
                         blockWriter.write(offset, buffer, length);
@@ -119,7 +123,7 @@ public class Downloader {
         private int addressIndex;
         private final Queue<Chunk> chunks = new ConcurrentLinkedQueue<Chunk>();
         private final Queue<String> errors = new ConcurrentLinkedQueue<String>();
-        private final Queue<Thread> threads = new ConcurrentLinkedQueue<Thread>();
+        private final ExecutorService executorService;
         private List<Inet4Address> addresses;
 
 
@@ -131,6 +135,7 @@ public class Downloader {
                 file.delete();
             }
             randomAccessFile = new RandomAccessFile(file, "rw");
+            executorService = Executors.newFixedThreadPool(concurrency);
         }
 
         public boolean download() {
@@ -144,7 +149,7 @@ public class Downloader {
                 totalLength = getTotalLength(url, addresses);
                 LogUtils.i("total length of " + url + ": " + totalLength);
                 long from = 0;
-                long step = totalLength / concurrency;
+                long step = totalLength / 100;
                 while (from < totalLength) {
                     long to = Math.min(from + step, totalLength - 1);
                     addChunk(from, to, false);
@@ -161,13 +166,7 @@ public class Downloader {
             } catch (Exception e) {
                 LogUtils.e("download failed", e);
             } finally {
-                for (Thread thread : threads) {
-                    try {
-                        thread.join(1000);
-                    } catch (InterruptedException e) {
-                        LogUtils.e("found hanging thread");
-                    }
-                }
+                executorService.shutdownNow();
             }
             return false;
         }
@@ -211,17 +210,11 @@ public class Downloader {
             }
         }
 
-        private void addChunk(long from, long to, boolean secure) {
+        private void addChunk(long from, long to, boolean isSecure) {
             chunks.add(new Chunk(from, to));
-            String chunkUrl;
-            if (secure) {
-                chunkUrl = url.toString().replace(url.getProtocol(), "https");
-            } else {
-                chunkUrl = url.toString().replace(url.getProtocol(), "http");
-            }
-            ChunkDownloader thread = new ChunkDownloader(this, this, chunkUrl, getAddress().getHostAddress(), from, to);
-            thread.start();
-            threads.add(thread);
+            ChunkDownloader chunkDownloader = new ChunkDownloader(
+                    this, this, url, getAddress().getHostAddress(), isSecure, from, to);
+            executorService.submit(chunkDownloader);
         }
 
         public Inet4Address getAddress() {
@@ -236,8 +229,7 @@ public class Downloader {
             for (Inet4Address staticAddress : staticAddresses) {
                 System.out.println(new Date() + " " + staticAddress);
                 try {
-                    return HttpsUtils.getTotalLength(
-                            url.toString().replace(url.getProtocol(), "http"), staticAddress.getHostAddress());
+                    return HttpsUtils.getTotalLength(url, staticAddress.getHostAddress(), false);
                 } catch (Exception e) {
                     LogUtils.e("failed to get total length", e);
                 }
@@ -245,8 +237,7 @@ public class Downloader {
             for (Inet4Address staticAddress : staticAddresses) {
                 System.out.println(new Date() + " " + staticAddress);
                 try {
-                    return HttpsUtils.getTotalLength(
-                            url.toString().replace(url.getProtocol(), "https"), staticAddress.getHostAddress());
+                    return HttpsUtils.getTotalLength(url, staticAddress.getHostAddress(), true);
                 } catch (Exception e) {
                     LogUtils.e("failed to get total length", e);
                 }
