@@ -225,16 +225,20 @@ fqsocks.CHINA_PROXY = None
 
 class CheckingGoAgentProxy(fqsocks.GoAgentProxy):
     def forward(self, client):
-        super(CheckingGoAgentProxy, self).forward(client)
-        sys.stderr.write('found: ')
-        sys.stderr.write(self.appid)
-        sys.stderr.write('\n')
-        if self.appid not in good_app_ids:
-            good_app_ids.add(self.appid)
-            print(self.appid)
-            if len(good_app_ids) >= 10:
-                done.set()
-        self.died = True
+        try:
+            super(CheckingGoAgentProxy, self).forward(client)
+            sys.stderr.write('found: ')
+            sys.stderr.write(self.appid)
+            sys.stderr.write('\n')
+            if self.appid not in good_app_ids:
+                good_app_ids.add(self.appid)
+                print(self.appid)
+                if len(good_app_ids) >= 10:
+                    done.set()
+            self.died = True
+        except:
+            self.died = True
+            raise
 
 
 for appid in APP_IDS:
@@ -271,7 +275,11 @@ def keep_fqsocks_busy():
 def check_if_all_died():
     while True:
         gevent.sleep(1)
-        if all(p.died for p in fqsocks.mandatory_proxies):
+        not_died_count = len([p for p in fqsocks.mandatory_proxies if not p.died])
+        sys.stderr.write('not died count: ')
+        sys.stderr.write(str(not_died_count))
+        sys.stderr.write('\n')
+        if not not_died_count:
             done.set()
 
 

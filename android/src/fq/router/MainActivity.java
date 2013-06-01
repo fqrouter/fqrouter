@@ -22,7 +22,6 @@ import fq.router.feedback.*;
 import fq.router.life.*;
 import fq.router.utils.LogUtils;
 import fq.router.utils.ShellUtils;
-import fq.router.vpn.SocksVpnService;
 import fq.router.wifi.*;
 
 import java.lang.reflect.Method;
@@ -54,15 +53,6 @@ public class MainActivity extends Activity implements
     private String upgradeUrl;
     private boolean downloaded;
     private WifiManager.WifiLock wifiLock;
-    private static Class SOCKS_VPN_SERVICE_CLASS;
-
-    static {
-        try {
-            SOCKS_VPN_SERVICE_CLASS = MainActivity.class.forName("fq.router.vpn.SocksVpnService");
-        } catch (ClassNotFoundException e) {
-            LogUtils.e("failed to load SocksVpnService.class", e);
-        }
-    }
 
 
     @Override
@@ -89,12 +79,12 @@ public class MainActivity extends Activity implements
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
         if (ASK_VPN_PERMISSION == requestCode) {
             if (resultCode == RESULT_OK) {
-                if (SOCKS_VPN_SERVICE_CLASS == null) {
+                if (LaunchService.SOCKS_VPN_SERVICE_CLASS == null) {
                     onHandleFatalError("vpn class not loaded");
                 } else {
                     updateStatus("Launch Socks Vpn Service");
-                    stopService(new Intent(this, SOCKS_VPN_SERVICE_CLASS));
-                    startService(new Intent(this, SOCKS_VPN_SERVICE_CLASS));
+                    stopService(new Intent(this, LaunchService.SOCKS_VPN_SERVICE_CLASS));
+                    startService(new Intent(this, LaunchService.SOCKS_VPN_SERVICE_CLASS));
                 }
             } else {
                 onHandleFatalError("vpn permission rejected");
@@ -222,7 +212,7 @@ public class MainActivity extends Activity implements
         appendLog("status updated to: " + status);
         TextView textView = (TextView) findViewById(R.id.statusTextView);
         textView.setText(status);
-        if (isVpnRunning()) {
+        if (LaunchService.isVpnRunning()) {
             clearNotification();
         } else {
             showNotification(status);
@@ -244,17 +234,13 @@ public class MainActivity extends Activity implements
     }
 
     private void exit() {
-        if (isVpnRunning()) {
+        if (LaunchService.isVpnRunning()) {
             Toast.makeText(this, "Use notification bar to stop VPN", 5000).show();
             return;
         }
         started = false;
         hideWifiHotspotToggleButton();
         ExitService.execute(this);
-    }
-
-    private boolean isVpnRunning() {
-        return SOCKS_VPN_SERVICE_CLASS != null && SocksVpnService.isRunning();
     }
 
     private void toggleWifiHotspot(ToggleButton button) {
@@ -404,7 +390,7 @@ public class MainActivity extends Activity implements
 
     @Override
     public void onStartVpn() {
-        if (isVpnRunning()) {
+        if (LaunchService.isVpnRunning()) {
             LogUtils.e("vpn is already running, do not start it again");
             return;
         }

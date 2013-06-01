@@ -14,6 +14,7 @@ import fq.router.utils.HttpUtils;
 import fq.router.utils.IOUtils;
 import fq.router.utils.LogUtils;
 import fq.router.utils.ShellUtils;
+import fq.router.vpn.SocksVpnService;
 
 import java.io.File;
 import java.io.OutputStreamWriter;
@@ -23,8 +24,22 @@ import java.util.Map;
 public class LaunchService extends IntentService {
     private final static String CONFIG_FILE_PATH = "/data/data/fq.router/config";
 
+    public static Class SOCKS_VPN_SERVICE_CLASS;
+
+    static {
+        try {
+            SOCKS_VPN_SERVICE_CLASS = LaunchService.class.forName("fq.router.vpn.SocksVpnService");
+        } catch (ClassNotFoundException e) {
+            LogUtils.e("failed to load SocksVpnService.class", e);
+        }
+    }
+
     public LaunchService() {
         super("Launch");
+    }
+
+    public static boolean isVpnRunning() {
+        return SOCKS_VPN_SERVICE_CLASS != null && SocksVpnService.isRunning();
     }
 
     @Override
@@ -38,6 +53,9 @@ public class LaunchService extends IntentService {
         if (ping(true)) {
             appendLog("manager is already running");
             reportStated(true);
+            if (!isVpnRunning()) {
+                sendBroadcast(new StartVpnIntent());
+            }
             return;
         }
         if (deployAndLaunch()) {
