@@ -1,13 +1,24 @@
 #!/usr/bin/env python
 import subprocess
-import shlex
-import time
 import sys
 import os
 import argparse
+import urllib2
+import functools
+import httplib
+import signal
+import atexit
+from fqsocks import fqsocks
+from fqsocks import http_connect
+import time
+
+import gevent
+import gevent.pool
+import gevent.monkey
+import gevent.event
+
 
 sys.path.append(os.path.join(os.path.dirname(__file__), '..'))
-import fqsocks.china_ip
 
 argument_parser = argparse.ArgumentParser()
 argument_parser.add_argument('--proxy-list', action='append')
@@ -16,6 +27,7 @@ args = argument_parser.parse_args()
 
 PROXY_LIST_DIR = os.path.join(os.path.dirname(__file__), 'proxy-list')
 CONCURRENT_CHECKERS_COUNT = 8
+
 
 def log(message):
     sys.stderr.write(message)
@@ -58,9 +70,10 @@ def add_proxy(line):
         elif ip in black_list:
             log('skip blacklisted ip: %s' % ip)
         else:
-            proxies.add((ip, port, 0))
+            proxies.add((ip, port))
     except:
         log('skip illegal proxy: %s' % line)
+
 
 if args.proxy:
     for proxy in args.proxy:
@@ -80,93 +93,111 @@ if args.proxy_list:
             log(e.output)
 
 
-class DomesticChecker(object):
-    def __init__(self, ip, port, elapsed):
-        self.ip = ip
-        self.port = port
-        self.elapsed = elapsed
-        self.proc = subprocess.Popen(
-            shlex.split('socksify curl --proxy %s:%s https://www.amazon.com/404' % (ip, port)),
-            stderr=subprocess.STDOUT, stdout=subprocess.PIPE)
-        self.started_at = time.time()
+class BoundHTTPSHandler(urllib2.HTTPSHandler):
+    def __init__(self, source_address=None, debuglevel=0):
+        urllib2.HTTPSHandler.__init__(self, debuglevel)
+        self.https_class = functools.partial(httplib.HTTPSConnection, source_address=source_address)
 
-    def is_ok(self):
-        if 0 == self.proc.poll() and 'Amazon.com' in self.proc.stdout.read():
-            return round(time.time() - self.started_at, 2)
-        return 0
-
-    def is_failed(self):
-        return self.proc.poll()
-
-    def is_timed_out(self):
-        return time.time() - self.started_at > 10
-
-    def kill(self):
-        self.proc.kill()
+    def https_open(self, req):
+        return self.do_open(self.https_class, req)
 
 
-class InternationalChecker(object):
-    def __init__(self, ip, port, elapsed):
-        self.ip = ip
-        self.port = port
-        self.elapsed = elapsed
-        self.proc = subprocess.Popen(
-            shlex.split('curl --proxy %s:%s https://mobile.twitter.com/signup' % (ip, port)),
-            stderr=subprocess.STDOUT, stdout=subprocess.PIPE)
-        self.started_at = time.time()
-
-    def is_ok(self):
-        if 0 == self.proc.poll() and 'Welcome to Twitter' in self.proc.stdout.read():
-            return round(time.time() - self.started_at, 2)
-        return 0
-
-    def is_failed(self):
-        return self.proc.poll()
-
-    def is_timed_out(self):
-        return time.time() - self.started_at > 10
-
-    def kill(self):
-        self.proc.kill()
+handler = BoundHTTPSHandler(source_address=('10.26.1.101', 0))
+opener = urllib2.build_opener(handler)
+fqsocks.OUTBOUND_IP = '10.1.2.3'
+fqsocks.LISTEN_IP = '127.0.0.1'
+fqsocks.LISTEN_PORT = 1101
+fqsocks.CHINA_PROXY = None
+# fqsocks.setup_logging('INFO')
+good_proxies = {}
+done = gevent.event.Event()
 
 
-checkers = []
-checked_proxies = []
-for i in range(10):
-    log('PASS %s' % (i + 1))
-    while len(proxies) + len(checkers):
-        for checker in list(checkers):
-            try:
-                ok = checker.is_ok()
-                if ok:
-                    log('OK[%s] %s:%s' % (ok, checker.ip, checker.port))
-                    checked_proxies.append((checker.ip, checker.port, checker.elapsed + ok))
-                    checkers.remove(checker)
-                elif checker.is_failed():
-                    log('FAILED %s:%s' % (checker.ip, checker.port))
-                    checkers.remove(checker)
-                elif checker.is_timed_out():
-                    log('TIMEOUT %s:%s' % (checker.ip, checker.port))
-                    checkers.remove(checker)
-                    try:
-                        checker.kill()
-                    except:
-                        pass
-            except:
-                log('FATAL %s:%s' % (checker.ip, checker.port))
-                checkers.remove(checker)
-        new_checkers_count = CONCURRENT_CHECKERS_COUNT - len(checkers)
-        for i in range(new_checkers_count):
-            if proxies:
-                ip, port, elapsed = proxies.pop()
-                if i % 2 == 0:
-                    checkers.append(DomesticChecker(ip, port, elapsed))
-                else:
-                    checkers.append(InternationalChecker(ip, port, elapsed))
-        time.sleep(0.2)
-    proxies = checked_proxies
-    checked_proxies = []
+class CheckingHttpConnectProxy(http_connect.HttpConnectProxy):
+    def __init__(self, *args, **kwargs):
+        super(CheckingHttpConnectProxy, self).__init__(*args, **kwargs)
+        self.successes = []
 
-for ip, port, elapsed in sorted(proxies, key=lambda proxy: proxy[2])[:20]:
-    print('%s:%s' % (ip, port))
-print('')
+    def do_forward(self, client):
+        before = time.time()
+        try:
+            super(CheckingHttpConnectProxy, self).do_forward(client)
+            after = time.time()
+            elapsed = after - before
+            if elapsed > 10:
+                raise Exception('taking too long')
+            self.successes.append(elapsed)
+            log('OK[%s] %s %s:%s' % (len(self.successes), elapsed, self.proxy_ip, self.proxy_port))
+            if len(self.successes) >= 10:
+                average = float(sum(self.successes)) / len(self.successes)
+                good_proxies[(self.proxy_ip, self.proxy_port)] = average
+                self.died = True
+        except:
+            self.died = True
+            log('FAILED %s:%s' % (self.proxy_ip, self.proxy_port))
+            raise
+
+
+fqsocks.mandatory_proxies = [CheckingHttpConnectProxy(ip, port) for ip, port in proxies]
+
+
+def check_twitter_access():
+    try:
+        opener.open('https://twitter.com/').read()
+    except:
+        pass
+
+
+def keep_fqsocks_busy():
+    while True:
+        pool = gevent.pool.Pool(size=16)
+        greenlets = []
+        for i in range(100):
+            greenlets.append(pool.apply_async(check_twitter_access))
+        while len(pool) > 0:
+            for greenlet in list(pool):
+                try:
+                    greenlet.join(timeout=10)
+                except:
+                    pass
+        try:
+            pool.kill()
+        except:
+            pass
+
+
+def check_if_all_died():
+    while True:
+        gevent.sleep(1)
+        if all(p.died for p in fqsocks.mandatory_proxies):
+            done.set()
+
+
+def setup():
+    subprocess.check_call('ifconfig lo:proxy 10.26.1.101 netmask 255.255.255.255', shell=True)
+    subprocess.check_call('iptables -t nat -I OUTPUT -s 10.26.1.101 -p tcp -j REDIRECT --to-port 1101', shell=True)
+
+
+def teardown():
+    subprocess.check_call('iptables -t nat -D OUTPUT -s 10.26.1.101 -p tcp -j REDIRECT --to-port 1101', shell=True)
+
+
+def main():
+    signal.signal(signal.SIGTERM, lambda signum, fame: teardown())
+    signal.signal(signal.SIGINT, lambda signum, fame: teardown())
+    atexit.register(teardown)
+    setup()
+    gevent.monkey.patch_all(thread=False)
+    gevent.spawn(fqsocks.start_server)
+    gevent.spawn(keep_fqsocks_busy)
+    gevent.spawn(check_if_all_died)
+    done.wait()
+    for ip_port, average in sorted(good_proxies.items(), key=lambda e: e[1])[:20]:
+        ip, port = ip_port
+        log('picked %s:%s %s' % (ip, port, average))
+        print('%s:%s' % (ip, port))
+    print('')
+
+
+if '__main__' == __name__:
+    main()

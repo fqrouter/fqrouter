@@ -202,7 +202,7 @@ if len(sys.argv) > 1:
     APP_IDS = [sys.argv[1]]
 
 random.shuffle(APP_IDS)
-GOOD_APP_IDS = set()
+good_app_ids = set()
 done = gevent.event.Event()
 
 
@@ -217,6 +217,7 @@ class BoundHTTPHandler(urllib2.HTTPHandler):
 
 handler = BoundHTTPHandler(source_address=('10.26.1.100', 0))
 opener = urllib2.build_opener(handler)
+fqsocks.OUTBOUND_IP = '10.1.2.3'
 fqsocks.LISTEN_IP = '127.0.0.1'
 fqsocks.LISTEN_PORT = 1100
 fqsocks.CHINA_PROXY = None
@@ -228,10 +229,10 @@ class CheckingGoAgentProxy(fqsocks.GoAgentProxy):
         sys.stderr.write('found: ')
         sys.stderr.write(self.appid)
         sys.stderr.write('\n')
-        if self.appid not in GOOD_APP_IDS:
-            GOOD_APP_IDS.add(self.appid)
+        if self.appid not in good_app_ids:
+            good_app_ids.add(self.appid)
             print(self.appid)
-            if len(GOOD_APP_IDS) >= 10:
+            if len(good_app_ids) >= 10:
                 done.set()
         self.died = True
 
@@ -250,9 +251,21 @@ def check_baidu_access():
 def keep_fqsocks_busy():
     goagent.GoAgentProxy.GOOGLE_HOSTS = ['goagent-google-ip.fqrouter.com']
     goagent.GoAgentProxy.refresh(fqsocks.mandatory_proxies, fqsocks.create_udp_socket, fqsocks.create_tcp_socket)
-    pool = gevent.pool.Pool(size=4)
-    for i in range(100):
-        pool.apply_async(check_baidu_access)
+    while True:
+        pool = gevent.pool.Pool(size=16)
+        greenlets = []
+        for i in range(100):
+            greenlets.append(pool.apply_async(check_baidu_access))
+        while len(pool) > 0:
+            for greenlet in list(pool):
+                try:
+                    greenlet.join(timeout=10)
+                except:
+                    pass
+        try:
+            pool.kill()
+        except:
+            pass
 
 
 def check_if_all_died():
@@ -281,6 +294,7 @@ def main():
     gevent.spawn(keep_fqsocks_busy)
     gevent.spawn(check_if_all_died)
     done.wait()
+    print('')
 
 
 if '__main__' == __name__:
