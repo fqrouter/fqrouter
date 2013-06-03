@@ -46,8 +46,8 @@ def setup():
         'python -m fqsocks --outbound-ip 10.1.2.3 '
         '--listen 10.1.2.3:8319 '
         '--http-request-mark 0xbabe '
-        '--proxy dynamic,n=2,type=ss,dns_record=ss#n#.fqrouter.com '
-        '--proxy dynamic,n=20,dns_record=proxy#n#.fqrouter.com '
+        '--proxy dynamic,n=4,type=ss,dns_record=ss#n#.fqrouter.com '
+        '--proxy dynamic,n=25,dns_record=proxy#n#.fqrouter.com '
         '--proxy dynamic,n=10,type=goagent,dns_record=goagent#n#.fqrouter.com '
         '--google-host goagent-google-ip.fqrouter.com '
         '--disable-access-check',

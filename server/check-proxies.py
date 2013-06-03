@@ -17,13 +17,6 @@ import gevent.pool
 import gevent.monkey
 import gevent.event
 
-#gaeproxy/gaeproxy
-#ip 199.241.28.167 #port 53
-#ip 158.255.208.201 #port 53
-#ip 198.71.90.142 #port 53
-#ip 209.141.50.79 #port 53
-#ip 64.31.18.198 #port 53
-
 sys.path.append(os.path.join(os.path.dirname(__file__), '..'))
 
 argument_parser = argparse.ArgumentParser()
