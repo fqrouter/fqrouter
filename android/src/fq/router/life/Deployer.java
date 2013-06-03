@@ -79,6 +79,11 @@ public class Deployer {
             return false;
         }
         try {
+            linkLibs();
+        } catch (Exception e) {
+            handleFatalError("failed to link libs", e);
+        }
+        try {
             makePayloadExecutable();
         } catch (Exception e) {
             handleFatalError("failed to make payload executable", e);
@@ -198,6 +203,25 @@ public class Deployer {
             }
         }
         appendLog("successfully unzipped payload.zip");
+    }
+
+    private void linkLibs() throws Exception {
+        ShellUtils.sudo(ShellUtils.findCommand("mount"), "-o", "remount,rw", "/system");
+        try {
+            File[] files = new File(PYTHON_DIR, "lib").listFiles();
+            if (files == null) {
+                throw new Exception(new File(PYTHON_DIR, "lib") + " not found");
+            } else {
+                for (File file : files) {
+                    String targetPath = "/system/lib/" + file.getName();
+                    if (!new File(targetPath).exists()) {
+                        ShellUtils.sudo(BUSYBOX_FILE.getCanonicalPath(), "ln", "-s", file.getCanonicalPath(), targetPath);
+                    }
+                }
+            }
+        } finally {
+            ShellUtils.sudo(ShellUtils.findCommand("mount"), "-o", "remount,ro", "/system");
+        }
     }
 
     private void makePayloadExecutable() throws Exception {
