@@ -8,7 +8,7 @@ def read():
     [fqrouter]
     WifiHotspotSSID=fqrouter
     WifiHotspotPassword=12345678
-    BypassDirectlyEnabled=true
+    IsScramblerEnabled=true
     """.splitlines()])), 'default')
     parser.read('/data/data/fq.router/config')
     return parser

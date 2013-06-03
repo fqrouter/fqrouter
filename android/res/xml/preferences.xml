@@ -1,6 +1,14 @@
 <?xml version="1.0" encoding="utf-8"?>
 <PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android">
     <PreferenceCategory
+            android:title="General">
+        <CheckBoxPreference
+                android:key="IsAutoUpdateEnabled"
+                android:title="Auto Update Enabled"
+                android:summary="check update automatically"
+                android:defaultValue="true"/>
+    </PreferenceCategory>
+    <PreferenceCategory
             android:title="Wifi Hotspot">
         <ListPreference
                 android:key="WifiHotspotMode"
@@ -23,9 +31,9 @@
     <PreferenceCategory
             android:title="Proxy">
         <CheckBoxPreference
-                android:key="BypassDirectlyEnabled"
+                android:key="IsScramblerEnabled"
                 android:title="Scrambler Enabled"
-                android:summary="Bypass GFW Directly without Proxy Server"
+                android:summary="bypass GFW directly without proxy server"
                 android:defaultValue="true"/>
     </PreferenceCategory>
 </PreferenceScreen>

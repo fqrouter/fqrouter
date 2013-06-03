@@ -41,7 +41,7 @@ def handle_ping(environ, start_response):
 def run():
     skipped_components = []
     LOGGER.info('environment: %s' % os.environ.items())
-    if not config.read().getboolean('fqrouter', 'BypassDirectlyEnabled'):
+    if not config.read().getboolean('fqrouter', 'IsScramblerEnabled'):
         LOGGER.info('scrambler component disabled by config')
         COMPONENTS.remove(comp_scrambler)
     for comp in COMPONENTS:
