@@ -51,12 +51,21 @@ public class LaunchService extends IntentService {
             return;
         }
         if (ping(true)) {
-            appendLog("manager is already running");
-            reportStated(true);
-            if (!isVpnRunning()) {
-                sendBroadcast(new StartVpnIntent());
+            if (isVpnRunning()) {
+                appendLog("manager is already running");
+                reportStated(true);
+                return;
+            } else {
+                updateStatus("Restart manager");
+                try {
+                    ManagerProcess.kill();
+                    Thread.sleep(1000);
+                    LaunchService.execute(this);
+                } catch (Exception e) {
+                    handleFatalError("failed to stop exiting process", e);
+                }
+                return;
             }
-            return;
         }
         if (deployAndLaunch()) {
             reportStated(false);

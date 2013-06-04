@@ -126,18 +126,7 @@ def create_tcp_socket(server_ip, server_port, connect_timeout):
             LOGGER.error('failed to create tcp socket: %s:%s' % (server_ip, server_port))
             raise Exception('failed to create tcp socket: %s:%s' % (server_ip, server_port))
         sock = socket.fromfd(fd, socket.AF_INET, socket.SOCK_STREAM)
-        orig_close = sock.close
-
-        def close():
-            try:
-                return orig_close()
-            finally:
-                fdsock = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
-                with contextlib.closing(fdsock):
-                    fdsock.connect('\0fdsock')
-                    fdsock.sendall('CLOSE TCP,%s\n' % socket_id)
-
-        sock.close = close
+        os.close(fd)
         return sock
 
 
@@ -157,18 +146,7 @@ def create_udp_socket():
             LOGGER.error('failed to create udp socket')
             raise Exception('failed to create udp socket')
         sock = socket.fromfd(fd, socket.AF_INET, socket.SOCK_DGRAM)
-        orig_close = sock.close
-
-        def close():
-            try:
-                return orig_close()
-            finally:
-                fdsock = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
-                with contextlib.closing(fdsock):
-                    fdsock.connect('\0fdsock')
-                    fdsock.sendall('CLOSE UDP,%s\n' % socket_id)
-
-        sock.close = close
+        os.close(fd)
         return sock
 
 

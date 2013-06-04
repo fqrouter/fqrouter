@@ -21,8 +21,6 @@ import java.util.concurrent.Executors;
 public class SocksVpnService extends VpnService {
 
     private static ParcelFileDescriptor tunPFD;
-    private Map<String, Socket> tcpSockets = new ConcurrentHashMap<String, Socket>();
-    private Map<String, DatagramSocket> udpSockets = new ConcurrentHashMap<String, DatagramSocket>();
 
     @Override
     public void onStart(Intent intent, int startId) {
@@ -119,8 +117,6 @@ public class SocksVpnService extends VpnService {
             BufferedReader reader = new BufferedReader(new InputStreamReader(inputStream), 1);
             String request = reader.readLine();
             String[] parts = request.split(",");
-            LogUtils.i("current open tcp sockets: " + tcpSockets.size());
-            LogUtils.i("current open udp sockets: " + udpSockets.size());
             if ("TUN".equals(parts[0])) {
                 fdSocket.setFileDescriptorsForSend(new FileDescriptor[]{tunFD});
                 outputStream.write('*');
@@ -133,20 +129,6 @@ public class SocksVpnService extends VpnService {
                 int dstPort = Integer.parseInt(parts[3]);
                 int connectTimeout = Integer.parseInt(parts[4]);
                 passTcpFileDescriptor(fdSocket, outputStream, socketId, dstIp, dstPort, connectTimeout);
-            } else if ("CLOSE UDP".equals(parts[0])) {
-                String socketId = parts[1];
-                DatagramSocket sock = udpSockets.get(socketId);
-                if (sock != null) {
-                    udpSockets.remove(socketId);
-                    sock.close();
-                }
-            } else if ("CLOSE TCP".equals(parts[0])) {
-                String socketId = parts[1];
-                Socket sock = tcpSockets.get(socketId);
-                if (sock != null) {
-                    tcpSockets.remove(socketId);
-                    sock.close();
-                }
             } else {
                 throw new UnsupportedOperationException("fdsock unable to handle: " + request);
             }
@@ -174,11 +156,10 @@ public class SocksVpnService extends VpnService {
             try {
                 sock.connect(new InetSocketAddress(dstIp, dstPort), connectTimeout);
                 ParcelFileDescriptor fd = ParcelFileDescriptor.fromSocket(sock);
-                tcpSockets.put(socketId, sock);
                 fdSocket.setFileDescriptorsForSend(new FileDescriptor[]{fd.getFileDescriptor()});
                 outputStream.write('*');
                 outputStream.flush();
-                fd.detachFd();
+                fd.close();
             } catch (ConnectException e) {
                 LogUtils.e("connect " + dstIp + ":" + dstPort + " failed");
                 outputStream.write('!');
@@ -199,11 +180,10 @@ public class SocksVpnService extends VpnService {
         DatagramSocket sock = new DatagramSocket();
         if (protect(sock)) {
             ParcelFileDescriptor fd = ParcelFileDescriptor.fromDatagramSocket(sock);
-            udpSockets.put(socketId, sock);
             fdSocket.setFileDescriptorsForSend(new FileDescriptor[]{fd.getFileDescriptor()});
             outputStream.write('*');
             outputStream.flush();
-            fd.detachFd();
+            fd.close();
         } else {
             LogUtils.e("protect udp socket failed");
         }
