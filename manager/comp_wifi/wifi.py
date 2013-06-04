@@ -747,7 +747,7 @@ def get_wpa_supplicant_control_socket_dir(conf_path=WPA_SUPPLICANT_CONF_PATH):
 
 def fix_wrong_control_socket_dir(control_socket_dir):
     if control_socket_dir == WIFI_INTERFACE:
-        return 'anydir'
+        return WIFI_INTERFACE
     if control_socket_dir:
         control_socket_not_exists = not os.path.exists(
             os.path.join(control_socket_dir, WIFI_INTERFACE))
@@ -755,7 +755,7 @@ def fix_wrong_control_socket_dir(control_socket_dir):
         control_socket_not_exists = True
     dev_socket_exists = os.path.exists('/dev/socket/wpa_%s' % WIFI_INTERFACE)
     if dev_socket_exists and control_socket_not_exists:
-        return 'anydir' # any valid dir will cause wpa_cli fail
+        return WIFI_INTERFACE # any valid dir will cause wpa_cli fail
     return control_socket_dir
 
 
