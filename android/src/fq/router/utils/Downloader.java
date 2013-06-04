@@ -116,7 +116,6 @@ public class Downloader {
     private static class FileDownloader implements BlockWriter, ChunkCallback {
         private final RandomAccessFile randomAccessFile;
         private final URL url;
-        private final int concurrency;
         private final ProgressUpdated callback;
         private long totalLength;
         private int downloadedLength;
@@ -129,7 +128,6 @@ public class Downloader {
 
         public FileDownloader(URL url, File file, int concurrency, ProgressUpdated callback) throws Exception {
             this.url = url;
-            this.concurrency = concurrency;
             this.callback = callback;
             if (file.exists()) {
                 file.delete();
@@ -161,8 +159,23 @@ public class Downloader {
                     }
                     Thread.sleep(1);
                 }
-                LogUtils.i("downloaded " + url);
-                return true;
+                if (errors.isEmpty()) {
+                    LogUtils.i("downloaded " + url);
+                    LogUtils.i("total length: " + totalLength);
+                    LogUtils.i("downloaded length: " + downloadedLength);
+                    if (totalLength == downloadedLength) {
+                        callback.onDownloaded();
+                        return true;
+                    } else {
+                        LogUtils.e("downloaded incomplete file");
+                        return false;
+                    }
+                } else {
+                    for (String error : errors) {
+                        LogUtils.i("error: " + error);
+                    }
+                    return false;
+                }
             } catch (Exception e) {
                 LogUtils.e("download failed", e);
             } finally {
@@ -178,9 +191,6 @@ public class Downloader {
             int percent = (int) (downloadedLength * 100 / totalLength);
             LogUtils.i("downloading " + url + ": " + percent + "%");
             callback.onProgressUpdated(percent);
-            if (percent == 100) {
-                callback.onDownloaded();
-            }
         }
 
         @Override
