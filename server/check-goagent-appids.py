@@ -74,7 +74,6 @@ class CheckingGoAgentProxy(fqsocks.GoAgentProxy):
                     done.set()
             self.died = True
         except fqsocks.ProxyFallBack as e:
-            print(e)
             self.died = True
             raise
         except:
