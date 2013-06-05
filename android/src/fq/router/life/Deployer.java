@@ -15,15 +15,13 @@ import java.io.OutputStream;
 
 public class Deployer {
 
-    public static File DATA_DIR = new File("/data/data/fq.router");
-    public static File BUSYBOX_FILE = new File(DATA_DIR, "busybox");
-    public static File PAYLOAD_ZIP = new File(DATA_DIR, "payload.zip");
-    public static File PAYLOAD_CHECKSUM = new File(DATA_DIR, "payload.checksum");
-    public static File PYTHON_DIR = new File(DATA_DIR, "python");
+    public static File PAYLOAD_ZIP = new File(ShellUtils.DATA_DIR, "payload.zip");
+    public static File PAYLOAD_CHECKSUM = new File(ShellUtils.DATA_DIR, "payload.checksum");
+    public static File PYTHON_DIR = new File(ShellUtils.DATA_DIR, "python");
     public static File PYTHON_LAUNCHER = new File(PYTHON_DIR, "bin/python");
-    public static File WIFI_TOOLS_DIR = new File(DATA_DIR, "wifi-tools");
-    public static File PROXY_TOOLS_DIR = new File(DATA_DIR, "proxy-tools");
-    public static File MANAGER_DIR = new File(DATA_DIR, "manager");
+    public static File WIFI_TOOLS_DIR = new File(ShellUtils.DATA_DIR, "wifi-tools");
+    public static File PROXY_TOOLS_DIR = new File(ShellUtils.DATA_DIR, "proxy-tools");
+    public static File MANAGER_DIR = new File(ShellUtils.DATA_DIR, "manager");
     public static File MANAGER_MAIN_PY = new File(MANAGER_DIR, "main.py");
     public static File MANAGER_VPN_PY = new File(MANAGER_DIR, "vpn.py");
     private final Context context;
@@ -37,7 +35,7 @@ public class Deployer {
         updateStatus("Deploying payload");
         try {
             copyBusybox();
-            makeExecutable(BUSYBOX_FILE);
+            makeExecutable(ShellUtils.BUSYBOX_FILE);
         } catch (Exception e) {
             handleFatalError("failed to copy busybox", e);
             return false;
@@ -66,7 +64,7 @@ public class Deployer {
         }
         try {
             copyBusybox();
-            makeExecutable(BUSYBOX_FILE);
+            makeExecutable(ShellUtils.BUSYBOX_FILE);
             copyPayloadZip();
         } catch (Exception e) {
             handleFatalError("failed to copy payload.zip", e);
@@ -119,13 +117,13 @@ public class Deployer {
     }
 
     private void clearDataDirectory() throws Exception {
-        if (DATA_DIR.exists()) {
+        if (ShellUtils.DATA_DIR.exists()) {
             appendLog("clear data dir");
-            deleteDirectory(DATA_DIR + "/python");
-            deleteDirectory(DATA_DIR + "/wifi-tools");
-            deleteDirectory(DATA_DIR + "/proxy-tools");
-            deleteDirectory(DATA_DIR + "/manager");
-            deleteDirectory(DATA_DIR + "/payload.zip");
+            deleteDirectory(ShellUtils.DATA_DIR + "/python");
+            deleteDirectory(ShellUtils.DATA_DIR + "/wifi-tools");
+            deleteDirectory(ShellUtils.DATA_DIR + "/proxy-tools");
+            deleteDirectory(ShellUtils.DATA_DIR + "/manager");
+            deleteDirectory(ShellUtils.DATA_DIR + "/payload.zip");
             new File("/data/data/fq.router/busybox").delete();
         }
     }
@@ -165,14 +163,14 @@ public class Deployer {
     }
 
     private void copyBusybox() throws Exception {
-        if (BUSYBOX_FILE.exists()) {
+        if (ShellUtils.BUSYBOX_FILE.exists()) {
             appendLog("skip copy busybox as it already exists");
             return;
         }
         appendLog("copying busybox to data directory");
         InputStream inputStream = context.getAssets().open("busybox");
         try {
-            OutputStream outputStream = new FileOutputStream(BUSYBOX_FILE);
+            OutputStream outputStream = new FileOutputStream(ShellUtils.BUSYBOX_FILE);
             try {
                 IOUtils.copy(inputStream, outputStream);
             } finally {
@@ -191,7 +189,7 @@ public class Deployer {
         }
         appendLog("unzipping payload.zip");
         Process process = Runtime.getRuntime().exec(
-                BUSYBOX_FILE + " unzip -o -q payload.zip", new String[0], new File("/data/data/fq.router"));
+                ShellUtils.BUSYBOX_FILE + " unzip -o -q payload.zip", new String[0], new File("/data/data/fq.router"));
         ShellUtils.waitFor("unzip", process);
         if (!new File("/data/data/fq.router/payload.zip").delete()) {
             appendLog("failed to delete payload.zip after unzip");
@@ -215,7 +213,7 @@ public class Deployer {
                 for (File file : files) {
                     String targetPath = "/system/lib/" + file.getName();
                     if (!new File(targetPath).exists()) {
-                        ShellUtils.sudo(BUSYBOX_FILE.getCanonicalPath(), "ln", "-s", file.getCanonicalPath(), targetPath);
+                        ShellUtils.sudo(ShellUtils.BUSYBOX_FILE.getCanonicalPath(), "ln", "-s", file.getCanonicalPath(), targetPath);
                     }
                 }
             }

@@ -45,27 +45,27 @@ public class LaunchService extends IntentService {
     @Override
     protected void onHandleIntent(Intent intent) {
         appendLog("ver: " + getMyVersion(this));
+        appendLog("rooted: " + ShellUtils.checkRooted());
+        if (isVpnRunning()) {
+            appendLog("manager is already running");
+            reportStated(true);
+            return;
+        }
         if (ping(false)) {
             appendLog("manager is already running");
             reportStated(false);
             return;
         }
         if (ping(true)) {
-            if (isVpnRunning()) {
-                appendLog("manager is already running");
-                reportStated(true);
-                return;
-            } else {
-                updateStatus("Restart manager");
-                try {
-                    ManagerProcess.kill();
-                    Thread.sleep(1000);
-                    LaunchService.execute(this);
-                } catch (Exception e) {
-                    handleFatalError("failed to stop exiting process", e);
-                }
-                return;
+            updateStatus("Restart manager");
+            try {
+                ManagerProcess.kill();
+                Thread.sleep(1000);
+                LaunchService.execute(this);
+            } catch (Exception e) {
+                handleFatalError("failed to stop exiting process", e);
             }
+            return;
         }
         if (deployAndLaunch()) {
             reportStated(false);
@@ -148,11 +148,13 @@ public class LaunchService extends IntentService {
         }};
         env.putAll(ShellUtils.pythonEnv());
         if (isVpnMode) {
-            Process process = ShellUtils.executeNoWait(env, Deployer.BUSYBOX_FILE.getCanonicalPath(), "sh");
+            Process process = ShellUtils.executeNoWait(env, ShellUtils.BUSYBOX_FILE.getCanonicalPath(), "sh");
             OutputStreamWriter stdin = new OutputStreamWriter(process.getOutputStream());
             try {
-                stdin.write(Deployer.PYTHON_LAUNCHER + " " + Deployer.MANAGER_VPN_PY.getAbsolutePath() +
-                        " > /data/data/fq.router/current-python.log 2>&1");
+                String command = Deployer.PYTHON_LAUNCHER + " " + Deployer.MANAGER_VPN_PY.getAbsolutePath() +
+                        " > /data/data/fq.router/current-python.log 2>&1";
+                LogUtils.i("write to stdin: " + command);
+                stdin.write(command);
                 stdin.write("\nexit\n");
             } finally {
                 stdin.close();

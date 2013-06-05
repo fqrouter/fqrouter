@@ -50,8 +50,8 @@ def setup():
         '--proxy dynamic,n=4,type=ss,dns_record=ss#n#.fqrouter.com '
         '--proxy dynamic,n=25,dns_record=proxy#n#.fqrouter.com '
         '--proxy dynamic,n=10,type=goagent,dns_record=goagent#n#.fqrouter.com '
-        '--google-host goagent-google-ip.fqrouter.com '
-        '--disable-access-check',
+        '--google-host goagent-google-ip.fqrouter.com ',
+        # '--disable-access-check',
         shell=True))
     processes.append(subprocess.Popen('python -m fqting --queue-number 2 --mark 0xcafe', shell=True))
 

@@ -1,5 +1,7 @@
 package fq.router.utils;
 
+import fq.router.life.Deployer;
+
 import java.io.*;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -12,6 +14,8 @@ public class ShellUtils {
             "/data/local/xbin/", "/data/local/bin/", "/system/sd/xbin/", "/system/bin/failsafe/",
             "/data/local/"};
     private final static String PYTHON_HOME = "/data/data/fq.router/python";
+    public static File DATA_DIR = new File("/data/data/fq.router");
+    public static File BUSYBOX_FILE = new File(DATA_DIR, "busybox");
     private static Boolean IS_ROOTED = null;
 
     public static String execute(String... command) throws Exception {
@@ -30,7 +34,23 @@ public class ShellUtils {
 
     public static String sudo(Map<String, String> env, String... command) throws Exception {
         if (Boolean.FALSE.equals(IS_ROOTED)) {
-            return waitFor(Arrays.toString(command), executeNoWait(env, command));
+            if (BUSYBOX_FILE.exists()) {
+                Process process = ShellUtils.executeNoWait(env, BUSYBOX_FILE.getCanonicalPath(), "sh");
+                OutputStreamWriter stdin = new OutputStreamWriter(process.getOutputStream());
+                try {
+                    LogUtils.i("write to stdin: " + Arrays.toString(command));
+                    for (String c : command) {
+                        stdin.write(c);
+                        stdin.write(" ");
+                    }
+                    stdin.write("\nexit\n");
+                } finally {
+                    stdin.close();
+                }
+                return waitFor(Arrays.toString(command), process);
+            } else {
+                return waitFor(Arrays.toString(command), executeNoWait(env, command));
+            }
         }
         Process process = sudoNoWait(env, command);
         return waitFor(Arrays.toString(command), process);
