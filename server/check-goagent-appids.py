@@ -82,7 +82,7 @@ class CheckingGoAgentProxy(fqsocks.GoAgentProxy):
             raise
 
 
-for appid in ['ceoecbj']:
+for appid in T1_APP_IDS:
     fqsocks.mandatory_proxies.append(CheckingGoAgentProxy(appid))
 
 
