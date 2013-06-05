@@ -197,9 +197,9 @@ def read_tun_fd():
 
 
 if '__main__' == __name__:
-    LOGGER.info('environment: %s' % os.environ.items())
     gevent.monkey.patch_all()
     setup_logging()
+    LOGGER.info('environment: %s' % os.environ.items())
     httpd.HANDLERS[('GET', 'ping')] = handle_ping
     httpd.HANDLERS[('GET', 'version/latest')] = comp_version.handle_latest
     greenlets = [gevent.spawn(httpd.serve_forever)]

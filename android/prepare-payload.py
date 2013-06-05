@@ -30,6 +30,8 @@ FQLAN_PY = os.path.join(PAYLOAD_DIR, 'python', 'lib', 'python2.7', 'site-package
 FQLAN_PY_SRC = os.path.join(os.path.dirname(__file__), '..', '..', 'fqlan', 'fqlan.py')
 FQSOCKS_DIR = os.path.join(PAYLOAD_DIR, 'python', 'lib', 'python2.7', 'site-packages', 'fqsocks')
 FQSOCKS_DIR_SRC = os.path.join(os.path.dirname(__file__), '..', '..', 'fqsocks', 'fqsocks')
+GOAGENT_PY = os.path.join(PAYLOAD_DIR, 'python', 'lib', 'python2.7', 'site-packages', '_goagent.py')
+GOAGENT_PY_SRC = os.path.join(os.path.dirname(__file__), '..', '..', 'goagent', 'local', 'proxy.py')
 MANAGER_DIR = os.path.join(ROOT_DIR, '../manager')
 
 
@@ -54,6 +56,7 @@ def main():
     copy_fqting()
     copy_fqlan()
     copy_fqsocks()
+    copy_goagent()
     zip_payload()
 
 
@@ -146,6 +149,10 @@ def copy_fqsocks():
     if not os.path.exists(FQSOCKS_DIR):
         os.mkdir(FQSOCKS_DIR)
     subprocess.check_call('cp -r %s/*.py %s' % (FQSOCKS_DIR_SRC, FQSOCKS_DIR), shell=True)
+
+
+def copy_goagent():
+    subprocess.check_call('cp %s %s' % (GOAGENT_PY_SRC, GOAGENT_PY), shell=True)
 
 
 def zip_payload():

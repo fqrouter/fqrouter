@@ -45,6 +45,7 @@ def setup():
     processes.append(subprocess.Popen(
         'python -m fqsocks --outbound-ip 10.1.2.3 '
         '--listen 10.1.2.3:8319 '
+        # '--log-level DEBUG '
         '--http-request-mark 0xbabe '
         '--proxy dynamic,n=4,type=ss,dns_record=ss#n#.fqrouter.com '
         '--proxy dynamic,n=25,dns_record=proxy#n#.fqrouter.com '
