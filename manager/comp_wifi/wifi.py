@@ -288,6 +288,10 @@ def start_hotspot_interface(wifi_chipset_family, ssid, password):
             shell_execute('logcat -d -v time -s p2p_supplicant:V')
         except:
             LOGGER.exception('failed to log p2p_supplicant')
+        try:
+            shell_execute('logcat -d -v time -s WifiP2pService:V')
+        except:
+            LOGGER.exception('failed to log WifiP2pService')
         raise Exception('working hotspot iface not found after start')
     return hotspot_interface
 

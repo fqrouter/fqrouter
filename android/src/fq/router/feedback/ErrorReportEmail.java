@@ -31,7 +31,7 @@ public class ErrorReportEmail {
         String error = createLogFiles();
         i.putExtra(Intent.EXTRA_TEXT, getErrorMailBody() + error);
         attachLogFiles(i, "manager.log", "fqsocks.log", "logcat.log", "getprop.log", "dmesg.log",
-                "iptables.log", "wifi.log", "fqdns.log", "fqting.log", "fqlan.log", "scan.log",
+                "iptables.log", "wifi.log", "wifi.log.1", "fqdns.log", "fqting.log", "fqlan.log", "scan.log",
                 "current-java.log", "current-python.log");
         return i;
     }
@@ -93,6 +93,7 @@ public class ErrorReportEmail {
         error += copyLog("fqlan.log");
         error += copyLog("scan.log");
         error += copyLog("wifi.log");
+        error += copyLog("wifi.log.1");
         error += copyLog("current-java.log");
         error += copyLog("current-python.log");
         return error;

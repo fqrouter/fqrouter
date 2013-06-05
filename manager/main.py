@@ -78,7 +78,7 @@ def setup_logging():
     handler.setFormatter(logging.Formatter('%(asctime)s %(levelname)s %(message)s'))
     logging.getLogger('fqrouter').addHandler(handler)
     handler = logging.handlers.RotatingFileHandler(
-        WIFI_LOG_FILE, maxBytes=1024 * 512, backupCount=0)
+        WIFI_LOG_FILE, maxBytes=1024 * 512, backupCount=1)
     handler.setFormatter(logging.Formatter('%(asctime)s %(levelname)s %(message)s'))
     logging.getLogger('wifi').addHandler(handler)
 
