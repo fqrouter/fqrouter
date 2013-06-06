@@ -2,6 +2,7 @@ env
 .idea
 *.pyc
 *.apk
+*.log
 android/payload
 android/assets
 android/assets-app
