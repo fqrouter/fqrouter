@@ -10,6 +10,7 @@ import android.net.wifi.WifiManager;
 import android.os.Bundle;
 import android.os.Handler;
 import android.preference.PreferenceManager;
+import android.support.v4.app.ActivityCompat;
 import android.support.v4.app.NotificationCompat;
 import android.text.method.ScrollingMovementMethod;
 import android.view.Menu;
@@ -268,7 +269,7 @@ public class MainActivity extends Activity implements
         started = true;
         checkUpdate();
         if (!isVpnMode) {
-            invalidateOptionsMenu(); // enable root required menu items
+            ActivityCompat.invalidateOptionsMenu(this); // enable root required menu items
             CheckWifiHotspotService.execute(this);
         }
     }
@@ -289,7 +290,7 @@ public class MainActivity extends Activity implements
             return;
         }
         this.upgradeUrl = upgradeUrl;
-        invalidateOptionsMenu();
+        ActivityCompat.invalidateOptionsMenu(this);
         new AlertDialog.Builder(this)
                 .setIcon(android.R.drawable.ic_dialog_alert)
                 .setTitle("There are newer version")
@@ -361,7 +362,7 @@ public class MainActivity extends Activity implements
 
     @Override
     public void onDownloadFailed(final String url, String downloadTo) {
-        invalidateOptionsMenu();
+        ActivityCompat.invalidateOptionsMenu(this);
         onHandleFatalError("download " + Uri.parse(url).getLastPathSegment() + " failed");
         Toast.makeText(this, "Open browser and download the update manually", 3000).show();
         new Handler().postDelayed(new Runnable() {
@@ -375,7 +376,7 @@ public class MainActivity extends Activity implements
     @Override
     public void onDownloaded(String url, String downloadTo) {
         downloaded = true;
-        invalidateOptionsMenu();
+        ActivityCompat.invalidateOptionsMenu(this);
         updateStatus("Downloaded " + Uri.parse(url).getLastPathSegment());
         Intent intent = new Intent(Intent.ACTION_VIEW);
         intent.setDataAndType(Uri.parse("file://" + downloadTo), "application/vnd.android.package-archive");

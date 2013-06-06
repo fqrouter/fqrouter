@@ -6,6 +6,7 @@ import android.net.Uri;
 import android.os.Bundle;
 import android.os.Handler;
 import android.preference.PreferenceManager;
+import android.support.v4.app.ActivityCompat;
 import android.text.method.ScrollingMovementMethod;
 import android.view.Menu;
 import android.view.MenuItem;
@@ -120,7 +121,7 @@ public class InstallerActivity extends Activity implements
 
     @Override
     public void onDownloadFailed(final String url, String downloadTo) {
-        invalidateOptionsMenu();
+        ActivityCompat.invalidateOptionsMenu(this);
         onHandleFatalError("download " + Uri.parse(url).getLastPathSegment() + " failed");
         Toast.makeText(this, "Open browser and download the update manually", 3000).show();
         new Handler().postDelayed(new Runnable() {
@@ -139,7 +140,7 @@ public class InstallerActivity extends Activity implements
             return;
         }
         this.upgradeUrl = upgradeUrl;
-        invalidateOptionsMenu();
+        ActivityCompat.invalidateOptionsMenu(this);
         updateStatus("Downloading " + Uri.parse(upgradeUrl).getLastPathSegment());
         DownloadService.execute(
                 this, upgradeUrl, downloadTo);
@@ -148,7 +149,7 @@ public class InstallerActivity extends Activity implements
     @Override
     public void onDownloaded(String url, String downloadTo) {
         downloaded = true;
-        invalidateOptionsMenu();
+        ActivityCompat.invalidateOptionsMenu(this);
         updateStatus("Downloaded " + Uri.parse(url).getLastPathSegment());
         Intent intent = new Intent(Intent.ACTION_VIEW);
         intent.setDataAndType(Uri.parse("file://" + downloadTo), "application/vnd.android.package-archive");
