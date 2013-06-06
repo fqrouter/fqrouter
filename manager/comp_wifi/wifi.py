@@ -162,6 +162,10 @@ def dump_wifi_status():
                     cmdline = f.read()
                     if 'supplicant' in cmdline:
                         LOGGER.info('pid %s: %s' % (pid, cmdline))
+                        try:
+                            shell_execute('/data/data/fq.router/busybox ls -a -l /proc/%s/cwd' % pid)
+                        except:
+                            LOGGER.exception('failed to dump supplicant working directory')
                         dump_wpa_supplicant(cmdline)
         try:
             dump_unix_sockets()
