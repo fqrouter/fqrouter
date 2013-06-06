@@ -272,8 +272,8 @@ def start_hotspot_interface(wifi_chipset_family, ssid, password):
         start_hotspot_on_bcm(ssid, password)
     elif 'wcnss' == wifi_chipset_family:
         start_hotspot_on_wcnss(ssid, password)
-    elif 'wl12xx' == wifi_chipset_family:
-        start_hotspot_on_wl12xx(ssid, password)
+    elif 'ti' == wifi_chipset_family:
+        start_hotspot_on_ti(ssid, password)
     elif 'mtk' == wifi_chipset_family:
         start_hotspot_on_mtk(ssid, password)
     else:
@@ -353,11 +353,13 @@ def get_wifi_chipset():
         if chipset.endswith('4324'):
             return 'bcm', '4324' # 43241
         if chipset.endswith('4076'): # sdio:c00v0097d4076
-            return 'wl12xx', 'unknown'
+            return 'ti', 'wl12xx'
         if 'platform:wcnss_wlan' == chipset:
             return 'wcnss', 'unknown'
         if 'platform:wl12xx' == chipset:
-            return 'wl12xx', 'unknown'
+            return 'ti', 'wl12xx'
+        if 'platform:wl18xx' == chipset:
+            return 'ti', 'wl18xx'
         if chipset.endswith('6620'):
             return 'mtk', '6620'
         if chipset.endswith('6628'):
@@ -368,7 +370,7 @@ def get_wifi_chipset():
         if os.path.exists('/sys/module/bcmdhd'):
             return 'bcm', 'unknown'
         if os.path.exists('/sys/module/wl12xx'):
-            return 'wl12xx', 'unknown'
+            return 'ti', 'wl12xx'
     return 'unsupported', chipset
 
 
@@ -472,7 +474,7 @@ def start_hotspot_on_mtk(ssid, password):
     log_upstream_wifi_status('after p2p persistent group created', control_socket_dir)
 
 
-def start_hotspot_on_wl12xx(ssid, password):
+def start_hotspot_on_ti(ssid, password):
     if 'ap0' not in list_wifi_ifaces():
         shell_execute(
             '%s %s interface add ap0 type managed' % (IW_PATH, WIFI_INTERFACE))
@@ -492,7 +494,7 @@ def start_hotspot_on_wl12xx(ssid, password):
     shell_execute('%s dev ap0 del' % IW_PATH)
     LOGGER.info('try start hostapd without ap0')
     if not start_hostapd():
-        raise Exception('failed to start hotspot on wl12xx')
+        raise Exception('failed to start hotspot on ti platform')
 
 
 def start_hostapd():
