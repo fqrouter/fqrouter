@@ -8,7 +8,7 @@ import dpkt
 import socket
 
 LOGGER = logging.getLogger('distributor')
-
+DNS_OPT = 41
 
 def main():
     log_level = logging.DEBUG
@@ -34,11 +34,14 @@ def main():
 def handle(sendto, raw_request, address):
     request = dpkt.dns.DNS(raw_request)
     LOGGER.debug('request: %s' % repr(request))
-    domains = [question.name for question in request.qd if dpkt.dns.DNS_A == question.type]
-    domain = domains[0]
+    domain = ''
+    for question in list(request.qd):
+        if dpkt.dns.DNS_A == question.type:
+            domain = question.anme
     LOGGER.info('domain: %s' % domain)
     answer = '2.3.3.0'
     response = dpkt.dns.DNS(raw_request)
+    response.ar = []
     response.set_qr(True)
     response.an = [dpkt.dns.DNS.RR(
         name=domain, type=dpkt.dns.DNS_A, ttl=0,
