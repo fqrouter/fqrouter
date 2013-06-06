@@ -6,6 +6,7 @@ import android.net.LocalSocket;
 import android.net.VpnService;
 import android.os.ParcelFileDescriptor;
 import fq.router.MainActivity;
+import fq.router.feedback.HandleFatalErrorIntent;
 import fq.router.feedback.UpdateStatusIntent;
 import fq.router.life.ExitService;
 import fq.router.life.LaunchedIntent;
@@ -74,7 +75,7 @@ public class SocksVpnService extends VpnService {
             updateStatus("Started in VPN mode");
             sendBroadcast(new LaunchedIntent(true));
         } catch (Exception e) {
-            LogUtils.e("establish failed", e);
+            handleFatalError("VPN establish failed", e);
         }
     }
 
@@ -190,18 +191,24 @@ public class SocksVpnService extends VpnService {
     }
 
     private void stopVpn() {
-        try {
-            tunPFD.close();
-        } catch (IOException e) {
-            LogUtils.e("failed to stop tunPFD", e);
+        if (tunPFD != null) {
+            try {
+                tunPFD.close();
+            } catch (IOException e) {
+                LogUtils.e("failed to stop tunPFD", e);
+            }
+            tunPFD = null;
         }
-        tunPFD = null;
         MainActivity.setShouldExit();
         ExitService.execute(this);
     }
 
     private void updateStatus(String status) {
         sendBroadcast(new UpdateStatusIntent(status));
+    }
+
+    private void handleFatalError(String message, Exception e) {
+        sendBroadcast(new HandleFatalErrorIntent(message, e));
     }
 }
 
