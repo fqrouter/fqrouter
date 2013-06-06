@@ -48,7 +48,8 @@ def setup():
         # '--log-level DEBUG '
         '--http-request-mark 0xbabe '
         '--proxy dynamic,n=4,type=ss,dns_record=ss#n#.fqrouter.com '
-        '--proxy dynamic,n=25,dns_record=proxy#n#.fqrouter.com '
+        '--proxy dynamic,n=20,dns_record=proxy#n#.fqrouter.com '
+        '--proxy dynamic,n=5,dns_record=proxy2#n#.fqrouter.com,is_public=False '
         '--proxy dynamic,n=10,type=goagent,dns_record=goagent#n#.fqrouter.com '
         '--google-host goagent-google-ip.fqrouter.com ',
         # '--disable-access-check',

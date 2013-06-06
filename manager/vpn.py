@@ -216,7 +216,8 @@ if '__main__' == __name__:
         '--log-file', '/data/data/fq.router/fqsocks.log',
         '--listen', '10.25.1.1:12345',
         '--proxy', 'dynamic,n=4,type=ss,dns_record=ss#n#.fqrouter.com',
-        '--proxy', 'dynamic,n=25,dns_record=proxy#n#.fqrouter.com',
+        '--proxy', 'dynamic,n=20,dns_record=proxy#n#.fqrouter.com',
+        '--proxy', 'dynamic,n=5,dns_record=proxy2#n#.fqrouter.com,is_public=False',
         '--proxy', 'dynamic,n=10,type=goagent,dns_record=goagent#n#.fqrouter.com',
         '--google-host', 'goagent-google-ip.fqrouter.com'
     ]))
