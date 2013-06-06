@@ -11,7 +11,7 @@ LOGGER = logging.getLogger('distributor')
 
 
 def main():
-    log_level = 'DEBUG'
+    log_level = logging.DEBUG
     log_file = ''
     logging.basicConfig(stream=sys.stdout, level=log_level, format='%(asctime)s %(levelname)s %(message)s')
     if log_file:
@@ -33,6 +33,7 @@ def main():
 
 def handle(sendto, raw_request, address):
     request = dpkt.dns.DNS(raw_request)
+    LOGGER.debug('request: %s' % repr(request))
     domains = [question.name for question in request.qd if dpkt.dns.DNS_A == question.type]
     domain = domains[0]
     LOGGER.info('domain: %s' % domain)
