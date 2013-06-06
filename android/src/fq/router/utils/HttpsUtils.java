@@ -24,8 +24,8 @@ public class HttpsUtils {
     }
 
     private static HttpGet createRequest(URL url, String staticAddress, boolean isSecure) {
-        String uri = isSecure ? url.toString().replace(url.getProtocol(), "http")
-                : url.toString().replace(url.getProtocol(), "https");
+        String uri = isSecure ? url.toString().replace(url.getProtocol(), "https")
+                : url.toString().replace(url.getProtocol(), "http");
         uri = uri.replace(url.getHost(), staticAddress);
         HttpGet request = new HttpGet(uri);
         request.setHeader("Host", url.getHost());
