@@ -29,7 +29,7 @@ public class ManagerProcess {
         ShellUtils.sudo("/data/data/fq.router/busybox", "killall", "-KILL", "python");
     }
 
-    private static boolean exists() {
+    public static boolean exists() {
         try {
             ShellUtils.sudo("/data/data/fq.router/busybox", "killall", "-0", "python");
             return true;

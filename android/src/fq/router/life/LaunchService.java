@@ -61,7 +61,11 @@ public class LaunchService extends IntentService {
             try {
                 ManagerProcess.kill();
                 Thread.sleep(1000);
-                LaunchService.execute(this);
+                if (ManagerProcess.exists()) {
+                    handleFatalError("failed to restart manager", null);
+                } else {
+                    LaunchService.execute(this);
+                }
             } catch (Exception e) {
                 handleFatalError("failed to stop exiting process", e);
             }
