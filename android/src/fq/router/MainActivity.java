@@ -219,6 +219,7 @@ public class MainActivity extends Activity implements
         }
     }
 
+    @Override
     public void appendLog(final String log) {
         LogUtils.i(log);
         TextView textView = (TextView) findViewById(R.id.logTextView);
@@ -229,7 +230,7 @@ public class MainActivity extends Activity implements
         try {
             startActivity(Intent.createChooser(new ErrorReportEmail(this).prepare(), "Send mail..."));
         } catch (android.content.ActivityNotFoundException ex) {
-            Toast.makeText(MainActivity.this, "There are no email clients installed.", Toast.LENGTH_SHORT).show();
+            Toast.makeText(this, "There are no email clients installed.", Toast.LENGTH_SHORT).show();
         }
     }
 

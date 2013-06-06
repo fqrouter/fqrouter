@@ -4,6 +4,7 @@ env
 *.apk
 android/payload
 android/assets
+android/assets-app
 android/gen
 android/out
 android/jni/libevent
