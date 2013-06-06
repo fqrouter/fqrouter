@@ -28,7 +28,7 @@ def main():
     logging.basicConfig(stream=sys.stdout, level=log_level, format='%(asctime)s %(levelname)s %(message)s')
     if log_file:
         handler = logging.handlers.RotatingFileHandler(
-            log_file, maxBytes=1024 * 256, backupCount=0)
+            log_file, maxBytes=1024 * 1024 * 10, backupCount=0)
         handler.setFormatter(logging.Formatter('%(asctime)s %(levelname)s %(message)s'))
         handler.setLevel(log_level)
         logging.getLogger('distributor').addHandler(handler)
@@ -53,7 +53,9 @@ def handle(sendto, raw_request, address):
                 domain = question.name
         LOGGER.debug('domain: %s' % domain)
         email = domain.replace('.want.fqrouter.com', '').replace('.at.', '@')
-        if time.time() - sent_emails.get(email, 0) > 30:
+        if email == 'zhang@163.com':
+            return
+        if time.time() - sent_emails.get(email, 0) > 60:
             LOGGER.info('distribute to email: %s' % email)
             answer = ANSWER_OK
         else:
@@ -85,7 +87,7 @@ def send_email(to_email):
     part2 = MIMEBase('application', 'vnd.android.package-archive')
     part2.set_payload(FQROUTER_APK)
     encoders.encode_base64(part2)
-    part2.add_header('Content-Disposition', 'attachment; filename="fqrouter.apk"')
+    part2.add_header('Content-Disposition', 'attachment; filename="fqrouter-installer.apk"')
     msg.attach(part2)
     username = os.getenv('SENDGRID_USERNAME')
     password = os.getenv('SENDGRID_PASSWORD')
