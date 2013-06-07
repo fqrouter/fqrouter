@@ -14,8 +14,6 @@ import fq.router.utils.LogUtils;
 
 import java.io.*;
 import java.net.*;
-import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
@@ -199,7 +197,7 @@ public class SocksVpnService extends VpnService {
             }
             tunPFD = null;
         }
-        MainActivity.setShouldExit();
+        MainActivity.setExiting();
         ExitService.execute(this);
     }
 

@@ -1,6 +1,7 @@
 package fq.router.life;
 
 import android.app.IntentService;
+import android.app.NotificationManager;
 import android.content.Context;
 import android.content.Intent;
 import fq.router.feedback.UpdateStatusIntent;
@@ -25,6 +26,9 @@ public class ExitService extends IntentService {
             LogUtils.e("failed to kill manager process", e);
         }
         sendBroadcast(new ExitedIntent());
+        NotificationManager notificationManager =
+                (NotificationManager) getSystemService(NOTIFICATION_SERVICE);
+        notificationManager.cancel(0);
     }
 
     private void updateStatus(String status) {

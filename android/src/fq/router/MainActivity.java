@@ -49,8 +49,7 @@ public class MainActivity extends Activity implements
     private final static int ITEM_ID_PICK_AND_PLAY = 5;
     private final static int ITEM_ID_UPGRADE_MANUALLY = 6;
     private final static int ASK_VPN_PERMISSION = 1;
-    private boolean started;
-    private static boolean shouldExit;
+    private static boolean started;
     private String upgradeUrl;
     private boolean downloaded;
     private WifiManager.WifiLock wifiLock;
@@ -99,17 +98,6 @@ public class MainActivity extends Activity implements
     @Override
     protected void onResume() {
         super.onResume();
-        if (shouldExit) {
-            shouldExit = false;
-            Toast.makeText(this, "VPN stopped...", 3000).show();
-            new Handler().postDelayed(new Runnable() {
-                @Override
-                public void run() {
-                    exit();
-                }
-            }, 3000);
-            return;
-        }
         if (!started) {
             return;
         }
@@ -165,7 +153,7 @@ public class MainActivity extends Activity implements
         } else if (ITEM_ID_RESET_WIFI == item.getItemId()) {
             resetWifi();
         } else if (ITEM_ID_SETTINGS == item.getItemId()) {
-            startActivity(new Intent(this, SettingsActivity.class));
+            startActivity(new Intent(this, MainSettingsActivity.class));
         } else if (ITEM_ID_PICK_AND_PLAY == item.getItemId()) {
             startActivity(new Intent(this, PickAndPlayActivity.class));
         } else if (ITEM_ID_UPGRADE_MANUALLY == item.getItemId()) {
@@ -311,7 +299,6 @@ public class MainActivity extends Activity implements
 
     @Override
     public void onExited() {
-        shouldExit = false;
         clearNotification();
         finish();
     }
@@ -406,8 +393,8 @@ public class MainActivity extends Activity implements
         }
     }
 
-    public static void setShouldExit() {
-        shouldExit = true;
+    public static void setExiting() {
+        started = false;
     }
 
     @Override

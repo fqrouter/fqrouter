@@ -204,7 +204,7 @@ public class Deployer {
     }
 
     private void linkLibs() throws Exception {
-        ShellUtils.sudo(ShellUtils.findCommand("mount"), "-o", "remount,rw", "/system");
+        ShellUtils.sudo("/data/data/fq.router/busybox", "mount", "-o", "remount,rw", "/system");
         try {
             File[] files = new File(PYTHON_DIR, "lib").listFiles();
             if (files == null) {
@@ -218,7 +218,7 @@ public class Deployer {
                 }
             }
         } finally {
-            ShellUtils.sudo(ShellUtils.findCommand("mount"), "-o", "remount,ro", "/system");
+            ShellUtils.sudo("/data/data/fq.router/busybox", "mount", "-o", "remount,ro", "/system");
         }
     }
 

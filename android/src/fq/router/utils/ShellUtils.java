@@ -127,9 +127,6 @@ public class ShellUtils {
     }
 
     public static boolean checkRooted() {
-        if (IS_ROOTED != null) {
-            return IS_ROOTED;
-        }
         try {
             IS_ROOTED = sudo("echo", "hello").contains("hello");
         } catch (Exception e) {

@@ -31,7 +31,9 @@
                   android:launchMode="singleTask"
                   android:configChanges="keyboard|keyboardHidden|orientation|screenSize">
         </activity>
-        <activity android:name=".SettingsActivity">
+        <activity android:name=".MainSettingsActivity">
+        </activity>
+        <activity android:name=".GoAgentSettingsActivity">
         </activity>
         <service android:name=".life.LaunchService">
         </service>

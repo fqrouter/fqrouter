@@ -29,11 +29,25 @@
 
     </PreferenceCategory>
     <PreferenceCategory
-            android:title="Proxy">
+            android:title="Scrambler">
         <CheckBoxPreference
                 android:key="IsScramblerEnabled"
                 android:title="Scrambler Enabled"
                 android:summary="bypass GFW directly without proxy server"
                 android:defaultValue="true"/>
     </PreferenceCategory>
+    <PreferenceCategory
+            android:title="GoAgent">
+        <CheckBoxPreference
+                android:key="IsGoAgentPublicServersEnabled"
+                android:title="Public Servers Enabled"
+                android:summary="GoAgent appids shared by others, especially thanks the gfanqiang project"
+                android:defaultValue="true"/>
+        <ListPreference
+                android:key="GoAgentPrivateServersPicker"
+                android:title="Private Servers"
+                android:summary="GoAgent appids deployed by yourself"
+                android:defaultValue=""/>
+    </PreferenceCategory>
+
 </PreferenceScreen>
