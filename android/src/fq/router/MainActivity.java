@@ -251,17 +251,15 @@ public class MainActivity extends Activity implements
 
     private void toggleWifiHotspot(ToggleButton button) {
         if (button.isChecked()) {
-            SharedPreferences preferences = PreferenceManager.getDefaultSharedPreferences(this);
-            String mode = preferences.getString("WifiHotspotMode", WifiHotspotHelper.MODE_WIFI_REPEATER);
-            startWifiHotspot(mode);
+            startWifiHotspot();
         } else {
             resetWifi();
         }
     }
 
-    private void startWifiHotspot(String mode) {
+    private void startWifiHotspot() {
         hideWifiHotspotToggleButton();
-        StartWifiHotspotService.execute(this, mode);
+        StartWifiHotspotService.execute(this);
     }
 
     public void hideWifiHotspotToggleButton() {
@@ -320,12 +318,9 @@ public class MainActivity extends Activity implements
     }
 
     @Override
-    public void onWifiHotspotChanged(boolean isStarted, boolean wasStartingWifiRepeater) {
+    public void onWifiHotspotChanged(boolean isStarted) {
         updateWifiLock(isStarted);
         showWifiHotspotToggleButton(isStarted);
-        if (!isStarted && wasStartingWifiRepeater) {
-            askIfStartTraditionalWifiHotspot();
-        }
     }
 
     private void updateWifiLock(boolean isStarted) {
@@ -340,27 +335,6 @@ public class MainActivity extends Activity implements
                 wifiLock.release();
             }
         }
-    }
-
-    private void askIfStartTraditionalWifiHotspot() {
-        new AlertDialog.Builder(MainActivity.this)
-                .setIcon(android.R.drawable.ic_dialog_alert)
-                .setTitle("Failed to start wifi repeater")
-                .setMessage("Do you want to start traditional wifi hotspot sharing 3G connection? " +
-                        "It will consume your 3G data traffic volume. " +
-                        "Or you can try 'Pick & Play' from the menu, " +
-                        "it can share free internet to devices in your current wifi network")
-
-                .setPositiveButton("Yes", new DialogInterface.OnClickListener() {
-
-                    @Override
-                    public void onClick(DialogInterface dialog, int which) {
-                        startWifiHotspot(WifiHotspotHelper.MODE_TRADITIONAL_WIFI_HOTSPOT);
-                    }
-
-                })
-                .setNegativeButton("No, thanks", null)
-                .show();
     }
 
     @Override

@@ -12,28 +12,19 @@ public class WifiHotspotChangedIntent extends Intent {
     public WifiHotspotChangedIntent(boolean isStarted) {
         setAction(ACTION_WIFI_HOTSPOT_CHECKED);
         putExtra("isStarted", isStarted);
-        putExtra("wasStartingWifiRepeater", false);
-    }
-
-    public WifiHotspotChangedIntent(boolean isStarted, boolean wasStartingWifiRepeater) {
-        setAction(ACTION_WIFI_HOTSPOT_CHECKED);
-        putExtra("isStarted", isStarted);
-        putExtra("wasStartingWifiRepeater", wasStartingWifiRepeater);
     }
 
     public static void register(final Handler handler) {
         handler.getBaseContext().registerReceiver(new LoggedBroadcastReceiver() {
             @Override
             public void handle(Context context, Intent intent) {
-                handler.onWifiHotspotChanged(
-                        intent.getBooleanExtra("isStarted", false),
-                        intent.getBooleanExtra("wasStartingWifiRepeater", false));
+                handler.onWifiHotspotChanged(intent.getBooleanExtra("isStarted", false));
             }
         }, new IntentFilter(ACTION_WIFI_HOTSPOT_CHECKED));
     }
 
     public static interface Handler {
-        void onWifiHotspotChanged(boolean isStarted, boolean wasStartingWifiRepeater);
+        void onWifiHotspotChanged(boolean isStarted);
 
         Context getBaseContext();
     }

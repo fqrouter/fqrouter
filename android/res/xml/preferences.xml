@@ -1,22 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android">
-    <PreferenceCategory
-            android:title="General">
-        <CheckBoxPreference
-                android:key="IsAutoUpdateEnabled"
-                android:title="Auto Update Enabled"
-                android:summary="check update automatically"
-                android:defaultValue="true"/>
-    </PreferenceCategory>
-    <PreferenceCategory
-            android:title="Wifi Hotspot">
-        <ListPreference
-                android:key="WifiHotspotMode"
-                android:title="Wifi Hotspot Mode"
-                android:summary="use traditional wifi hotspot will consume your 3G data traffic volume"
-                android:entries="@array/settings_wifi_hotspot_mode_label"
-                android:entryValues="@array/settings_wifi_hotspot_mode_value"
-                android:defaultValue="wifi-repeater"/>
+    <PreferenceCategory android:title="Wifi Hotspot">
         <EditTextPreference
                 android:key="WifiHotspotSSID"
                 android:title="SSID"
@@ -28,16 +12,14 @@
                 android:defaultValue="12345678"/>
 
     </PreferenceCategory>
-    <PreferenceCategory
-            android:title="Scrambler">
+    <PreferenceCategory android:title="Scrambler">
         <CheckBoxPreference
                 android:key="IsScramblerEnabled"
                 android:title="Scrambler Enabled"
                 android:summary="bypass GFW directly without proxy server"
                 android:defaultValue="true"/>
     </PreferenceCategory>
-    <PreferenceCategory
-            android:title="GoAgent">
+    <PreferenceCategory android:title="GoAgent">
         <CheckBoxPreference
                 android:key="IsGoAgentPublicServersEnabled"
                 android:title="Public Servers Enabled"
@@ -49,5 +31,11 @@
                 android:summary="GoAgent appids deployed by yourself"
                 android:defaultValue=""/>
     </PreferenceCategory>
-
+    <PreferenceCategory android:title="General">
+        <CheckBoxPreference
+                android:key="IsAutoUpdateEnabled"
+                android:title="Auto Update Enabled"
+                android:summary="check update automatically"
+                android:defaultValue="true"/>
+    </PreferenceCategory>
 </PreferenceScreen>

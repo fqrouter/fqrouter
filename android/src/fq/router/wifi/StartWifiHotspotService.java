@@ -13,19 +13,15 @@ public class StartWifiHotspotService extends IntentService {
 
     @Override
     protected void onHandleIntent(Intent intent) {
-        String mode = intent.getStringExtra("mode");
-        appendLog("wifi hotspot mode: " + mode);
-        boolean isStarted = new WifiHotspotHelper(this).start(mode);
-        sendBroadcast(new WifiHotspotChangedIntent(isStarted, WifiHotspotHelper.MODE_WIFI_REPEATER.equals(mode)));
+        boolean isStarted = new WifiHotspotHelper(this).start();
+        sendBroadcast(new WifiHotspotChangedIntent(isStarted));
     }
 
     private void appendLog(String log) {
         sendBroadcast(new AppendLogIntent(log));
     }
 
-    public static void execute(Context context, String mode) {
-        Intent intent = new Intent(context, StartWifiHotspotService.class);
-        intent.putExtra("mode", mode);
-        context.startService(intent);
+    public static void execute(Context context) {
+        context.startService(new Intent(context, StartWifiHotspotService.class));
     }
 }
