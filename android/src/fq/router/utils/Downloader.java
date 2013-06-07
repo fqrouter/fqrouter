@@ -147,10 +147,10 @@ public class Downloader {
                 totalLength = getTotalLength(url, addresses);
                 LogUtils.i("total length of " + url + ": " + totalLength);
                 long from = 0;
-                long step = totalLength / 10;
+                long step = totalLength / 20;
                 while (from < totalLength) {
                     long to = Math.min(from + step, totalLength - 1);
-                    addChunk(from, to, false);
+                    addChunk(from, to, true);
                     from = to + 1;
                 }
                 while (!chunks.isEmpty()) {
