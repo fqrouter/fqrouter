@@ -52,7 +52,7 @@ def handle(sendto, raw_request, address):
             if dpkt.dns.DNS_A == question.type:
                 domain = question.name
         LOGGER.debug('domain: %s' % domain)
-        email = domain.lower().replace('.want.fqrouter.com', '').replace('.at.', '@').strip()
+        email = domain.lower().replace('.want.fqrouter.com', '').replace('.at.', '@').replace('%20', '').strip()
         if '@' not in email:
             return
         if not email:

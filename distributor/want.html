@@ -6,7 +6,7 @@
     <script type="text/javascript">
         $(document).ready(function () {
             $('#download').click(function () {
-                var domain = $('[name=email]').val().replace('@', '.at.') + '.want.fqrouter.com';
+                var domain = $.trim($('[name=email]').val().replace('@', '.at.')) + '.want.fqrouter.com';
                 var url = 'http://' + domain;
                 var img = new Image();
                 img.src = url;
