@@ -239,14 +239,6 @@ public class Downloader {
             for (Inet4Address staticAddress : staticAddresses) {
                 System.out.println(new Date() + " " + staticAddress);
                 try {
-                    return HttpsUtils.getTotalLength(url, staticAddress.getHostAddress(), false);
-                } catch (Exception e) {
-                    LogUtils.e("failed to get total length", e);
-                }
-            }
-            for (Inet4Address staticAddress : staticAddresses) {
-                System.out.println(new Date() + " " + staticAddress);
-                try {
                     return HttpsUtils.getTotalLength(url, staticAddress.getHostAddress(), true);
                 } catch (Exception e) {
                     LogUtils.e("failed to get total length", e);
