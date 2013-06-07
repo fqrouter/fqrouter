@@ -56,21 +56,29 @@ public class IOUtils {
         return new BigInteger(1, md5.digest()).toString(16);
     }
 
-    public static void writeToFile(File file, String content) throws Exception {
-        FileOutputStream outputStream = new FileOutputStream(file);
+    public static void writeToFile(File file, String content) {
         try {
-            OutputStreamWriter writer = new OutputStreamWriter(outputStream);
+
+            FileOutputStream outputStream = new FileOutputStream(file);
             try {
-                writer.write(content);
+                OutputStreamWriter writer = new OutputStreamWriter(outputStream);
+                try {
+                    writer.write(content);
+                } finally {
+                    writer.close();
+                }
             } finally {
-                writer.close();
+                outputStream.close();
             }
-        } finally {
-            outputStream.close();
+        } catch (Exception e) {
+            throw new RuntimeException(e);
         }
     }
 
     public static String readFromFile(File file) {
+        if (!file.exists()) {
+            return "";
+        }
         try {
             return readAll(new FileInputStream(file));
         } catch (Exception e) {

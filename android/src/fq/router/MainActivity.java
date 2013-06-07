@@ -25,6 +25,7 @@ import fq.router.utils.LogUtils;
 import fq.router.utils.ShellUtils;
 import fq.router.wifi.*;
 
+import java.io.File;
 import java.lang.reflect.Method;
 
 
@@ -53,6 +54,21 @@ public class MainActivity extends Activity implements
     private String upgradeUrl;
     private boolean downloaded;
     private WifiManager.WifiLock wifiLock;
+
+    static {
+        File etcDir = new File("/data/data/fq.router/etc");
+        if (!etcDir.exists()) {
+            etcDir.mkdir();
+        }
+        File varDir = new File("/data/data/fq.router/var");
+        if (!varDir.exists()) {
+            varDir.mkdir();
+        }
+        File logDir = new File("/data/data/fq.router/log");
+        if (!logDir.exists()) {
+            logDir.mkdir();
+        }
+    }
 
 
     @Override

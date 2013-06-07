@@ -7,16 +7,19 @@ import android.preference.EditTextPreference;
 import android.preference.Preference;
 import android.preference.PreferenceActivity;
 import android.preference.PreferenceManager;
+import fq.router.utils.IOUtils;
 import fq.router.utils.LogUtils;
 import org.json.JSONArray;
 import org.json.JSONObject;
 
+import java.io.File;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 
 public class GoAgentSettingsActivity extends PreferenceActivity implements SharedPreferences.OnSharedPreferenceChangeListener {
 
+    private final static File GOAGENT_JSON_FILE = new File("/data/data/fq.router/etc/goagent.json");
     private int index;
 
     @Override
@@ -91,8 +94,7 @@ public class GoAgentSettingsActivity extends PreferenceActivity implements Share
     }
 
     public static List<Server> loadServers(Context context) {
-        SharedPreferences preferences = PreferenceManager.getDefaultSharedPreferences(context);
-        String serversText = preferences.getString("GoAgentPrivateServers", "");
+        String serversText = IOUtils.readFromFile(GOAGENT_JSON_FILE);
         if (serversText.equals("")) {
             return new ArrayList<Server>();
         }
@@ -115,7 +117,6 @@ public class GoAgentSettingsActivity extends PreferenceActivity implements Share
     }
 
     public static void saveServers(Context context, List<Server> servers) {
-        SharedPreferences preferences = PreferenceManager.getDefaultSharedPreferences(context);
         List<JSONObject> serverJsons = new ArrayList<JSONObject>();
         for (final Server server : servers) {
             serverJsons.add(new JSONObject(new HashMap() {{
@@ -126,7 +127,7 @@ public class GoAgentSettingsActivity extends PreferenceActivity implements Share
         }
         String serversText = new JSONArray(serverJsons).toString();
         LogUtils.i("save goagent servers: " + serversText);
-        preferences.edit().putString("GoAgentPrivateServers", serversText).commit();
+        IOUtils.writeToFile(GOAGENT_JSON_FILE, serversText);
     }
 
     public static class Server {
