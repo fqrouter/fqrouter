@@ -53,7 +53,7 @@ public class MainSettingsActivity extends PreferenceActivity implements SharedPr
 
     private void initGoAgent() {
         final ListPreference picker = (ListPreference) findPreference("GoAgentPrivateServersPicker");
-        List<GoAgentSettingsActivity.Server> servers = GoAgentSettingsActivity.loadServers(this);
+        List<GoAgentSettingsActivity.Server> servers = GoAgentSettingsActivity.loadServers();
         CharSequence[] entries = new CharSequence[servers.size() + 1];
         entries[servers.size()] = ">> Add";
         CharSequence[] entryValues = new CharSequence[servers.size() + 1];
@@ -96,8 +96,7 @@ public class MainSettingsActivity extends PreferenceActivity implements SharedPr
         } else {
             showToast("You need to restart fqrouter to apply the changes");
         }
-        Map<String, ?> settings = sharedPreferences.getAll();
-        LaunchService.updateConfigFile(settings);
+        LaunchService.updateConfigFile(this);
     }
 
     private void onGoAgentPrivateServerPicked(String value) {
@@ -111,9 +110,9 @@ public class MainSettingsActivity extends PreferenceActivity implements SharedPr
                         @Override
                         public void onClick(DialogInterface dialog, int which) {
                             Intent intent = new Intent(MainSettingsActivity.this, GoAgentSettingsActivity.class);
-                            List<GoAgentSettingsActivity.Server> servers = GoAgentSettingsActivity.loadServers(MainSettingsActivity.this);
+                            List<GoAgentSettingsActivity.Server> servers = GoAgentSettingsActivity.loadServers();
                             servers.add(new GoAgentSettingsActivity.Server());
-                            GoAgentSettingsActivity.saveServers(MainSettingsActivity.this, servers);
+                            GoAgentSettingsActivity.saveServers(servers);
                             intent.putExtra("index", servers.size() - 1);
                             startActivity(intent);
                         }

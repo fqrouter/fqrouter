@@ -15,6 +15,7 @@ import fq.router.utils.IOUtils;
 import fq.router.utils.LogUtils;
 import fq.router.utils.ShellUtils;
 import fq.router.vpn.SocksVpnService;
+import org.json.JSONObject;
 
 import java.io.File;
 import java.io.OutputStreamWriter;
@@ -22,7 +23,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 public class LaunchService extends IntentService {
-    private final static String CONFIG_FILE_PATH = "/data/data/fq.router/config";
+    private final static File FQROUTER_CONFIG_FILE = new File("/data/data/fq.router/etc/fqrouter.json");
 
     public static Class SOCKS_VPN_SERVICE_CLASS;
 
@@ -98,8 +99,7 @@ public class LaunchService extends IntentService {
         if (!deployer.deploy()) {
             return false;
         }
-        SharedPreferences preferences = PreferenceManager.getDefaultSharedPreferences(this);
-        updateConfigFile(preferences.getAll());
+        updateConfigFile(this);
         updateStatus("Launching...");
         if (ShellUtils.checkRooted()) {
             return launch(false);
@@ -211,18 +211,16 @@ public class LaunchService extends IntentService {
         sendBroadcast(new HandleFatalErrorIntent(message, e));
     }
 
-    public static void updateConfigFile(Map<String, ?> settings) {
+    public static void updateConfigFile(Context context) {
         try {
-            File configFile = new File(CONFIG_FILE_PATH);
-            if (configFile.exists()) {
-                configFile.delete();
-            }
-            StringBuilder s = new StringBuilder();
-            s.append("[fqrouter]\r\n");
-            for (String k : settings.keySet()) {
-                s.append(k).append("=").append(settings.get(k)).append("\r\n");
-            }
-            IOUtils.writeToFile(configFile, s.toString());
+            SharedPreferences preferences = PreferenceManager.getDefaultSharedPreferences(context);
+            JSONObject configJson = new JSONObject();
+            configJson.put("wifi_hotspot_ssid", preferences.getString("WifiHotspotSSID", "fqrouter"));
+            configJson.put("wifi_hotspot_password", preferences.getString("WifiHotspotPassword", "p@55word"));
+            configJson.put("scrambler_enabled", preferences.getBoolean("IsScramblerEnabled", true));
+            configJson.put("goagent_public_servers_enabled",
+                    preferences.getBoolean("IsGoAgentPublicServersEnabled", true));
+            IOUtils.writeToFile(FQROUTER_CONFIG_FILE, configJson.toString());
         } catch (Exception e) {
             LogUtils.e("failed to update config file", e);
         }

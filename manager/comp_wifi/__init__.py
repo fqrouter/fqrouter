@@ -32,8 +32,8 @@ def is_alive():
 
 def handle_start(environ, start_response):
     cfg = config.read()
-    ssid = cfg.get('fqrouter', 'WifiHotspotSSID')
-    password = cfg.get('fqrouter', 'WifiHotspotPassword')
+    ssid = str(cfg.get('wifi_hotspot_ssid', 'fqrouter'))
+    password = str(cfg.get('wifi_hotspot_password', '12345678'))
     success, message = start_hotspot(ssid, password)
     status = httplib.OK if success else httplib.BAD_GATEWAY
     start_response(status, [('Content-Type', 'text/plain')])

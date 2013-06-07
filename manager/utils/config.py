@@ -1,14 +1,6 @@
-from ConfigParser import ConfigParser
-from cStringIO import StringIO
-
+import json
 
 def read():
-    parser = ConfigParser()
-    parser.readfp(StringIO('\n'.join([line.strip() for line in """
-    [fqrouter]
-    WifiHotspotSSID=fqrouter
-    WifiHotspotPassword=12345678
-    IsScramblerEnabled=true
-    """.splitlines()])), 'default')
-    parser.read('/data/data/fq.router/config')
-    return parser
+    with open('/data/data/fq.router/etc/fqrouter.json') as f:
+        config_json = f.read()
+    return json.loads(config_json)

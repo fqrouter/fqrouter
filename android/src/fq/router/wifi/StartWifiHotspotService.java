@@ -23,10 +23,6 @@ public class StartWifiHotspotService extends IntentService {
         sendBroadcast(new AppendLogIntent(log));
     }
 
-    private void updateStatus(String status) {
-        sendBroadcast(new UpdateStatusIntent(status));
-    }
-
     public static void execute(Context context, String mode) {
         Intent intent = new Intent(context, StartWifiHotspotService.class);
         intent.putExtra("mode", mode);
