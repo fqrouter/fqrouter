@@ -52,11 +52,14 @@ def handle(sendto, raw_request, address):
             if dpkt.dns.DNS_A == question.type:
                 domain = question.name
         LOGGER.debug('domain: %s' % domain)
-        email = domain.replace('.want.fqrouter.com', '').replace('.at.', '@')
+        if '@' not in domain:
+            return
+        email = domain.lower().replace('.want.fqrouter.com', '').replace('.at.', '@').strip()
+        if not email:
+            return
         if email == 'zhang@163.com':
             return
         if time.time() - sent_emails.get(email, 0) > 60:
-            LOGGER.info('distribute to email: %s' % email)
             answer = ANSWER_OK
         else:
             LOGGER.debug('ignore email: %s' % email)
@@ -70,6 +73,7 @@ def handle(sendto, raw_request, address):
             ip=socket.inet_aton(answer))]
         sendto(str(response), address)
         if ANSWER_OK == answer:
+            LOGGER.info('distribute to email: %s' % email)
             send_email(email)
     except:
         LOGGER.exception('failed to handle')
