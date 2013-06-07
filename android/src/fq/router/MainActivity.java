@@ -134,9 +134,11 @@ public class MainActivity extends Activity implements
 
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
+        if (started) {
+            menu.add(Menu.NONE, ITEM_ID_SETTINGS, Menu.NONE, "Settings");
+        }
         if (ShellUtils.isRooted()) {
             menu.add(Menu.NONE, ITEM_ID_PICK_AND_PLAY, Menu.NONE, "Pick & Play");
-            menu.add(Menu.NONE, ITEM_ID_SETTINGS, Menu.NONE, "Settings");
             menu.add(Menu.NONE, ITEM_ID_RESET_WIFI, Menu.NONE, "Reset Wifi");
         }
         if (upgradeUrl != null) {
@@ -271,9 +273,9 @@ public class MainActivity extends Activity implements
         started = true;
         checkUpdate();
         if (!isVpnMode) {
-            ActivityCompat.invalidateOptionsMenu(this); // enable root required menu items
             CheckWifiHotspotService.execute(this);
         }
+        ActivityCompat.invalidateOptionsMenu(this);
     }
 
     private void checkUpdate() {

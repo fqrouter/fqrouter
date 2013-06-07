@@ -11,6 +11,7 @@ import android.preference.PreferenceActivity;
 import android.preference.PreferenceManager;
 import android.widget.Toast;
 import fq.router.life.LaunchService;
+import fq.router.utils.ShellUtils;
 
 import java.util.List;
 import java.util.Map;
@@ -49,6 +50,10 @@ public class MainSettingsActivity extends PreferenceActivity implements SharedPr
                         return false;
                     }
                 });
+        if (!ShellUtils.isRooted()) {
+            getPreferenceScreen().removePreference(findPreference("WifiHotspot"));
+            getPreferenceScreen().removePreference(findPreference("Scrambler"));
+        }
     }
 
     private void initGoAgent() {

@@ -8,9 +8,9 @@ PYTHON_PATH = '/data/data/fq.router/python/bin/python'
 
 
 def launch_python(name, args, on_exit=None):
-    proc = subprocess.Popen(
-        [PYTHON_PATH, '-m', name] + list(args),
-        stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
+    command = [PYTHON_PATH, '-m', name] + list(args)
+    LOGGER.info('launch python: %s' % ' '.join(command))
+    proc = subprocess.Popen(command, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
     gevent.sleep(0.5)
     if proc.poll() is not None:
         try:

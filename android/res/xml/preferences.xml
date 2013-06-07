@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android">
-    <PreferenceCategory android:title="Wifi Hotspot">
+    <PreferenceCategory android:title="Wifi Hotspot" android:key="WifiHotspot">
         <EditTextPreference
                 android:key="WifiHotspotSSID"
                 android:title="SSID"
@@ -11,13 +11,6 @@
                 android:title="Password"
                 android:defaultValue="12345678"/>
 
-    </PreferenceCategory>
-    <PreferenceCategory android:title="Scrambler">
-        <CheckBoxPreference
-                android:key="IsScramblerEnabled"
-                android:title="Scrambler Enabled"
-                android:summary="bypass GFW directly without proxy server"
-                android:defaultValue="true"/>
     </PreferenceCategory>
     <PreferenceCategory android:title="GoAgent">
         <CheckBoxPreference
@@ -30,6 +23,13 @@
                 android:title="Private Servers"
                 android:summary="GoAgent appids deployed by yourself"
                 android:defaultValue=""/>
+    </PreferenceCategory>
+    <PreferenceCategory android:title="Scrambler" android:key="Scrambler">
+        <CheckBoxPreference
+                android:key="IsScramblerEnabled"
+                android:title="Scrambler Enabled"
+                android:summary="bypass GFW directly without proxy server"
+                android:defaultValue="true"/>
     </PreferenceCategory>
     <PreferenceCategory android:title="General">
         <CheckBoxPreference
