@@ -20,7 +20,7 @@ import comp_version
 
 
 ROOT_DIR = os.path.dirname(__file__)
-LOG_DIR = '/data/data/fq.router'
+LOG_DIR = '/data/data/fq.router/log'
 MANAGER_LOG_FILE = os.path.join(LOG_DIR, 'manager.log')
 WIFI_LOG_FILE = os.path.join(LOG_DIR, 'wifi.log')
 

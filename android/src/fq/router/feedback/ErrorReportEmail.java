@@ -75,12 +75,12 @@ public class ErrorReportEmail {
             error += "\n" + "failed to execute iptables for nat table" + "\n" + e;
         }
         try {
-            ShellUtils.sudo("/data/data/fq.router/busybox", "chmod", "0666", "/data/data/fq.router/*.log");
+            ShellUtils.sudo("/data/data/fq.router/busybox", "chmod", "0666", "/data/data/fq.router/log/*.log");
         } catch (Exception e) {
             LogUtils.e("failed to change log file permission", e);
             error += "\n" + "failed to change log file permission using busybox chmod" + "\n" + e;
             try {
-                ShellUtils.sudo(ShellUtils.findCommand("chmod"), "0666", "/data/data/fq.router/*.log");
+                ShellUtils.sudo(ShellUtils.findCommand("chmod"), "0666", "/data/data/fq.router/log/*.log");
             } catch (Exception e2) {
                 LogUtils.e("failed to change log file permission", e2);
                 error += "\n" + "failed to change log file permission using system chmod" + "\n" + e2;
@@ -100,8 +100,12 @@ public class ErrorReportEmail {
     }
 
     private String copyLog(String logFileName) {
+        File destFile = new File(LOG_DIR + "/" + logFileName);
+        if (destFile.exists()) {
+            destFile.delete();
+        }
         try {
-            FileInputStream inputStream = new FileInputStream("/data/data/fq.router/" + logFileName);
+            FileInputStream inputStream = new FileInputStream("/data/data/fq.router/log/" + logFileName);
             try {
                 FileOutputStream outputStream = new FileOutputStream(LOG_DIR + "/" + logFileName);
                 try {

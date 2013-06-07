@@ -62,7 +62,7 @@ def handle_scan(environ, start_response):
         scan_process = subprocess.Popen(
             [shell.PYTHON_PATH, '-m', 'fqlan',
              '--log-level', 'INFO',
-             '--log-file', '/data/data/fq.router/scan.log',
+             '--log-file', '/data/data/fq.router/log/scan.log',
              '--lan-interface', comp_wifi.WIFI_INTERFACE,
              '--ifconfig-command', '/data/data/fq.router/busybox',
              '--ip-command', '/data/data/fq.router/busybox',
@@ -90,7 +90,7 @@ def restart_fqlan():
         return
     fqlan_process = shell.launch_python(
         'fqlan', ['--log-level', 'INFO',
-        '--log-file', '/data/data/fq.router/fqlan.log',
+        '--log-file', '/data/data/fq.router/log/fqlan.log',
         '--lan-interface', comp_wifi.WIFI_INTERFACE,
         '--ifconfig-command', '/data/data/fq.router/busybox',
         '--ip-command', '/data/data/fq.router/busybox',

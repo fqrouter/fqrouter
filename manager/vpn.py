@@ -20,7 +20,7 @@ from utils import httpd
 
 
 LOGGER = logging.getLogger('fqrouter.%s' % __name__)
-LOG_DIR = '/data/data/fq.router'
+LOG_DIR = '/data/data/fq.router/log'
 MANAGER_LOG_FILE = os.path.join(LOG_DIR, 'manager.log')
 FQDNS_LOG_FILE = os.path.join(LOG_DIR, 'fqdns.log')
 
@@ -213,7 +213,7 @@ if '__main__' == __name__:
     greenlets.append(gevent.spawn(serve_udp))
     greenlets.append(gevent.spawn(fqsocks.fqsocks.main, [
         '--log-level', 'INFO',
-        '--log-file', '/data/data/fq.router/fqsocks.log',
+        '--log-file', '/data/data/fq.router/log/fqsocks.log',
         '--listen', '10.25.1.1:12345',
         '--proxy', 'dynamic,n=4,type=ss,dns_record=ss#n#.fqrouter.com',
         '--proxy', 'dynamic,n=20,dns_record=proxy#n#.fqrouter.com',

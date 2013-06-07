@@ -47,7 +47,7 @@ public class LogUtils {
 
     private static void writeLogFile(String level, String line) {
         if (logFile == null) {
-            logFile = new File("/data/data/fq.router/current-java.log");
+            logFile = new File("/data/data/fq.router/log/current-java.log");
             if (logFile.exists()) {
                 logFile.delete();
             }
