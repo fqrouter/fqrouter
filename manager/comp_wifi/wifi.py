@@ -354,6 +354,8 @@ def get_wifi_chipset():
             return 'bcm', '4330'
         if chipset.endswith('4334'):
             return 'bcm', '4334'
+        if chipset.endswith('4335'):
+            return 'bcm', '4335'
         if chipset.endswith('4324'):
             return 'bcm', '4324' # 43241
         if chipset.endswith('4076'): # sdio:c00v0097d4076
