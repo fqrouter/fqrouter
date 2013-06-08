@@ -25,7 +25,10 @@ import fq.router.utils.ApkUtils;
 import fq.router.utils.IOUtils;
 import fq.router.utils.LogUtils;
 import fq.router.utils.ShellUtils;
-import fq.router.wifi.*;
+import fq.router.wifi.CheckWifiHotspotService;
+import fq.router.wifi.StartWifiHotspotService;
+import fq.router.wifi.StopWifiHotspotService;
+import fq.router.wifi.WifiHotspotChangedIntent;
 
 import java.lang.reflect.Method;
 
@@ -46,10 +49,9 @@ public class MainActivity extends Activity implements
     public final static int SHOW_AS_ACTION_IF_ROOM = 1;
     private final static int ITEM_ID_EXIT = 1;
     private final static int ITEM_ID_REPORT_ERROR = 2;
-    private final static int ITEM_ID_RESET_WIFI = 3;
-    private final static int ITEM_ID_SETTINGS = 4;
-    private final static int ITEM_ID_PICK_AND_PLAY = 5;
-    private final static int ITEM_ID_UPGRADE_MANUALLY = 6;
+    private final static int ITEM_ID_SETTINGS = 3;
+    private final static int ITEM_ID_PICK_AND_PLAY = 4;
+    private final static int ITEM_ID_UPGRADE_MANUALLY = 5;
     private final static int ASK_VPN_PERMISSION = 1;
     private static boolean started;
     private String upgradeUrl;
@@ -129,7 +131,6 @@ public class MainActivity extends Activity implements
         }
         if (ShellUtils.isRooted()) {
             menu.add(Menu.NONE, ITEM_ID_PICK_AND_PLAY, Menu.NONE, "Pick & Play");
-            menu.add(Menu.NONE, ITEM_ID_RESET_WIFI, Menu.NONE, "Reset Wifi");
         }
         if (upgradeUrl != null) {
             menu.add(Menu.NONE, ITEM_ID_UPGRADE_MANUALLY, Menu.NONE, "Upgrade Manually");
@@ -158,8 +159,6 @@ public class MainActivity extends Activity implements
             exit();
         } else if (ITEM_ID_REPORT_ERROR == item.getItemId()) {
             reportError();
-        } else if (ITEM_ID_RESET_WIFI == item.getItemId()) {
-            resetWifi();
         } else if (ITEM_ID_SETTINGS == item.getItemId()) {
             startActivity(new Intent(this, MainSettingsActivity.class));
         } else if (ITEM_ID_PICK_AND_PLAY == item.getItemId()) {
@@ -197,11 +196,6 @@ public class MainActivity extends Activity implements
         NotificationManager notificationManager =
                 (NotificationManager) getSystemService(NOTIFICATION_SERVICE);
         notificationManager.cancel(0);
-    }
-
-    private void resetWifi() {
-        hideWifiHotspotToggleButton();
-        StopWifiHotspotService.execute(this);
     }
 
     @Override
@@ -245,7 +239,8 @@ public class MainActivity extends Activity implements
         if (button.isChecked()) {
             startWifiHotspot();
         } else {
-            resetWifi();
+            hideWifiHotspotToggleButton();
+            StopWifiHotspotService.execute(this);
         }
     }
 
