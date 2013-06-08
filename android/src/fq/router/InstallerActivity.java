@@ -2,8 +2,6 @@ package fq.router;
 
 import android.app.Activity;
 import android.app.AlertDialog;
-import android.content.DialogInterface;
-import android.content.Intent;
 import android.net.Uri;
 import android.os.Bundle;
 import android.preference.PreferenceManager;
@@ -12,7 +10,6 @@ import android.text.method.ScrollingMovementMethod;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.widget.TextView;
-import android.widget.Toast;
 import fq.router.feedback.*;
 import fq.router.life.DownloadFailedIntent;
 import fq.router.life.DownloadService;
@@ -21,6 +18,7 @@ import fq.router.life.DownloadingIntent;
 import fq.router.utils.ApkUtils;
 import fq.router.utils.IOUtils;
 import fq.router.utils.LogUtils;
+import fq.router.utils.ShellUtils;
 
 import java.lang.reflect.Method;
 
@@ -51,7 +49,6 @@ public class InstallerActivity extends Activity implements
         PreferenceManager.setDefaultValues(this, R.xml.preferences, true);
         TextView textView = (TextView) findViewById(R.id.logTextView);
         textView.setMovementMethod(new ScrollingMovementMethod());
-        checkUpdate();
         UpdateStatusIntent.register(this);
         AppendLogIntent.register(this);
         UpdateFoundIntent.register(this);
@@ -59,11 +56,20 @@ public class InstallerActivity extends Activity implements
         DownloadedIntent.register(this);
         DownloadFailedIntent.register(this);
         HandleFatalErrorIntent.register(this);
+        appendLog("rooted: " + ShellUtils.checkRooted());
+        new AlertDialog.Builder(this)
+                .setIcon(android.R.drawable.ic_dialog_info)
+                .setTitle("Please, be patient")
+                .setMessage("This is just a installer, you need to wait for a 10M file to be downloaded " +
+                        "then install the downloaded apk file. Get it?")
+                .setNegativeButton("Got It", null)
+                .show();
+        checkUpdate();
     }
 
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
-        addMenuItem(menu, ITEM_ID_REPORT_ERROR, "Report Error");
+        menu.add(Menu.NONE, ITEM_ID_REPORT_ERROR, Menu.NONE, "Report Error");
         addMenuItem(menu, ITEM_ID_EXIT, "Exit");
         return super.onCreateOptionsMenu(menu);
     }
@@ -86,36 +92,13 @@ public class InstallerActivity extends Activity implements
         if (ITEM_ID_EXIT == item.getItemId()) {
             exit();
         } else if (ITEM_ID_REPORT_ERROR == item.getItemId()) {
-            reportError();
+            new ErrorReportEmail(this).send();
         }
         return super.onMenuItemSelected(featureId, item);
     }
 
     private void exit() {
         finish();
-    }
-
-    private void reportError() {
-        try {
-            new AlertDialog.Builder(this)
-                    .setIcon(android.R.drawable.ic_dialog_alert)
-                    .setTitle("Hey, dude")
-                    .setMessage("This is just a installer, you need to wait for " +
-                            "the download completed then install the downloaded apk file. Get it?")
-                    .setPositiveButton("No", new DialogInterface.OnClickListener() {
-
-                        @Override
-                        public void onClick(DialogInterface dialog, int which) {
-                            startActivity(Intent.createChooser(
-                                    new ErrorReportEmail(InstallerActivity.this).prepare(), "Send mail..."));
-                        }
-
-                    })
-                    .setNegativeButton("Got It", null)
-                    .show();
-        } catch (android.content.ActivityNotFoundException ex) {
-            Toast.makeText(this, "There are no email clients installed.", Toast.LENGTH_SHORT).show();
-        }
     }
 
     private void checkUpdate() {

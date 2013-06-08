@@ -130,12 +130,12 @@ public class MainActivity extends Activity implements
             menu.add(Menu.NONE, ITEM_ID_SETTINGS, Menu.NONE, "Settings");
         }
         if (ShellUtils.isRooted()) {
-            menu.add(Menu.NONE, ITEM_ID_PICK_AND_PLAY, Menu.NONE, "Pick & Play");
+            addMenuItem(menu, ITEM_ID_PICK_AND_PLAY, "Pick & Play");
         }
         if (upgradeUrl != null) {
             menu.add(Menu.NONE, ITEM_ID_UPGRADE_MANUALLY, Menu.NONE, "Upgrade Manually");
         }
-        addMenuItem(menu, ITEM_ID_REPORT_ERROR, "Report Error");
+        menu.add(Menu.NONE, ITEM_ID_REPORT_ERROR, Menu.NONE, "Report Error");
         addMenuItem(menu, ITEM_ID_EXIT, "Exit");
         return super.onCreateOptionsMenu(menu);
     }
@@ -158,7 +158,7 @@ public class MainActivity extends Activity implements
         if (ITEM_ID_EXIT == item.getItemId()) {
             exit();
         } else if (ITEM_ID_REPORT_ERROR == item.getItemId()) {
-            reportError();
+            new ErrorReportEmail(this).send();
         } else if (ITEM_ID_SETTINGS == item.getItemId()) {
             startActivity(new Intent(this, MainSettingsActivity.class));
         } else if (ITEM_ID_PICK_AND_PLAY == item.getItemId()) {
@@ -215,14 +215,6 @@ public class MainActivity extends Activity implements
         LogUtils.i(log);
         TextView textView = (TextView) findViewById(R.id.logTextView);
         textView.setText(log + "\n" + textView.getText());
-    }
-
-    private void reportError() {
-        try {
-            startActivity(Intent.createChooser(new ErrorReportEmail(this).prepare(), "Send mail..."));
-        } catch (android.content.ActivityNotFoundException ex) {
-            Toast.makeText(this, "There are no email clients installed.", Toast.LENGTH_SHORT).show();
-        }
     }
 
     private void exit() {

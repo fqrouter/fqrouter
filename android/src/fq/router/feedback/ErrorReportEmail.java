@@ -1,9 +1,12 @@
 package fq.router.feedback;
 
+import android.app.AlertDialog;
 import android.content.Context;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.net.Uri;
 import android.os.Build;
+import android.widget.Toast;
 import fq.router.life.LaunchService;
 import fq.router.utils.IOUtils;
 import fq.router.utils.LogUtils;
@@ -21,6 +24,29 @@ public class ErrorReportEmail {
 
     public ErrorReportEmail(Context context) {
         this.context = context;
+    }
+
+    public void send() {
+        new AlertDialog.Builder(context)
+                .setIcon(android.R.drawable.ic_dialog_alert)
+                .setTitle("Help me, help yourself")
+                .setMessage("Please describe the problem in details. " +
+                        "Otherwise you are wasting my time which could be spent on making fqrouter better. " +
+                        "Thanks for your understanding!")
+                .setPositiveButton("I will!", new DialogInterface.OnClickListener() {
+
+                    @Override
+                    public void onClick(DialogInterface dialog, int which) {
+                        try {
+                            context.startActivity(Intent.createChooser(prepare(), "Send mail..."));
+                        } catch (android.content.ActivityNotFoundException ex) {
+                            Toast.makeText(context, "There are no email clients installed.", Toast.LENGTH_SHORT).show();
+                        }
+                    }
+
+                })
+                .setNegativeButton("Maybe next time", null)
+                .show();
     }
 
     public Intent prepare() {
