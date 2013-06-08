@@ -11,6 +11,9 @@ import org.apache.http.impl.client.DefaultHttpClient;
 import org.apache.http.impl.conn.tsccm.ThreadSafeClientConnManager;
 import org.apache.http.params.BasicHttpParams;
 
+import javax.net.ssl.HostnameVerifier;
+import javax.net.ssl.HttpsURLConnection;
+import javax.net.ssl.SSLSession;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -18,14 +21,35 @@ import java.net.URL;
 
 public class HttpsUtils {
 
-    public static long getTotalLength(URL url, final String staticAddress, boolean isSecure) throws Exception {
-        HttpGet request = createRequest(url, staticAddress, isSecure);
-        return execute(request).getEntity().getContentLength();
+    public static Headers getHeadersUsingRequest(URL url, final String staticAddress) throws Exception {
+        final HttpGet request = createRequest(url, staticAddress);
+        return new Headers() {{
+            contentLength = execute(request).getEntity().getContentLength();
+        }};
     }
 
-    private static HttpGet createRequest(URL url, String staticAddress, boolean isSecure) {
-        String uri = isSecure ? url.toString().replace(url.getProtocol(), "https")
-                : url.toString().replace(url.getProtocol(), "http");
+    public static Headers getHeadersUsingUrl(URL url) throws IOException {
+        url = new URL(url.toString().replace(url.getProtocol(), "https"));
+        HttpsURLConnection httpsUrlConnection = (HttpsURLConnection) url.openConnection();
+        try {
+            httpsUrlConnection.setHostnameVerifier(new HostnameVerifier() {
+                @Override
+                public boolean verify(String s, SSLSession sslSession) {
+                    return true;
+                }
+            });
+            httpsUrlConnection.connect();
+            Headers headers = new Headers();
+            headers.contentLength = httpsUrlConnection.getHeaderFieldInt("Content-Length", 0);
+            headers.etag = httpsUrlConnection.getHeaderField("ETag");
+            return headers;
+        } finally {
+            httpsUrlConnection.disconnect();
+        }
+    }
+
+    private static HttpGet createRequest(URL url, String staticAddress) {
+        String uri = url.toString().replace(url.getProtocol(), "https");
         uri = uri.replace(url.getHost(), staticAddress);
         HttpGet request = new HttpGet(uri);
         request.setHeader("Host", url.getHost());
@@ -48,9 +72,9 @@ public class HttpsUtils {
     }
 
     public static void download(
-            URL url, String staticAddress, boolean isSecure,
+            URL url, String staticAddress,
             OutputStream outputStream, long from, long to, IOUtils.ChunkCopied chunkCopied) throws Exception {
-        HttpGet request = createRequest(url, staticAddress, isSecure);
+        HttpGet request = createRequest(url, staticAddress);
         request.addHeader("Range", "bytes=" + from + "-" + to);
         HttpResponse response = execute(request);
         InputStream inputStream = response.getEntity().getContent();
@@ -61,4 +85,8 @@ public class HttpsUtils {
         }
     }
 
+    public static class Headers {
+        public String etag = "";
+        public long contentLength;
+    }
 }

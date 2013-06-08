@@ -18,6 +18,7 @@ import fq.router.life.DownloadFailedIntent;
 import fq.router.life.DownloadService;
 import fq.router.life.DownloadedIntent;
 import fq.router.life.DownloadingIntent;
+import fq.router.utils.ApkUtils;
 import fq.router.utils.IOUtils;
 import fq.router.utils.LogUtils;
 
@@ -151,17 +152,15 @@ public class InstallerActivity extends Activity implements
             return;
         }
         this.upgradeUrl = upgradeUrl;
-        ActivityCompat.invalidateOptionsMenu(this);
         updateStatus("Downloading " + Uri.parse(upgradeUrl).getLastPathSegment());
-        DownloadService.execute(
-                this, upgradeUrl, downloadTo);
+        DownloadService.execute(this, upgradeUrl, downloadTo);
     }
 
     @Override
     public void onDownloaded(String url, String downloadTo) {
         downloaded = true;
         updateStatus("Downloaded " + Uri.parse(url).getLastPathSegment());
-        CheckUpdateService.installApk(this, downloadTo);
+        ApkUtils.installApk(this, downloadTo);
     }
 
     @Override

@@ -22,6 +22,15 @@ public class IOUtils {
         }
     }
 
+    public static String md5Checksum(File file) {
+        try {
+            return copy(new FileInputStream(file), null);
+        } catch (Exception e) {
+            LogUtils.e("failed to calculate md5 checksum", e);
+            return "";
+        }
+    }
+
     public static interface LineRead {
         void onLineRead(String line);
     }
@@ -61,7 +70,7 @@ public class IOUtils {
         int length;
         while ((length = inputStream.read(buffer)) > 0) {
             md5.update(buffer, 0, length);
-            if (outputStream != null) {
+            if (null != outputStream) {
                 outputStream.write(buffer, 0, length);
             }
             if (null != callback) {

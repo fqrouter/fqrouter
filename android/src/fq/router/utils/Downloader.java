@@ -48,17 +48,15 @@ public class Downloader {
         private final ChunkCallback chunkCallback;
         private final URL url;
         private final String staticAddress;
-        private final boolean isSecure;
         private final long from;
         private final long to;
         private long offset;
 
         private ChunkDownloader(BlockWriter blockWriter, ChunkCallback chunkCallback,
-                                URL url, String staticAddress, boolean isSecure, long from, long to) {
+                                URL url, String staticAddress, long from, long to) {
             this.chunkCallback = chunkCallback;
             this.blockWriter = blockWriter;
             this.url = url;
-            this.isSecure = isSecure;
             this.staticAddress = staticAddress;
             this.from = from;
             this.to = to;
@@ -68,7 +66,7 @@ public class Downloader {
         @Override
         public void run() {
             try {
-                HttpsUtils.download(url, staticAddress, isSecure, null, from, to, new IOUtils.ChunkCopied() {
+                HttpsUtils.download(url, staticAddress, null, from, to, new IOUtils.ChunkCopied() {
                     @Override
                     public void onChunkCopied(byte[] buffer, int length) throws Exception {
                         blockWriter.write(offset, buffer, length);
@@ -114,8 +112,9 @@ public class Downloader {
     }
 
     private static class FileDownloader implements BlockWriter, ChunkCallback {
-        private final RandomAccessFile randomAccessFile;
+        private RandomAccessFile randomAccessFile;
         private final URL url;
+        private final File file;
         private final ProgressUpdated callback;
         private long totalLength;
         private int downloadedLength;
@@ -128,11 +127,8 @@ public class Downloader {
 
         public FileDownloader(URL url, File file, int concurrency, ProgressUpdated callback) throws Exception {
             this.url = url;
+            this.file = file;
             this.callback = callback;
-            if (file.exists()) {
-                file.delete();
-            }
-            randomAccessFile = new RandomAccessFile(file, "rw");
             executorService = Executors.newFixedThreadPool(concurrency);
         }
 
@@ -144,13 +140,28 @@ public class Downloader {
                 if (0 == addresses.size()) {
                     return false;
                 }
-                totalLength = getTotalLength(url, addresses);
+                HttpsUtils.Headers headers = getHeaders(url, addresses);
+                if (file.exists()) {
+                    LogUtils.i("remote etag: " + headers.etag);
+                    if (headers.etag != null && headers.etag.length() > 0) {
+                        String localEtag = IOUtils.md5Checksum(file);
+                        LogUtils.i("local etag: " + localEtag);
+                        if (headers.etag.replace("\"", "").equals(localEtag)) {
+                            LogUtils.i("already downloaded same file");
+                            callback.onDownloaded();
+                            return true;
+                        }
+                    }
+                    file.delete();
+                }
+                randomAccessFile = new RandomAccessFile(file, "rw");
+                totalLength = headers.contentLength;
                 LogUtils.i("total length of " + url + ": " + totalLength);
                 long from = 0;
                 long step = totalLength / 20;
                 while (from < totalLength) {
                     long to = Math.min(from + step, totalLength - 1);
-                    addChunk(from, to, true);
+                    addChunk(from, to);
                     from = to + 1;
                 }
                 while (!chunks.isEmpty()) {
@@ -205,7 +216,7 @@ public class Downloader {
             } catch (InterruptedException e) {
                 // ignore
             }
-            addChunk(failedAtOffset, to, true);
+            addChunk(failedAtOffset, to);
             removeChunk(from, to);
         }
 
@@ -220,10 +231,10 @@ public class Downloader {
             }
         }
 
-        private void addChunk(long from, long to, boolean isSecure) {
+        private void addChunk(long from, long to) {
             chunks.add(new Chunk(from, to));
             ChunkDownloader chunkDownloader = new ChunkDownloader(
-                    this, this, url, getAddress().getHostAddress(), isSecure, from, to);
+                    this, this, url, getAddress().getHostAddress(), from, to);
             executorService.submit(chunkDownloader);
         }
 
@@ -235,16 +246,21 @@ public class Downloader {
             return addresses.get(addressIndex);
         }
 
-        private static long getTotalLength(URL url, List<Inet4Address> staticAddresses) throws Exception {
-            for (Inet4Address staticAddress : staticAddresses) {
-                System.out.println(new Date() + " " + staticAddress);
-                try {
-                    return HttpsUtils.getTotalLength(url, staticAddress.getHostAddress(), true);
-                } catch (Exception e) {
-                    LogUtils.e("failed to get total length", e);
+        private static HttpsUtils.Headers getHeaders(URL url, List<Inet4Address> staticAddresses) throws Exception {
+            try {
+                return HttpsUtils.getHeadersUsingUrl(url);
+            } catch (Exception e) {
+                LogUtils.e("failed to get headers using url", e);
+                for (Inet4Address staticAddress : staticAddresses) {
+                    System.out.println(new Date() + " " + staticAddress);
+                    try {
+                        return HttpsUtils.getHeadersUsingRequest(url, staticAddress.getHostAddress());
+                    } catch (Exception e2) {
+                        LogUtils.e("failed to get headers using url", e2);
+                    }
                 }
             }
-            throw new Exception("give up getting total length");
+            throw new Exception("give up getting headers");
         }
     }
 }

@@ -21,12 +21,12 @@ import android.widget.Toast;
 import android.widget.ToggleButton;
 import fq.router.feedback.*;
 import fq.router.life.*;
+import fq.router.utils.ApkUtils;
 import fq.router.utils.IOUtils;
 import fq.router.utils.LogUtils;
 import fq.router.utils.ShellUtils;
 import fq.router.wifi.*;
 
-import java.io.File;
 import java.lang.reflect.Method;
 
 
@@ -353,7 +353,7 @@ public class MainActivity extends Activity implements
         } catch (Exception e) {
             LogUtils.e("failed to kill manager", e);
         }
-        CheckUpdateService.installApk(this, downloadTo);
+        ApkUtils.installApk(this, downloadTo);
     }
 
     @Override
