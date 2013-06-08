@@ -3,15 +3,46 @@ package fq.router.feedback;
 import android.app.IntentService;
 import android.content.Context;
 import android.content.Intent;
+import android.net.Uri;
 import fq.router.life.LaunchService;
 import fq.router.utils.DnsUtils;
 import fq.router.utils.HttpUtils;
 import fq.router.utils.LogUtils;
+import fq.router.utils.ShellUtils;
+
+import java.util.HashMap;
 
 public class CheckUpdateService extends IntentService {
 
     public CheckUpdateService() {
         super("CheckUpdate");
+    }
+
+    public static void installApk(Context context, String apkPath) {
+        if (ShellUtils.checkRooted()) {
+            try {
+                installApkAutomatically(apkPath);
+            } catch (Exception e) {
+                LogUtils.e("silent install failed", e);
+                installApkManually(context, apkPath);
+            }
+        } else {
+            installApkManually(context, apkPath);
+        }
+    }
+
+    private static void installApkAutomatically(String apkPath) throws Exception {
+        ShellUtils.sudoNoWait(
+                new HashMap<String, String>(),
+                ShellUtils.findCommand("sleep"), "10", ";",
+                ShellUtils.findCommand("am"), "start", "-n", "fq.router/.MainActivity");
+        ShellUtils.sudo(ShellUtils.findCommand("pm"), "install", "-r", apkPath);
+    }
+
+    private static  void installApkManually(Context context, String apkPath) {
+        Intent intent = new Intent(Intent.ACTION_VIEW);
+        intent.setDataAndType(Uri.parse("file://" + apkPath), "application/vnd.android.package-archive");
+        context.startActivity(intent);
     }
 
     @Override

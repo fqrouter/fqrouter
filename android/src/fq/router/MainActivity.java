@@ -21,6 +21,7 @@ import android.widget.Toast;
 import android.widget.ToggleButton;
 import fq.router.feedback.*;
 import fq.router.life.*;
+import fq.router.utils.IOUtils;
 import fq.router.utils.LogUtils;
 import fq.router.utils.ShellUtils;
 import fq.router.wifi.*;
@@ -56,18 +57,7 @@ public class MainActivity extends Activity implements
     private WifiManager.WifiLock wifiLock;
 
     static {
-        File etcDir = new File("/data/data/fq.router/etc");
-        if (!etcDir.exists()) {
-            etcDir.mkdir();
-        }
-        File varDir = new File("/data/data/fq.router/var");
-        if (!varDir.exists()) {
-            varDir.mkdir();
-        }
-        File logDir = new File("/data/data/fq.router/log");
-        if (!logDir.exists()) {
-            logDir.mkdir();
-        }
+        IOUtils.createCommonDirs();
     }
 
 
@@ -357,9 +347,13 @@ public class MainActivity extends Activity implements
         downloaded = true;
         ActivityCompat.invalidateOptionsMenu(this);
         updateStatus("Downloaded " + Uri.parse(url).getLastPathSegment());
-        Intent intent = new Intent(Intent.ACTION_VIEW);
-        intent.setDataAndType(Uri.parse("file://" + downloadTo), "application/vnd.android.package-archive");
-        startActivity(intent);
+        setExiting();
+        try {
+            ManagerProcess.kill();
+        } catch (Exception e) {
+            LogUtils.e("failed to kill manager", e);
+        }
+        CheckUpdateService.installApk(this, downloadTo);
     }
 
     @Override

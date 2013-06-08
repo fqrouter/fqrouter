@@ -7,6 +7,21 @@ import java.security.MessageDigest;
 public class IOUtils {
 
 
+    public static void createCommonDirs() {
+        File etcDir = new File("/data/data/fq.router/etc");
+        if (!etcDir.exists()) {
+            etcDir.mkdir();
+        }
+        File varDir = new File("/data/data/fq.router/var");
+        if (!varDir.exists()) {
+            varDir.mkdir();
+        }
+        File logDir = new File("/data/data/fq.router/log");
+        if (!logDir.exists()) {
+            logDir.mkdir();
+        }
+    }
+
     public static interface LineRead {
         void onLineRead(String line);
     }

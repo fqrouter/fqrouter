@@ -1,10 +1,11 @@
 package fq.router;
 
 import android.app.Activity;
+import android.app.AlertDialog;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.net.Uri;
 import android.os.Bundle;
-import android.os.Handler;
 import android.preference.PreferenceManager;
 import android.support.v4.app.ActivityCompat;
 import android.text.method.ScrollingMovementMethod;
@@ -13,7 +14,11 @@ import android.view.MenuItem;
 import android.widget.TextView;
 import android.widget.Toast;
 import fq.router.feedback.*;
-import fq.router.life.*;
+import fq.router.life.DownloadFailedIntent;
+import fq.router.life.DownloadService;
+import fq.router.life.DownloadedIntent;
+import fq.router.life.DownloadingIntent;
+import fq.router.utils.IOUtils;
 import fq.router.utils.LogUtils;
 
 import java.lang.reflect.Method;
@@ -31,9 +36,12 @@ public class InstallerActivity extends Activity implements
     public final static int SHOW_AS_ACTION_IF_ROOM = 1;
     private final static int ITEM_ID_EXIT = 1;
     private final static int ITEM_ID_REPORT_ERROR = 2;
-    private final static int ITEM_ID_UPGRADE_MANUALLY = 6;
     private String upgradeUrl;
     private boolean downloaded;
+
+    static {
+        IOUtils.createCommonDirs();
+    }
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
@@ -54,9 +62,6 @@ public class InstallerActivity extends Activity implements
 
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
-        if (upgradeUrl != null) {
-            menu.add(Menu.NONE, ITEM_ID_UPGRADE_MANUALLY, Menu.NONE, "Download Manually");
-        }
         addMenuItem(menu, ITEM_ID_REPORT_ERROR, "Report Error");
         addMenuItem(menu, ITEM_ID_EXIT, "Exit");
         return super.onCreateOptionsMenu(menu);
@@ -81,8 +86,6 @@ public class InstallerActivity extends Activity implements
             exit();
         } else if (ITEM_ID_REPORT_ERROR == item.getItemId()) {
             reportError();
-        } else if (ITEM_ID_UPGRADE_MANUALLY == item.getItemId()) {
-            startActivity(new Intent(Intent.ACTION_VIEW, Uri.parse(upgradeUrl)));
         }
         return super.onMenuItemSelected(featureId, item);
     }
@@ -93,7 +96,22 @@ public class InstallerActivity extends Activity implements
 
     private void reportError() {
         try {
-            startActivity(Intent.createChooser(new ErrorReportEmail(this).prepare(), "Send mail..."));
+            new AlertDialog.Builder(this)
+                    .setIcon(android.R.drawable.ic_dialog_alert)
+                    .setTitle("Hey, dude")
+                    .setMessage("This is just a installer, you need to wait for " +
+                            "the download completed then install the downloaded apk file. Get it?")
+                    .setPositiveButton("No", new DialogInterface.OnClickListener() {
+
+                        @Override
+                        public void onClick(DialogInterface dialog, int which) {
+                            startActivity(Intent.createChooser(
+                                    new ErrorReportEmail(InstallerActivity.this).prepare(), "Send mail..."));
+                        }
+
+                    })
+                    .setNegativeButton("Got It", null)
+                    .show();
         } catch (android.content.ActivityNotFoundException ex) {
             Toast.makeText(this, "There are no email clients installed.", Toast.LENGTH_SHORT).show();
         }
@@ -123,13 +141,6 @@ public class InstallerActivity extends Activity implements
     public void onDownloadFailed(final String url, String downloadTo) {
         ActivityCompat.invalidateOptionsMenu(this);
         onHandleFatalError("download " + Uri.parse(url).getLastPathSegment() + " failed");
-        Toast.makeText(this, "Open browser and download the update manually", 3000).show();
-        new Handler().postDelayed(new Runnable() {
-            @Override
-            public void run() {
-                startActivity(new Intent(Intent.ACTION_VIEW, Uri.parse(url)));
-            }
-        }, 3000);
     }
 
     @Override
@@ -149,11 +160,8 @@ public class InstallerActivity extends Activity implements
     @Override
     public void onDownloaded(String url, String downloadTo) {
         downloaded = true;
-        ActivityCompat.invalidateOptionsMenu(this);
         updateStatus("Downloaded " + Uri.parse(url).getLastPathSegment());
-        Intent intent = new Intent(Intent.ACTION_VIEW);
-        intent.setDataAndType(Uri.parse("file://" + downloadTo), "application/vnd.android.package-archive");
-        startActivity(intent);
+        CheckUpdateService.installApk(this, downloadTo);
     }
 
     @Override
