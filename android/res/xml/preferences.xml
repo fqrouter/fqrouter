@@ -24,6 +24,18 @@
                 android:summary="GoAgent appids deployed by yourself"
                 android:defaultValue=""/>
     </PreferenceCategory>
+    <PreferenceCategory android:title="Shadowsocks">
+        <CheckBoxPreference
+                android:key="IsShadowsocksPublicServersEnabled"
+                android:title="Public Servers Enabled"
+                android:summary="Shadowsocks servers shared by others"
+                android:defaultValue="true"/>
+        <ListPreference
+                android:key="ShadowsocksPrivateServersPicker"
+                android:title="Private Servers"
+                android:summary="Shadowsocks servers deployed by yourself"
+                android:defaultValue=""/>
+    </PreferenceCategory>
     <PreferenceCategory android:title="Scrambler" android:key="Scrambler">
         <CheckBoxPreference
                 android:key="IsScramblerEnabled"

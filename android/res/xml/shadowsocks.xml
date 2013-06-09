@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android">
+    <EditTextPreference
+            android:key="ShadowsocksHost"
+            android:title="Host"
+            android:summary="ip or domain name"/>
+    <EditTextPreference
+            android:key="ShadowsocksPort"
+            android:title="Port"/>
+    <EditTextPreference
+            android:key="ShadowsocksPassword"
+            android:title="Password"/>
+    <ListPreference
+            android:key="ShadowsocksEncryptionMethod"
+            android:title="Encryption Method"/>
+    <Preference
+            android:key="ShadowsocksDelete"
+            android:title=">> Delete"
+            android:defaultValue=""/>
+</PreferenceScreen>

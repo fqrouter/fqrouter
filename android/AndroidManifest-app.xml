@@ -36,6 +36,8 @@
         </activity>
         <activity android:name=".GoAgentSettingsActivity">
         </activity>
+        <activity android:name=".ShadowsocksSettingsActivity">
+        </activity>
         <service android:name=".life.LaunchService">
         </service>
         <service android:name=".life.ExitService">

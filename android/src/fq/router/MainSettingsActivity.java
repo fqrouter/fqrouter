@@ -14,7 +14,6 @@ import fq.router.life.LaunchService;
 import fq.router.utils.ShellUtils;
 
 import java.util.List;
-import java.util.Map;
 
 public class MainSettingsActivity extends PreferenceActivity implements SharedPreferences.OnSharedPreferenceChangeListener {
 
@@ -50,10 +49,37 @@ public class MainSettingsActivity extends PreferenceActivity implements SharedPr
                         return false;
                     }
                 });
+        findPreference("ShadowsocksPrivateServersPicker").setOnPreferenceChangeListener(
+                new Preference.OnPreferenceChangeListener() {
+                    @Override
+                    public boolean onPreferenceChange(Preference preference, Object newValue) {
+                        onShadowsocksPrivateServerPicked((String) newValue);
+                        return false;
+                    }
+                });
         if (!ShellUtils.isRooted()) {
             getPreferenceScreen().removePreference(findPreference("WifiHotspot"));
             getPreferenceScreen().removePreference(findPreference("Scrambler"));
         }
+    }
+
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+        PreferenceManager
+                .getDefaultSharedPreferences(this)
+                .registerOnSharedPreferenceChangeListener(this);
+        initGoAgent();
+        initShadowsocks();
+    }
+
+    @Override
+    protected void onPause() {
+        super.onPause();
+        PreferenceManager
+                .getDefaultSharedPreferences(this)
+                .unregisterOnSharedPreferenceChangeListener(this);
     }
 
     private void initGoAgent() {
@@ -76,22 +102,24 @@ public class MainSettingsActivity extends PreferenceActivity implements SharedPr
         picker.setEntryValues(entryValues);
     }
 
-
-    @Override
-    protected void onResume() {
-        super.onResume();
-        PreferenceManager
-                .getDefaultSharedPreferences(this)
-                .registerOnSharedPreferenceChangeListener(this);
-        initGoAgent();
-    }
-
-    @Override
-    protected void onPause() {
-        super.onPause();
-        PreferenceManager
-                .getDefaultSharedPreferences(this)
-                .unregisterOnSharedPreferenceChangeListener(this);
+    private void initShadowsocks() {
+        final ListPreference picker = (ListPreference) findPreference("ShadowsocksPrivateServersPicker");
+        List<ShadowsocksSettingsActivity.Server> servers = ShadowsocksSettingsActivity.loadServers();
+        CharSequence[] entries = new CharSequence[servers.size() + 1];
+        entries[servers.size()] = ">> Add";
+        CharSequence[] entryValues = new CharSequence[servers.size() + 1];
+        entryValues[servers.size()] = ">> Add";
+        for (int i = 0; i < servers.size(); i++) {
+            ShadowsocksSettingsActivity.Server server = servers.get(i);
+            if (server.host.equals("")) {
+                entries[i] = "HOST NOT SET";
+            } else {
+                entries[i] = server.host;
+            }
+            entryValues[i] = String.valueOf(i);
+        }
+        picker.setEntries(entries);
+        picker.setEntryValues(entryValues);
     }
 
     @Override
@@ -106,29 +134,53 @@ public class MainSettingsActivity extends PreferenceActivity implements SharedPr
 
     private void onGoAgentPrivateServerPicked(String value) {
         if (">> Add".equals(value)) {
-            new AlertDialog.Builder(this)
-                    .setIcon(android.R.drawable.ic_dialog_alert)
-                    .setTitle("P2P Agreement")
-                    .setMessage(P2P_AGREEMENT)
-                    .setPositiveButton("Yes", new DialogInterface.OnClickListener() {
+            showP2PAgreement(new DialogInterface.OnClickListener() {
 
-                        @Override
-                        public void onClick(DialogInterface dialog, int which) {
-                            Intent intent = new Intent(MainSettingsActivity.this, GoAgentSettingsActivity.class);
-                            List<GoAgentSettingsActivity.Server> servers = GoAgentSettingsActivity.loadServers();
-                            servers.add(new GoAgentSettingsActivity.Server());
-                            GoAgentSettingsActivity.saveServers(servers);
-                            intent.putExtra("index", servers.size() - 1);
-                            startActivity(intent);
-                        }
-                    })
-                    .setNegativeButton("No", null)
-                    .show();
+                @Override
+                public void onClick(DialogInterface dialog, int which) {
+                    Intent intent = new Intent(MainSettingsActivity.this, GoAgentSettingsActivity.class);
+                    List<GoAgentSettingsActivity.Server> servers = GoAgentSettingsActivity.loadServers();
+                    servers.add(new GoAgentSettingsActivity.Server());
+                    GoAgentSettingsActivity.saveServers(servers);
+                    intent.putExtra("index", servers.size() - 1);
+                    startActivity(intent);
+                }
+            });
         } else {
             Intent intent = new Intent(this, GoAgentSettingsActivity.class);
             intent.putExtra("index", Integer.valueOf(value));
             startActivity(intent);
         }
+    }
+
+    private void onShadowsocksPrivateServerPicked(String value) {
+        if (">> Add".equals(value)) {
+            showP2PAgreement(new DialogInterface.OnClickListener() {
+                @Override
+                public void onClick(DialogInterface dialog, int which) {
+                    Intent intent = new Intent(MainSettingsActivity.this, ShadowsocksSettingsActivity.class);
+                    List<ShadowsocksSettingsActivity.Server> servers = ShadowsocksSettingsActivity.loadServers();
+                    servers.add(new ShadowsocksSettingsActivity.Server());
+                    ShadowsocksSettingsActivity.saveServers(servers);
+                    intent.putExtra("index", servers.size() - 1);
+                    startActivity(intent);
+                }
+            });
+        } else {
+            Intent intent = new Intent(this, ShadowsocksSettingsActivity.class);
+            intent.putExtra("index", Integer.valueOf(value));
+            startActivity(intent);
+        }
+    }
+
+    private void showP2PAgreement(DialogInterface.OnClickListener onAgreed) {
+        new AlertDialog.Builder(this)
+                .setIcon(android.R.drawable.ic_dialog_alert)
+                .setTitle("P2P Agreement")
+                .setMessage(P2P_AGREEMENT)
+                .setPositiveButton("Yes", onAgreed)
+                .setNegativeButton("No", null)
+                .show();
     }
 
     private void showToast(String text) {
