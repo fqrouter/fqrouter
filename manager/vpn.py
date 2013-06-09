@@ -216,7 +216,6 @@ if '__main__' == __name__:
         '--log-level', 'INFO',
         '--log-file', '/data/data/fq.router/log/fqsocks.log',
         '--listen', '10.25.1.1:12345',
-        '--proxy', 'dynamic,n=4,type=ss,dns_record=ss#n#.fqrouter.com',
         '--proxy', 'dynamic,n=20,dns_record=proxy#n#.fqrouter.com',
         '--proxy', 'dynamic,n=5,dns_record=proxy2#n#.fqrouter.com,is_public=False',
         '--google-host', 'goagent-google-ip.fqrouter.com']
@@ -224,6 +223,12 @@ if '__main__' == __name__:
         args += ['--proxy', 'dynamic,n=10,type=goagent,dns_record=goagent#n#.fqrouter.com']
     for server in config.list_goagent_private_servers():
         proxy_config = 'goagent,appid=%s,path=%s,password=%s' % (server['appid'], server['path'], server['password'])
+        args += ['--proxy', proxy_config]
+    if config.read().get('shadowsocks_public_servers_enabled', True):
+        args += ['--proxy', 'dynamic,n=4,type=ss,dns_record=ss#n#.fqrouter.com']
+    for server in config.list_shadowsocks_private_servers():
+        proxy_config = 'ss,proxy_ip=%s,proxy_port=%s,password=%s,encrypt_method=%s' % (
+            server['host'], server['port'], server['password'], server['encryption_method'])
         args += ['--proxy', proxy_config]
     greenlets.append(gevent.spawn(fqsocks.fqsocks.main, args))
     for greenlet in greenlets:

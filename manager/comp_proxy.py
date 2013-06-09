@@ -59,7 +59,6 @@ def start_fqsocks():
         '--outbound-ip', '10.1.2.3', # send from 10.1.2.3 so we can skip redirecting those traffic
         '--listen', '10.1.2.3:8319',
         '--http-request-mark', '0xbabe', # trigger scrambler
-        '--proxy', 'dynamic,n=4,type=ss,dns_record=ss#n#.fqrouter.com',
         '--proxy', 'dynamic,n=20,dns_record=proxy#n#.fqrouter.com',
         '--proxy', 'dynamic,n=5,dns_record=proxy2#n#.fqrouter.com,is_public=False',
         '--google-host', 'goagent-google-ip.fqrouter.com']
@@ -67,5 +66,11 @@ def start_fqsocks():
         args += ['--proxy', 'dynamic,n=10,type=goagent,dns_record=goagent#n#.fqrouter.com']
     for server in config.list_goagent_private_servers():
         proxy_config = 'goagent,appid=%s,path=%s,password=%s' % (server['appid'], server['path'], server['password'])
+        args += ['--proxy', proxy_config]
+    if config.read().get('shadowsocks_public_servers_enabled', True):
+        args += ['--proxy', 'dynamic,n=4,type=ss,dns_record=ss#n#.fqrouter.com']
+    for server in config.list_shadowsocks_private_servers():
+        proxy_config = 'ss,proxy_ip=%s,proxy_port=%s,password=%s,encrypt_method=%s' % (
+            server['host'], server['port'], server['password'], server['encryption_method'])
         args += ['--proxy', proxy_config]
     fqsocks_process = shell.launch_python('fqsocks', args, on_exit=stop)

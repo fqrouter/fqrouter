@@ -220,6 +220,8 @@ public class LaunchService extends IntentService {
             configJson.put("scrambler_enabled", preferences.getBoolean("IsScramblerEnabled", true));
             configJson.put("goagent_public_servers_enabled",
                     preferences.getBoolean("IsGoAgentPublicServersEnabled", true));
+            configJson.put("shadowsocks_public_servers_enabled",
+                    preferences.getBoolean("IsShadowsocksPublicServersEnabled", true));
             IOUtils.writeToFile(FQROUTER_CONFIG_FILE, configJson.toString());
         } catch (Exception e) {
             LogUtils.e("failed to update config file", e);
