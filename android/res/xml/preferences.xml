@@ -4,7 +4,7 @@
         <EditTextPreference
                 android:key="WifiHotspotSSID"
                 android:title="SSID"
-                android:summary="the wifi network name you see in list"
+                android:summary="the wifi network name you see"
                 android:defaultValue="fqrouter"/>
         <EditTextPreference
                 android:key="WifiHotspotPassword"
@@ -16,24 +16,24 @@
         <CheckBoxPreference
                 android:key="IsGoAgentPublicServersEnabled"
                 android:title="Public Servers Enabled"
-                android:summary="GoAgent appids shared by others, especially thanks the gfanqiang project"
+                android:summary="goagent appids shared by others, especially thanks the gfanqiang project"
                 android:defaultValue="true"/>
         <ListPreference
                 android:key="GoAgentPrivateServersPicker"
                 android:title="Private Servers"
-                android:summary="GoAgent appids deployed by yourself"
+                android:summary="goagent appids deployed by yourself"
                 android:defaultValue=""/>
     </PreferenceCategory>
     <PreferenceCategory android:title="Shadowsocks">
         <CheckBoxPreference
                 android:key="IsShadowsocksPublicServersEnabled"
                 android:title="Public Servers Enabled"
-                android:summary="Shadowsocks servers shared by others"
+                android:summary="shadowsocks servers shared by others"
                 android:defaultValue="true"/>
         <ListPreference
                 android:key="ShadowsocksPrivateServersPicker"
                 android:title="Private Servers"
-                android:summary="Shadowsocks servers deployed by yourself"
+                android:summary="shadowsocks servers deployed by yourself"
                 android:defaultValue=""/>
     </PreferenceCategory>
     <PreferenceCategory android:title="Scrambler" android:key="Scrambler">

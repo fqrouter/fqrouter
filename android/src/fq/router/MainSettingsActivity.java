@@ -9,6 +9,7 @@ import android.preference.ListPreference;
 import android.preference.Preference;
 import android.preference.PreferenceActivity;
 import android.preference.PreferenceManager;
+import android.widget.EditText;
 import android.widget.Toast;
 import fq.router.life.LaunchService;
 import fq.router.utils.ShellUtils;
@@ -85,10 +86,12 @@ public class MainSettingsActivity extends PreferenceActivity implements SharedPr
     private void initGoAgent() {
         final ListPreference picker = (ListPreference) findPreference("GoAgentPrivateServersPicker");
         List<GoAgentSettingsActivity.Server> servers = GoAgentSettingsActivity.loadServers();
-        CharSequence[] entries = new CharSequence[servers.size() + 1];
+        CharSequence[] entries = new CharSequence[servers.size() + 2];
         entries[servers.size()] = ">> Add";
-        CharSequence[] entryValues = new CharSequence[servers.size() + 1];
+        entries[servers.size() + 1] = ">> Batch Add";
+        CharSequence[] entryValues = new CharSequence[servers.size() + 2];
         entryValues[servers.size()] = ">> Add";
+        entryValues[servers.size() + 1] = ">> Batch Add";
         for (int i = 0; i < servers.size(); i++) {
             GoAgentSettingsActivity.Server server = servers.get(i);
             if (server.appid.equals("")) {
@@ -146,11 +149,60 @@ public class MainSettingsActivity extends PreferenceActivity implements SharedPr
                     startActivity(intent);
                 }
             });
+        } else if (">> Batch Add".equals(value)) {
+            showP2PAgreement(new DialogInterface.OnClickListener() {
+
+                @Override
+                public void onClick(DialogInterface dialog, int which) {
+                    showGoAgentBatchAdd();
+                }
+            });
         } else {
             Intent intent = new Intent(this, GoAgentSettingsActivity.class);
             intent.putExtra("index", Integer.valueOf(value));
             startActivity(intent);
         }
+    }
+
+    private void showGoAgentBatchAdd() {
+        final AlertDialog.Builder alert = new AlertDialog.Builder(this);
+
+        alert.setTitle("Add one a time");
+        alert.setMessage("AppId");
+        final EditText input = new EditText(this);
+        alert.setView(input);
+
+        alert.setPositiveButton("Add more", new DialogInterface.OnClickListener() {
+            public void onClick(DialogInterface dialog, int whichButton) {
+                addGoAgentPrivateServer(input.getText().toString());
+                input.setText("");
+                new android.os.Handler().postDelayed(new Runnable() {
+                    @Override
+                    public void run() {
+                        showGoAgentBatchAdd();
+                    }
+                }, 500);
+            }
+        });
+
+        alert.setNegativeButton("Done", new DialogInterface.OnClickListener() {
+            public void onClick(DialogInterface dialog, int whichButton) {
+                addGoAgentPrivateServer(input.getText().toString());
+            }
+        });
+        alert.show();
+    }
+
+    private void addGoAgentPrivateServer(final String value) {
+        if (value.trim().isEmpty()) {
+            return;
+        }
+        List<GoAgentSettingsActivity.Server> servers = GoAgentSettingsActivity.loadServers();
+        servers.add(new GoAgentSettingsActivity.Server() {{
+            appid = value.trim();
+        }});
+        GoAgentSettingsActivity.saveServers(servers);
+        initGoAgent();
     }
 
     private void onShadowsocksPrivateServerPicked(String value) {

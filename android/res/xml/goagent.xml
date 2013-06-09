@@ -9,12 +9,12 @@
     <EditTextPreference
             android:key="GoAgentPath"
             android:title="Path"
-            android:summary="/2 for default deployment"
+            android:summary="do not need to change"
             android:defaultValue="/2"/>
     <EditTextPreference
             android:key="GoAgentPassword"
             android:title="Password"
-            android:summary="no password for default deployment"
+            android:summary="do not need to change"
             android:defaultValue=""/>
     <Preference
             android:key="GoAgentDelete"
