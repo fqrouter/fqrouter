@@ -13,12 +13,12 @@ RULES = [
     # proxy
     'OUTPUT -t nat -p tcp ! -s 10.1.2.3 -j DNAT --to-destination 10.1.2.3:8319',
     # scrambler
-    # 'INPUT -t filter -p icmp -j NFQUEUE --queue-num 2',
-    # 'INPUT -t filter -p udp --sport 53 --dport 1 -j NFQUEUE --queue-num 2',
-    # 'OUTPUT -t filter -p tcp -m mark --mark 0xbabe -j NFQUEUE --queue-num 2',
-    # 'INPUT -t filter -p tcp --tcp-flags ALL SYN,ACK -j NFQUEUE --queue-num 2',
-    # 'INPUT -t filter -p tcp --tcp-flags ALL RST -j NFQUEUE --queue-num 2',
-    # 'OUTPUT -t filter -p tcp --tcp-flags ALL SYN -j NFQUEUE --queue-num 2'
+    'INPUT -t filter -p icmp -j NFQUEUE --queue-num 2',
+    'INPUT -t filter -p udp --sport 53 --dport 1 -j NFQUEUE --queue-num 2',
+    'OUTPUT -t filter -p tcp -m mark --mark 0xbabe -j NFQUEUE --queue-num 2',
+    'INPUT -t filter -p tcp --tcp-flags ALL SYN,ACK -j NFQUEUE --queue-num 2',
+    'INPUT -t filter -p tcp --tcp-flags ALL RST -j NFQUEUE --queue-num 2',
+    'OUTPUT -t filter -p tcp --tcp-flags ALL SYN -j NFQUEUE --queue-num 2'
 ]
 processes = []
 
