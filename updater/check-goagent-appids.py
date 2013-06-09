@@ -125,11 +125,14 @@ def check_if_all_died():
 
 def setup():
     subprocess.check_call('ifconfig lo:goagent 10.26.1.100 netmask 255.255.255.255', shell=True)
+    subprocess.check_call('ifconfig lo:1 10.1.2.3 netmask 255.255.255.255', shell=True)
     subprocess.check_call('iptables -t nat -I OUTPUT -s 10.26.1.100 -p tcp -j REDIRECT --to-port 1100', shell=True)
+    subprocess.check_call('iptables -t nat -I POSTROUTING -s 10.1.2.3 -j MASQUERADE', shell=True)
 
 
 def teardown():
     subprocess.check_call('iptables -t nat -D OUTPUT -s 10.26.1.100 -p tcp -j REDIRECT --to-port 1100', shell=True)
+    subprocess.check_call('iptables -t nat -D POSTROUTING -s 10.1.2.3 -j MASQUERADE', shell=True)
 
 
 def main():
