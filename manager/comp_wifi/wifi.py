@@ -219,8 +219,8 @@ def dump_unix_sockets():
 
 def get_working_hotspot_iface():
     hotspot_iface = get_p2p_persistent_iface() or \
-           get_working_hotspot_iface_using_nl80211() or \
-           get_working_hotspot_iface_using_wext()
+                    get_working_hotspot_iface_using_nl80211() or \
+                    get_working_hotspot_iface_using_wext()
     if WIFI_INTERFACE == hotspot_iface:
         return None
     else:
@@ -649,6 +649,8 @@ def do_p2p_group_add(iface, control_socket_dir, index, frequency):
 
 
 def restart_service(name):
+    was_running = is_process_exists(name)
+    LOGGER.info('%s was running: %s' % (name, was_running))
     try:
         shell_execute('stop %s' % name)
     except:
@@ -658,6 +660,21 @@ def restart_service(name):
     except:
         LOGGER.exception('failed to start %s' % name)
     gevent.sleep(1)
+    if was_running:
+        for i in range(5):
+            if is_process_exists(name):
+                LOGGER.info('%s is back' % name)
+                return
+            gevent.sleep(1)
+        LOGGER.info('%s is not back in time' % name)
+
+
+def is_process_exists(name):
+    try:
+        shell_execute('%s -0 %s' % (KILLALL_PATH, name))
+        return True
+    except:
+        return False
 
 
 def set_driver_param(control_socket_dir, iface, param):
