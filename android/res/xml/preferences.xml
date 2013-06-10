@@ -14,8 +14,8 @@
     </PreferenceCategory>
     <PreferenceCategory android:title="GoAgent">
         <CheckBoxPreference
-                android:key="IsGoAgentPublicServersEnabled"
-                android:title="Public Servers Enabled"
+                android:key="GoAgentPublicServersEnabled"
+                android:title="Public Servers"
                 android:summary="goagent appids shared by others, especially thanks the gfanqiang project"
                 android:defaultValue="true"/>
         <ListPreference
@@ -26,8 +26,8 @@
     </PreferenceCategory>
     <PreferenceCategory android:title="Shadowsocks">
         <CheckBoxPreference
-                android:key="IsShadowsocksPublicServersEnabled"
-                android:title="Public Servers Enabled"
+                android:key="ShadowsocksPublicServersEnabled"
+                android:title="Public Servers"
                 android:summary="shadowsocks servers shared by others"
                 android:defaultValue="true"/>
         <ListPreference
@@ -36,17 +36,24 @@
                 android:summary="shadowsocks servers deployed by yourself"
                 android:defaultValue=""/>
     </PreferenceCategory>
-    <PreferenceCategory android:title="Scrambler" android:key="Scrambler">
+    <PreferenceCategory
+            android:title="Bypass GFW" android:key="Bypass"
+            android:summary="scramble the traffic so that GFW can let us go, without using a proxy server">
         <CheckBoxPreference
-                android:key="IsScramblerEnabled"
-                android:title="Scrambler Enabled"
-                android:summary="bypass GFW directly without proxy server"
+                android:key="YoutubeScramblerEnabled"
+                android:title="Youtube Scrambler"
+                android:summary="scramble at HTTP level"
+                android:defaultValue="true"/>
+        <CheckBoxPreference
+                android:key="TcpScramblerEnabled"
+                android:title="TCP Scrambler"
+                android:summary="scramble at TCP level"
                 android:defaultValue="true"/>
     </PreferenceCategory>
     <PreferenceCategory android:title="General">
         <CheckBoxPreference
-                android:key="IsAutoUpdateEnabled"
-                android:title="Auto Update Enabled"
+                android:key="AutoUpdateEnabled"
+                android:title="Auto Update"
                 android:summary="check update automatically"
                 android:defaultValue="true"/>
     </PreferenceCategory>

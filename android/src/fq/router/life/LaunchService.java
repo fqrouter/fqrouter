@@ -217,11 +217,12 @@ public class LaunchService extends IntentService {
             JSONObject configJson = new JSONObject();
             configJson.put("wifi_hotspot_ssid", preferences.getString("WifiHotspotSSID", "fqrouter"));
             configJson.put("wifi_hotspot_password", preferences.getString("WifiHotspotPassword", "p@55word"));
-            configJson.put("scrambler_enabled", preferences.getBoolean("IsScramblerEnabled", true));
+            configJson.put("tcp_scrambler_enabled", preferences.getBoolean("TcpScramblerEnabled", true));
+            configJson.put("youtube_scrambler_enabled", preferences.getBoolean("YoutubeScramblerEnabled", true));
             configJson.put("goagent_public_servers_enabled",
-                    preferences.getBoolean("IsGoAgentPublicServersEnabled", true));
+                    preferences.getBoolean("GoAgentPublicServersEnabled", true));
             configJson.put("shadowsocks_public_servers_enabled",
-                    preferences.getBoolean("IsShadowsocksPublicServersEnabled", true));
+                    preferences.getBoolean("ShadowsocksPublicServersEnabled", true));
             IOUtils.writeToFile(FQROUTER_CONFIG_FILE, configJson.toString());
         } catch (Exception e) {
             LogUtils.e("failed to update config file", e);

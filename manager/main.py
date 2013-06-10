@@ -41,7 +41,7 @@ def handle_ping(environ, start_response):
 def run():
     skipped_components = []
     LOGGER.info('environment: %s' % os.environ.items())
-    if not config.read()['scrambler_enabled']:
+    if not config.read()['tcp_scrambler_enabled']:
         LOGGER.info('scrambler component disabled by config')
         COMPONENTS.remove(comp_scrambler)
     for comp in COMPONENTS:

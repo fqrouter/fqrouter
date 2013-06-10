@@ -257,8 +257,8 @@ public class MainActivity extends Activity implements
 
     private void checkUpdate() {
         SharedPreferences preferences = PreferenceManager.getDefaultSharedPreferences(this);
-        boolean isAutoUpdateEnabled = preferences.getBoolean("IsAutoUpdateEnabled", true);
-        if (isAutoUpdateEnabled && upgradeUrl == null) {
+        boolean AutoUpdateEnabled = preferences.getBoolean("AutoUpdateEnabled", true);
+        if (AutoUpdateEnabled && upgradeUrl == null) {
             CheckUpdateService.execute(this);
         }
     }

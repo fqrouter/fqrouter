@@ -62,6 +62,8 @@ def start_fqsocks():
         '--proxy', 'dynamic,n=20,dns_record=proxy#n#.fqrouter.com,is_public=True,priority=4',
         '--proxy', 'dynamic,n=5,dns_record=proxy2#n#.fqrouter.com,priority=2',
         '--google-host', 'goagent-google-ip.fqrouter.com']
+    if config.read().get('youtube_scrambler_enabled', True):
+        args += ['--enable-youtube-scrambler']
     if config.read().get('goagent_public_servers_enabled', True):
         args += ['--proxy', 'dynamic,n=10,type=goagent,dns_record=goagent#n#.fqrouter.com,priority=1']
     for server in config.list_goagent_private_servers():

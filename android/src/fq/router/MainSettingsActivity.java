@@ -5,10 +5,7 @@ import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.os.Bundle;
-import android.preference.ListPreference;
-import android.preference.Preference;
-import android.preference.PreferenceActivity;
-import android.preference.PreferenceManager;
+import android.preference.*;
 import android.widget.EditText;
 import android.widget.Toast;
 import fq.router.life.LaunchService;
@@ -60,7 +57,8 @@ public class MainSettingsActivity extends PreferenceActivity implements SharedPr
                 });
         if (!ShellUtils.isRooted()) {
             getPreferenceScreen().removePreference(findPreference("WifiHotspot"));
-            getPreferenceScreen().removePreference(findPreference("Scrambler"));
+            PreferenceCategory bypassCategoryPref = (PreferenceCategory) findPreference("Bypass");
+            bypassCategoryPref.removePreference(bypassCategoryPref.findPreference("TcpScramblerEnabled"));
         }
     }
 
