@@ -632,7 +632,15 @@ def start_p2p_persistent_network(iface, control_socket_dir, ssid, password, sets
     do_p2p_group_add(iface, control_socket_dir, index, frequency)
     if get_working_hotspot_iface():
         return index
+    gevent.sleep(3)
+    do_p2p_group_add(iface, control_socket_dir, index, frequency)
+    if get_working_hotspot_iface():
+        return index
     LOGGER.error('restart wpa_supplicant to fix unexpected GO creation')
+    do_p2p_group_add(iface, control_socket_dir, index, frequency)
+    if get_working_hotspot_iface():
+        return index
+    gevent.sleep(3)
     do_p2p_group_add(iface, control_socket_dir, index, frequency)
     if get_working_hotspot_iface():
         return index
@@ -660,13 +668,6 @@ def restart_service(name):
     except:
         LOGGER.exception('failed to start %s' % name)
     gevent.sleep(1)
-    if was_running:
-        for i in range(5):
-            if is_process_exists(name):
-                LOGGER.info('%s is back' % name)
-                return
-            gevent.sleep(1)
-        LOGGER.info('%s is not back in time' % name)
 
 
 def is_process_exists(name):
