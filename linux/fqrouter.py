@@ -47,14 +47,14 @@ def setup():
         '--listen 10.1.2.3:8319 '
         # '--log-level DEBUG '
         '--http-request-mark 0xbabe '
-        '--proxy dynamic,n=4,type=ss,dns_record=ss#n#.fqrouter.com '
-        '--proxy dynamic,n=20,dns_record=proxy#n#.fqrouter.com '
-        '--proxy dynamic,n=5,dns_record=proxy2#n#.fqrouter.com,is_public=False '
-        '--proxy dynamic,n=10,type=goagent,dns_record=goagent#n#.fqrouter.com '
-        '--google-host goagent-google-ip.fqrouter.com ',
-        # '--disable-access-check',
+        '--proxy dynamic,n=4,type=ss,dns_record=ss#n#.fqrouter.com,priority=3 '
+        '--proxy dynamic,n=20,dns_record=proxy#n#.fqrouter.com,is_public=True,priority=4 '
+        '--proxy dynamic,n=5,dns_record=proxy2#n#.fqrouter.com,priority=2 '
+        '--proxy dynamic,n=10,type=goagent,dns_record=goagent#n#.fqrouter.com,priority=1 '
+        '--google-host goagent-google-ip.fqrouter.com '
+        '--disable-access-check',
         shell=True))
-    processes.append(subprocess.Popen('python -m fqting --queue-number 2 --mark 0xcafe', shell=True))
+    processes.append(subprocess.Popen('python -m fqting --queue-number 2 --mark 0xcafe --log-level DEBUG', shell=True))
 
 
 def teardown():

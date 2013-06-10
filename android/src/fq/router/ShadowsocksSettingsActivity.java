@@ -49,7 +49,9 @@ public class ShadowsocksSettingsActivity extends PreferenceActivity implements S
         ((EditTextPreference) findPreference("ShadowsocksPassword")).setText(server.password);
         ListPreference encryptionMethodPref = (ListPreference) findPreference("ShadowsocksEncryptionMethod");
         CharSequence[] encryptionMethods = new CharSequence[]{
-                "table", "rc4", "bf-cfb", "aes-256-cfb", "des-cfb", "aes-128-cfb"};
+                "table", "rc4", "aes-128-cfb", "aes-192-cfb", "aes-256-cfb", "bf-cfb",
+                "camellia-128-cfb", "camellia-192-cfb", "camellia-256-cfb", "cast5-cfb",
+                "des-cfb", "idea-cfb", "rc2-cfb", "seed-cfb"};
         encryptionMethodPref.setEntryValues(encryptionMethods);
         encryptionMethodPref.setEntries(encryptionMethods);
         encryptionMethodPref.setValue(server.encryption_method);
