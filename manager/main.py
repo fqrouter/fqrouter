@@ -17,7 +17,8 @@ import comp_proxy
 import comp_shortcut
 import comp_lan
 import comp_version
-
+import subprocess
+import shlex
 
 ROOT_DIR = os.path.dirname(__file__)
 LOG_DIR = '/data/data/fq.router/log'
@@ -64,11 +65,26 @@ def run():
 
 def clean():
     LOGGER.info('clean...')
-    for comp in reversed(COMPONENTS):
+    try:
+        for comp in reversed(COMPONENTS):
+            try:
+                comp.stop()
+            except:
+                LOGGER.exception('failed to clean: %s' % comp.__name__)
         try:
-            comp.stop()
-        except:
-            LOGGER.exception('failed to clean: %s' % comp.__name__)
+            LOGGER.info('iptables -L -v -n')
+            LOGGER.info(subprocess.check_output(shlex.split('iptables -L -v -n'), stderr=subprocess.STDOUT))
+        except subprocess.CalledProcessError, e:
+            LOGGER.error('failed to dump filter table: %s' % (sys.exc_info()[1]))
+            LOGGER.error(e.output)
+        try:
+            LOGGER.info('iptables -t nat -L -v -n')
+            LOGGER.info(subprocess.check_output(shlex.split('iptables -t nat -L -v -n'), stderr=subprocess.STDOUT))
+        except subprocess.CalledProcessError, e:
+            LOGGER.error('failed to dump nat table: %s' % (sys.exc_info()[1]))
+            LOGGER.error(e.output)
+    except:
+        LOGGER.exception('clean failed')
 
 
 def setup_logging():
