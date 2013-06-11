@@ -214,9 +214,7 @@ if '__main__' == __name__:
     args = [
         '--log-level', 'INFO',
         '--log-file', '/data/data/fq.router/log/fqsocks.log',
-        '--listen', '10.25.1.1:12345',
-        '--proxy', 'dynamic,n=20,dns_record=proxy#n#.fqrouter.com,is_public=True,priority=4',
-        '--proxy', 'dynamic,n=5,dns_record=proxy2#n#.fqrouter.com,priority=2']
+        '--listen', '10.25.1.1:12345']
     args = comp_proxy.configure(args)
     greenlets.append(gevent.spawn(fqsocks.fqsocks.main, args))
     for greenlet in greenlets:

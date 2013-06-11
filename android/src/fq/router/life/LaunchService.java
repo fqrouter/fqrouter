@@ -223,6 +223,8 @@ public class LaunchService extends IntentService {
                     preferences.getBoolean("GoAgentPublicServersEnabled", true));
             configJson.put("shadowsocks_public_servers_enabled",
                     preferences.getBoolean("ShadowsocksPublicServersEnabled", true));
+            configJson.put("http_proxy_public_servers_enabled",
+                    preferences.getBoolean("HttpProxyPublicServersEnabled", true));
             IOUtils.writeToFile(FQROUTER_CONFIG_FILE, configJson.toString());
         } catch (Exception e) {
             LogUtils.e("failed to update config file", e);
