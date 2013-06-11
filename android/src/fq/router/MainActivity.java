@@ -7,6 +7,7 @@ import android.content.SharedPreferences;
 import android.net.Uri;
 import android.net.VpnService;
 import android.net.wifi.WifiManager;
+import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
 import android.preference.PreferenceManager;
@@ -249,7 +250,7 @@ public class MainActivity extends Activity implements
     public void onLaunched(boolean isVpnMode) {
         started = true;
         checkUpdate();
-        if (!isVpnMode) {
+        if (!isVpnMode && Build.VERSION.SDK_INT >= 14) {
             CheckWifiHotspotService.execute(this);
         }
         ActivityCompat.invalidateOptionsMenu(this);
