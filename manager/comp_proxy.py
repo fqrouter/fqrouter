@@ -60,8 +60,12 @@ def start_fqsocks():
         '--listen', '10.1.2.3:8319',
         '--http-request-mark', '0xbabe', # trigger scrambler
         '--proxy', 'dynamic,n=20,dns_record=proxy#n#.fqrouter.com,is_public=True,priority=4',
-        '--proxy', 'dynamic,n=5,dns_record=proxy2#n#.fqrouter.com,priority=2',
-        '--google-host', 'goagent-google-ip.fqrouter.com']
+        '--proxy', 'dynamic,n=5,dns_record=proxy2#n#.fqrouter.com,priority=2']
+    args = configure(args)
+    fqsocks_process = shell.launch_python('fqsocks', args, on_exit=stop)
+
+def configure(args):
+    args += ['--google-host', 'goagent-google-ip.fqrouter.com']
     if config.read().get('youtube_scrambler_enabled', True):
         args += ['--enable-youtube-scrambler']
     if config.read().get('goagent_public_servers_enabled', True):
@@ -75,4 +79,4 @@ def start_fqsocks():
         proxy_config = 'ss,proxy_ip=%s,proxy_port=%s,password=%s,encrypt_method=%s' % (
             server['host'], server['port'], server['password'], server['encryption_method'])
         args += ['--proxy', proxy_config]
-    fqsocks_process = shell.launch_python('fqsocks', args, on_exit=stop)
+    return args
