@@ -632,15 +632,7 @@ def start_p2p_persistent_network(iface, control_socket_dir, ssid, password, sets
     do_p2p_group_add(iface, control_socket_dir, index, frequency)
     if get_working_hotspot_iface():
         return index
-    gevent.sleep(3)
-    do_p2p_group_add(iface, control_socket_dir, index, frequency)
-    if get_working_hotspot_iface():
-        return index
     LOGGER.error('restart wpa_supplicant to fix unexpected GO creation')
-    do_p2p_group_add(iface, control_socket_dir, index, frequency)
-    if get_working_hotspot_iface():
-        return index
-    gevent.sleep(3)
     do_p2p_group_add(iface, control_socket_dir, index, frequency)
     if get_working_hotspot_iface():
         return index

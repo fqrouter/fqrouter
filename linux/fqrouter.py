@@ -51,8 +51,8 @@ def setup():
         '--proxy dynamic,n=20,dns_record=proxy#n#.fqrouter.com,is_public=True,priority=4 '
         '--proxy dynamic,n=5,dns_record=proxy2#n#.fqrouter.com,priority=2 '
         '--proxy dynamic,n=10,type=goagent,dns_record=goagent#n#.fqrouter.com,priority=1 '
-        '--google-host goagent-google-ip.fqrouter.com '
         '--enable-youtube-scrambler '
+        '--google-host goagent-google-ip.fqrouter.com '
         '--disable-access-check',
         shell=True))
     processes.append(subprocess.Popen('python -m fqting --queue-number 2 --mark 0xcafe --log-level DEBUG', shell=True))

@@ -38,6 +38,8 @@
         </activity>
         <activity android:name=".ShadowsocksSettingsActivity">
         </activity>
+        <activity android:name=".HttpProxySettingsActivity">
+        </activity>
         <service android:name=".life.LaunchService">
         </service>
         <service android:name=".life.ExitService">

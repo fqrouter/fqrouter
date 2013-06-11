@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android">
+    <EditTextPreference
+            android:key="HttpProxyHost"
+            android:title="Host"
+            android:summary="ip or domain name"/>
+    <EditTextPreference
+            android:key="HttpProxyPort"
+            android:title="Port"/>
+    <EditTextPreference
+            android:key="HttpProxyUsername"
+            android:title="Username"/>
+    <EditTextPreference
+            android:key="HttpProxyPassword"
+            android:title="Password"/>
+    <ListPreference
+            android:key="HttpProxyTrafficType"
+            android:title="Traffic Type"
+            android:summary="use the proxy for http or https or both"/>
+    <ListPreference
+            android:key="HttpProxyTransportType"
+            android:title="Transport Type"
+            android:summary="the connection to proxy server is secured or not"/>
+    <Preference
+            android:key="HttpProxyDelete"
+            android:title=">> Delete"
+            android:defaultValue=""/>
+</PreferenceScreen>
