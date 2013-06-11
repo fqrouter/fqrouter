@@ -1,7 +1,6 @@
 adb push main.py /sdcard/manager/main.py
 adb push comp_dns.py /sdcard/manager/comp_dns.py
 adb push comp_lan.py /sdcard/manager/comp_lan.py
-adb push comp_version.py /sdcard/manager/comp_version.py
 adb push comp_proxy.py /sdcard/manager/comp_proxy.py
 adb push comp_shortcut.py /sdcard/manager/comp_shortcut.py
 adb push comp_scrambler.py /sdcard/manager/comp_scrambler.py

@@ -14,7 +14,6 @@ import gevent
 import gevent.monkey
 import gevent.socket
 import dpkt
-import comp_version
 import comp_proxy
 
 from utils import httpd
@@ -203,7 +202,6 @@ if '__main__' == __name__:
     setup_logging()
     LOGGER.info('environment: %s' % os.environ.items())
     httpd.HANDLERS[('GET', 'ping')] = handle_ping
-    httpd.HANDLERS[('GET', 'version/latest')] = comp_version.handle_latest
     greenlets = [gevent.spawn(httpd.serve_forever)]
     try:
         tun_fd = read_tun_fd()

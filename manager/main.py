@@ -16,7 +16,6 @@ import comp_scrambler
 import comp_proxy
 import comp_shortcut
 import comp_lan
-import comp_version
 import subprocess
 import shlex
 
@@ -26,7 +25,7 @@ MANAGER_LOG_FILE = os.path.join(LOG_DIR, 'manager.log')
 WIFI_LOG_FILE = os.path.join(LOG_DIR, 'wifi.log')
 
 LOGGER = logging.getLogger('fqrouter.%s' % __name__)
-COMPONENTS = [comp_wifi, comp_dns, comp_scrambler, comp_proxy, comp_lan, comp_shortcut, comp_version]
+COMPONENTS = [comp_wifi, comp_dns, comp_scrambler, comp_proxy, comp_lan, comp_shortcut]
 
 
 def handle_ping(environ, start_response):
