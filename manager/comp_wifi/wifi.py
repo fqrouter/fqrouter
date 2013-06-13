@@ -639,7 +639,6 @@ def start_p2p_persistent_network(iface, control_socket_dir, ssid, password, sets
         restart_service('p2p_supplicant')
         restart_service('wpa_supplicant')
         do_p2p_group_add('p2p0', get_p2p_supplicant_control_socket_dir(), index, frequency)
-        gevent.sleep(2)
     finally:
         enable_wifi_p2p_service()
     return index
@@ -698,7 +697,7 @@ def restart_service(name):
     except:
         LOGGER.exception('failed to start %s' % name)
     if was_running:
-        gevent.sleep(2)
+        gevent.sleep(1)
 
 
 def is_process_exists(name):
