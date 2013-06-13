@@ -268,66 +268,40 @@ def list_wifi_ifaces():
 
 
 def start_hotspot_interface(wifi_chipset_family, ssid, password):
-    disable_wifi_p2p_service()
-    restart_service('p2p_supplicant')
     try:
-        if 'bcm' == wifi_chipset_family:
-            start_hotspot_on_bcm(ssid, password)
-        elif 'wcnss' == wifi_chipset_family:
-            start_hotspot_on_wcnss(ssid, password)
-        elif 'ti' == wifi_chipset_family:
-            start_hotspot_on_ti(ssid, password)
-        elif 'mtk' == wifi_chipset_family:
-            start_hotspot_on_mtk(ssid, password)
-        else:
-            raise Exception('wifi chipset family %s is not supported: %s' % wifi_chipset_family)
-        hotspot_interface = get_working_hotspot_iface()
-        if not hotspot_interface:
-            try:
-                shell_execute('logcat -d -v time -s wpa_supplicant:V')
-            except:
-                LOGGER.exception('failed to log wpa_supplicant')
-            try:
-                shell_execute('logcat -d -v time -s p2p_supplicant:V')
-            except:
-                LOGGER.exception('failed to log p2p_supplicant')
-            try:
-                shell_execute('logcat -d -v time -s WifiP2pService:V')
-            except:
-                LOGGER.exception('failed to log WifiP2pService')
-            raise Exception('working hotspot iface not found after start')
-        return hotspot_interface
-    finally:
-        enable_wifi_p2p_service()
-
-
-def disable_wifi_p2p_service():
-    try:
-        if not os.path.exists(P2P_SUPPLICANT_CONF_PATH):
-            return
-        with open(P2P_SUPPLICANT_CONF_PATH) as f:
-            conf = f.read()
-        if '-fqrouter-p2p' in conf:
-            return
-        control_socket_dir = get_p2p_supplicant_control_socket_dir()
-        conf = conf.replace(control_socket_dir, '%s-fqrouter-p2p' % control_socket_dir)
-        with open(P2P_SUPPLICANT_CONF_PATH, 'w') as f:
-            f.write(conf)
+        shell_execute('start wpa_supplicant')
     except:
-        LOGGER.exception('failed to disable wifi p2p service')
-
-
-def enable_wifi_p2p_service():
+        LOGGER.exception('failed to start wpa_supplicant')
     try:
-        if not os.path.exists(P2P_SUPPLICANT_CONF_PATH):
-            return
-        with open(P2P_SUPPLICANT_CONF_PATH) as f:
-            conf = f.read()
-        conf = conf.replace('-fqrouter-p2p', '')
-        with open(P2P_SUPPLICANT_CONF_PATH, 'w') as f:
-            f.write(conf)
+        shell_execute('start p2p_supplicant')
     except:
-        LOGGER.exception('failed to enable wifi p2p service')
+        LOGGER.exception('failed to start p2p_supplicant')
+    if 'bcm' == wifi_chipset_family:
+        start_hotspot_on_bcm(ssid, password)
+    elif 'wcnss' == wifi_chipset_family:
+        start_hotspot_on_wcnss(ssid, password)
+    elif 'ti' == wifi_chipset_family:
+        start_hotspot_on_ti(ssid, password)
+    elif 'mtk' == wifi_chipset_family:
+        start_hotspot_on_mtk(ssid, password)
+    else:
+        raise Exception('wifi chipset family %s is not supported: %s' % wifi_chipset_family)
+    hotspot_interface = get_working_hotspot_iface()
+    if not hotspot_interface:
+        try:
+            shell_execute('logcat -d -v time -s wpa_supplicant:V')
+        except:
+            LOGGER.exception('failed to log wpa_supplicant')
+        try:
+            shell_execute('logcat -d -v time -s p2p_supplicant:V')
+        except:
+            LOGGER.exception('failed to log p2p_supplicant')
+        try:
+            shell_execute('logcat -d -v time -s WifiP2pService:V')
+        except:
+            LOGGER.exception('failed to log WifiP2pService')
+        raise Exception('working hotspot iface not found after start')
+    return hotspot_interface
 
 
 def wait_for_upstream_wifi_network_connected():
@@ -657,25 +631,59 @@ def start_p2p_persistent_network(iface, control_socket_dir, ssid, password, sets
     gevent.sleep(2)
     if get_working_hotspot_iface():
         return index
+    if 'p2p0' != iface:
+        return index
     LOGGER.error('restart p2p_supplicant to fix unexpected GO creation')
-    restart_service('p2p_supplicant')
-    do_p2p_group_add(iface, control_socket_dir, index, frequency)
-    if get_working_hotspot_iface():
-        return index
-    LOGGER.error('restart wpa_supplicant to fix unexpected GO creation')
-    do_p2p_group_add(iface, control_socket_dir, index, frequency)
-    if get_working_hotspot_iface():
-        return index
-    LOGGER.error('restart *_supplicant did not fix the problem')
+    try:
+        disable_wifi_p2p_service()
+        restart_service('p2p_supplicant')
+        restart_service('wpa_supplicant')
+        do_p2p_group_add('p2p0', get_p2p_supplicant_control_socket_dir(), index, frequency)
+        gevent.sleep(2)
+    finally:
+        enable_wifi_p2p_service()
     return index
 
 
 def do_p2p_group_add(iface, control_socket_dir, index, frequency):
-    if frequency:
-        shell_execute('%s -p %s -i %s p2p_group_add persistent=%s freq=%s ' %
-                      (P2P_CLI_PATH, control_socket_dir, iface, index, frequency.replace('.', '')))
-    else:
-        shell_execute('%s -p %s -i %s p2p_group_add persistent=%s' % (P2P_CLI_PATH, control_socket_dir, iface, index))
+    try:
+        if frequency:
+            shell_execute('%s -p %s -i %s p2p_group_add persistent=%s freq=%s ' %
+                          (P2P_CLI_PATH, control_socket_dir, iface, index, frequency.replace('.', '')))
+        else:
+            shell_execute('%s -p %s -i %s p2p_group_add persistent=%s' %
+                          (P2P_CLI_PATH, control_socket_dir, iface, index))
+    except:
+        LOGGER.exception('failed to add p2p group')
+
+
+def disable_wifi_p2p_service():
+    try:
+        if not os.path.exists(P2P_SUPPLICANT_CONF_PATH):
+            return
+        with open(P2P_SUPPLICANT_CONF_PATH) as f:
+            conf = f.read()
+        if '-fqrouter-p2p' in conf:
+            return
+        control_socket_dir = get_p2p_supplicant_control_socket_dir()
+        conf = conf.replace(control_socket_dir, '%s-fqrouter-p2p' % control_socket_dir)
+        with open(P2P_SUPPLICANT_CONF_PATH, 'w') as f:
+            f.write(conf)
+    except:
+        LOGGER.exception('failed to disable wifi p2p service')
+
+
+def enable_wifi_p2p_service():
+    try:
+        if not os.path.exists(P2P_SUPPLICANT_CONF_PATH):
+            return
+        with open(P2P_SUPPLICANT_CONF_PATH) as f:
+            conf = f.read()
+        conf = conf.replace('-fqrouter-p2p', '')
+        with open(P2P_SUPPLICANT_CONF_PATH, 'w') as f:
+            f.write(conf)
+    except:
+        LOGGER.exception('failed to enable wifi p2p service')
 
 
 def restart_service(name):
