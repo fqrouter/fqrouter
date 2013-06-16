@@ -269,10 +269,6 @@ def list_wifi_ifaces():
 
 def start_hotspot_interface(wifi_chipset_family, ssid, password):
     try:
-        shell_execute('start wpa_supplicant')
-    except:
-        LOGGER.exception('failed to start wpa_supplicant')
-    try:
         shell_execute('start p2p_supplicant')
     except:
         LOGGER.exception('failed to start p2p_supplicant')
@@ -637,7 +633,6 @@ def start_p2p_persistent_network(iface, control_socket_dir, ssid, password, sets
     try:
         disable_wifi_p2p_service()
         restart_service('p2p_supplicant')
-        restart_service('wpa_supplicant')
         do_p2p_group_add('p2p0', get_p2p_supplicant_control_socket_dir(), index, frequency)
     finally:
         enable_wifi_p2p_service()

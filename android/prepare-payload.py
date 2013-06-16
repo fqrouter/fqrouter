@@ -19,9 +19,6 @@ DPKT_DIR = os.path.join(PAYLOAD_DIR, 'dpkt-fqrouter')
 DPKT_PACKAGE_DIR = os.path.join(DPKT_DIR, 'dpkt')
 BUSYBOX_FILE = os.path.join(ASSETS_DIR, 'busybox')
 PROXY_TOOLS_DIR = os.path.join(PAYLOAD_DIR, 'proxy-tools')
-GREENLET_FILE = os.path.join(PAYLOAD_DIR, 'python', 'lib', 'python2.7', 'lib-dynload', 'greenlet.so')
-GEVENT_ZIP_FILE = os.path.join(PAYLOAD_DIR, 'gevent.zip')
-GEVENT_DIR = os.path.join(PAYLOAD_DIR, 'gevent')
 FQDNS_PY = os.path.join(PAYLOAD_DIR, 'python', 'lib', 'python2.7', 'site-packages', 'fqdns.py')
 FQDNS_PY_SRC = os.path.join(os.path.dirname(__file__), '..', '..', 'fqdns', 'fqdns.py')
 FQTING_PY = os.path.join(PAYLOAD_DIR, 'python', 'lib', 'python2.7', 'site-packages', 'fqting.py')
@@ -49,9 +46,6 @@ def main():
     download_dpkt()
     untargz_dpkt()
     download_busybox()
-    download_greenlet()
-    download_gevent()
-    unzip_gevent()
     copy_fqdns()
     copy_fqting()
     copy_fqlan()
@@ -69,7 +63,8 @@ def download_python27():
 def unzip_python27():
     if os.path.exists(PYTHON_DIR):
         return
-    subprocess.check_call('unzip %s' % PYTHON_ZIP_FILE, cwd=PAYLOAD_DIR, shell=True)
+    os.mkdir(PYTHON_DIR)
+    subprocess.check_call('unzip %s' % PYTHON_ZIP_FILE, cwd=PYTHON_DIR, shell=True)
     if not os.path.exists(os.path.join(PYTHON_DIR, 'bin/python')):
         print('zip file not as expected')
         sys.exit(1)
@@ -106,31 +101,6 @@ def download_busybox():
     if os.path.exists(BUSYBOX_FILE):
         return
     urllib.urlretrieve('http://www.busybox.net/downloads/binaries/latest/busybox-armv6l', BUSYBOX_FILE)
-
-
-def download_greenlet():
-    # thanks @ofmax (madeye)
-    # source https://github.com/madeye/gaeproxy/blob/master/assets/modules/python.mp3
-    if os.path.exists(GREENLET_FILE):
-        return
-    urllib.urlretrieve('http://cdn.fqrouter.com/android-utils/greenlet.so', GREENLET_FILE)
-
-
-def download_gevent():
-    # thanks @ofmax (madeye)
-    # source https://github.com/madeye/gaeproxy/blob/master/assets/modules/python.mp3
-    if os.path.exists(GEVENT_ZIP_FILE):
-        return
-    urllib.urlretrieve('http://cdn.fqrouter.com/android-utils/gevent.zip', GEVENT_ZIP_FILE)
-
-
-def unzip_gevent():
-    if os.path.exists(GEVENT_DIR):
-        return
-    subprocess.check_call('unzip %s' % GEVENT_ZIP_FILE, cwd=PAYLOAD_DIR, shell=True)
-    if not os.path.exists(os.path.join(GEVENT_DIR, 'greenlet.pyc')):
-        print('zip file not as expected')
-        sys.exit(1)
 
 
 def copy_fqdns():
@@ -174,8 +144,6 @@ def zip_payload():
     include_directory(WIFI_TOOLS_DIR, PAYLOAD_DIR)
     include_directory(PROXY_TOOLS_DIR, PAYLOAD_DIR)
     include_directory(MANAGER_DIR, os.path.dirname(MANAGER_DIR))
-    include_directory(GEVENT_DIR, PAYLOAD_DIR,
-                      'python/lib/python2.7/site-packages')
     include_directory(DPKT_PACKAGE_DIR, DPKT_DIR, 'python/lib/python2.7/site-packages')
 
     payload_zip.close()
