@@ -485,7 +485,17 @@ def start_hotspot_on_ti(ssid, password):
         shell_execute(
             '%s %s interface add ap0 type managed' % (IW_PATH, WIFI_INTERFACE))
     assert 'ap0' in list_wifi_ifaces()
-    shell_execute('netcfg ap0 up')
+    shell_execute('netcfg')
+    try:
+        shell_execute('netcfg ap0 up')
+    except:
+        LOGGER.exception('failed to start ap0')
+        try:
+            shell_execute('netcfg wlan0 down')
+            shell_execute('netcfg ap0 up')
+            shell_execute('netcfg wlan0 up')
+        except:
+            LOGGER.exception('failed to start ap0 after stop wlan0')
     with open(FQROUTER_HOSTAPD_CONF_PATH, 'w') as f:
         frequency, channel = get_upstream_frequency_and_channel()
         f.write(hostapd_template.render(WIFI_INTERFACE, channel=channel or 1, ssid=ssid, password=password))
