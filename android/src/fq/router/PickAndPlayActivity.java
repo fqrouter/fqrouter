@@ -36,16 +36,16 @@ public class PickAndPlayActivity extends ListActivity {
         devices.clear();
         arrayAdapter = new ArrayAdapter(this, android.R.layout.simple_list_item_multiple_choice, devices);
         setListAdapter(arrayAdapter);
-        scan();
+        scan(1);
     }
 
-    private void scan() {
+    private void scan(final int factor) {
         new Thread(new Runnable() {
             @Override
             public void run() {
                 try {
                     updateStatus("scanning...");
-                    HttpUtils.get("http://127.0.0.1:8318/lan/scan", new IOUtils.LineRead() {
+                    HttpUtils.get("http://127.0.0.1:8318/lan/scan?factor=" + factor, new IOUtils.LineRead() {
                         @Override
                         public void onLineRead(String line) {
                             try {
@@ -93,7 +93,7 @@ public class PickAndPlayActivity extends ListActivity {
         if (ITEM_ID_RESCAN == item.getItemId()) {
             devices.clear();
             arrayAdapter.notifyDataSetChanged();
-            scan();
+            scan(2);
         }
         return super.onMenuItemSelected(featureId, item);
     }

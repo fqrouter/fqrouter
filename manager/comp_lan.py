@@ -66,7 +66,7 @@ def handle_scan(environ, start_response):
              '--lan-interface', comp_wifi.WIFI_INTERFACE,
              '--ifconfig-command', '/data/data/fq.router/busybox',
              '--ip-command', '/data/data/fq.router/busybox',
-             'scan', '--hostname', '--mark', '0xcafe'],
+             'scan', '--hostname', '--mark', '0xcafe', '--factor', environ['REQUEST_ARGUMENTS']['factor'].value],
             stdout=subprocess.PIPE, stderr=subprocess.PIPE)
         _, output = scan_process.communicate()
     except:
