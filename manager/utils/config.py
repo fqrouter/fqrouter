@@ -25,8 +25,18 @@ def list_shadowsocks_private_servers():
         config_json = f.read()
     return json.loads(config_json)
 
+
 def list_http_proxy_private_servers():
     path = '/data/data/fq.router/etc/http-proxy.json'
+    if not os.path.exists(path):
+        return []
+    with open(path) as f:
+        config_json = f.read()
+    return json.loads(config_json)
+
+
+def list_ssh_private_servers():
+    path = '/data/data/fq.router/etc/ssh.json'
     if not os.path.exists(path):
         return []
     with open(path) as f:

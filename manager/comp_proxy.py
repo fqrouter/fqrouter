@@ -93,4 +93,9 @@ def configure(args):
         else:
             args += ['--proxy', 'http-relay,%s' % proxy_config]
             args += ['--proxy', 'http-connect,%s' % proxy_config]
+    for server in config.list_ssh_private_servers():
+        proxy_config = 'proxy_ip=%s,proxy_port=%s,username=%s,password=%s' % \
+                       (server['host'], server['port'], server['username'], server['password'])
+        for i in range(server['connections_count']):
+            args += ['--proxy', 'ssh,%s' % proxy_config]
     return args
