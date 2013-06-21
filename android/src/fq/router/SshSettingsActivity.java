@@ -52,6 +52,7 @@ public class SshSettingsActivity extends PreferenceActivity implements SharedPre
         ((EditTextPreference) findPreference("SshUsername")).setText(server.username);
         ((EditTextPreference) findPreference("SshPassword")).setText(server.password);
         ((EditTextPreference) findPreference("SshConnectionsCount")).setText(Integer.toString(server.connectionsCount));
+        updatePrivateKeyHint();
     }
 
     @Override
@@ -76,6 +77,16 @@ public class SshSettingsActivity extends PreferenceActivity implements SharedPre
         server.connectionsCount = Integer.valueOf(
                 ((EditTextPreference) findPreference("SshConnectionsCount")).getText());
         saveServers(servers);
+        updatePrivateKeyHint();
+    }
+
+    private void updatePrivateKeyHint() {
+        String sshHost = ((EditTextPreference) findPreference("SshHost")).getText();
+        if (!sshHost.trim().isEmpty()) {
+            findPreference("SshPassword").setSummary(
+                    "leave password empty if you are using private key authentication. " +
+                            "put private key at /data/data/fq.router/etc/ssh/" + sshHost);
+        }
     }
 
     private void onDeleteClicked() {
