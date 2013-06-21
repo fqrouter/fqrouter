@@ -168,9 +168,9 @@ public class LaunchService extends IntentService {
             try {
                 appendLog(ShellUtils.sudo(
                         env, Deployer.PYTHON_LAUNCHER +
-                        " -c \"import os; print 'current user: %s' % os.getuid()\"").trim());
+                        " -c \"import os; print 'current user id: %s' % os.getuid()\"").trim());
             }  catch (Exception e) {
-                LogUtils.e("log current user failed", e);
+                LogUtils.e("log current user id failed", e);
             }
             return ShellUtils.sudoNoWait(env, Deployer.PYTHON_LAUNCHER + " " +
                     Deployer.MANAGER_MAIN_PY.getAbsolutePath() + " > /data/data/fq.router/log/current-python.log 2>&1");

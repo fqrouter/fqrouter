@@ -63,6 +63,14 @@ public class MainSettingsActivity extends PreferenceActivity implements SharedPr
                         return false;
                     }
                 });
+        findPreference("SshPrivateServersPicker").setOnPreferenceChangeListener(
+                new Preference.OnPreferenceChangeListener() {
+                    @Override
+                    public boolean onPreferenceChange(Preference preference, Object newValue) {
+                        onSshPrivateServerPicked((String) newValue);
+                        return false;
+                    }
+                });
         if (!ShellUtils.isRooted()) {
             getPreferenceScreen().removePreference(findPreference("WifiHotspot"));
             PreferenceCategory bypassCategoryPref = (PreferenceCategory) findPreference("Bypass");
@@ -80,6 +88,7 @@ public class MainSettingsActivity extends PreferenceActivity implements SharedPr
         initGoAgent();
         initShadowsocks();
         initHttpProxy();
+        initSshProxy();
     }
 
     @Override
@@ -141,6 +150,26 @@ public class MainSettingsActivity extends PreferenceActivity implements SharedPr
         entryValues[servers.size()] = ">> Add";
         for (int i = 0; i < servers.size(); i++) {
             HttpProxySettingsActivity.Server server = servers.get(i);
+            if (server.host.equals("")) {
+                entries[i] = "HOST NOT SET";
+            } else {
+                entries[i] = server.host;
+            }
+            entryValues[i] = String.valueOf(i);
+        }
+        picker.setEntries(entries);
+        picker.setEntryValues(entryValues);
+    }
+
+    private void initSshProxy() {
+        final ListPreference picker = (ListPreference) findPreference("SshPrivateServersPicker");
+        List<SshSettingsActivity.Server> servers = SshSettingsActivity.loadServers();
+        CharSequence[] entries = new CharSequence[servers.size() + 1];
+        entries[servers.size()] = ">> Add";
+        CharSequence[] entryValues = new CharSequence[servers.size() + 1];
+        entryValues[servers.size()] = ">> Add";
+        for (int i = 0; i < servers.size(); i++) {
+            SshSettingsActivity.Server server = servers.get(i);
             if (server.host.equals("")) {
                 entries[i] = "HOST NOT SET";
             } else {
@@ -267,6 +296,26 @@ public class MainSettingsActivity extends PreferenceActivity implements SharedPr
             });
         } else {
             Intent intent = new Intent(this, HttpProxySettingsActivity.class);
+            intent.putExtra("index", Integer.valueOf(value));
+            startActivity(intent);
+        }
+    }
+
+    private void onSshPrivateServerPicked(String value) {
+        if (">> Add".equals(value)) {
+            showP2PAgreement(new DialogInterface.OnClickListener() {
+                @Override
+                public void onClick(DialogInterface dialog, int which) {
+                    Intent intent = new Intent(MainSettingsActivity.this, SshSettingsActivity.class);
+                    List<SshSettingsActivity.Server> servers = SshSettingsActivity.loadServers();
+                    servers.add(new SshSettingsActivity.Server());
+                    SshSettingsActivity.saveServers(servers);
+                    intent.putExtra("index", servers.size() - 1);
+                    startActivity(intent);
+                }
+            });
+        } else {
+            Intent intent = new Intent(this, SshSettingsActivity.class);
             intent.putExtra("index", Integer.valueOf(value));
             startActivity(intent);
         }

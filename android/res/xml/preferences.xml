@@ -34,7 +34,7 @@
                 android:title="Private Servers"
                 android:defaultValue=""/>
     </PreferenceCategory>
-    <PreferenceCategory android:title="Http Proxy">
+    <PreferenceCategory android:title="HTTP Proxy">
         <CheckBoxPreference
                 android:key="HttpProxyPublicServersEnabled"
                 android:title="Public Servers"
@@ -42,6 +42,12 @@
                 android:defaultValue="true"/>
         <ListPreference
                 android:key="HttpProxyPrivateServersPicker"
+                android:title="Private Servers"
+                android:defaultValue=""/>
+    </PreferenceCategory>
+    <PreferenceCategory android:title="SSH Proxy">
+        <ListPreference
+                android:key="SshPrivateServersPicker"
                 android:title="Private Servers"
                 android:defaultValue=""/>
     </PreferenceCategory>

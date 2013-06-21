@@ -7,7 +7,8 @@
             android:summary="ip or domain name"/>
     <EditTextPreference
             android:key="HttpProxyPort"
-            android:title="Port"/>
+            android:title="Port"
+            android:inputType="number"/>
     <EditTextPreference
             android:key="HttpProxyUsername"
             android:title="Username"/>

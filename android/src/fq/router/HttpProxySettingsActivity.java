@@ -45,7 +45,7 @@ public class HttpProxySettingsActivity extends PreferenceActivity implements Sha
             return;
         }
         ((EditTextPreference) findPreference("HttpProxyHost")).setText(server.host);
-        ((EditTextPreference) findPreference("HttpProxyPort")).setText(server.port);
+        ((EditTextPreference) findPreference("HttpProxyPort")).setText(Integer.toString(server.port));
         ((EditTextPreference) findPreference("HttpProxyUsername")).setText(server.username);
         ((EditTextPreference) findPreference("HttpProxyPassword")).setText(server.password);
         ListPreference trafficTypePerf = (ListPreference) findPreference("HttpProxyTrafficType");
@@ -77,7 +77,7 @@ public class HttpProxySettingsActivity extends PreferenceActivity implements Sha
             return;
         }
         server.host = ((EditTextPreference) findPreference("HttpProxyHost")).getText();
-        server.port = ((EditTextPreference) findPreference("HttpProxyPort")).getText();
+        server.port = Integer.valueOf(((EditTextPreference) findPreference("HttpProxyPort")).getText());
         server.username = ((EditTextPreference) findPreference("HttpProxyUsername")).getText();
         server.password = ((EditTextPreference) findPreference("HttpProxyPassword")).getText();
         server.traffic_type = ((ListPreference) findPreference("HttpProxyTrafficType")).getValue();
@@ -115,7 +115,7 @@ public class HttpProxySettingsActivity extends PreferenceActivity implements Sha
                 final JSONObject serverJson = serversJson.getJSONObject(i);
                 servers.add(new Server() {{
                     host = serverJson.getString("host");
-                    port = serverJson.getString("port");
+                    port = Integer.valueOf(serverJson.getString("port"));
                     username = serverJson.getString("username");
                     password = serverJson.getString("password");
                     traffic_type = serverJson.getString("traffic_type");
@@ -148,7 +148,7 @@ public class HttpProxySettingsActivity extends PreferenceActivity implements Sha
 
     public static class Server {
         public String host = "";
-        public String port = "8889";
+        public int port = 8889;
         public String username = "";
         public String password = "";
         public String traffic_type = "http/https";

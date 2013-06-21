@@ -2,7 +2,10 @@ package fq.router;
 
 import android.content.SharedPreferences;
 import android.os.Bundle;
-import android.preference.*;
+import android.preference.EditTextPreference;
+import android.preference.Preference;
+import android.preference.PreferenceActivity;
+import android.preference.PreferenceManager;
 import fq.router.utils.IOUtils;
 import fq.router.utils.LogUtils;
 import org.json.JSONArray;
@@ -13,17 +16,17 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 
-public class ShadowsocksSettingsActivity extends PreferenceActivity implements SharedPreferences.OnSharedPreferenceChangeListener {
+public class SshSettingsActivity extends PreferenceActivity implements SharedPreferences.OnSharedPreferenceChangeListener {
 
-    private final static File SHADOWSOCKS_CONFIG_FILE = new File("/data/data/fq.router/etc/shadowsocks.json");
+    private final static File SSH_CONFIG_FILE = new File("/data/data/fq.router/etc/ssh.json");
     private int index;
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         index = getIntent().getExtras().getInt("index");
-        addPreferencesFromResource(R.xml.shadowsocks);
-        findPreference("ShadowsocksDelete").setOnPreferenceClickListener(
+        addPreferencesFromResource(R.xml.ssh);
+        findPreference("SshDelete").setOnPreferenceClickListener(
                 new Preference.OnPreferenceClickListener() {
                     @Override
                     public boolean onPreferenceClick(Preference preference) {
@@ -44,18 +47,11 @@ public class ShadowsocksSettingsActivity extends PreferenceActivity implements S
         if (server == null) {
             return;
         }
-        ((EditTextPreference) findPreference("ShadowsocksHost")).setText(server.host);
-        ((EditTextPreference) findPreference("ShadowsocksPort")).setText(Integer.toString(server.port));
-        ((EditTextPreference) findPreference("ShadowsocksPassword")).setText(server.password);
-        ListPreference encryptionMethodPref = (ListPreference) findPreference("ShadowsocksEncryptionMethod");
-        CharSequence[] encryptionMethods = new CharSequence[]{
-                "table", "rc4", "aes-128-cfb", "aes-192-cfb", "aes-256-cfb", "bf-cfb",
-                "camellia-128-cfb", "camellia-192-cfb", "camellia-256-cfb", "cast5-cfb",
-                "des-cfb", "idea-cfb", "rc2-cfb", "seed-cfb"};
-        encryptionMethodPref.setEntryValues(encryptionMethods);
-        encryptionMethodPref.setEntries(encryptionMethods);
-        encryptionMethodPref.setValue(server.encryption_method);
-
+        ((EditTextPreference) findPreference("SshHost")).setText(server.host);
+        ((EditTextPreference) findPreference("SshPort")).setText(Integer.toString(server.port));
+        ((EditTextPreference) findPreference("SshUsername")).setText(server.username);
+        ((EditTextPreference) findPreference("SshPassword")).setText(server.password);
+        ((EditTextPreference) findPreference("SshConnectionsCount")).setText(Integer.toString(server.connectionsCount));
     }
 
     @Override
@@ -73,10 +69,12 @@ public class ShadowsocksSettingsActivity extends PreferenceActivity implements S
         if (server == null) {
             return;
         }
-        server.host = ((EditTextPreference) findPreference("ShadowsocksHost")).getText();
-        server.port = Integer.valueOf(((EditTextPreference) findPreference("ShadowsocksPort")).getText());
-        server.password = ((EditTextPreference) findPreference("ShadowsocksPassword")).getText();
-        server.encryption_method = ((ListPreference) findPreference("ShadowsocksEncryptionMethod")).getValue();
+        server.host = ((EditTextPreference) findPreference("SshHost")).getText();
+        server.port = Integer.valueOf(((EditTextPreference) findPreference("SshPort")).getText());
+        server.username = ((EditTextPreference) findPreference("SshUsername")).getText();
+        server.password = ((EditTextPreference) findPreference("SshPassword")).getText();
+        server.connectionsCount = Integer.valueOf(
+                ((EditTextPreference) findPreference("SshConnectionsCount")).getText());
         saveServers(servers);
     }
 
@@ -99,7 +97,7 @@ public class ShadowsocksSettingsActivity extends PreferenceActivity implements S
     }
 
     public static List<Server> loadServers() {
-        String serversText = IOUtils.readFromFile(SHADOWSOCKS_CONFIG_FILE);
+        String serversText = IOUtils.readFromFile(SSH_CONFIG_FILE);
         if (serversText.equals("")) {
             return new ArrayList<Server>();
         }
@@ -111,8 +109,9 @@ public class ShadowsocksSettingsActivity extends PreferenceActivity implements S
                 servers.add(new Server() {{
                     host = serverJson.getString("host");
                     port = Integer.valueOf(serverJson.getString("port"));
+                    username = serverJson.getString("username");
                     password = serverJson.getString("password");
-                    encryption_method = serverJson.getString("encryption_method");
+                    connectionsCount = Integer.valueOf(serverJson.getString("connections_count"));
                 }});
             }
             return servers;
@@ -128,19 +127,21 @@ public class ShadowsocksSettingsActivity extends PreferenceActivity implements S
             serverJsons.add(new JSONObject(new HashMap() {{
                 put("host", server.host);
                 put("port", server.port);
+                put("username", server.username);
                 put("password", server.password);
-                put("encryption_method", server.encryption_method);
+                put("connections_count", server.connectionsCount);
             }}));
         }
         String serversText = new JSONArray(serverJsons).toString();
-        LogUtils.i("save shadowsocks servers: " + serversText);
-        IOUtils.writeToFile(SHADOWSOCKS_CONFIG_FILE, serversText);
+        LogUtils.i("save ssh servers: " + serversText);
+        IOUtils.writeToFile(SSH_CONFIG_FILE, serversText);
     }
 
     public static class Server {
         public String host = "";
-        public int port = 8889;
+        public int port = 22;
+        public String username = "";
         public String password = "";
-        public String encryption_method = "table";
+        public int connectionsCount = 1;
     }
 }

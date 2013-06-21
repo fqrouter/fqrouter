@@ -2,21 +2,25 @@
 
 <PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android">
     <EditTextPreference
-            android:key="ShadowsocksHost"
+            android:key="SshHost"
             android:title="Host"
             android:summary="ip or domain name"/>
     <EditTextPreference
-            android:key="ShadowsocksPort"
+            android:key="SshPort"
             android:title="Port"
             android:inputType="number"/>
     <EditTextPreference
-            android:key="ShadowsocksPassword"
+            android:key="SshUsername"
+            android:title="Username"/>
+    <EditTextPreference
+            android:key="SshPassword"
             android:title="Password"/>
-    <ListPreference
-            android:key="ShadowsocksEncryptionMethod"
-            android:title="Encryption Method"/>
+    <EditTextPreference
+            android:key="SshConnectionsCount"
+            android:title="SSH Connections Count"
+            android:inputType="number"/>
     <Preference
-            android:key="ShadowsocksDelete"
+            android:key="SshDelete"
             android:title=">> Delete"
             android:defaultValue=""/>
 </PreferenceScreen>
