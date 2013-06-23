@@ -72,7 +72,7 @@ public class SocksVpnService extends VpnService {
             LogUtils.i("Started in VPN mode");
             sendBroadcast(new LaunchedIntent(true));
         } catch (Exception e) {
-            handleFatalError("VPN establish failed", e);
+            handleFatalError(LogUtils.e("VPN establish failed", e));
         }
     }
 
@@ -200,8 +200,8 @@ public class SocksVpnService extends VpnService {
         ExitService.execute(this);
     }
 
-    private void handleFatalError(String message, Exception e) {
-        sendBroadcast(new HandleFatalErrorIntent(message, e));
+    private void handleFatalError(String message) {
+        sendBroadcast(new HandleFatalErrorIntent(message));
     }
 }
 

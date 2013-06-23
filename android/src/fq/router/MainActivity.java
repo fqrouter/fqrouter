@@ -22,6 +22,8 @@ import android.widget.TextView;
 import android.widget.Toast;
 import android.widget.ToggleButton;
 import fq.router.feedback.*;
+import fq.router.free_internet.ConnectFreeInternetService;
+import fq.router.free_internet.FreeInternetChangedIntent;
 import fq.router.free_internet.StartVpnIntent;
 import fq.router.life_cycle.*;
 import fq.router.utils.ApkUtils;
@@ -43,6 +45,7 @@ public class MainActivity extends Activity implements
         UpdateFoundIntent.Handler,
         ExitedIntent.Handler,
         WifiRepeaterChangedIntent.Handler,
+        FreeInternetChangedIntent.Handler,
         DownloadingIntent.Handler,
         DownloadedIntent.Handler,
         DownloadFailedIntent.Handler,
@@ -59,7 +62,7 @@ public class MainActivity extends Activity implements
     private static boolean started;
     private Handler handler = new Handler();
     private Set<Integer> blinkingImageViews = new HashSet<Integer>();
-    private boolean blinkingStatusTextView = false;
+    private String blinkingStatus = "";
     private String upgradeUrl;
     private boolean downloaded;
     private WifiManager.WifiLock wifiLock;
@@ -79,6 +82,7 @@ public class MainActivity extends Activity implements
         UpdateFoundIntent.register(this);
         ExitedIntent.register(this);
         WifiRepeaterChangedIntent.register(this);
+        FreeInternetChangedIntent.register(this);
         DownloadingIntent.register(this);
         DownloadedIntent.register(this);
         DownloadFailedIntent.register(this);
@@ -144,22 +148,22 @@ public class MainActivity extends Activity implements
     }
 
     private void startBlinkingStatus(String status) {
-        blinkingStatusTextView = true;
-        blinkStatus(status, 0);
+        blinkingStatus = status;
+        blinkStatus(0);
     }
 
-    private void blinkStatus(final String status, final int count) {
+    private void blinkStatus(final int count) {
         handler.postDelayed(new Runnable() {
             @Override
             public void run() {
                 TextView statusTextView = (TextView) findViewById(R.id.statusTextView);
-                if (blinkingStatusTextView) {
-                    String text = status;
+                if (!blinkingStatus.isEmpty()) {
+                    String text = blinkingStatus;
                     for (int i = 0; i < count; i++) {
                         text += ".";
                     }
                     statusTextView.setText(text);
-                    blinkStatus(status, (count + 1) % 4);
+                    blinkStatus((count + 1) % 4);
                 }
             }
         }, 500);
@@ -327,8 +331,11 @@ public class MainActivity extends Activity implements
         ImageView star = (ImageView) findViewById(R.id.star);
         stopBlinkingImage(star);
         enableImage(star);
-        blinkingStatusTextView = false;
+        blinkingStatus = "";
         updateStatus("Launched");
+        startBlinkingImage((ImageView) findViewById(R.id.freeInternetArrow));
+        startBlinkingStatus("Connecting to free internet");
+        ConnectFreeInternetService.execute(this);
     }
 
     private void checkUpdate() {
@@ -449,9 +456,23 @@ public class MainActivity extends Activity implements
     @Override
     public void onHandleFatalError(String message) {
         blinkingImageViews.clear();
-        blinkingStatusTextView = false;
+        blinkingStatus = "";
         disableAllImages();
         updateStatus("Error: " + message);
         checkUpdate();
+    }
+
+    @Override
+    public void onFreeInternetChanged(boolean isConnected) {
+        ImageView freeInternetArrow = (ImageView) findViewById(R.id.freeInternetArrow);
+        stopBlinkingImage(freeInternetArrow);
+        blinkingStatus = "";
+        if (isConnected) {
+            enableImage(freeInternetArrow);
+            updateStatus("Connected to free internet");
+        } else {
+            disableImage(freeInternetArrow);
+            updateStatus("Disconnected from free internet");
+        }
     }
 }

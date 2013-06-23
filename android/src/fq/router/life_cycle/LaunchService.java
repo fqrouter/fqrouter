@@ -61,12 +61,12 @@ public class LaunchService extends IntentService {
                 ManagerProcess.kill();
                 Thread.sleep(1000);
                 if (ManagerProcess.exists()) {
-                    handleFatalError("failed to restart manager", null);
+                    LogUtils.e("failed to restart manager", null);
                 } else {
                     LaunchService.execute(this);
                 }
             } catch (Exception e) {
-                handleFatalError("failed to stop exiting process", e);
+                handleFatalError(LogUtils.e("failed to stop exiting process", e));
             }
             return;
         }
@@ -74,7 +74,7 @@ public class LaunchService extends IntentService {
         if (fatalError.isEmpty()) {
             reportStated(false);
         } else {
-            handleFatalError(fatalError, null);
+            handleFatalError(fatalError);
         }
     }
 
@@ -127,7 +127,6 @@ public class LaunchService extends IntentService {
             }
             return "timed out";
         } catch (Exception e) {
-            handleFatalError("failed to launch", e);
             return LogUtils.e("failed to launch", e);
         }
     }
@@ -210,8 +209,8 @@ public class LaunchService extends IntentService {
         }
     }
 
-    private void handleFatalError(String message, Exception e) {
-        sendBroadcast(new HandleFatalErrorIntent(message, e));
+    private void handleFatalError(String message) {
+        sendBroadcast(new HandleFatalErrorIntent(message));
     }
 
     public static void updateConfigFile(Context context) {

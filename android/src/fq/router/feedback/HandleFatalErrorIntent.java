@@ -3,18 +3,12 @@ package fq.router.feedback;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
-import fq.router.utils.LogUtils;
 import fq.router.utils.LoggedBroadcastReceiver;
 
 public class HandleFatalErrorIntent extends Intent {
     private final static String ACTION_HANDLE_FATAL_ERROR = "HandleFatalError";
 
-    public HandleFatalErrorIntent(String message, Exception e) {
-        if (null == e) {
-            LogUtils.e(message);
-        } else {
-            LogUtils.e(message, e);
-        }
+    public HandleFatalErrorIntent(String message) {
         setAction(ACTION_HANDLE_FATAL_ERROR);
         putExtra("message", message);
     }

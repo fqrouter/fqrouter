@@ -3,6 +3,7 @@ package fq.router.free_internet;
 import android.app.IntentService;
 import android.content.Context;
 import android.content.Intent;
+import fq.router.feedback.HandleFatalErrorIntent;
 import fq.router.utils.HttpUtils;
 import fq.router.utils.LogUtils;
 
@@ -17,8 +18,7 @@ public class ConnectFreeInternetService extends IntentService {
             HttpUtils.post("http://127.0.0.1:8318/free-internet/connect");
             sendBroadcast(new FreeInternetChangedIntent(true));
         } catch (Exception e) {
-            LogUtils.e("failed to connect to free internet", e);
-            sendBroadcast(new FreeInternetChangedIntent(false));
+            sendBroadcast(new HandleFatalErrorIntent(LogUtils.e("failed to connect to free internet", e)));
         }
     }
 

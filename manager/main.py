@@ -40,11 +40,13 @@ def handle_free_internet_connect(environ, start_response):
         components.remove(comp_scrambler)
     start_components(*components)
     start_response(httplib.OK, [('Content-Type', 'text/plain')])
+    return []
 
 
 def handle_free_internet_disconnect(environ, start_response):
     stop_components(comp_dns, comp_scrambler, comp_proxy, comp_shortcut)
     start_response(httplib.OK, [('Content-Type', 'text/plain')])
+    return []
 
 
 def handle_free_internet_is_connected(environ, start_response):
