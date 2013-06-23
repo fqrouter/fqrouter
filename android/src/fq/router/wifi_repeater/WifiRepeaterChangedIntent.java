@@ -1,16 +1,16 @@
-package fq.router.wifi;
+package fq.router.wifi_repeater;
 
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import fq.router.utils.LoggedBroadcastReceiver;
 
-public class WifiHotspotChangedIntent extends Intent {
+public class WifiRepeaterChangedIntent extends Intent {
 
-    private final static String ACTION_WIFI_HOTSPOT_CHECKED = "WifiHotspotChecked";
+    private final static String ACTION_WIFI_REPEATER_CHANGED = "WifiRepeaterChanged";
 
-    public WifiHotspotChangedIntent(boolean isStarted) {
-        setAction(ACTION_WIFI_HOTSPOT_CHECKED);
+    public WifiRepeaterChangedIntent(boolean isStarted) {
+        setAction(ACTION_WIFI_REPEATER_CHANGED);
         putExtra("isStarted", isStarted);
     }
 
@@ -18,13 +18,13 @@ public class WifiHotspotChangedIntent extends Intent {
         handler.getBaseContext().registerReceiver(new LoggedBroadcastReceiver() {
             @Override
             public void handle(Context context, Intent intent) {
-                handler.onWifiHotspotChanged(intent.getBooleanExtra("isStarted", false));
+                handler.onWifiRepeaterChanged(intent.getBooleanExtra("isStarted", false));
             }
-        }, new IntentFilter(ACTION_WIFI_HOTSPOT_CHECKED));
+        }, new IntentFilter(ACTION_WIFI_REPEATER_CHANGED));
     }
 
     public static interface Handler {
-        void onWifiHotspotChanged(boolean isStarted);
+        void onWifiRepeaterChanged(boolean isStarted);
 
         Context getBaseContext();
     }

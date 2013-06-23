@@ -1,10 +1,9 @@
-package fq.router.life;
+package fq.router.life_cycle;
 
 import android.app.IntentService;
 import android.app.NotificationManager;
 import android.content.Context;
 import android.content.Intent;
-import fq.router.feedback.UpdateStatusIntent;
 import fq.router.utils.LogUtils;
 
 public class ExitService extends IntentService {
@@ -19,7 +18,7 @@ public class ExitService extends IntentService {
     }
 
     private void exit() {
-        updateStatus("Exiting...");
+        LogUtils.i("Exiting...");
         try {
             ManagerProcess.kill();
         } catch (Exception e) {
@@ -29,10 +28,6 @@ public class ExitService extends IntentService {
         NotificationManager notificationManager =
                 (NotificationManager) getSystemService(NOTIFICATION_SERVICE);
         notificationManager.cancel(0);
-    }
-
-    private void updateStatus(String status) {
-        sendBroadcast(new UpdateStatusIntent(status));
     }
 
     public static void execute(Context context) {

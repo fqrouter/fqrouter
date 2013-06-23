@@ -3,15 +3,13 @@ package fq.router.utils;
 import android.content.Context;
 import android.content.Intent;
 import android.net.Uri;
-import fq.router.feedback.UpdateStatusIntent;
 
-import java.io.File;
 import java.util.HashMap;
 
 public class ApkUtils {
 
     public static void installApk(Context context, String apkPath) {
-        context.sendBroadcast(new UpdateStatusIntent("Installing fqrouter..."));
+        LogUtils.i("Installing fqrouter...");
         if (ShellUtils.checkRooted()) {
             try {
                 installApkAutomatically(apkPath);

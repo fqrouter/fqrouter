@@ -1,4 +1,4 @@
-package fq.router.life;
+package fq.router.life_cycle;
 
 import fq.router.utils.LogUtils;
 import fq.router.utils.ShellUtils;

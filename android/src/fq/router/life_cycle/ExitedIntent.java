@@ -1,29 +1,28 @@
-package fq.router.life;
+package fq.router.life_cycle;
 
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import fq.router.utils.LoggedBroadcastReceiver;
 
-public class LaunchedIntent extends Intent {
-    private final static String ACTION_LAUNCHED = "Launched";
+public class ExitedIntent extends Intent {
+    private final static String ACTION_EXITED = "Exited";
 
-    public LaunchedIntent(boolean isVpnMode) {
-        setAction(ACTION_LAUNCHED);
-        putExtra("isVpnMode", isVpnMode);
+    public ExitedIntent() {
+        setAction(ACTION_EXITED);
     }
 
     public static void register(final Handler handler) {
         handler.getBaseContext().registerReceiver(new LoggedBroadcastReceiver() {
             @Override
             public void handle(Context context, Intent intent) {
-                handler.onLaunched(intent.getBooleanExtra("isVpnMode", false));
+                handler.onExited();
             }
-        }, new IntentFilter(ACTION_LAUNCHED));
+        }, new IntentFilter(ACTION_EXITED));
     }
 
     public static interface Handler {
-        void onLaunched(boolean isVpnMode);
+        void onExited();
 
         Context getBaseContext();
     }

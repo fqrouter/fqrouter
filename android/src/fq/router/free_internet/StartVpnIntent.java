@@ -1,28 +1,28 @@
-package fq.router.life;
+package fq.router.free_internet;
 
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import fq.router.utils.LoggedBroadcastReceiver;
 
-public class ExitedIntent extends Intent {
-    private final static String ACTION_EXITED = "Exited";
+public class StartVpnIntent extends Intent {
+    private final static String ACTION_START_VPN = "StartVpn";
 
-    public ExitedIntent() {
-        setAction(ACTION_EXITED);
+    public StartVpnIntent() {
+        setAction(ACTION_START_VPN);
     }
 
     public static void register(final Handler handler) {
         handler.getBaseContext().registerReceiver(new LoggedBroadcastReceiver() {
             @Override
             public void handle(Context context, Intent intent) {
-                handler.onExited();
+                handler.onStartVpn();
             }
-        }, new IntentFilter(ACTION_EXITED));
+        }, new IntentFilter(ACTION_START_VPN));
     }
 
     public static interface Handler {
-        void onExited();
+        void onStartVpn();
 
         Context getBaseContext();
     }

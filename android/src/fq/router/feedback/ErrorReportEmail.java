@@ -7,7 +7,7 @@ import android.content.Intent;
 import android.net.Uri;
 import android.os.Build;
 import android.widget.Toast;
-import fq.router.life.LaunchService;
+import fq.router.life_cycle.LaunchService;
 import fq.router.utils.IOUtils;
 import fq.router.utils.LogUtils;
 import fq.router.utils.ShellUtils;

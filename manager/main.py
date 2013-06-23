@@ -25,26 +25,50 @@ MANAGER_LOG_FILE = os.path.join(LOG_DIR, 'manager.log')
 WIFI_LOG_FILE = os.path.join(LOG_DIR, 'wifi.log')
 
 LOGGER = logging.getLogger('fqrouter.%s' % __name__)
-COMPONENTS = [comp_wifi, comp_dns, comp_scrambler, comp_proxy, comp_lan, comp_shortcut]
+ALL_COMPONENTS = [comp_wifi, comp_dns, comp_scrambler, comp_proxy, comp_lan, comp_shortcut]
 
 
 def handle_ping(environ, start_response):
     start_response(httplib.OK, [('Content-Type', 'text/plain')])
-    for comp in COMPONENTS:
-        if not comp.is_alive() and getattr(comp, '__MANDATORY__', False):
-            LOGGER.error('%s COMPONENT DIED' % comp.__name__)
-            yield '%s COMPONENT DIED' % comp.__name__
-    LOGGER.info('PONG')
     yield 'PONG'
 
 
-def run():
-    skipped_components = []
-    LOGGER.info('environment: %s' % os.environ.items())
+def handle_free_internet_connect(environ, start_response):
+    components = [comp_dns, comp_scrambler, comp_proxy, comp_shortcut]
     if not config.read()['tcp_scrambler_enabled']:
         LOGGER.info('scrambler component disabled by config')
-        COMPONENTS.remove(comp_scrambler)
-    for comp in COMPONENTS:
+        components.remove(comp_scrambler)
+    start_components(*components)
+    start_response(httplib.OK, [('Content-Type', 'text/plain')])
+
+
+def handle_free_internet_disconnect(environ, start_response):
+    stop_components(comp_dns, comp_scrambler, comp_proxy, comp_shortcut)
+    start_response(httplib.OK, [('Content-Type', 'text/plain')])
+
+
+def handle_free_internet_is_connected(environ, start_response):
+    is_connected = is_free_internet_connected()
+    start_response(httplib.OK, [('Content-Type', 'text/plain')])
+    yield 'TRUE' if is_connected else 'FALSE'
+
+
+def is_free_internet_connected():
+    return comp_dns.is_alive() and comp_proxy.is_alive()
+
+
+def run():
+    start_components(comp_wifi, comp_lan)
+    httpd.HANDLERS[('GET', 'ping')] = handle_ping
+    httpd.HANDLERS[('POST', 'free-internet/connect')] = handle_free_internet_connect
+    httpd.HANDLERS[('POST', 'free-internet/disconnect')] = handle_free_internet_disconnect
+    httpd.HANDLERS[('POST', 'free-internet/is-connected')] = handle_free_internet_is_connected
+    httpd.serve_forever()
+
+
+def start_components(*components):
+    LOGGER.info('environment: %s' % os.environ.items())
+    for comp in components:
         try:
             shutdown_hook.add(comp.stop)
             handlers = comp.start()
@@ -56,20 +80,21 @@ def run():
             comp.stop()
             if getattr(comp, '__MANDATORY__', False):
                 raise
-            skipped_components.append(comp.__name__)
-    LOGGER.info('all components started except: %s' % skipped_components)
-    httpd.HANDLERS[('GET', 'ping')] = handle_ping
-    httpd.serve_forever()
+            LOGGER.info('skipped component: %s' % comp.__name__)
+
+
+def stop_components(*components):
+    for comp in reversed(components):
+        try:
+            comp.stop()
+        except:
+            LOGGER.exception('failed to stop: %s' % comp.__name__)
 
 
 def clean():
     LOGGER.info('clean...')
     try:
-        for comp in reversed(COMPONENTS):
-            try:
-                comp.stop()
-            except:
-                LOGGER.exception('failed to clean: %s' % comp.__name__)
+        stop_components(*ALL_COMPONENTS)
         try:
             LOGGER.info('iptables -L -v -n')
             LOGGER.info(subprocess.check_output(shlex.split('iptables -L -v -n'), stderr=subprocess.STDOUT))

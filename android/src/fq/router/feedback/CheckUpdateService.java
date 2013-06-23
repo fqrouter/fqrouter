@@ -3,14 +3,9 @@ package fq.router.feedback;
 import android.app.IntentService;
 import android.content.Context;
 import android.content.Intent;
-import android.net.Uri;
-import fq.router.life.LaunchService;
+import fq.router.life_cycle.LaunchService;
 import fq.router.utils.DnsUtils;
-import fq.router.utils.HttpUtils;
 import fq.router.utils.LogUtils;
-import fq.router.utils.ShellUtils;
-
-import java.util.HashMap;
 
 public class CheckUpdateService extends IntentService {
 
@@ -26,24 +21,20 @@ public class CheckUpdateService extends IntentService {
 
     public void checkUpdate() {
         try {
-            appendLog("checking update...");
+            LogUtils.i("checking update...");
             String versionInfo = DnsUtils.resolveTXT("beta.android.ver.fqrouter.com");
             String latestVersion = versionInfo.split("\\|")[0];
             String upgradeUrl = versionInfo.split("\\|")[1];
             if (isNewer(latestVersion, LaunchService.getMyVersion(this))) {
-                appendLog("latest version is: " + latestVersion);
+                LogUtils.i("latest version is: " + latestVersion);
                 sendBroadcast(new UpdateFoundIntent(latestVersion, upgradeUrl));
             } else {
-                appendLog("already running the latest version");
+                LogUtils.i("already running the latest version");
             }
         } catch (Exception e) {
-            appendLog("check updates failed");
+            LogUtils.i("check updates failed");
             LogUtils.e("check updates failed", e);
         }
-    }
-
-    private void appendLog(String log) {
-        sendBroadcast(new AppendLogIntent(log));
     }
 
 

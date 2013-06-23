@@ -3,40 +3,48 @@
 <FrameLayout
         android:layout_width="fill_parent"
         android:layout_height="fill_parent" xmlns:android="http://schemas.android.com/apk/res/android">
-    <RelativeLayout
-            android:layout_width="fill_parent"
-            android:layout_height="fill_parent" android:layout_gravity="left|top">
-        <LinearLayout
-                android:orientation="vertical"
-                android:layout_width="fill_parent"
-                android:layout_height="fill_parent">
-            <TextView
-                    android:layout_width="fill_parent"
-                    android:layout_height="wrap_content"
-                    android:id="@+id/statusTextView" android:singleLine="true" android:textSize="12pt"
-                    android:textColor="#ff0000"/>
-            <TextView
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="=== FQROUTER ==="
-                    android:id="@+id/logTextView" android:layout_gravity="left|top"/>
-        </LinearLayout>
-    </RelativeLayout>
-    <RelativeLayout
-            android:id="@+id/wifiHotspotPanel"
-            android:layout_gravity="center"
-            android:layout_width="fill_parent"
-            android:layout_height="wrap_content" android:background="@android:color/background_dark"
-            android:visibility="invisible">
-        <ToggleButton
-                android:layout_width="fill_parent"
-                android:layout_height="100dp"
-                android:id="@+id/wifiHotspotToggleButton"
-                android:textSize="24dp" android:gravity="center"
-                android:singleLine="false"
-                android:textOn="Turn Off Wifi Hotspot" android:textOff="Share Free Internet as Wifi Network"
-                android:checked="false" android:clickable="false" android:enabled="true"
-                />
-    </RelativeLayout>
 
+    <Button
+            android:layout_width="160dp"
+            android:layout_height="80dp"
+            android:text="Free Internet"
+            android:id="@+id/freeInternetButton" android:layout_gravity="center_horizontal|top" android:textSize="10pt"
+            android:textStyle="bold" android:longClickable="true" android:layout_marginTop="48dp"/>
+    <Button
+            android:layout_width="160dp"
+            android:layout_height="80dp"
+            android:text="Wifi Repeater"
+            android:id="@+id/wifiRepeaterButton" android:layout_gravity="left|bottom" android:textStyle="bold"
+            android:textSize="10pt" android:longClickable="true"/>
+    <Button
+            android:layout_width="160dp"
+            android:layout_height="80dp"
+            android:text="Pick &amp; Play"
+            android:id="@+id/pickAndPlayButton" android:layout_gravity="right|bottom" android:textSize="10pt"
+            android:textStyle="bold" android:longClickable="true"/>
+    <ImageView
+            android:layout_width="80dp"
+            android:layout_height="80dp"
+            android:id="@+id/freeInternetArrow" android:layout_gravity="center" android:src="@drawable/arrow_up"
+            android:layout_marginBottom="72dp"/>
+    <ImageView
+            android:layout_width="80dp"
+            android:layout_height="80dp"
+            android:id="@+id/wifiRepeaterArrow" android:layout_gravity="center" android:src="@drawable/arrow_left"
+            android:layout_marginRight="64dp" android:layout_marginTop="72dp" android:longClickable="false"/>
+    <ImageView
+            android:layout_width="80dp"
+            android:layout_height="80dp"
+            android:id="@+id/pickAndPlayArrow" android:layout_gravity="center" android:src="@drawable/arrow_right"
+            android:layout_marginLeft="64dp" android:layout_marginTop="72dp" android:adjustViewBounds="false"
+            android:longClickable="false"/>
+    <ImageView
+            android:layout_width="80dp"
+            android:layout_height="80dp"
+            android:id="@+id/star" android:layout_gravity="center" android:src="@drawable/star"/>
+    <TextView
+            android:layout_width="fill_parent"
+            android:layout_height="48dp"
+            android:id="@+id/statusTextView" android:layout_gravity="center_horizontal|top" android:textSize="10pt"
+            android:textColor="#b40000"/>
 </FrameLayout>

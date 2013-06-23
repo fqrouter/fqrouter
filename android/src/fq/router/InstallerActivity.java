@@ -11,10 +11,10 @@ import android.view.Menu;
 import android.view.MenuItem;
 import android.widget.TextView;
 import fq.router.feedback.*;
-import fq.router.life.DownloadFailedIntent;
-import fq.router.life.DownloadService;
-import fq.router.life.DownloadedIntent;
-import fq.router.life.DownloadingIntent;
+import fq.router.feedback.DownloadFailedIntent;
+import fq.router.feedback.DownloadService;
+import fq.router.feedback.DownloadedIntent;
+import fq.router.feedback.DownloadingIntent;
 import fq.router.utils.ApkUtils;
 import fq.router.utils.IOUtils;
 import fq.router.utils.LogUtils;
@@ -23,8 +23,6 @@ import fq.router.utils.ShellUtils;
 import java.lang.reflect.Method;
 
 public class InstallerActivity extends Activity implements
-        UpdateStatusIntent.Handler,
-        AppendLogIntent.Handler,
         UpdateFoundIntent.Handler,
         DownloadingIntent.Handler,
         DownloadedIntent.Handler,
@@ -49,8 +47,6 @@ public class InstallerActivity extends Activity implements
         PreferenceManager.setDefaultValues(this, R.xml.preferences, true);
         TextView textView = (TextView) findViewById(R.id.logTextView);
         textView.setMovementMethod(new ScrollingMovementMethod());
-        UpdateStatusIntent.register(this);
-        AppendLogIntent.register(this);
         UpdateFoundIntent.register(this);
         DownloadingIntent.register(this);
         DownloadedIntent.register(this);
@@ -107,14 +103,12 @@ public class InstallerActivity extends Activity implements
         }
     }
 
-    @Override
     public void updateStatus(String status) {
         appendLog("status updated to: " + status);
         TextView textView = (TextView) findViewById(R.id.statusTextView);
         textView.setText(status);
     }
 
-    @Override
     public void appendLog(final String log) {
         LogUtils.i(log);
         TextView textView = (TextView) findViewById(R.id.logTextView);

@@ -1,4 +1,4 @@
-package fq.router.life;
+package fq.router.life_cycle;
 
 import android.app.IntentService;
 import android.content.Context;
@@ -7,14 +7,12 @@ import android.content.SharedPreferences;
 import android.content.pm.PackageInfo;
 import android.os.Build;
 import android.preference.PreferenceManager;
-import fq.router.feedback.AppendLogIntent;
 import fq.router.feedback.HandleFatalErrorIntent;
-import fq.router.feedback.UpdateStatusIntent;
+import fq.router.free_internet.SocksVpnService;
 import fq.router.utils.HttpUtils;
 import fq.router.utils.IOUtils;
 import fq.router.utils.LogUtils;
 import fq.router.utils.ShellUtils;
-import fq.router.vpn.SocksVpnService;
 import org.json.JSONObject;
 
 import java.io.File;
@@ -45,20 +43,20 @@ public class LaunchService extends IntentService {
 
     @Override
     protected void onHandleIntent(Intent intent) {
-        appendLog("ver: " + getMyVersion(this));
-        appendLog("rooted: " + ShellUtils.checkRooted());
+        LogUtils.i("ver: " + getMyVersion(this));
+        LogUtils.i("rooted: " + ShellUtils.checkRooted());
         if (isVpnRunning()) {
-            appendLog("manager is already running");
+            LogUtils.i("manager is already running");
             reportStated(true);
             return;
         }
         if (ping(false)) {
-            appendLog("manager is already running");
+            LogUtils.i("manager is already running");
             reportStated(false);
             return;
         }
         if (ping(true)) {
-            updateStatus("Restart manager");
+            LogUtils.i("Restart manager");
             try {
                 ManagerProcess.kill();
                 Thread.sleep(1000);
@@ -72,68 +70,66 @@ public class LaunchService extends IntentService {
             }
             return;
         }
-        if (deployAndLaunch()) {
+        String fatalError = deployAndLaunch();
+        if (fatalError.isEmpty()) {
             reportStated(false);
+        } else {
+            handleFatalError(fatalError, null);
         }
     }
 
     private void reportStated(boolean isVpnMode) {
         if (isVpnMode) {
-            updateStatus("Started in VPN mode");
+            LogUtils.i("Started in VPN mode");
         } else {
-            updateStatus("Started, f**k censorship");
+            LogUtils.i("Started, f**k censorship");
         }
         sendBroadcast(new LaunchedIntent(isVpnMode));
     }
 
-    private boolean deployAndLaunch() {
+    private String deployAndLaunch() {
         try {
-            updateStatus("Kill existing manager process");
-            appendLog("try to kill manager process before launch");
+            LogUtils.i("Kill existing manager process");
+            LogUtils.i("try to kill manager process before launch");
             ManagerProcess.kill();
         } catch (Exception e) {
             LogUtils.e("failed to kill manager process before launch", e);
-            appendLog("failed to kill manager process before launch");
+            LogUtils.i("failed to kill manager process before launch");
         }
         Deployer deployer = new Deployer(this);
-        if (!deployer.deploy()) {
-            return false;
+        String fatalError = deployer.deploy();
+        if (!fatalError.isEmpty()) {
+            return fatalError;
         }
         updateConfigFile(this);
-        updateStatus("Launching...");
+        LogUtils.i("Launching...");
         if (ShellUtils.checkRooted()) {
             return launch(false);
         } else {
             if (Build.VERSION.SDK_INT < 14) {
-                handleFatalError("[ROOT] is required", null);
-                appendLog("What is [ROOT]: http://en.wikipedia.org/wiki/Android_rooting");
-                return false;
+                return "[ROOT] is required";
             }
-            if (launch(true)) {
-                sendBroadcast(new StartVpnIntent());
-            }
-            return false;
+            return launch(true);
         }
     }
 
-    private boolean launch(boolean isVpnMode) {
+    private String launch(boolean isVpnMode) {
         try {
             Process process = executeManager(isVpnMode);
             for (int i = 0; i < 30; i++) {
                 if (ping(isVpnMode)) {
-                    return true;
+                    return "";
                 }
                 if (hasProcessExited(process)) {
-                    handleFatalError("manager quit", null);
-                    return false;
+                    return "manager quit";
                 }
                 sleepOneSecond();
             }
-            handleFatalError("timed out", null);
+            return "timed out";
         } catch (Exception e) {
             handleFatalError("failed to launch", e);
+            return LogUtils.e("failed to launch", e);
         }
-        return false;
     }
 
 
@@ -166,9 +162,9 @@ public class LaunchService extends IntentService {
             return process;
         } else {
             try {
-                appendLog(ShellUtils.sudo(
-                        env, Deployer.PYTHON_LAUNCHER +
-                        " -c \"import os; print 'current user id: %s' % os.getuid()\"").trim());
+                LogUtils.i(ShellUtils.sudo(
+                                env, Deployer.PYTHON_LAUNCHER +
+                                " -c \"import os; print 'current user id: %s' % os.getuid()\"").trim());
             }  catch (Exception e) {
                 LogUtils.e("log current user id failed", e);
             }
@@ -236,14 +232,6 @@ public class LaunchService extends IntentService {
         } catch (Exception e) {
             LogUtils.e("failed to update config file", e);
         }
-    }
-
-    private void appendLog(String log) {
-        sendBroadcast(new AppendLogIntent(log));
-    }
-
-    private void updateStatus(String status) {
-        sendBroadcast(new UpdateStatusIntent(status));
     }
 
     public static void execute(Context context) {

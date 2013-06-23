@@ -18,7 +18,7 @@ public class LogUtils {
         }
     }
 
-    public static void e(String msg, Throwable exception) {
+    public static String e(String msg, Throwable exception) {
         try {
             Log.e("fqrouter", msg, exception);
             writeLogFile("ERROR", msg + "\r\n" + formatException(exception));
@@ -26,6 +26,7 @@ public class LogUtils {
             System.out.println(msg);
             exception.printStackTrace();
         }
+        return msg;
     }
 
     private static String formatException(Throwable e) {

@@ -4,6 +4,8 @@ import android.app.*;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.SharedPreferences;
+import android.graphics.ColorMatrix;
+import android.graphics.ColorMatrixColorFilter;
 import android.net.Uri;
 import android.net.VpnService;
 import android.net.wifi.WifiManager;
@@ -13,34 +15,34 @@ import android.os.Handler;
 import android.preference.PreferenceManager;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.app.NotificationCompat;
-import android.text.method.ScrollingMovementMethod;
 import android.view.Menu;
 import android.view.MenuItem;
-import android.view.View;
+import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
 import android.widget.ToggleButton;
 import fq.router.feedback.*;
-import fq.router.life.*;
+import fq.router.free_internet.StartVpnIntent;
+import fq.router.life_cycle.*;
 import fq.router.utils.ApkUtils;
 import fq.router.utils.IOUtils;
 import fq.router.utils.LogUtils;
 import fq.router.utils.ShellUtils;
-import fq.router.wifi.CheckWifiHotspotService;
-import fq.router.wifi.StartWifiHotspotService;
-import fq.router.wifi.StopWifiHotspotService;
-import fq.router.wifi.WifiHotspotChangedIntent;
+import fq.router.wifi_repeater.CheckWifiRepeaterService;
+import fq.router.wifi_repeater.StartWifiRepeaterService;
+import fq.router.wifi_repeater.StopWifiRepeaterService;
+import fq.router.wifi_repeater.WifiRepeaterChangedIntent;
 
 import java.lang.reflect.Method;
+import java.util.HashSet;
+import java.util.Set;
 
 
 public class MainActivity extends Activity implements
-        UpdateStatusIntent.Handler,
-        AppendLogIntent.Handler,
         LaunchedIntent.Handler,
         UpdateFoundIntent.Handler,
         ExitedIntent.Handler,
-        WifiHotspotChangedIntent.Handler,
+        WifiRepeaterChangedIntent.Handler,
         DownloadingIntent.Handler,
         DownloadedIntent.Handler,
         DownloadFailedIntent.Handler,
@@ -55,6 +57,9 @@ public class MainActivity extends Activity implements
     private final static int ITEM_ID_UPGRADE_MANUALLY = 5;
     private final static int ASK_VPN_PERMISSION = 1;
     private static boolean started;
+    private Handler handler = new Handler();
+    private Set<Integer> blinkingImageViews = new HashSet<Integer>();
+    private boolean blinkingStatusTextView = false;
     private String upgradeUrl;
     private boolean downloaded;
     private WifiManager.WifiLock wifiLock;
@@ -70,19 +75,32 @@ public class MainActivity extends Activity implements
         setContentView(R.layout.main);
         PreferenceManager.setDefaultValues(this, R.xml.preferences, true);
         setupUI();
-        UpdateStatusIntent.register(this);
-        AppendLogIntent.register(this);
         LaunchedIntent.register(this);
         UpdateFoundIntent.register(this);
         ExitedIntent.register(this);
-        WifiHotspotChangedIntent.register(this);
+        WifiRepeaterChangedIntent.register(this);
         DownloadingIntent.register(this);
         DownloadedIntent.register(this);
         DownloadFailedIntent.register(this);
         StartVpnIntent.register(this);
         HandleFatalErrorIntent.register(this);
+        launch();
+    }
+
+    private void launch() {
+        disableAllImages();
+        startBlinkingImage((ImageView) findViewById(R.id.star));
+        startBlinkingStatus("Launching");
         LaunchService.execute(this);
     }
+
+    private void disableAllImages() {
+        disableImage((ImageView) findViewById(R.id.freeInternetArrow));
+        disableImage((ImageView) findViewById(R.id.wifiRepeaterArrow));
+        disableImage((ImageView) findViewById(R.id.pickAndPlayArrow));
+        disableImage((ImageView) findViewById(R.id.star));
+    }
+
 
     @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
@@ -114,15 +132,73 @@ public class MainActivity extends Activity implements
     }
 
     private void setupUI() {
-        TextView textView = (TextView) findViewById(R.id.logTextView);
-        textView.setMovementMethod(new ScrollingMovementMethod());
-        final ToggleButton button = (ToggleButton) findViewById(R.id.wifiHotspotToggleButton);
-        button.setOnClickListener(new View.OnClickListener() {
+//        TextView textView = (TextView) findViewById(R.id.logTextView);
+//        textView.setMovementMethod(new ScrollingMovementMethod());
+//        final ToggleButton button = (ToggleButton) findViewById(R.id.wifiHotspotToggleButton);
+//        button.setOnClickListener(new View.OnClickListener() {
+//            @Override
+//            public void onClick(View view) {
+//                toggleWifiHotspot((ToggleButton) view);
+//            }
+//        });
+    }
+
+    private void startBlinkingStatus(String status) {
+        blinkingStatusTextView = true;
+        blinkStatus(status, 0);
+    }
+
+    private void blinkStatus(final String status, final int count) {
+        handler.postDelayed(new Runnable() {
             @Override
-            public void onClick(View view) {
-                toggleWifiHotspot((ToggleButton) view);
+            public void run() {
+                TextView statusTextView = (TextView) findViewById(R.id.statusTextView);
+                if (blinkingStatusTextView) {
+                    String text = status;
+                    for (int i = 0; i < count; i++) {
+                        text += ".";
+                    }
+                    statusTextView.setText(text);
+                    blinkStatus(status, (count + 1) % 4);
+                }
             }
-        });
+        }, 500);
+    }
+
+    private void startBlinkingImage(ImageView imageView) {
+        blinkingImageViews.add(imageView.getId());
+        blinkImage(imageView, true);
+    }
+
+    private void stopBlinkingImage(ImageView imageView) {
+        blinkingImageViews.remove(imageView.getId());
+    }
+
+    private void blinkImage(final ImageView imageView, final boolean setsGrayScale) {
+        handler.postDelayed(new Runnable() {
+            @Override
+            public void run() {
+                if (blinkingImageViews.contains(imageView.getId())) {
+                    if (setsGrayScale) {
+                        disableImage(imageView);
+                    } else {
+                        enableImage(imageView);
+                    }
+                    blinkImage(imageView, !setsGrayScale);
+                }
+            }
+        }, 1000);
+    }
+
+    private void enableImage(ImageView imageView) {
+        imageView.clearColorFilter();
+    }
+
+    private void disableImage(ImageView imageView) {
+        ColorMatrix matrix = new ColorMatrix();
+        matrix.setSaturation(0); //0 means grayscale
+        ColorMatrixColorFilter cf = new ColorMatrixColorFilter(matrix);
+        imageView.setColorFilter(cf);
     }
 
     @Override
@@ -172,10 +248,10 @@ public class MainActivity extends Activity implements
 
 
     public void showWifiHotspotToggleButton(final boolean isStarted) {
-        final ToggleButton wifiHotspotToggleButton = (ToggleButton) findViewById(R.id.wifiHotspotToggleButton);
-        wifiHotspotToggleButton.setChecked(isStarted);
-        final View wifiHotspotPanel = findViewById(R.id.wifiHotspotPanel);
-        wifiHotspotPanel.setVisibility(View.VISIBLE);
+//        final ToggleButton wifiHotspotToggleButton = (ToggleButton) findViewById(R.id.wifiHotspotToggleButton);
+//        wifiHotspotToggleButton.setChecked(isStarted);
+//        final View wifiHotspotPanel = findViewById(R.id.wifiHotspotPanel);
+//        wifiHotspotPanel.setVisibility(View.VISIBLE);
     }
 
     private void showNotification(String text) {
@@ -199,9 +275,8 @@ public class MainActivity extends Activity implements
         notificationManager.cancel(0);
     }
 
-    @Override
     public void updateStatus(String status) {
-        appendLog("status updated to: " + status);
+        LogUtils.i(status);
         TextView textView = (TextView) findViewById(R.id.statusTextView);
         textView.setText(status);
         if (LaunchService.isVpnRunning()) {
@@ -209,13 +284,6 @@ public class MainActivity extends Activity implements
         } else {
             showNotification(status);
         }
-    }
-
-    @Override
-    public void appendLog(final String log) {
-        LogUtils.i(log);
-        TextView textView = (TextView) findViewById(R.id.logTextView);
-        textView.setText(log + "\n" + textView.getText());
     }
 
     private void exit() {
@@ -226,6 +294,8 @@ public class MainActivity extends Activity implements
         started = false;
         hideWifiHotspotToggleButton();
         ExitService.execute(this);
+        startBlinkingImage((ImageView) findViewById(R.id.star));
+        startBlinkingStatus("Exiting");
     }
 
     private void toggleWifiHotspot(ToggleButton button) {
@@ -233,17 +303,17 @@ public class MainActivity extends Activity implements
             startWifiHotspot();
         } else {
             hideWifiHotspotToggleButton();
-            StopWifiHotspotService.execute(this);
+            StopWifiRepeaterService.execute(this);
         }
     }
 
     private void startWifiHotspot() {
         hideWifiHotspotToggleButton();
-        StartWifiHotspotService.execute(this);
+        StartWifiRepeaterService.execute(this);
     }
 
     public void hideWifiHotspotToggleButton() {
-        findViewById(R.id.wifiHotspotPanel).setVisibility(View.INVISIBLE);
+//        findViewById(R.id.wifiHotspotPanel).setVisibility(View.INVISIBLE);
     }
 
     @Override
@@ -251,9 +321,14 @@ public class MainActivity extends Activity implements
         started = true;
         checkUpdate();
         if (!isVpnMode && Build.VERSION.SDK_INT >= 14) {
-            CheckWifiHotspotService.execute(this);
+            CheckWifiRepeaterService.execute(this);
         }
         ActivityCompat.invalidateOptionsMenu(this);
+        ImageView star = (ImageView) findViewById(R.id.star);
+        stopBlinkingImage(star);
+        enableImage(star);
+        blinkingStatusTextView = false;
+        updateStatus("Launched");
     }
 
     private void checkUpdate() {
@@ -298,7 +373,7 @@ public class MainActivity extends Activity implements
     }
 
     @Override
-    public void onWifiHotspotChanged(boolean isStarted) {
+    public void onWifiRepeaterChanged(boolean isStarted) {
         updateWifiLock(isStarted);
         showWifiHotspotToggleButton(isStarted);
     }
@@ -322,7 +397,7 @@ public class MainActivity extends Activity implements
         ActivityCompat.invalidateOptionsMenu(this);
         onHandleFatalError("download " + Uri.parse(url).getLastPathSegment() + " failed");
         Toast.makeText(this, "Open browser and download the update manually", 3000).show();
-        new Handler().postDelayed(new Runnable() {
+        handler.postDelayed(new Runnable() {
             @Override
             public void run() {
                 startActivity(new Intent(Intent.ACTION_VIEW, Uri.parse(url)));
@@ -373,6 +448,9 @@ public class MainActivity extends Activity implements
 
     @Override
     public void onHandleFatalError(String message) {
+        blinkingImageViews.clear();
+        blinkingStatusTextView = false;
+        disableAllImages();
         updateStatus("Error: " + message);
         checkUpdate();
     }

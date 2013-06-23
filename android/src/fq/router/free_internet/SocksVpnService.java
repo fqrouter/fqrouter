@@ -1,4 +1,4 @@
-package fq.router.vpn;
+package fq.router.free_internet;
 
 import android.content.Intent;
 import android.net.LocalServerSocket;
@@ -7,9 +7,8 @@ import android.net.VpnService;
 import android.os.ParcelFileDescriptor;
 import fq.router.MainActivity;
 import fq.router.feedback.HandleFatalErrorIntent;
-import fq.router.feedback.UpdateStatusIntent;
-import fq.router.life.ExitService;
-import fq.router.life.LaunchedIntent;
+import fq.router.life_cycle.ExitService;
+import fq.router.life_cycle.LaunchedIntent;
 import fq.router.utils.LogUtils;
 
 import java.io.*;
@@ -70,7 +69,7 @@ public class SocksVpnService extends VpnService {
                     }
                 }
             }).start();
-            updateStatus("Started in VPN mode");
+            LogUtils.i("Started in VPN mode");
             sendBroadcast(new LaunchedIntent(true));
         } catch (Exception e) {
             handleFatalError("VPN establish failed", e);
@@ -199,10 +198,6 @@ public class SocksVpnService extends VpnService {
         }
         MainActivity.setExiting();
         ExitService.execute(this);
-    }
-
-    private void updateStatus(String status) {
-        sendBroadcast(new UpdateStatusIntent(status));
     }
 
     private void handleFatalError(String message, Exception e) {

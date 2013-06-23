@@ -8,7 +8,7 @@ import android.os.Bundle;
 import android.preference.*;
 import android.widget.EditText;
 import android.widget.Toast;
-import fq.router.life.LaunchService;
+import fq.router.life_cycle.LaunchService;
 import fq.router.utils.ShellUtils;
 
 import java.util.List;
