@@ -26,7 +26,6 @@ import fq.router.feedback.*;
 import fq.router.free_internet.ConnectFreeInternetService;
 import fq.router.free_internet.DisconnectFreeInternetService;
 import fq.router.free_internet.FreeInternetChangedIntent;
-import fq.router.free_internet.StartVpnIntent;
 import fq.router.life_cycle.*;
 import fq.router.utils.ApkUtils;
 import fq.router.utils.IOUtils;
@@ -51,7 +50,6 @@ public class MainActivity extends Activity implements
         DownloadingIntent.Handler,
         DownloadedIntent.Handler,
         DownloadFailedIntent.Handler,
-        StartVpnIntent.Handler,
         HandleFatalErrorIntent.Handler {
 
     public final static int SHOW_AS_ACTION_IF_ROOM = 1;
@@ -88,7 +86,6 @@ public class MainActivity extends Activity implements
         DownloadingIntent.register(this);
         DownloadedIntent.register(this);
         DownloadFailedIntent.register(this);
-        StartVpnIntent.register(this);
         HandleFatalErrorIntent.register(this);
         blinkStatus(0);
         launch();
@@ -108,6 +105,7 @@ public class MainActivity extends Activity implements
         disableImage((ImageView) findViewById(R.id.star));
         disableFreeInternetButton();
         disableWifiRepeaterButton();
+        disablePickAndPlayButton();
     }
 
 
@@ -328,7 +326,7 @@ public class MainActivity extends Activity implements
 
 
     public void enableFreeInternetButton(final boolean isConnected) {
-        final ToggleButton button = (ToggleButton) findViewById(R.id.freeInternetButton);
+        ToggleButton button = (ToggleButton) findViewById(R.id.freeInternetButton);
         button.setChecked(isConnected);
         button.setEnabled(true);
     }
@@ -339,7 +337,18 @@ public class MainActivity extends Activity implements
 
 
     public void enableWifiRepeaterButton(final boolean isStarted) {
-        final ToggleButton button = (ToggleButton) findViewById(R.id.wifiRepeaterButton);
+        ToggleButton button = (ToggleButton) findViewById(R.id.wifiRepeaterButton);
+        button.setChecked(isStarted);
+        button.setEnabled(true);
+    }
+
+    public void disablePickAndPlayButton() {
+        findViewById(R.id.pickAndPlayButton).setEnabled(false);
+    }
+
+
+    public void enablePickAndPlayButton(final boolean isStarted) {
+        ToggleButton button = (ToggleButton) findViewById(R.id.pickAndPlayButton);
         button.setChecked(isStarted);
         button.setEnabled(true);
     }
@@ -354,16 +363,19 @@ public class MainActivity extends Activity implements
         enableImage(star);
         stopBlinkingStatus();
 
-        enableFreeInternetButton(false);
-        enableWifiRepeaterButton(false);
-
         checkUpdate();
         if (!isVpnMode && Build.VERSION.SDK_INT >= 14) {
             CheckWifiRepeaterService.execute(this);
         }
         startBlinkingImage((ImageView) findViewById(R.id.freeInternetArrow));
         startBlinkingStatus("Connecting to free internet");
-        ConnectFreeInternetService.execute(this);
+        if (isVpnMode) {
+            startVpn();
+        } else {
+            enableWifiRepeaterButton(false);
+            enableFreeInternetButton(false);
+            ConnectFreeInternetService.execute(this);
+        }
     }
 
     private void checkUpdate() {
@@ -472,8 +484,7 @@ public class MainActivity extends Activity implements
         textView.setText("Downloaded: " + percent + "%");
     }
 
-    @Override
-    public void onStartVpn() {
+    private void startVpn() {
         if (LaunchService.isVpnRunning()) {
             LogUtils.e("vpn is already running, do not start it again");
             return;
@@ -510,6 +521,11 @@ public class MainActivity extends Activity implements
         } else {
             disableImage(freeInternetArrow);
         }
-        enableFreeInternetButton(isConnected);
+        if (LaunchService.isVpnRunning()) {
+            ToggleButton button = (ToggleButton) findViewById(R.id.freeInternetButton);
+            button.setChecked(isConnected);
+        } else {
+            enableFreeInternetButton(isConnected);
+        }
     }
 }

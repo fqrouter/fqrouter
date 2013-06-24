@@ -70,7 +70,7 @@ public class SocksVpnService extends VpnService {
                 }
             }).start();
             LogUtils.i("Started in VPN mode");
-            sendBroadcast(new LaunchedIntent(true));
+            sendBroadcast(new FreeInternetChangedIntent(true));
         } catch (Exception e) {
             handleFatalError(LogUtils.e("VPN establish failed", e));
         }

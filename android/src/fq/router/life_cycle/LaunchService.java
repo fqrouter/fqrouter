@@ -27,7 +27,7 @@ public class LaunchService extends IntentService {
 
     static {
         try {
-            SOCKS_VPN_SERVICE_CLASS = LaunchService.class.forName("fq.router.vpn.SocksVpnService");
+            SOCKS_VPN_SERVICE_CLASS = LaunchService.class.forName("fq.router.free_internet.SocksVpnService");
         } catch (ClassNotFoundException e) {
             LogUtils.e("failed to load SocksVpnService.class", e);
         }
@@ -46,13 +46,11 @@ public class LaunchService extends IntentService {
         LogUtils.i("ver: " + getMyVersion(this));
         LogUtils.i("rooted: " + ShellUtils.checkRooted());
         if (isVpnRunning()) {
-            LogUtils.i("manager is already running");
-            reportStated(true);
+            LogUtils.i("manager is already running in vpn mode");
             return;
         }
         if (ping(false)) {
-            LogUtils.i("manager is already running");
-            reportStated(false);
+            LogUtils.i("manager is already running in root mode");
             return;
         }
         if (ping(true)) {
@@ -70,24 +68,10 @@ public class LaunchService extends IntentService {
             }
             return;
         }
-        String fatalError = deployAndLaunch();
-        if (fatalError.isEmpty()) {
-            reportStated(false);
-        } else {
-            handleFatalError(fatalError);
-        }
+        deployAndLaunch();
     }
 
-    private void reportStated(boolean isVpnMode) {
-        if (isVpnMode) {
-            LogUtils.i("Started in VPN mode");
-        } else {
-            LogUtils.i("Started, f**k censorship");
-        }
-        sendBroadcast(new LaunchedIntent(isVpnMode));
-    }
-
-    private String deployAndLaunch() {
+    private void deployAndLaunch() {
         try {
             LogUtils.i("Kill existing manager process");
             LogUtils.i("try to kill manager process before launch");
@@ -99,17 +83,29 @@ public class LaunchService extends IntentService {
         Deployer deployer = new Deployer(this);
         String fatalError = deployer.deploy();
         if (!fatalError.isEmpty()) {
-            return fatalError;
+            handleFatalError(fatalError);
+            return;
         }
         updateConfigFile(this);
         LogUtils.i("Launching...");
         if (ShellUtils.checkRooted()) {
-            return launch(false);
+            fatalError = launch(false);
+            if (fatalError.isEmpty()) {
+                sendBroadcast(new LaunchedIntent(false));
+            } else {
+                handleFatalError(fatalError);
+            }
         } else {
             if (Build.VERSION.SDK_INT < 14) {
-                return "[ROOT] is required";
+                handleFatalError("[ROOT] is required");
+                return;
             }
-            return launch(true);
+            fatalError = launch(true);
+            if (fatalError.isEmpty()) {
+                sendBroadcast(new LaunchedIntent(true));
+            } else {
+                handleFatalError(fatalError);
+            }
         }
     }
 
@@ -162,9 +158,9 @@ public class LaunchService extends IntentService {
         } else {
             try {
                 LogUtils.i(ShellUtils.sudo(
-                                env, Deployer.PYTHON_LAUNCHER +
-                                " -c \"import os; print 'current user id: %s' % os.getuid()\"").trim());
-            }  catch (Exception e) {
+                        env, Deployer.PYTHON_LAUNCHER +
+                        " -c \"import os; print 'current user id: %s' % os.getuid()\"").trim());
+            } catch (Exception e) {
                 LogUtils.e("log current user id failed", e);
             }
             return ShellUtils.sudoNoWait(env, Deployer.PYTHON_LAUNCHER + " " +
