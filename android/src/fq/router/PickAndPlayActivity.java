@@ -45,7 +45,7 @@ public class PickAndPlayActivity extends ListActivity {
             public void run() {
                 try {
                     updateStatus("scanning...");
-                    HttpUtils.get("http://127.0.0.1:8318/lan/scan?factor=" + factor, new IOUtils.LineRead() {
+                    HttpUtils.get("http://127.0.0.1:8318/pick-and-play/scan?factor=" + factor, new IOUtils.LineRead() {
                         @Override
                         public void onLineRead(String line) {
                             try {
@@ -143,11 +143,11 @@ public class PickAndPlayActivity extends ListActivity {
                 try {
                     if (isChecked) {
                         wifiLock.acquire();
-                        HttpUtils.post("http://127.0.0.1:8318/lan/forge-default-gateway", "ip=" + URLEncoder.encode(ip, "UTF-8") +
+                        HttpUtils.post("http://127.0.0.1:8318/pick-and-play/forge-default-gateway", "ip=" + URLEncoder.encode(ip, "UTF-8") +
                                 "&mac=" + URLEncoder.encode(mac, "UTF-8"));
                         updateStatus("picked " + ip + ", free internet is accessible from that device now");
                     } else {
-                        if ("0".equals(HttpUtils.post("http://127.0.0.1:8318/lan/restore-default-gateway", "ip=" + URLEncoder.encode(ip, "UTF-8")))) {
+                        if ("0".equals(HttpUtils.post("http://127.0.0.1:8318/pick-and-play/restore-default-gateway", "ip=" + URLEncoder.encode(ip, "UTF-8")))) {
                             wifiLock.release();
                         }
                         updateStatus("unpicked " + ip + ", network went back to normal");

@@ -18,11 +18,10 @@
             android:textOff="Wifi Repeater"
             android:id="@+id/wifiRepeaterButton" android:layout_gravity="left|bottom" android:textStyle="bold"
             android:textSize="10pt" android:longClickable="true"/>
-    <ToggleButton
+    <Button
             android:layout_width="160dp"
             android:layout_height="88dp"
-            android:textOn="Pick &amp; Play"
-            android:textOff="Pick &amp; Play"
+            android:text="Pick &amp; Play"
             android:id="@+id/pickAndPlayButton" android:layout_gravity="right|bottom" android:textSize="10pt"
             android:textStyle="bold" android:longClickable="true"/>
     <ImageView

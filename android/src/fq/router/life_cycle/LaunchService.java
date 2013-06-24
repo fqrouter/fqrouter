@@ -47,10 +47,12 @@ public class LaunchService extends IntentService {
         LogUtils.i("rooted: " + ShellUtils.checkRooted());
         if (isVpnRunning()) {
             LogUtils.i("manager is already running in vpn mode");
+            sendBroadcast(new LaunchedIntent(true));
             return;
         }
         if (ping(false)) {
             LogUtils.i("manager is already running in root mode");
+            sendBroadcast(new LaunchedIntent(false));
             return;
         }
         if (ping(true)) {

@@ -16,9 +16,10 @@ fqlan_process = None
 
 def start():
     return [
-        ('GET', 'lan/scan', handle_scan),
-        ('POST', 'lan/forge-default-gateway', handle_forge_default_gateway),
-        ('POST', 'lan/restore-default-gateway', handle_restore_default_gateway)
+        ('GET', 'pick-and-play/scan', handle_scan),
+        ('POST', 'pick-and-play/forge-default-gateway', handle_forge_default_gateway),
+        ('POST', 'pick-and-play/restore-default-gateway', handle_restore_default_gateway),
+        ('GET', 'pick-and-play/is-started', handle_is_started)
     ]
 
 
@@ -57,6 +58,12 @@ def handle_restore_default_gateway(environ, start_response):
     return [str(len(picked_devices))]
 
 
+def handle_is_started(environ, start_response):
+    is_started = is_alive()
+    start_response(httplib.OK, [('Content-Type', 'text/plain')])
+    yield 'TRUE' if is_started else 'FALSE'
+
+
 def handle_scan(environ, start_response):
     try:
         scan_process = subprocess.Popen(
@@ -90,8 +97,8 @@ def restart_fqlan():
         return
     fqlan_process = shell.launch_python(
         'fqlan', ['--log-level', 'INFO',
-        '--log-file', '/data/data/fq.router/log/fqlan.log',
-        '--lan-interface', comp_wifi.WIFI_INTERFACE,
-        '--ifconfig-command', '/data/data/fq.router/busybox',
-        '--ip-command', '/data/data/fq.router/busybox',
-        'forge'] + ['%s,%s' % (ip, mac) for ip, mac in picked_devices.items()], on_exit=stop)
+                  '--log-file', '/data/data/fq.router/log/fqlan.log',
+                  '--lan-interface', comp_wifi.WIFI_INTERFACE,
+                  '--ifconfig-command', '/data/data/fq.router/busybox',
+                  '--ip-command', '/data/data/fq.router/busybox',
+                  'forge'] + ['%s,%s' % (ip, mac) for ip, mac in picked_devices.items()], on_exit=stop)

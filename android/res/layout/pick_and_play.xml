@@ -7,7 +7,7 @@
     <TextView
             android:layout_width="fill_parent"
             android:layout_height="wrap_content"
-            android:text="scan the currently connected wifi network to discover your other devices (iphone, windows pc). pick any device from the list, then that device will route via fqrouter to access restricted website such as youtube or twitter."
+            android:text="scan the currently connected wifi network to discover your other devices (iphone, windows pc, etc). pick any device from the list, then that device will route via fqrouter to access restricted website such as youtube or twitter."
             android:layout_marginBottom="4pt"/>
     <TextView
             android:id="@+id/statusTextBox"

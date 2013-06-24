@@ -73,10 +73,11 @@ def start_components(*components):
     for comp in components:
         try:
             shutdown_hook.add(comp.stop)
-            handlers = comp.start()
-            for method, url, handler in handlers or []:
-                httpd.HANDLERS[(method, url)] = handler
-            LOGGER.info('started component: %s' % comp.__name__)
+            if not comp.is_alive():
+                handlers = comp.start()
+                for method, url, handler in handlers or []:
+                    httpd.HANDLERS[(method, url)] = handler
+                LOGGER.info('started component: %s' % comp.__name__)
         except:
             LOGGER.exception('failed to start component: %s' % comp.__name__)
             comp.stop()

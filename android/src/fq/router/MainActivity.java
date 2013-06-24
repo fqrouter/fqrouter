@@ -9,7 +9,6 @@ import android.graphics.ColorMatrixColorFilter;
 import android.net.Uri;
 import android.net.VpnService;
 import android.net.wifi.WifiManager;
-import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
 import android.preference.PreferenceManager;
@@ -27,6 +26,8 @@ import fq.router.free_internet.ConnectFreeInternetService;
 import fq.router.free_internet.DisconnectFreeInternetService;
 import fq.router.free_internet.FreeInternetChangedIntent;
 import fq.router.life_cycle.*;
+import fq.router.pick_and_play.CheckPickAndPlayService;
+import fq.router.pick_and_play.PickAndPlayChangedIntent;
 import fq.router.utils.ApkUtils;
 import fq.router.utils.IOUtils;
 import fq.router.utils.LogUtils;
@@ -46,6 +47,7 @@ public class MainActivity extends Activity implements
         UpdateFoundIntent.Handler,
         ExitedIntent.Handler,
         WifiRepeaterChangedIntent.Handler,
+        PickAndPlayChangedIntent.Handler,
         FreeInternetChangedIntent.Handler,
         DownloadingIntent.Handler,
         DownloadedIntent.Handler,
@@ -56,10 +58,9 @@ public class MainActivity extends Activity implements
     private final static int ITEM_ID_EXIT = 1;
     private final static int ITEM_ID_REPORT_ERROR = 2;
     private final static int ITEM_ID_SETTINGS = 3;
-    private final static int ITEM_ID_PICK_AND_PLAY = 4;
-    private final static int ITEM_ID_UPGRADE_MANUALLY = 5;
+    private final static int ITEM_ID_UPGRADE_MANUALLY = 4;
     private final static int ASK_VPN_PERMISSION = 1;
-    private static boolean started;
+    private static boolean isLaunched;
     private Handler handler = new Handler();
     private Set<Integer> blinkingImageViews = new HashSet<Integer>();
     private String blinkingStatus = "";
@@ -82,6 +83,7 @@ public class MainActivity extends Activity implements
         UpdateFoundIntent.register(this);
         ExitedIntent.register(this);
         WifiRepeaterChangedIntent.register(this);
+        PickAndPlayChangedIntent.register(this);
         FreeInternetChangedIntent.register(this);
         DownloadingIntent.register(this);
         DownloadedIntent.register(this);
@@ -89,6 +91,15 @@ public class MainActivity extends Activity implements
         HandleFatalErrorIntent.register(this);
         blinkStatus(0);
         launch();
+    }
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+        if (isLaunched) {
+            CheckWifiRepeaterService.execute(this);
+            CheckPickAndPlayService.execute(this);
+        }
     }
 
     private void launch() {
@@ -142,7 +153,14 @@ public class MainActivity extends Activity implements
                 toggleFreeInternet((ToggleButton) view);
             }
         });
+        findViewById(R.id.pickAndPlayButton).setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                startActivity(new Intent(MainActivity.this, PickAndPlayActivity.class));
+            }
+        });
     }
+
 
     private void startBlinkingStatus(String status) {
         blinkingStatus = status;
@@ -207,11 +225,8 @@ public class MainActivity extends Activity implements
 
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
-        if (started) {
+        if (isLaunched) {
             menu.add(Menu.NONE, ITEM_ID_SETTINGS, Menu.NONE, "Settings");
-        }
-        if (ShellUtils.isRooted()) {
-            addMenuItem(menu, ITEM_ID_PICK_AND_PLAY, "Pick & Play");
         }
         if (upgradeUrl != null) {
             menu.add(Menu.NONE, ITEM_ID_UPGRADE_MANUALLY, Menu.NONE, "Upgrade Manually");
@@ -242,8 +257,6 @@ public class MainActivity extends Activity implements
             new ErrorReportEmail(this).send();
         } else if (ITEM_ID_SETTINGS == item.getItemId()) {
             startActivity(new Intent(this, MainSettingsActivity.class));
-        } else if (ITEM_ID_PICK_AND_PLAY == item.getItemId()) {
-            startActivity(new Intent(this, PickAndPlayActivity.class));
         } else if (ITEM_ID_UPGRADE_MANUALLY == item.getItemId()) {
             startActivity(new Intent(Intent.ACTION_VIEW, Uri.parse(upgradeUrl)));
         }
@@ -287,7 +300,7 @@ public class MainActivity extends Activity implements
             Toast.makeText(this, "Use notification bar to stop VPN", 5000).show();
             return;
         }
-        started = false;
+        isLaunched = false;
         disableAll();
         ExitService.execute(this);
         startBlinkingImage((ImageView) findViewById(R.id.star));
@@ -347,15 +360,9 @@ public class MainActivity extends Activity implements
     }
 
 
-    public void enablePickAndPlayButton(final boolean isStarted) {
-        ToggleButton button = (ToggleButton) findViewById(R.id.pickAndPlayButton);
-        button.setChecked(isStarted);
-        button.setEnabled(true);
-    }
-
     @Override
     public void onLaunched(boolean isVpnMode) {
-        started = true;
+        isLaunched = true;
         ActivityCompat.invalidateOptionsMenu(this);
 
         ImageView star = (ImageView) findViewById(R.id.star);
@@ -364,16 +371,17 @@ public class MainActivity extends Activity implements
         stopBlinkingStatus();
 
         checkUpdate();
-        if (!isVpnMode && Build.VERSION.SDK_INT >= 14) {
-            CheckWifiRepeaterService.execute(this);
-        }
+        CheckWifiRepeaterService.execute(this);
         startBlinkingImage((ImageView) findViewById(R.id.freeInternetArrow));
         startBlinkingStatus("Connecting to free internet");
         if (isVpnMode) {
-            startVpn();
+            if (!LaunchService.isVpnRunning()) {
+                startVpn();
+            }
         } else {
             enableWifiRepeaterButton(false);
             enableFreeInternetButton(false);
+            findViewById(R.id.pickAndPlayButton).setEnabled(true);
             ConnectFreeInternetService.execute(this);
         }
     }
@@ -498,7 +506,7 @@ public class MainActivity extends Activity implements
     }
 
     public static void setExiting() {
-        started = false;
+        isLaunched = false;
     }
 
     @Override
@@ -518,6 +526,7 @@ public class MainActivity extends Activity implements
         ((TextView) findViewById(R.id.statusTextView)).setText("");
         if (isConnected) {
             enableImage(freeInternetArrow);
+            updateStatus("You may try youtube/twitter now");
         } else {
             disableImage(freeInternetArrow);
         }
@@ -526,6 +535,18 @@ public class MainActivity extends Activity implements
             button.setChecked(isConnected);
         } else {
             enableFreeInternetButton(isConnected);
+        }
+    }
+
+    @Override
+    public void onPickAndPlayChanged(boolean isStarted) {
+        ImageView pickAndPlayArrow = (ImageView) findViewById(R.id.pickAndPlayArrow);
+        stopBlinkingImage(pickAndPlayArrow);
+        stopBlinkingStatus();
+        if (isStarted) {
+            enableImage(pickAndPlayArrow);
+        } else {
+            disableImage(pickAndPlayArrow);
         }
     }
 }
