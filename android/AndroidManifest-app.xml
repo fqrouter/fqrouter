@@ -59,6 +59,8 @@
         </service>
         <service android:name=".free_internet.ConnectFreeInternetService">
         </service>
+        <service android:name=".free_internet.DisconnectFreeInternetService">
+        </service>
         <service
                 android:name=".free_internet.SocksVpnService"
                 android:label="@string/app_name"

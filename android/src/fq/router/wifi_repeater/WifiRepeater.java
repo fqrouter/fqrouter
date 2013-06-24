@@ -19,7 +19,7 @@ public class WifiRepeater {
 
     public boolean isStarted() {
         try {
-            return "TRUE".equals(HttpUtils.get("http://127.0.0.1:8318/wifi-repeater/started"));
+            return "TRUE".equals(HttpUtils.get("http://127.0.0.1:8318/wifi-repeater/is-started"));
         } catch (Exception e) {
             LogUtils.e("failed to check wifi repeater is started", e);
             return false;

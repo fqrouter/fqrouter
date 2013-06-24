@@ -4,22 +4,25 @@
         android:layout_width="fill_parent"
         android:layout_height="fill_parent" xmlns:android="http://schemas.android.com/apk/res/android">
 
-    <Button
+    <ToggleButton
             android:layout_width="160dp"
-            android:layout_height="80dp"
-            android:text="Free Internet"
+            android:layout_height="88dp"
+            android:textOn="Free Internet"
+            android:textOff="Free Internet"
             android:id="@+id/freeInternetButton" android:layout_gravity="center_horizontal|top" android:textSize="10pt"
             android:textStyle="bold" android:longClickable="true" android:layout_marginTop="48dp"/>
-    <Button
+    <ToggleButton
             android:layout_width="160dp"
-            android:layout_height="80dp"
-            android:text="Wifi Repeater"
+            android:layout_height="88dp"
+            android:textOn="Wifi Repeater"
+            android:textOff="Wifi Repeater"
             android:id="@+id/wifiRepeaterButton" android:layout_gravity="left|bottom" android:textStyle="bold"
             android:textSize="10pt" android:longClickable="true"/>
-    <Button
+    <ToggleButton
             android:layout_width="160dp"
-            android:layout_height="80dp"
-            android:text="Pick &amp; Play"
+            android:layout_height="88dp"
+            android:textOn="Pick &amp; Play"
+            android:textOff="Pick &amp; Play"
             android:id="@+id/pickAndPlayButton" android:layout_gravity="right|bottom" android:textSize="10pt"
             android:textStyle="bold" android:longClickable="true"/>
     <ImageView

@@ -13,9 +13,9 @@ from utils import config
 def start():
     setup_lo_alias()
     return [
-        ('POST', 'wifi/start', handle_start),
-        ('POST', 'wifi/stop', handle_stop),
-        ('GET', 'wifi/started', handle_started),
+        ('POST', 'wifi-repeater/start', handle_start),
+        ('POST', 'wifi-repeater/stop', handle_stop),
+        ('GET', 'wifi-repeater/is-started', handle_is_started),
     ]
 
 
@@ -42,6 +42,6 @@ def handle_stop(environ, start_response):
     yield stop_hotspot()
 
 
-def handle_started(environ, start_response):
+def handle_is_started(environ, start_response):
     start_response(httplib.OK, [('Content-Type', 'text/plain')])
     yield 'TRUE' if get_working_hotspot_iface() else 'FALSE'

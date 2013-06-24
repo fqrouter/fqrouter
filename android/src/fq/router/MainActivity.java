@@ -17,12 +17,14 @@ import android.support.v4.app.ActivityCompat;
 import android.support.v4.app.NotificationCompat;
 import android.view.Menu;
 import android.view.MenuItem;
+import android.view.View;
 import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
 import android.widget.ToggleButton;
 import fq.router.feedback.*;
 import fq.router.free_internet.ConnectFreeInternetService;
+import fq.router.free_internet.DisconnectFreeInternetService;
 import fq.router.free_internet.FreeInternetChangedIntent;
 import fq.router.free_internet.StartVpnIntent;
 import fq.router.life_cycle.*;
@@ -88,21 +90,24 @@ public class MainActivity extends Activity implements
         DownloadFailedIntent.register(this);
         StartVpnIntent.register(this);
         HandleFatalErrorIntent.register(this);
+        blinkStatus(0);
         launch();
     }
 
     private void launch() {
-        disableAllImages();
+        disableAll();
         startBlinkingImage((ImageView) findViewById(R.id.star));
         startBlinkingStatus("Launching");
         LaunchService.execute(this);
     }
 
-    private void disableAllImages() {
+    private void disableAll() {
         disableImage((ImageView) findViewById(R.id.freeInternetArrow));
         disableImage((ImageView) findViewById(R.id.wifiRepeaterArrow));
         disableImage((ImageView) findViewById(R.id.pickAndPlayArrow));
         disableImage((ImageView) findViewById(R.id.star));
+        disableFreeInternetButton();
+        disableWifiRepeaterButton();
     }
 
 
@@ -126,30 +131,27 @@ public class MainActivity extends Activity implements
         }
     }
 
-    @Override
-    protected void onResume() {
-        super.onResume();
-        if (!started) {
-            return;
-        }
-        LaunchService.execute(this);
-    }
-
     private void setupUI() {
-//        TextView textView = (TextView) findViewById(R.id.logTextView);
-//        textView.setMovementMethod(new ScrollingMovementMethod());
-//        final ToggleButton button = (ToggleButton) findViewById(R.id.wifiHotspotToggleButton);
-//        button.setOnClickListener(new View.OnClickListener() {
-//            @Override
-//            public void onClick(View view) {
-//                toggleWifiHotspot((ToggleButton) view);
-//            }
-//        });
+        findViewById(R.id.wifiRepeaterButton).setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                toggleWifiRepeater((ToggleButton) view);
+            }
+        });
+        findViewById(R.id.freeInternetButton).setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                toggleFreeInternet((ToggleButton) view);
+            }
+        });
     }
 
     private void startBlinkingStatus(String status) {
         blinkingStatus = status;
-        blinkStatus(0);
+    }
+
+    private void stopBlinkingStatus() {
+        blinkingStatus = "";
     }
 
     private void blinkStatus(final int count) {
@@ -163,8 +165,8 @@ public class MainActivity extends Activity implements
                         text += ".";
                     }
                     statusTextView.setText(text);
-                    blinkStatus((count + 1) % 4);
                 }
+                blinkStatus((count + 1) % 4);
             }
         }, 500);
     }
@@ -250,14 +252,6 @@ public class MainActivity extends Activity implements
         return super.onMenuItemSelected(featureId, item);
     }
 
-
-    public void showWifiHotspotToggleButton(final boolean isStarted) {
-//        final ToggleButton wifiHotspotToggleButton = (ToggleButton) findViewById(R.id.wifiHotspotToggleButton);
-//        wifiHotspotToggleButton.setChecked(isStarted);
-//        final View wifiHotspotPanel = findViewById(R.id.wifiHotspotPanel);
-//        wifiHotspotPanel.setVisibility(View.VISIBLE);
-    }
-
     private void showNotification(String text) {
         Intent intent = new Intent(this, MainActivity.class);
         PendingIntent pIntent = PendingIntent.getActivity(this, 0, intent, 0);
@@ -296,43 +290,77 @@ public class MainActivity extends Activity implements
             return;
         }
         started = false;
-        hideWifiHotspotToggleButton();
+        disableAll();
         ExitService.execute(this);
         startBlinkingImage((ImageView) findViewById(R.id.star));
         startBlinkingStatus("Exiting");
     }
 
-    private void toggleWifiHotspot(ToggleButton button) {
+    private void toggleFreeInternet(ToggleButton button) {
+        startBlinkingImage((ImageView) findViewById(R.id.freeInternetArrow));
         if (button.isChecked()) {
-            startWifiHotspot();
+            startBlinkingStatus("Connecting to free internet");
+            disableFreeInternetButton();
+            ConnectFreeInternetService.execute(this);
         } else {
-            hideWifiHotspotToggleButton();
+            startBlinkingStatus("Disconnecting from free internet");
+            disableFreeInternetButton();
+            DisconnectFreeInternetService.execute(this);
+        }
+    }
+
+    private void toggleWifiRepeater(ToggleButton button) {
+        startBlinkingImage((ImageView) findViewById(R.id.wifiRepeaterArrow));
+        if (button.isChecked()) {
+            startBlinkingStatus("Starting wifi repeater");
+            disableWifiRepeaterButton();
+            StartWifiRepeaterService.execute(this);
+        } else {
+            startBlinkingStatus("Stopping wifi repeater");
+            disableWifiRepeaterButton();
             StopWifiRepeaterService.execute(this);
         }
     }
 
-    private void startWifiHotspot() {
-        hideWifiHotspotToggleButton();
-        StartWifiRepeaterService.execute(this);
+    public void disableFreeInternetButton() {
+        findViewById(R.id.freeInternetButton).setEnabled(false);
     }
 
-    public void hideWifiHotspotToggleButton() {
-//        findViewById(R.id.wifiHotspotPanel).setVisibility(View.INVISIBLE);
+
+    public void enableFreeInternetButton(final boolean isConnected) {
+        final ToggleButton button = (ToggleButton) findViewById(R.id.freeInternetButton);
+        button.setChecked(isConnected);
+        button.setEnabled(true);
+    }
+
+    public void disableWifiRepeaterButton() {
+        findViewById(R.id.wifiRepeaterButton).setEnabled(false);
+    }
+
+
+    public void enableWifiRepeaterButton(final boolean isStarted) {
+        final ToggleButton button = (ToggleButton) findViewById(R.id.wifiRepeaterButton);
+        button.setChecked(isStarted);
+        button.setEnabled(true);
     }
 
     @Override
     public void onLaunched(boolean isVpnMode) {
         started = true;
+        ActivityCompat.invalidateOptionsMenu(this);
+
+        ImageView star = (ImageView) findViewById(R.id.star);
+        stopBlinkingImage(star);
+        enableImage(star);
+        stopBlinkingStatus();
+
+        enableFreeInternetButton(false);
+        enableWifiRepeaterButton(false);
+
         checkUpdate();
         if (!isVpnMode && Build.VERSION.SDK_INT >= 14) {
             CheckWifiRepeaterService.execute(this);
         }
-        ActivityCompat.invalidateOptionsMenu(this);
-        ImageView star = (ImageView) findViewById(R.id.star);
-        stopBlinkingImage(star);
-        enableImage(star);
-        blinkingStatus = "";
-        updateStatus("Launched");
         startBlinkingImage((ImageView) findViewById(R.id.freeInternetArrow));
         startBlinkingStatus("Connecting to free internet");
         ConnectFreeInternetService.execute(this);
@@ -382,7 +410,16 @@ public class MainActivity extends Activity implements
     @Override
     public void onWifiRepeaterChanged(boolean isStarted) {
         updateWifiLock(isStarted);
-        showWifiHotspotToggleButton(isStarted);
+        enableWifiRepeaterButton(isStarted);
+        stopBlinkingImage((ImageView) findViewById(R.id.wifiRepeaterArrow));
+        stopBlinkingStatus();
+        ((TextView) findViewById(R.id.statusTextView)).setText("");
+        if (isStarted) {
+            enableImage((ImageView) findViewById(R.id.wifiRepeaterArrow));
+        } else {
+            disableImage((ImageView) findViewById(R.id.wifiRepeaterArrow));
+        }
+        ((ToggleButton) findViewById(R.id.wifiRepeaterButton)).setChecked(isStarted);
     }
 
     private void updateWifiLock(boolean isStarted) {
@@ -456,8 +493,8 @@ public class MainActivity extends Activity implements
     @Override
     public void onHandleFatalError(String message) {
         blinkingImageViews.clear();
-        blinkingStatus = "";
-        disableAllImages();
+        stopBlinkingStatus();
+        disableAll();
         updateStatus("Error: " + message);
         checkUpdate();
     }
@@ -466,13 +503,13 @@ public class MainActivity extends Activity implements
     public void onFreeInternetChanged(boolean isConnected) {
         ImageView freeInternetArrow = (ImageView) findViewById(R.id.freeInternetArrow);
         stopBlinkingImage(freeInternetArrow);
-        blinkingStatus = "";
+        stopBlinkingStatus();
+        ((TextView) findViewById(R.id.statusTextView)).setText("");
         if (isConnected) {
             enableImage(freeInternetArrow);
-            updateStatus("Connected to free internet");
         } else {
             disableImage(freeInternetArrow);
-            updateStatus("Disconnected from free internet");
         }
+        enableFreeInternetButton(isConnected);
     }
 }
