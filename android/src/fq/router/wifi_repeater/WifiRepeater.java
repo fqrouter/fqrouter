@@ -26,29 +26,27 @@ public class WifiRepeater {
         }
     }
 
-    public boolean start() {
+    public void start() {
         try {
             if (Build.VERSION.SDK_INT < 14) {
-                LogUtils.i("Android 4.0 or above is required to start wifi repeater, " +
-                                "you may use 'Pick & Play' instead.");
-                return false;
+                throw new HandleFatalErrorIntent.Message(
+                        "Android 4.0 or above is required to start wifi repeater, " +
+                        "you may use 'Pick & Play' instead.");
             }
             startWifiRepeater();
             LogUtils.i("Started wifi repeater");
             LogUtils.i("SSID: " + getSSID());
             LogUtils.i("PASSWORD: " + getPassword());
-            return true;
         } catch (HttpUtils.Error e) {
-            LogUtils.i("error: " + e.output);
-            reportStartFailure(e);
+            LogUtils.e("failed to start wifi repeater", e);
+            throw new HandleFatalErrorIntent.Message(e.output);
         } catch (Exception e) {
-            reportStartFailure(e);
+            LogUtils.e("failed to start wifi repeater", e);
+            throw new HandleFatalErrorIntent.Message("failed to start wifi repeater");
         }
-        return false;
     }
 
     private void reportStartFailure(Exception e) {
-        LogUtils.e("failed to start wifi repeater", e);
         stop();
     }
 
@@ -82,5 +80,9 @@ public class WifiRepeater {
 
     private WifiManager getWifiManager() {
         return (WifiManager) context.getSystemService(Context.WIFI_SERVICE);
+    }
+
+    private void handleFatalError(String msg) {
+        context.sendBroadcast(new HandleFatalErrorIntent(msg));
     }
 }

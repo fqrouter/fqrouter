@@ -10,8 +10,9 @@ fqsocks_process = None
 
 
 def start():
-    insert_iptables_rules()
-    start_fqsocks()
+    if not is_alive():
+        insert_iptables_rules()
+        start_fqsocks()
 
 
 def stop():

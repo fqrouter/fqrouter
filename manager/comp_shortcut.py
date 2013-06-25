@@ -8,8 +8,9 @@ nfqueue_ipset_process = None
 
 
 def start():
-    insert_iptables_rules()
-    start_nfqueue_ipset()
+    if not is_alive():
+        insert_iptables_rules()
+        start_nfqueue_ipset()
 
 
 def stop():

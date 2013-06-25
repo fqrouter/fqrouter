@@ -9,6 +9,7 @@ import android.graphics.ColorMatrixColorFilter;
 import android.net.Uri;
 import android.net.VpnService;
 import android.net.wifi.WifiManager;
+import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
 import android.preference.PreferenceManager;
@@ -22,6 +23,7 @@ import android.widget.TextView;
 import android.widget.Toast;
 import android.widget.ToggleButton;
 import fq.router.feedback.*;
+import fq.router.free_internet.CheckFreeInternetService;
 import fq.router.free_internet.ConnectFreeInternetService;
 import fq.router.free_internet.DisconnectFreeInternetService;
 import fq.router.free_internet.FreeInternetChangedIntent;
@@ -97,8 +99,31 @@ public class MainActivity extends Activity implements
     protected void onResume() {
         super.onResume();
         if (isLaunched) {
+            checkAll();
+        }
+    }
+
+    private void checkAll() {
+        checkWifiRepeater();
+        checkPickAndPlay();
+        checkFreeInternet();
+    }
+
+    private void checkWifiRepeater() {
+        if (ShellUtils.isRooted() && Build.VERSION.SDK_INT >= 14) {
             CheckWifiRepeaterService.execute(this);
+        }
+    }
+
+    private void checkPickAndPlay() {
+        if (ShellUtils.isRooted()) {
             CheckPickAndPlayService.execute(this);
+        }
+    }
+
+    private void checkFreeInternet() {
+        if (ShellUtils.isRooted()) {
+            CheckFreeInternetService.execute(this);
         }
     }
 
@@ -113,7 +138,6 @@ public class MainActivity extends Activity implements
         disableImage((ImageView) findViewById(R.id.freeInternetArrow));
         disableImage((ImageView) findViewById(R.id.wifiRepeaterArrow));
         disableImage((ImageView) findViewById(R.id.pickAndPlayArrow));
-        disableImage((ImageView) findViewById(R.id.star));
         disableFreeInternetButton();
         disableWifiRepeaterButton();
         disablePickAndPlayButton();
@@ -287,11 +311,20 @@ public class MainActivity extends Activity implements
     public void updateStatus(String status) {
         LogUtils.i(status);
         TextView textView = (TextView) findViewById(R.id.statusTextView);
-        textView.setText(status);
-        if (LaunchService.isVpnRunning()) {
-            clearNotification();
-        } else {
-            showNotification(status);
+        if (!textView.getText().toString().startsWith("Error:")) {
+            textView.setText(status);
+            if (LaunchService.isVpnRunning()) {
+                clearNotification();
+            } else {
+                showNotification(status);
+            }
+        }
+    }
+
+    private void clearStatus() {
+        TextView textView = (TextView) findViewById(R.id.statusTextView);
+        if (!textView.getText().toString().startsWith("Error:")) {
+            textView.setText("");
         }
     }
 
@@ -370,8 +403,6 @@ public class MainActivity extends Activity implements
         enableImage(star);
         stopBlinkingStatus();
 
-        checkUpdate();
-        CheckWifiRepeaterService.execute(this);
         startBlinkingImage((ImageView) findViewById(R.id.freeInternetArrow));
         startBlinkingStatus("Connecting to free internet");
         if (isVpnMode) {
@@ -379,9 +410,8 @@ public class MainActivity extends Activity implements
                 startVpn();
             }
         } else {
-            enableWifiRepeaterButton(false);
-            enableFreeInternetButton(false);
-            findViewById(R.id.pickAndPlayButton).setEnabled(true);
+            checkWifiRepeater();
+            checkPickAndPlay();
             ConnectFreeInternetService.execute(this);
         }
     }
@@ -425,21 +455,6 @@ public class MainActivity extends Activity implements
     public void onExited() {
         clearNotification();
         finish();
-    }
-
-    @Override
-    public void onWifiRepeaterChanged(boolean isStarted) {
-        updateWifiLock(isStarted);
-        enableWifiRepeaterButton(isStarted);
-        stopBlinkingImage((ImageView) findViewById(R.id.wifiRepeaterArrow));
-        stopBlinkingStatus();
-        ((TextView) findViewById(R.id.statusTextView)).setText("");
-        if (isStarted) {
-            enableImage((ImageView) findViewById(R.id.wifiRepeaterArrow));
-        } else {
-            disableImage((ImageView) findViewById(R.id.wifiRepeaterArrow));
-        }
-        ((ToggleButton) findViewById(R.id.wifiRepeaterButton)).setChecked(isStarted);
     }
 
     private void updateWifiLock(boolean isStarted) {
@@ -515,7 +530,22 @@ public class MainActivity extends Activity implements
         stopBlinkingStatus();
         disableAll();
         updateStatus("Error: " + message);
+        checkAll();
         checkUpdate();
+    }
+
+    @Override
+    public void onWifiRepeaterChanged(boolean isStarted) {
+        updateWifiLock(isStarted);
+        stopBlinkingImage((ImageView) findViewById(R.id.wifiRepeaterArrow));
+        stopBlinkingStatus();
+        clearStatus();
+        if (isStarted) {
+            enableImage((ImageView) findViewById(R.id.wifiRepeaterArrow));
+        } else {
+            disableImage((ImageView) findViewById(R.id.wifiRepeaterArrow));
+        }
+        enableWifiRepeaterButton(isStarted);
     }
 
     @Override
@@ -523,11 +553,12 @@ public class MainActivity extends Activity implements
         ImageView freeInternetArrow = (ImageView) findViewById(R.id.freeInternetArrow);
         stopBlinkingImage(freeInternetArrow);
         stopBlinkingStatus();
-        ((TextView) findViewById(R.id.statusTextView)).setText("");
         if (isConnected) {
-            enableImage(freeInternetArrow);
             updateStatus("You may try youtube/twitter now");
+            enableImage(freeInternetArrow);
+            checkUpdate();
         } else {
+            clearStatus();
             disableImage(freeInternetArrow);
         }
         if (LaunchService.isVpnRunning()) {
@@ -543,10 +574,12 @@ public class MainActivity extends Activity implements
         ImageView pickAndPlayArrow = (ImageView) findViewById(R.id.pickAndPlayArrow);
         stopBlinkingImage(pickAndPlayArrow);
         stopBlinkingStatus();
+        clearStatus();
         if (isStarted) {
             enableImage(pickAndPlayArrow);
         } else {
             disableImage(pickAndPlayArrow);
         }
+        findViewById(R.id.pickAndPlayButton).setEnabled(true);
     }
 }

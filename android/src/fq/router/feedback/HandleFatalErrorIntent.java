@@ -27,4 +27,10 @@ public class HandleFatalErrorIntent extends Intent {
 
         Context getBaseContext();
     }
+
+    public static class Message extends RuntimeException {
+        public Message(String msg) {
+            super(msg);
+        }
+    }
 }

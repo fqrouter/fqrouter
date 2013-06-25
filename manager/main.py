@@ -64,7 +64,7 @@ def run():
     httpd.HANDLERS[('GET', 'ping')] = handle_ping
     httpd.HANDLERS[('POST', 'free-internet/connect')] = handle_free_internet_connect
     httpd.HANDLERS[('POST', 'free-internet/disconnect')] = handle_free_internet_disconnect
-    httpd.HANDLERS[('POST', 'free-internet/is-connected')] = handle_free_internet_is_connected
+    httpd.HANDLERS[('GET', 'free-internet/is-connected')] = handle_free_internet_is_connected
     httpd.serve_forever()
 
 
@@ -73,11 +73,10 @@ def start_components(*components):
     for comp in components:
         try:
             shutdown_hook.add(comp.stop)
-            if not comp.is_alive():
-                handlers = comp.start()
-                for method, url, handler in handlers or []:
-                    httpd.HANDLERS[(method, url)] = handler
-                LOGGER.info('started component: %s' % comp.__name__)
+            handlers = comp.start()
+            for method, url, handler in handlers or []:
+                httpd.HANDLERS[(method, url)] = handler
+            LOGGER.info('started component: %s' % comp.__name__)
         except:
             LOGGER.exception('failed to start component: %s' % comp.__name__)
             comp.stop()
