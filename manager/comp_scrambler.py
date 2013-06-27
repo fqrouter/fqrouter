@@ -13,7 +13,7 @@ def start():
         insert_iptables_rules()
         fqting_process = shell.launch_python(
             'fqting', ('--log-level', 'INFO',
-            '--log-file', '/data/data/fq.router/log/fqting.log',
+            '--log-file', '/data/data/fq.router2/log/fqting.log',
             '--queue-number', '2',
             '--mark', '0xcafe'), on_exit=stop)
 

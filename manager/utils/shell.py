@@ -4,7 +4,7 @@ import gevent
 
 LOGGER = logging.getLogger('fqrouter.%s' % __name__)
 
-PYTHON_PATH = '/data/data/fq.router/python/bin/python'
+PYTHON_PATH = '/data/data/fq.router2/python/bin/python'
 
 
 def launch_python(name, args, on_exit=None):

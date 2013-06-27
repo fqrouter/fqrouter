@@ -28,16 +28,16 @@ LOGGER = logging.getLogger('wifi')
 MODALIAS_PATH = '/sys/class/net/%s/device/modalias' % WIFI_INTERFACE
 WPA_SUPPLICANT_CONF_PATH = '/data/misc/wifi/wpa_supplicant.conf'
 P2P_SUPPLICANT_CONF_PATH = '/data/misc/wifi/p2p_supplicant.conf'
-P2P_CLI_PATH = '/data/data/fq.router/wifi-tools/p2p_cli'
-IW_PATH = '/data/data/fq.router/wifi-tools/iw'
-HOSTAPD_PATH = '/data/data/fq.router/wifi-tools/hostapd'
-IWCONFIG_PATH = '/data/data/fq.router/wifi-tools/iwconfig'
-IWLIST_PATH = '/data/data/fq.router/wifi-tools/iwlist'
-DNSMASQ_PATH = '/data/data/fq.router/wifi-tools/dnsmasq'
-KILLALL_PATH = '/data/data/fq.router/busybox killall'
-IFCONFIG_PATH = '/data/data/fq.router/busybox ifconfig'
-IP_PATH = '/data/data/fq.router/busybox ip'
-FQROUTER_HOSTAPD_CONF_PATH = '/data/data/fq.router/hostapd.conf'
+P2P_CLI_PATH = '/data/data/fq.router2/wifi-tools/p2p_cli'
+IW_PATH = '/data/data/fq.router2/wifi-tools/iw'
+HOSTAPD_PATH = '/data/data/fq.router2/wifi-tools/hostapd'
+IWCONFIG_PATH = '/data/data/fq.router2/wifi-tools/iwconfig'
+IWLIST_PATH = '/data/data/fq.router2/wifi-tools/iwlist'
+DNSMASQ_PATH = '/data/data/fq.router2/wifi-tools/dnsmasq'
+KILLALL_PATH = '/data/data/fq.router2/busybox killall'
+IFCONFIG_PATH = '/data/data/fq.router2/busybox ifconfig'
+IP_PATH = '/data/data/fq.router2/busybox ip'
+FQROUTER_HOSTAPD_CONF_PATH = '/data/data/fq.router2/hostapd.conf'
 CHANNELS = {
     '2412': 1, '2417': 2, '2422': 3, '2427': 4, '2432': 5, '2437': 6, '2442': 7,
     '2447': 8, '2452': 9, '2457': 10, '2462': 11, '2467': 12, '2472': 13, '2484': 14,
@@ -163,7 +163,7 @@ def dump_wifi_status():
                     if 'supplicant' in cmdline:
                         LOGGER.info('pid %s: %s' % (pid, cmdline))
                         try:
-                            shell_execute('/data/data/fq.router/busybox ls -a -l /proc/%s/cwd' % pid)
+                            shell_execute('/data/data/fq.router2/busybox ls -a -l /proc/%s/cwd' % pid)
                         except:
                             LOGGER.exception('failed to dump supplicant working directory')
                         dump_wpa_supplicant(cmdline)
@@ -568,8 +568,8 @@ def setup_networking(hotspot_interface):
         LOGGER.exception('failed to killall dnsmasq')
     shell_execute('%s -i %s --dhcp-authoritative --no-negcache --user=root --no-resolv --no-hosts '
                   '--server=8.8.8.8 --dhcp-range=10.24.1.2,10.24.1.254,12h '
-                  '--dhcp-leasefile=/data/data/fq.router/dnsmasq.leases '
-                  '--pid-file=/data/data/fq.router/dnsmasq.pid' % (DNSMASQ_PATH, hotspot_interface))
+                  '--dhcp-leasefile=/data/data/fq.router2/dnsmasq.leases '
+                  '--pid-file=/data/data/fq.router2/dnsmasq.pid' % (DNSMASQ_PATH, hotspot_interface))
     log_upstream_wifi_status('after setup networking', control_socket_dir)
 
 

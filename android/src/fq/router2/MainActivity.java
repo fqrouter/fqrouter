@@ -154,6 +154,7 @@ public class MainActivity extends Activity implements
                     updateStatus("Launch Socks Vpn Service");
                     stopService(new Intent(this, LaunchService.SOCKS_VPN_SERVICE_CLASS));
                     startService(new Intent(this, LaunchService.SOCKS_VPN_SERVICE_CLASS));
+                    uninstallOldVersion();
                 }
             } else {
                 onHandleFatalError("vpn permission rejected");
@@ -410,9 +411,30 @@ public class MainActivity extends Activity implements
                 startVpn();
             }
         } else {
+            ApkUtils.uninstall(MainActivity.this, "fq.router");
             checkWifiRepeater();
             checkPickAndPlay();
             ConnectFreeInternetService.execute(this);
+        }
+    }
+
+    private void uninstallOldVersion() {
+        boolean isOldVersionInstalled = ApkUtils.isInstalled(this, "fq.router");
+        LogUtils.i("old version is installed: " + isOldVersionInstalled);
+        if (isOldVersionInstalled) {
+            new AlertDialog.Builder(this)
+                    .setIcon(android.R.drawable.ic_dialog_alert)
+                    .setTitle("fqrouter has been upgraded to 2.x.x version")
+                    .setMessage("The old 1.x.x version will be uninstalled")
+                    .setPositiveButton("Uninstall", new DialogInterface.OnClickListener() {
+
+                        @Override
+                        public void onClick(DialogInterface dialog, int which) {
+                            ApkUtils.uninstall(MainActivity.this, "fq.router");
+                        }
+
+                    })
+                    .show();
         }
     }
 
@@ -495,7 +517,7 @@ public class MainActivity extends Activity implements
         } catch (Exception e) {
             LogUtils.e("failed to kill manager", e);
         }
-        ApkUtils.installApk(this, downloadTo);
+        ApkUtils.install(this, downloadTo);
     }
 
     @Override

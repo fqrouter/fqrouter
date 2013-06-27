@@ -3,13 +3,13 @@ import os
 
 
 def read():
-    with open('/data/data/fq.router/etc/fqrouter.json') as f:
+    with open('/data/data/fq.router2/etc/fqrouter.json') as f:
         config_json = f.read()
     return json.loads(config_json)
 
 
 def list_goagent_private_servers():
-    path = '/data/data/fq.router/etc/goagent.json'
+    path = '/data/data/fq.router2/etc/goagent.json'
     if not os.path.exists(path):
         return []
     with open(path) as f:
@@ -18,7 +18,7 @@ def list_goagent_private_servers():
 
 
 def list_shadowsocks_private_servers():
-    path = '/data/data/fq.router/etc/shadowsocks.json'
+    path = '/data/data/fq.router2/etc/shadowsocks.json'
     if not os.path.exists(path):
         return []
     with open(path) as f:
@@ -27,7 +27,7 @@ def list_shadowsocks_private_servers():
 
 
 def list_http_proxy_private_servers():
-    path = '/data/data/fq.router/etc/http-proxy.json'
+    path = '/data/data/fq.router2/etc/http-proxy.json'
     if not os.path.exists(path):
         return []
     with open(path) as f:
@@ -36,7 +36,7 @@ def list_http_proxy_private_servers():
 
 
 def list_ssh_private_servers():
-    path = '/data/data/fq.router/etc/ssh.json'
+    path = '/data/data/fq.router2/etc/ssh.json'
     if not os.path.exists(path):
         return []
     with open(path) as f:

@@ -204,6 +204,11 @@ public class Deployer {
                 for (File file : files) {
                     String targetPath = "/system/lib/" + file.getName();
                     if (!new File(targetPath).exists()) {
+                        try {
+                            ShellUtils.sudo("rm " + targetPath);
+                        } catch (Exception e) {
+                            // ignore
+                        }
                         ShellUtils.sudo(ShellUtils.BUSYBOX_FILE.getCanonicalPath(), "ln", "-s", file.getCanonicalPath(), targetPath);
                     }
                 }

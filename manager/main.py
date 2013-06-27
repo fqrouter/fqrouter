@@ -20,7 +20,7 @@ import subprocess
 import shlex
 
 ROOT_DIR = os.path.dirname(__file__)
-LOG_DIR = '/data/data/fq.router/log'
+LOG_DIR = '/data/data/fq.router2/log'
 MANAGER_LOG_FILE = os.path.join(LOG_DIR, 'manager.log')
 WIFI_LOG_FILE = os.path.join(LOG_DIR, 'wifi.log')
 

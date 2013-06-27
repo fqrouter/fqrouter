@@ -1,18 +1,20 @@
 package fq.router2.life_cycle;
 
+import android.app.AlertDialog;
 import android.app.IntentService;
 import android.content.Context;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.pm.PackageInfo;
+import android.content.pm.PackageManager;
+import android.net.Uri;
 import android.os.Build;
 import android.preference.PreferenceManager;
+import fq.router2.feedback.DownloadService;
 import fq.router2.feedback.HandleFatalErrorIntent;
 import fq.router2.free_internet.SocksVpnService;
-import fq.router2.utils.HttpUtils;
-import fq.router2.utils.IOUtils;
-import fq.router2.utils.LogUtils;
-import fq.router2.utils.ShellUtils;
+import fq.router2.utils.*;
 import org.json.JSONObject;
 
 import java.io.File;
@@ -27,7 +29,7 @@ public class LaunchService extends IntentService {
 
     static {
         try {
-            SOCKS_VPN_SERVICE_CLASS = LaunchService.class.forName("fq.router.free_internet.SocksVpnService");
+            SOCKS_VPN_SERVICE_CLASS = LaunchService.class.forName("fq.router2.free_internet.SocksVpnService");
         } catch (ClassNotFoundException e) {
             LogUtils.e("failed to load SocksVpnService.class", e);
         }
@@ -44,7 +46,8 @@ public class LaunchService extends IntentService {
     @Override
     protected void onHandleIntent(Intent intent) {
         LogUtils.i("ver: " + getMyVersion(this));
-        LogUtils.i("rooted: " + ShellUtils.checkRooted());
+        boolean rooted = ShellUtils.checkRooted();
+        LogUtils.i("rooted: " + rooted);
         if (isVpnRunning()) {
             LogUtils.i("manager is already running in vpn mode");
             sendBroadcast(new LaunchedIntent(true));
@@ -80,7 +83,6 @@ public class LaunchService extends IntentService {
             ManagerProcess.kill();
         } catch (Exception e) {
             LogUtils.e("failed to kill manager process before launch", e);
-            LogUtils.i("failed to kill manager process before launch");
         }
         Deployer deployer = new Deployer(this);
         String fatalError = deployer.deploy();
@@ -149,7 +151,7 @@ public class LaunchService extends IntentService {
             OutputStreamWriter stdin = new OutputStreamWriter(process.getOutputStream());
             try {
                 String command = Deployer.PYTHON_LAUNCHER + " " + Deployer.MANAGER_VPN_PY.getAbsolutePath() +
-                        " > /data/data/fq.router/log/current-python.log 2>&1";
+                        " > /data/data/fq.router2/log/current-python.log 2>&1";
                 LogUtils.i("write to stdin: " + command);
                 stdin.write(command);
                 stdin.write("\nexit\n");
@@ -166,7 +168,7 @@ public class LaunchService extends IntentService {
                 LogUtils.e("log current user id failed", e);
             }
             return ShellUtils.sudoNoWait(env, Deployer.PYTHON_LAUNCHER + " " +
-                    Deployer.MANAGER_MAIN_PY.getAbsolutePath() + " > /data/data/fq.router/log/current-python.log 2>&1");
+                    Deployer.MANAGER_MAIN_PY.getAbsolutePath() + " > /data/data/fq.router2/log/current-python.log 2>&1");
         }
     }
 

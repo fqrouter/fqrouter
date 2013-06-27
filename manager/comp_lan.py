@@ -69,10 +69,10 @@ def handle_scan(environ, start_response):
         scan_process = subprocess.Popen(
             [shell.PYTHON_PATH, '-m', 'fqlan',
              '--log-level', 'INFO',
-             '--log-file', '/data/data/fq.router/log/scan.log',
+             '--log-file', '/data/data/fq.router2/log/scan.log',
              '--lan-interface', comp_wifi.WIFI_INTERFACE,
-             '--ifconfig-command', '/data/data/fq.router/busybox',
-             '--ip-command', '/data/data/fq.router/busybox',
+             '--ifconfig-command', '/data/data/fq.router2/busybox',
+             '--ip-command', '/data/data/fq.router2/busybox',
              'scan', '--hostname', '--mark', '0xcafe', '--factor', environ['REQUEST_ARGUMENTS']['factor'].value],
             stdout=subprocess.PIPE, stderr=subprocess.PIPE)
         _, output = scan_process.communicate()
@@ -97,8 +97,8 @@ def restart_fqlan():
         return
     fqlan_process = shell.launch_python(
         'fqlan', ['--log-level', 'INFO',
-                  '--log-file', '/data/data/fq.router/log/fqlan.log',
+                  '--log-file', '/data/data/fq.router2/log/fqlan.log',
                   '--lan-interface', comp_wifi.WIFI_INTERFACE,
-                  '--ifconfig-command', '/data/data/fq.router/busybox',
-                  '--ip-command', '/data/data/fq.router/busybox',
+                  '--ifconfig-command', '/data/data/fq.router2/busybox',
+                  '--ip-command', '/data/data/fq.router2/busybox',
                   'forge'] + ['%s,%s' % (ip, mac) for ip, mac in picked_devices.items()], on_exit=stop)

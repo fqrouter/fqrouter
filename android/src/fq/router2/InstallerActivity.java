@@ -137,7 +137,7 @@ public class InstallerActivity extends Activity implements
     public void onDownloaded(String url, String downloadTo) {
         downloaded = true;
         updateStatus("Downloaded " + Uri.parse(url).getLastPathSegment());
-        ApkUtils.installApk(this, downloadTo);
+        ApkUtils.install(this, downloadTo);
     }
 
     @Override

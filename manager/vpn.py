@@ -21,7 +21,7 @@ from utils import config
 
 
 LOGGER = logging.getLogger('fqrouter.%s' % __name__)
-LOG_DIR = '/data/data/fq.router/log'
+LOG_DIR = '/data/data/fq.router2/log'
 MANAGER_LOG_FILE = os.path.join(LOG_DIR, 'manager.log')
 FQDNS_LOG_FILE = os.path.join(LOG_DIR, 'fqdns.log')
 
@@ -213,7 +213,7 @@ if '__main__' == __name__:
     greenlets.append(gevent.spawn(serve_udp))
     args = [
         '--log-level', 'INFO',
-        '--log-file', '/data/data/fq.router/log/fqsocks.log',
+        '--log-file', '/data/data/fq.router2/log/fqsocks.log',
         '--listen', '10.25.1.1:12345']
     args = comp_proxy.configure(args)
     greenlets.append(gevent.spawn(fqsocks.fqsocks.main, args))
