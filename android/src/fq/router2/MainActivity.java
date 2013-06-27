@@ -292,7 +292,7 @@ public class MainActivity extends Activity implements
         Intent intent = new Intent(this, MainActivity.class);
         PendingIntent pIntent = PendingIntent.getActivity(this, 0, intent, 0);
         Notification notification = new NotificationCompat.Builder(this)
-                .setSmallIcon(R.drawable.wall_green)
+                .setSmallIcon(R.drawable.small_star)
                 .setContentTitle("fqrouter is running")
                 .setContentText(text)
                 .setContentIntent(pIntent)
