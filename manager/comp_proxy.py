@@ -75,14 +75,14 @@ def configure(args):
         proxy_config = 'goagent,appid=%s,path=%s,password=%s' % (server['appid'], server['path'], server['password'])
         args += ['--proxy', proxy_config]
     if config.read().get('shadowsocks_public_servers_enabled', True):
-        args += ['--proxy', 'dynamic,n=4,type=ss,dns_record=ss#n#.fqrouter.com,priority=3']
+        args += ['--proxy', 'dynamic,n=7,type=ss,dns_record=ss#n#.fqrouter.com,priority=2']
     for server in config.list_shadowsocks_private_servers():
         proxy_config = 'ss,proxy_ip=%s,proxy_port=%s,password=%s,encrypt_method=%s' % (
             server['host'], server['port'], server['password'], server['encryption_method'])
         args += ['--proxy', proxy_config]
     if config.read().get('http_proxy_public_servers_enabled', True):
         args += ['--proxy', 'dynamic,n=20,dns_record=proxy#n#.fqrouter.com,is_public=True,priority=4']
-        args += ['--proxy', 'dynamic,n=5,dns_record=proxy2#n#.fqrouter.com,priority=2']
+        args += ['--proxy', 'dynamic,n=5,dns_record=proxy2#n#.fqrouter.com,priority=3']
     for server in config.list_http_proxy_private_servers():
         if 'spdy (webvpn)' == server['transport_type']:
             proxy_config = 'proxy_ip=%s,proxy_port=%s,username=%s,password=%s,requested_spdy_version=%s' % \

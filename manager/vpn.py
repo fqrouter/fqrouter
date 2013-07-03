@@ -197,8 +197,12 @@ def read_tun_fd():
 
 
 if '__main__' == __name__:
-    gevent.monkey.patch_all()
     setup_logging()
+    gevent.monkey.patch_all(ssl=False)
+    try:
+        gevent.monkey.patch_ssl()
+    except:
+        LOGGER.exception('failed to patch ssl')
     LOGGER.info('environment: %s' % os.environ.items())
     httpd.HANDLERS[('GET', 'ping')] = handle_ping
     greenlets = [gevent.spawn(httpd.serve_forever)]

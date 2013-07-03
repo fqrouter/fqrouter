@@ -126,8 +126,12 @@ def setup_logging():
 
 
 if '__main__' == __name__:
-    gevent.monkey.patch_all()
     setup_logging()
+    gevent.monkey.patch_all(ssl=False)
+    try:
+        gevent.monkey.patch_ssl()
+    except:
+        LOGGER.exception('failed to patch ssl')
     if len(sys.argv) > 1:
         action = sys.argv[1]
         if 'clean' == action:
