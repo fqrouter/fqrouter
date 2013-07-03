@@ -124,6 +124,10 @@ public class MainActivity extends Activity implements
     private void checkFreeInternet() {
         if (ShellUtils.isRooted()) {
             CheckFreeInternetService.execute(this);
+        } else {
+            if (LaunchService.isVpnRunning()) {
+                onFreeInternetChanged(true);
+            }
         }
     }
 
@@ -407,7 +411,9 @@ public class MainActivity extends Activity implements
         startBlinkingImage((ImageView) findViewById(R.id.freeInternetArrow));
         startBlinkingStatus("Connecting to free internet");
         if (isVpnMode) {
-            if (!LaunchService.isVpnRunning()) {
+            if (LaunchService.isVpnRunning()) {
+                onFreeInternetChanged(true);
+            } else {
                 startVpn();
             }
         } else {

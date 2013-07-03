@@ -82,13 +82,13 @@ public class MainSettingsActivity extends PreferenceActivity implements SharedPr
     @Override
     protected void onResume() {
         super.onResume();
-        PreferenceManager
-                .getDefaultSharedPreferences(this)
-                .registerOnSharedPreferenceChangeListener(this);
         initGoAgent();
         initShadowsocks();
         initHttpProxy();
         initSshProxy();
+        PreferenceManager
+                .getDefaultSharedPreferences(this)
+                .registerOnSharedPreferenceChangeListener(this);
     }
 
     @Override

@@ -39,9 +39,6 @@ public class SshSettingsActivity extends PreferenceActivity implements SharedPre
     @Override
     protected void onResume() {
         super.onResume();
-        PreferenceManager
-                .getDefaultSharedPreferences(this)
-                .registerOnSharedPreferenceChangeListener(this);
         List<Server> servers = loadServers();
         Server server = loadServer(servers);
         if (server == null) {
@@ -53,6 +50,9 @@ public class SshSettingsActivity extends PreferenceActivity implements SharedPre
         ((EditTextPreference) findPreference("SshPassword")).setText(server.password);
         ((EditTextPreference) findPreference("SshConnectionsCount")).setText(Integer.toString(server.connectionsCount));
         updatePrivateKeyHint();
+        PreferenceManager
+                .getDefaultSharedPreferences(this)
+                .registerOnSharedPreferenceChangeListener(this);
     }
 
     @Override
@@ -153,6 +153,6 @@ public class SshSettingsActivity extends PreferenceActivity implements SharedPre
         public int port = 22;
         public String username = "";
         public String password = "";
-        public int connectionsCount = 1;
+        public int connectionsCount = 4;
     }
 }

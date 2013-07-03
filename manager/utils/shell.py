@@ -28,7 +28,7 @@ def monitor_process(name, proc, on_exit):
     try:
         output, _ = proc.communicate()
         if proc.poll():
-            LOGGER.error('%s output: %s' % (name, output[-200:]))
+            LOGGER.error('%s output: %s' % (name, output[-1000:]))
     except:
         LOGGER.exception('%s died' % name)
     finally:

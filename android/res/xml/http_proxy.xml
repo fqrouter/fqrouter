@@ -23,6 +23,15 @@
             android:key="HttpProxyTransportType"
             android:title="Transport Type"
             android:summary="the connection to proxy server is secured or not"/>
+    <ListPreference
+            android:key="HttpProxySpdyVersion"
+            android:title="SPDY Version"
+            android:summary="you can ignore this if transport type is not spdy"/>
+    <EditTextPreference
+            android:key="HttpProxySpdyConnectionsCount"
+            android:title="SPDY Connections Count"
+            android:inputType="number"
+            android:summary="you can ignore this if transport type is not spdy"/>
     <Preference
             android:key="HttpProxyDelete"
             android:title=">> Delete"

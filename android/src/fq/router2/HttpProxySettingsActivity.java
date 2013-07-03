@@ -36,9 +36,6 @@ public class HttpProxySettingsActivity extends PreferenceActivity implements Sha
     @Override
     protected void onResume() {
         super.onResume();
-        PreferenceManager
-                .getDefaultSharedPreferences(this)
-                .registerOnSharedPreferenceChangeListener(this);
         List<Server> servers = loadServers();
         Server server = loadServer(servers);
         if (server == null) {
@@ -48,17 +45,26 @@ public class HttpProxySettingsActivity extends PreferenceActivity implements Sha
         ((EditTextPreference) findPreference("HttpProxyPort")).setText(Integer.toString(server.port));
         ((EditTextPreference) findPreference("HttpProxyUsername")).setText(server.username);
         ((EditTextPreference) findPreference("HttpProxyPassword")).setText(server.password);
-        ListPreference trafficTypePerf = (ListPreference) findPreference("HttpProxyTrafficType");
+        ListPreference trafficTypePref = (ListPreference) findPreference("HttpProxyTrafficType");
         CharSequence[] trafficTypes = new CharSequence[]{"http only", "https only", "http/https"};
-        trafficTypePerf.setEntryValues(trafficTypes);
-        trafficTypePerf.setEntries(trafficTypes);
-        trafficTypePerf.setValue(server.traffic_type);
-        ListPreference transportTypePerf = (ListPreference) findPreference("HttpProxyTransportType");
-        CharSequence[] transportType = new CharSequence[]{"plain", "ssl"};
-        transportTypePerf.setEntryValues(transportType);
-        transportTypePerf.setEntries(transportType);
-        transportTypePerf.setValue(server.transport_type);
-
+        trafficTypePref.setEntryValues(trafficTypes);
+        trafficTypePref.setEntries(trafficTypes);
+        trafficTypePref.setValue(server.traffic_type);
+        ListPreference transportTypePref = (ListPreference) findPreference("HttpProxyTransportType");
+        CharSequence[] transportTypes = new CharSequence[]{"plain", "ssl", "spdy (webvpn)"};
+        transportTypePref.setEntryValues(transportTypes);
+        transportTypePref.setEntries(transportTypes);
+        transportTypePref.setValue(server.transport_type);
+        ListPreference spdyVersionPref = (ListPreference) findPreference("HttpProxySpdyVersion");
+        CharSequence[] spdyVersions = new CharSequence[]{"auto", "spdy/2", "spdy/3"};
+        spdyVersionPref.setEntryValues(spdyVersions);
+        spdyVersionPref.setEntries(spdyVersions);
+        spdyVersionPref.setValue(server.spdy_version);
+        ((EditTextPreference) findPreference("HttpProxySpdyConnectionsCount")).setText(
+                String.valueOf(server.spdy_connections_count));
+        PreferenceManager
+                .getDefaultSharedPreferences(this)
+                .registerOnSharedPreferenceChangeListener(this);
     }
 
     @Override
@@ -82,6 +88,9 @@ public class HttpProxySettingsActivity extends PreferenceActivity implements Sha
         server.password = ((EditTextPreference) findPreference("HttpProxyPassword")).getText();
         server.traffic_type = ((ListPreference) findPreference("HttpProxyTrafficType")).getValue();
         server.transport_type = ((ListPreference) findPreference("HttpProxyTransportType")).getValue();
+        server.spdy_version = ((ListPreference) findPreference("HttpProxySpdyVersion")).getValue();
+        server.spdy_connections_count = Integer.valueOf(
+                ((EditTextPreference) findPreference("HttpProxySpdyConnectionsCount")).getText());
         saveServers(servers);
     }
 
@@ -120,6 +129,8 @@ public class HttpProxySettingsActivity extends PreferenceActivity implements Sha
                     password = serverJson.getString("password");
                     traffic_type = serverJson.getString("traffic_type");
                     transport_type = serverJson.getString("transport_type");
+                    spdy_version = serverJson.getString("spdy_version");
+                    spdy_connections_count = Integer.valueOf(serverJson.getString("spdy_connections_count"));
                 }});
             }
             return servers;
@@ -139,6 +150,8 @@ public class HttpProxySettingsActivity extends PreferenceActivity implements Sha
                 put("password", server.password);
                 put("traffic_type", server.traffic_type);
                 put("transport_type", server.transport_type);
+                put("spdy_version", server.spdy_version);
+                put("spdy_connections_count", server.spdy_connections_count);
             }}));
         }
         String serversText = new JSONArray(serverJsons).toString();
@@ -148,10 +161,12 @@ public class HttpProxySettingsActivity extends PreferenceActivity implements Sha
 
     public static class Server {
         public String host = "";
-        public int port = 8889;
+        public int port = 3128;
         public String username = "";
         public String password = "";
         public String traffic_type = "http/https";
         public String transport_type = "plain";
+        public String spdy_version = "auto";
+        public int spdy_connections_count = 4;
     }
 }

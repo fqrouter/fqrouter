@@ -39,9 +39,6 @@ public class GoAgentSettingsActivity extends PreferenceActivity implements Share
     @Override
     protected void onResume() {
         super.onResume();
-        PreferenceManager
-                .getDefaultSharedPreferences(this)
-                .registerOnSharedPreferenceChangeListener(this);
         List<Server> servers = loadServers();
         Server server = loadServer(servers);
         if (server == null) {
@@ -50,7 +47,9 @@ public class GoAgentSettingsActivity extends PreferenceActivity implements Share
         ((EditTextPreference) findPreference("GoAgentAppId")).setText(server.appid);
         ((EditTextPreference) findPreference("GoAgentPath")).setText(server.path);
         ((EditTextPreference) findPreference("GoAgentPassword")).setText(server.password);
-
+        PreferenceManager
+                .getDefaultSharedPreferences(this)
+                .registerOnSharedPreferenceChangeListener(this);
     }
 
     @Override

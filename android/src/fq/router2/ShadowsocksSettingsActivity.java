@@ -36,9 +36,6 @@ public class ShadowsocksSettingsActivity extends PreferenceActivity implements S
     @Override
     protected void onResume() {
         super.onResume();
-        PreferenceManager
-                .getDefaultSharedPreferences(this)
-                .registerOnSharedPreferenceChangeListener(this);
         List<Server> servers = loadServers();
         Server server = loadServer(servers);
         if (server == null) {
@@ -55,6 +52,9 @@ public class ShadowsocksSettingsActivity extends PreferenceActivity implements S
         encryptionMethodPref.setEntryValues(encryptionMethods);
         encryptionMethodPref.setEntries(encryptionMethods);
         encryptionMethodPref.setValue(server.encryption_method);
+        PreferenceManager
+                .getDefaultSharedPreferences(this)
+                .registerOnSharedPreferenceChangeListener(this);
 
     }
 
