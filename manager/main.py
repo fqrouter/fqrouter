@@ -30,7 +30,7 @@ ALL_COMPONENTS = [comp_wifi, comp_dns, comp_scrambler, comp_proxy, comp_lan, com
 
 def handle_ping(environ, start_response):
     start_response(httplib.OK, [('Content-Type', 'text/plain')])
-    yield 'PONG'
+    yield 'PONG/2'
 
 
 def handle_free_internet_connect(environ, start_response):

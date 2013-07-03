@@ -173,8 +173,7 @@ def setup_logging():
 
 def handle_ping(environ, start_response):
     start_response(httplib.OK, [('Content-Type', 'text/plain')])
-    LOGGER.info('VPN PONG')
-    yield 'VPN PONG'
+    yield 'VPN PONG/2'
 
 
 def read_tun_fd():

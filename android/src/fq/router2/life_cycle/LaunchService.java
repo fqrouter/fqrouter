@@ -194,7 +194,7 @@ public class LaunchService extends IntentService {
     public static boolean ping(boolean isVpnMode) {
         try {
             String content = HttpUtils.get("http://127.0.0.1:8318/ping");
-            if (isVpnMode ? "VPN PONG".equals(content) : "PONG".equals(content)) {
+            if (isVpnMode ? "VPN PONG/2".equals(content) : "PONG/2".equals(content)) {
                 return true;
             } else {
                 LogUtils.e("ping failed: " + content);

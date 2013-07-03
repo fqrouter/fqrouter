@@ -304,13 +304,13 @@ public class MainActivity extends Activity implements
         NotificationManager notificationManager =
                 (NotificationManager) getSystemService(NOTIFICATION_SERVICE);
         notification.flags |= Notification.FLAG_ONGOING_EVENT;
-        notificationManager.notify(0, notification);
+        notificationManager.notify(1983, notification);
     }
 
     private void clearNotification() {
         NotificationManager notificationManager =
                 (NotificationManager) getSystemService(NOTIFICATION_SERVICE);
-        notificationManager.cancel(0);
+        notificationManager.cancel(1983);
     }
 
     public void updateStatus(String status) {
