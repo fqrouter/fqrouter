@@ -212,6 +212,49 @@ public class MainActivity extends Activity implements
                 startActivity(new Intent(MainActivity.this, PickAndPlayActivity.class));
             }
         });
+        findViewById(R.id.freeInternetArrow).setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                new AlertDialog.Builder(MainActivity.this)
+                        .setIcon(android.R.drawable.ic_dialog_info)
+                        .setTitle("Free Internet Access")
+                        .setMessage("When this arrow is green, the mobile can access youtube/twitter. " +
+                                "By default, fqrouter will use public proxy servers to circumvent GFW censorship. " +
+                                "If mobile is [ROOTED], scrambler will be used to bypass GFW without proxy help. " +
+                                "If you have private proxy servers, you can setup them in the settings.")
+                        .setPositiveButton("Got it!", null)
+                        .show();
+            }
+        });
+        findViewById(R.id.wifiRepeaterArrow).setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                new AlertDialog.Builder(MainActivity.this)
+                        .setIcon(android.R.drawable.ic_dialog_info)
+                        .setTitle("Share Free Internet via Wifi")
+                        .setMessage("If you mobile is [ROOTED], then you can share free internet " +
+                                "to other devices. All android built-in internet sharing method can be " +
+                                "used, such as USB/Bluetooth/3G Wifi Hotspot. Additionally, fqrouter can start " +
+                                "wifi hotspot even if the mobile is connected to a wifi network, A.K.A wifi repeater. " +
+                                "It ONLY works on a few mobiles, but still worth trying.")
+                        .setPositiveButton("Got it!", null)
+                        .show();
+            }
+        });
+        findViewById(R.id.pickAndPlayArrow).setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                new AlertDialog.Builder(MainActivity.this)
+                        .setIcon(android.R.drawable.ic_dialog_info)
+                        .setTitle("Share Free Internet via Pick & Play")
+                        .setMessage("If you mobile is [ROOTED], then you can share free internet " +
+                                "to other devices. Pick & Play will scan other devices within the same wifi network. " +
+                                "Then you can pick any device from the discovered devices list " +
+                                "which will instantly be able to access free internet.")
+                        .setPositiveButton("Got it!", null)
+                        .show();
+            }
+        });
     }
 
 
