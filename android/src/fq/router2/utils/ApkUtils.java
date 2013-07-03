@@ -28,7 +28,7 @@ public class ApkUtils {
         ShellUtils.sudoNoWait(
                 new HashMap<String, String>(),
                 ShellUtils.findCommand("sleep"), "10", ";",
-                ShellUtils.findCommand("am"), "start", "-n", "fq.router/.MainActivity");
+                ShellUtils.findCommand("am"), "start", "-n", "fq.router2/.MainActivity");
         ShellUtils.sudo(ShellUtils.findCommand("pm"), "install", "-r", apkPath);
     }
 

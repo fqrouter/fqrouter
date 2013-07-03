@@ -11,10 +11,6 @@ public class ManagerProcess {
         } catch (Exception e) {
             LogUtils.e("failed to clean", e);
         }
-        if (!exists()) {
-            LogUtils.i("no python process to kill");
-            return;
-        }
         LogUtils.i("killall python");
         ShellUtils.sudo("/data/data/fq.router2/busybox", "killall", "python");
         for (int i = 0; i < 10; i++) {

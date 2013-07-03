@@ -118,7 +118,7 @@ fqsocks.fqsocks.SPI['get_original_destination'] = get_original_destination
 def create_tcp_socket(server_ip, server_port, connect_timeout):
     fdsock = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
     with contextlib.closing(fdsock):
-        fdsock.connect('\0fdsock')
+        fdsock.connect('\0fdsock2')
         socket_id = generate_socket_id()
         fdsock.sendall('OPEN TCP,%s,%s,%s,%s\n' % (socket_id, server_ip, server_port, connect_timeout * 1000))
         gevent.socket.wait_read(fdsock.fileno())
@@ -138,7 +138,7 @@ fqsocks.fqsocks.SPI['create_tcp_socket'] = create_tcp_socket
 def create_udp_socket():
     fdsock = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
     with contextlib.closing(fdsock):
-        fdsock.connect('\0fdsock')
+        fdsock.connect('\0fdsock2')
         socket_id = generate_socket_id()
         fdsock.sendall('OPEN UDP,%s\n' % socket_id)
         gevent.socket.wait_read(fdsock.fileno())
@@ -182,8 +182,8 @@ def read_tun_fd():
         fdsock = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
         with contextlib.closing(fdsock):
             try:
-                fdsock.connect('\0fdsock')
-                LOGGER.info('connected to fdsock')
+                fdsock.connect('\0fdsock2')
+                LOGGER.info('connected to fdsock2')
                 fdsock.sendall('TUN\n')
                 gevent.socket.wait_read(fdsock.fileno())
                 tun_fd=_multiprocessing.recvfd(fdsock.fileno())

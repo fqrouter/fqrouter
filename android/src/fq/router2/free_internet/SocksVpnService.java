@@ -47,7 +47,7 @@ public class SocksVpnService extends VpnService {
                 throw new RuntimeException("another VPN is still running");
             }
             tunPFD = new Builder()
-                    .setSession("fqrouter")
+                    .setSession("fqrouter2")
                     .addAddress("10.25.1.1", 24)
                     .addRoute("0.0.0.0", 0)
                     .addDnsServer("8.8.8.8")
@@ -76,7 +76,7 @@ public class SocksVpnService extends VpnService {
     }
 
     private void listenFdServerSocket(final ParcelFileDescriptor tunPFD) throws Exception {
-        final LocalServerSocket fdServerSocket = new LocalServerSocket("fdsock");
+        final LocalServerSocket fdServerSocket = new LocalServerSocket("fdsock2");
         try {
 
             ExecutorService executorService = Executors.newFixedThreadPool(16);
