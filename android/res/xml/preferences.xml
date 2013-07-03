@@ -63,6 +63,18 @@
                 android:summary="scramble at TCP level, so that GFW can let us go, without using a proxy server"
                 android:defaultValue="true"/>
     </PreferenceCategory>
+    <PreferenceCategory android:title="Shortcut">
+        <CheckBoxPreference
+                android:key="ChinaShortcutEnabled"
+                android:title="China Shortcut"
+                android:summary="If server is China ip, access directly"
+                android:defaultValue="true"/>
+        <CheckBoxPreference
+                android:key="DirectAccessEnabled"
+                android:title="Direct Access If Possible"
+                android:summary="Try access directly first, use proxy only if tried and failed (including ip blocked, url keyword, etc)"
+                android:defaultValue="true"/>
+    </PreferenceCategory>
     <PreferenceCategory android:title="General">
         <CheckBoxPreference
                 android:key="AutoUpdateEnabled"

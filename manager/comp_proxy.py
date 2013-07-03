@@ -67,6 +67,10 @@ def start_fqsocks():
 
 def configure(args):
     args += ['--google-host', 'goagent-google-ip.fqrouter.com']
+    if not config.read().get('china_shortcut_enabled', True):
+        args += ['--disable-china-shortcut']
+    if not config.read().get('direct_access_enabled', True):
+        args += ['--disable-direct-access']
     if config.read().get('youtube_scrambler_enabled', True):
         args += ['--enable-youtube-scrambler']
     if config.read().get('goagent_public_servers_enabled', True):

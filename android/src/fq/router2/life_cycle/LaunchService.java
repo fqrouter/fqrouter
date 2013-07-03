@@ -221,6 +221,8 @@ public class LaunchService extends IntentService {
             configJson.put("wifi_hotspot_password", preferences.getString("WifiHotspotPassword", "p@55word"));
             configJson.put("tcp_scrambler_enabled", preferences.getBoolean("TcpScramblerEnabled", true));
             configJson.put("youtube_scrambler_enabled", preferences.getBoolean("YoutubeScramblerEnabled", true));
+            configJson.put("china_shortcut_enabled", preferences.getBoolean("ChinaShortcutEnabled", true));
+            configJson.put("direct_access_enabled", preferences.getBoolean("DirectAccessEnabled", true));
             configJson.put("goagent_public_servers_enabled",
                     preferences.getBoolean("GoAgentPublicServersEnabled", true));
             configJson.put("shadowsocks_public_servers_enabled",

@@ -35,9 +35,16 @@ def handle_ping(environ, start_response):
 
 def handle_free_internet_connect(environ, start_response):
     components = [comp_dns, comp_scrambler, comp_proxy, comp_shortcut]
-    if not config.read()['tcp_scrambler_enabled']:
+    if not config.read().get('tcp_scrambler_enabled', True):
         LOGGER.info('scrambler component disabled by config')
         components.remove(comp_scrambler)
+    if not config.read().get('china_shortcut_enabled', True):
+        LOGGER.info('shortcut component disabled by config china_short_enabled')
+        components.remove(comp_shortcut)
+    if not config.read().get('direct_access_enabled', True):
+        LOGGER.info('shortcut component disabled by config direct_access_enabled')
+        if comp_shortcut in components:
+            components.remove(comp_shortcut)
     start_components(*components)
     start_response(httplib.OK, [('Content-Type', 'text/plain')])
     return []
