@@ -1,4 +1,51 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="app_name">fqrouter2</string>
+    <string name="old_version_alert_title">fqrouter has been upgraded to 2.x.x version</string>
+    <string name="old_version_alert_message">If you experienced error, please restart your mobile and uninstall old fqrouter 1.x.x version.</string>
+    <string name="old_version_alert_button">OK, I will do it</string>
+    <string name="new_version_alert_title">There are newer version</string>
+    <string name="new_version_alert_message">Do you want to upgrade now?</string>
+    <string name="new_version_alert_yes">Yes</string>
+    <string name="new_version_alert_no">No</string>
+    <string name="uninstall_old_version_alert_title">fqrouter has been upgraded to 2.x.x version</string>
+    <string name="uninstall_old_version_alert_message">The old 1.x.x version will be uninstalled</string>
+    <string name="uninstall_old_version_alert_button">Uninstall</string>
+    <string name="vpn_exit_hint">Use notification bar to stop VPN</string>
+    <string name="notification_title">fqrouter is running</string>
+    <string name="menu_settings">Settings</string>
+    <string name="menu_upgrade_manually">Upgrade Manually</string>
+    <string name="menu_report_error">Report Error</string>
+    <string name="menu_exit">Exit</string>
+    <string name="status_free_internet_connected">You may try youtube/twitter now</string>
+    <string name="status_free_internet_connecting">Connecting to free internet</string>
+    <string name="status_free_internet_disconnecting">Disconnecting from free internet</string>
+    <string name="status_wifi_repeater_starting">Starting wifi repeater</string>
+    <string name="status_wifi_repeater_stopping">Stopping wifi repeater</string>
+    <string name="status_launching">Launching</string>
+    <string name="status_launch_vpn">Launch Socks Vpn Service</string>
+    <string name="status_vpn_rejected">vpn permission rejected</string>
+    <string name="free_internet_info_title">Free Internet Access</string>
+    <string name="free_internet_info_message">When this arrow is green, the mobile can access youtube/twitter. By
+        default, fqrouter will use public proxy servers to circumvent GFW censorship. If mobile is [ROOTED], scrambler
+        will be used to bypass GFW without proxy help. If you have private proxy servers, you can setup them in the
+        settings.
+    </string>
+    <string name="free_internet_info_button">Got it!</string>
+    <string name="wifi_repeater_info_title">Share Free Internet via Wifi</string>
+    <string name="wifi_repeater_info_message">If you mobile is [ROOTED], then you can share free internet to other
+        devices. All android built-in internet sharing method can be used, such as USB/Bluetooth/3G Wifi Hotspot.
+        Additionally, fqrouter can start wifi hotspot even if the mobile is connected to a wifi network, A.K.A wifi
+        repeater. It ONLY works on a few mobiles, but still worth trying.
+    </string>
+    <string name="wifi_repeater_info_button">Got it!</string>
+    <string name="pick_and_play_info_title"><![CDATA[Share Free Internet via Pick & Play]]></string>
+    <string name="pick_and_play_info_message">
+        <![CDATA[If you mobile is [ROOTED], then you can share free internet to other devices. Pick & Play will scan other devices within the same wifi network. Then you can pick any device from the discovered devices list which will instantly be able to access free internet.]]></string>
+    <string name="pick_and_play_info_button">Got it!</string>
+    <string name="status_exiting">Exiting</string>
+    <string name="upgrade_via_browser_hint">Open browser and download the update manually</string>
+    <string name="status_downloaded">Downloaded</string>
+    <string name="status_downloading">Downloading</string>
+    <string name="status_download_failed">failed to download</string>
 </resources>

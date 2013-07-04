@@ -134,7 +134,7 @@ public class MainActivity extends Activity implements
     private void launch() {
         disableAll();
         startBlinkingImage((ImageView) findViewById(R.id.star));
-        startBlinkingStatus("Launching");
+        startBlinkingStatus(_(R.string.status_launching));
         LaunchService.execute(this);
     }
 
@@ -155,13 +155,13 @@ public class MainActivity extends Activity implements
                 if (LaunchService.SOCKS_VPN_SERVICE_CLASS == null) {
                     onHandleFatalError("vpn class not loaded");
                 } else {
-                    updateStatus("Launch Socks Vpn Service");
+                    updateStatus(_(R.string.status_launch_vpn));
                     stopService(new Intent(this, LaunchService.SOCKS_VPN_SERVICE_CLASS));
                     startService(new Intent(this, LaunchService.SOCKS_VPN_SERVICE_CLASS));
                     uninstallOldVersion();
                 }
             } else {
-                onHandleFatalError("vpn permission rejected");
+                onHandleFatalError(_(R.string.status_vpn_rejected));
                 LogUtils.e("failed to start vpn service: " + resultCode);
             }
         } else {
@@ -193,12 +193,9 @@ public class MainActivity extends Activity implements
             public void onClick(View view) {
                 new AlertDialog.Builder(MainActivity.this)
                         .setIcon(android.R.drawable.ic_dialog_info)
-                        .setTitle("Free Internet Access")
-                        .setMessage("When this arrow is green, the mobile can access youtube/twitter. " +
-                                "By default, fqrouter will use public proxy servers to circumvent GFW censorship. " +
-                                "If mobile is [ROOTED], scrambler will be used to bypass GFW without proxy help. " +
-                                "If you have private proxy servers, you can setup them in the settings.")
-                        .setPositiveButton("Got it!", null)
+                        .setTitle(R.string.free_internet_info_title)
+                        .setMessage(R.string.free_internet_info_message)
+                        .setPositiveButton(R.string.free_internet_info_button, null)
                         .show();
             }
         });
@@ -207,13 +204,9 @@ public class MainActivity extends Activity implements
             public void onClick(View view) {
                 new AlertDialog.Builder(MainActivity.this)
                         .setIcon(android.R.drawable.ic_dialog_info)
-                        .setTitle("Share Free Internet via Wifi")
-                        .setMessage("If you mobile is [ROOTED], then you can share free internet " +
-                                "to other devices. All android built-in internet sharing method can be " +
-                                "used, such as USB/Bluetooth/3G Wifi Hotspot. Additionally, fqrouter can start " +
-                                "wifi hotspot even if the mobile is connected to a wifi network, A.K.A wifi repeater. " +
-                                "It ONLY works on a few mobiles, but still worth trying.")
-                        .setPositiveButton("Got it!", null)
+                        .setTitle(R.string.wifi_repeater_info_title)
+                        .setMessage(R.string.wifi_repeater_info_message)
+                        .setPositiveButton(R.string.wifi_repeater_info_button, null)
                         .show();
             }
         });
@@ -222,12 +215,9 @@ public class MainActivity extends Activity implements
             public void onClick(View view) {
                 new AlertDialog.Builder(MainActivity.this)
                         .setIcon(android.R.drawable.ic_dialog_info)
-                        .setTitle("Share Free Internet via Pick & Play")
-                        .setMessage("If you mobile is [ROOTED], then you can share free internet " +
-                                "to other devices. Pick & Play will scan other devices within the same wifi network. " +
-                                "Then you can pick any device from the discovered devices list " +
-                                "which will instantly be able to access free internet.")
-                        .setPositiveButton("Got it!", null)
+                        .setTitle(R.string.pick_and_play_info_title)
+                        .setMessage(R.string.pick_and_play_info_message)
+                        .setPositiveButton(R.string.pick_and_play_info_button, null)
                         .show();
             }
         });
@@ -298,13 +288,13 @@ public class MainActivity extends Activity implements
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
         if (isLaunched) {
-            menu.add(Menu.NONE, ITEM_ID_SETTINGS, Menu.NONE, "Settings");
+            menu.add(Menu.NONE, ITEM_ID_SETTINGS, Menu.NONE, R.string.menu_settings);
         }
         if (upgradeUrl != null) {
-            menu.add(Menu.NONE, ITEM_ID_UPGRADE_MANUALLY, Menu.NONE, "Upgrade Manually");
+            menu.add(Menu.NONE, ITEM_ID_UPGRADE_MANUALLY, Menu.NONE, R.string.menu_upgrade_manually);
         }
-        menu.add(Menu.NONE, ITEM_ID_REPORT_ERROR, Menu.NONE, "Report Error");
-        addMenuItem(menu, ITEM_ID_EXIT, "Exit");
+        menu.add(Menu.NONE, ITEM_ID_REPORT_ERROR, Menu.NONE, R.string.menu_report_error);
+        addMenuItem(menu, ITEM_ID_EXIT, _(R.string.menu_exit));
         return super.onCreateOptionsMenu(menu);
     }
 
@@ -340,7 +330,7 @@ public class MainActivity extends Activity implements
         PendingIntent pIntent = PendingIntent.getActivity(this, 0, intent, 0);
         Notification notification = new NotificationCompat.Builder(this)
                 .setSmallIcon(R.drawable.small_star)
-                .setContentTitle("fqrouter is running")
+                .setContentTitle(_(R.string.notification_title))
                 .setContentText(text)
                 .setContentIntent(pIntent)
                 .build();
@@ -378,37 +368,41 @@ public class MainActivity extends Activity implements
 
     private void exit() {
         if (LaunchService.isVpnRunning()) {
-            Toast.makeText(this, "Use notification bar to stop VPN", 5000).show();
+            Toast.makeText(this, R.string.vpn_exit_hint, 5000).show();
             return;
         }
         isLaunched = false;
         disableAll();
         ExitService.execute(this);
         startBlinkingImage((ImageView) findViewById(R.id.star));
-        startBlinkingStatus("Exiting");
+        startBlinkingStatus(_(R.string.status_exiting));
     }
 
     private void toggleFreeInternet(ToggleButton button) {
         startBlinkingImage((ImageView) findViewById(R.id.freeInternetArrow));
         if (button.isChecked()) {
-            startBlinkingStatus("Connecting to free internet");
+            startBlinkingStatus(_(R.string.status_free_internet_connecting));
             disableFreeInternetButton();
             ConnectFreeInternetService.execute(this);
         } else {
-            startBlinkingStatus("Disconnecting from free internet");
+            startBlinkingStatus(_(R.string.status_free_internet_disconnecting));
             disableFreeInternetButton();
             DisconnectFreeInternetService.execute(this);
         }
     }
 
+    private String _(int id) {
+        return getResources().getString(id);
+    }
+
     private void toggleWifiRepeater(ToggleButton button) {
         startBlinkingImage((ImageView) findViewById(R.id.wifiRepeaterArrow));
         if (button.isChecked()) {
-            startBlinkingStatus("Starting wifi repeater");
+            startBlinkingStatus(_(R.string.status_wifi_repeater_starting));
             disableWifiRepeaterButton();
             StartWifiRepeaterService.execute(this);
         } else {
-            startBlinkingStatus("Stopping wifi repeater");
+            startBlinkingStatus(_(R.string.status_wifi_repeater_stopping));
             disableWifiRepeaterButton();
             StopWifiRepeaterService.execute(this);
         }
@@ -452,7 +446,7 @@ public class MainActivity extends Activity implements
         stopBlinkingStatus();
 
         startBlinkingImage((ImageView) findViewById(R.id.freeInternetArrow));
-        startBlinkingStatus("Connecting to free internet");
+        startBlinkingStatus(_(R.string.status_free_internet_connecting));
         if (isVpnMode) {
             if (LaunchService.isVpnRunning()) {
                 onFreeInternetChanged(true);
@@ -473,9 +467,9 @@ public class MainActivity extends Activity implements
         if (isOldVersionInstalled) {
             new AlertDialog.Builder(this)
                     .setIcon(android.R.drawable.ic_dialog_alert)
-                    .setTitle("fqrouter has been upgraded to 2.x.x version")
-                    .setMessage("The old 1.x.x version will be uninstalled")
-                    .setPositiveButton("Uninstall", new DialogInterface.OnClickListener() {
+                    .setTitle(R.string.uninstall_old_version_alert_title)
+                    .setMessage(R.string.uninstall_old_version_alert_message)
+                    .setPositiveButton(R.string.uninstall_old_version_alert_button, new DialogInterface.OnClickListener() {
 
                         @Override
                         public void onClick(DialogInterface dialog, int which) {
@@ -506,19 +500,19 @@ public class MainActivity extends Activity implements
         ActivityCompat.invalidateOptionsMenu(this);
         new AlertDialog.Builder(this)
                 .setIcon(android.R.drawable.ic_dialog_alert)
-                .setTitle("There are newer version")
-                .setMessage("Do you want to upgrade now?")
-                .setPositiveButton("Yes", new DialogInterface.OnClickListener() {
+                .setTitle(R.string.new_version_alert_title)
+                .setMessage(R.string.new_version_alert_message)
+                .setPositiveButton(R.string.new_version_alert_yes, new DialogInterface.OnClickListener() {
 
                     @Override
                     public void onClick(DialogInterface dialog, int which) {
-                        updateStatus("Downloading " + Uri.parse(upgradeUrl).getLastPathSegment());
+                        updateStatus(_(R.string.status_downloading) + " " + Uri.parse(upgradeUrl).getLastPathSegment());
                         DownloadService.execute(
                                 MainActivity.this, upgradeUrl, downloadTo);
                     }
 
                 })
-                .setNegativeButton("No", null)
+                .setNegativeButton(R.string.new_version_alert_no, null)
                 .show();
     }
 
@@ -545,8 +539,8 @@ public class MainActivity extends Activity implements
     @Override
     public void onDownloadFailed(final String url, String downloadTo) {
         ActivityCompat.invalidateOptionsMenu(this);
-        onHandleFatalError("download " + Uri.parse(url).getLastPathSegment() + " failed");
-        Toast.makeText(this, "Open browser and download the update manually", 3000).show();
+        onHandleFatalError(_(R.string.status_download_failed) + " " + Uri.parse(url).getLastPathSegment());
+        Toast.makeText(this, R.string.upgrade_via_browser_hint, 3000).show();
         handler.postDelayed(new Runnable() {
             @Override
             public void run() {
@@ -559,7 +553,7 @@ public class MainActivity extends Activity implements
     public void onDownloaded(String url, String downloadTo) {
         downloaded = true;
         ActivityCompat.invalidateOptionsMenu(this);
-        updateStatus("Downloaded " + Uri.parse(url).getLastPathSegment());
+        updateStatus(_(R.string.status_downloaded) + " " + Uri.parse(url).getLastPathSegment());
         setExiting();
         try {
             ManagerProcess.kill();
@@ -572,10 +566,10 @@ public class MainActivity extends Activity implements
     @Override
     public void onDownloading(String url, String downloadTo, int percent) {
         if (System.currentTimeMillis() % (2 * 1000) == 0) {
-            showNotification("Downloading " + Uri.parse(url).getLastPathSegment() + ": " + percent + "%");
+            showNotification(_(R.string.status_downloading) + " " + Uri.parse(url).getLastPathSegment() + ": " + percent + "%");
         }
         TextView textView = (TextView) findViewById(R.id.statusTextView);
-        textView.setText("Downloaded: " + percent + "%");
+        textView.setText(_(R.string.status_downloaded) + " " + percent + "%");
     }
 
     private void startVpn() {
@@ -606,9 +600,9 @@ public class MainActivity extends Activity implements
         if (ApkUtils.isInstalled(this, "fq.router")) {
             new AlertDialog.Builder(this)
                     .setIcon(android.R.drawable.ic_dialog_alert)
-                    .setTitle("fqrouter has been upgraded to 2.x.x version")
-                    .setMessage("If you experienced error, please restart your mobile and uninstall old fqrouter 1.x.x version.")
-                    .setPositiveButton("OK, I will do it", new DialogInterface.OnClickListener() {
+                    .setTitle(R.string.old_version_alert_title)
+                    .setMessage(R.string.old_version_alert_message)
+                    .setPositiveButton(R.string.old_version_alert_button, new DialogInterface.OnClickListener() {
 
                         @Override
                         public void onClick(DialogInterface dialog, int which) {
@@ -648,7 +642,7 @@ public class MainActivity extends Activity implements
         stopBlinkingImage(freeInternetArrow);
         stopBlinkingStatus();
         if (isConnected) {
-            updateStatus("You may try youtube/twitter now");
+            updateStatus(_(R.string.status_free_internet_connected));
             enableImage(freeInternetArrow);
             checkUpdate();
         } else {

@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">fqrouter2</string>
+    <string name="old_version_alert_title">fqrouter已经升级到了2.x.x版</string>
+    <string name="old_version_alert_message">如果你遇到了错误，请重启手机然后卸载fqrouter旧的1.x.x版。</string>
+    <string name="old_version_alert_button">好吧，我这就去做</string>
+    <string name="new_version_alert_title">发现了新版本</string>
+    <string name="new_version_alert_message">现在升级吗？</string>
+    <string name="new_version_alert_yes">好的</string>
+    <string name="new_version_alert_no">不好</string>
+    <string name="uninstall_old_version_alert_title">fqrouter已经升级到了2.x.x版</string>
+    <string name="uninstall_old_version_alert_message">老的1.x.x版本会被卸载</string>
+    <string name="uninstall_old_version_alert_button">卸载吧</string>
+    <string name="vpn_exit_hint">只能用提示栏中的图标停止VPN</string>
+    <string name="notification_title">fqrouter运行中</string>
+    <string name="menu_settings">设置</string>
+    <string name="menu_upgrade_manually">手动升级</string>
+    <string name="menu_report_error">报告错误</string>
+    <string name="menu_exit">退出</string>
+    <string name="status_free_internet_connecting">努力翻墙中</string>
+    <string name="status_free_internet_disconnecting">正在关闭翻墙功能</string>
+    <string name="status_wifi_repeater_starting">正在开启无线中继</string>
+    <string name="status_wifi_repeater_stopping">正在关闭无线中继</string>
+    <string name="status_free_internet_connected">youtube/twitter 应该能访问了吧？</string>
+    <string name="status_downloading">正在下载</string>
+    <string name="status_launching">启动中</string>
+    <string name="status_launch_vpn">VPN启动中</string>
+    <string name="status_vpn_rejected">获取VPN权限失败</string>
+    <string name="status_downloaded">下载了</string>
+    <string name="status_download_failed">下载失败</string>
+    <string name="free_internet_info_title">翻墙</string>
+    <string name="free_internet_info_message">箭头变绿之后，手机就可以上youtube/twitter了。默认设置下，fqrouter使用的是公共代理翻墙的。如果手机ROOT了，就可以使用混淆器不经过代理服务器穿墙而过。如果你自己有代理服务器，可以在设置菜单中配置。
+    </string>
+    <string name="free_internet_info_button">好像明白了</string>
+    <string name="wifi_repeater_info_title">使用 Wifi 共享翻墙网络</string>
+    <string name="wifi_repeater_info_message">如果手机ROOT了，你可以把翻墙网络分享给其他设备。Android系统自带的那些共享上网的功能都可以用，包括USB/蓝牙/3G无线热点。除此之外，fqrouter可以在手机Wifi上网的同时启动一个新的无线热点，也就是无线中继。但是这个功能只在少数的手机上可以正常使用，用不了也不要意外。
+    </string>
+    <string name="wifi_repeater_info_button">好像明白了</string>
+    <string name="pick_and_play_info_title"><![CDATA[使用 Pick & Play 共享翻墙网络]]></string>
+    <string name="pick_and_play_info_message">
+        <![CDATA[如果手机ROOT了，你可以把翻墙网络分享给其他设备。Pick & Play 会把同一个无线网络中的其他设备先扫描出来。然后你可以从发现的设备列表中点选你想要的设备，然后那个设备立马也就翻墙了。]]></string>
+    <string name="pick_and_play_info_button">好像明白了</string>
+    <string name="status_exiting">正在退出</string>
+    <string name="upgrade_via_browser_hint">打开浏览器手动升级</string>
+</resources>

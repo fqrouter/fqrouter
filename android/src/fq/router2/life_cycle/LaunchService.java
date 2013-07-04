@@ -199,11 +199,8 @@ public class LaunchService extends IntentService {
         try {
             String content = HttpUtils.get("http://127.0.0.1:8318/ping");
             return content.equals("PONG") || content.equals("VPN PONG");
-        } catch (HttpUtils.Error e) {
-            LogUtils.e("ping failed: [" + e.responseCode + "] " + e.output);
-            return false;
         } catch (Exception e) {
-            LogUtils.e("ping failed: " + e);
+            LogUtils.e("check is old version running failed: " + e);
             return false;
         }
     }
