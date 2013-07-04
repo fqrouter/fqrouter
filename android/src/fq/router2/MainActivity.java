@@ -133,30 +133,6 @@ public class MainActivity extends Activity implements
 
     private void launch() {
         disableAll();
-        if (ApkUtils.isInstalled(this, "fq.router") && !ShellUtils.checkRooted()) {
-            new AlertDialog.Builder(this)
-                    .setIcon(android.R.drawable.ic_dialog_alert)
-                    .setTitle("fqrouter has been upgraded to 2.x.x version")
-                    .setMessage("The 1.x.x version fqrouter need to be exited and uninstalled manually. " +
-                            "If fqrouter is running, please use the notification bar to " +
-                            "exit the VPN started by fqrouter. And then uninstall it.")
-                    .setPositiveButton("OK, I will do it", new DialogInterface.OnClickListener() {
-
-                        @Override
-                        public void onClick(DialogInterface dialog, int which) {
-                            MainActivity.this.finish();
-                        }
-
-                    })
-                    .setOnCancelListener(new DialogInterface.OnCancelListener() {
-                        @Override
-                        public void onCancel(DialogInterface dialogInterface) {
-                            MainActivity.this.finish();
-                        }
-                    })
-                    .show();
-            return;
-        }
         startBlinkingImage((ImageView) findViewById(R.id.star));
         startBlinkingStatus("Launching");
         LaunchService.execute(this);
@@ -636,6 +612,7 @@ public class MainActivity extends Activity implements
 
                         @Override
                         public void onClick(DialogInterface dialog, int which) {
+                            clearNotification();
                             MainActivity.this.finish();
                         }
 
@@ -643,6 +620,7 @@ public class MainActivity extends Activity implements
                     .setOnCancelListener(new DialogInterface.OnCancelListener() {
                         @Override
                         public void onCancel(DialogInterface dialogInterface) {
+                            clearNotification();
                             MainActivity.this.finish();
                         }
                     })

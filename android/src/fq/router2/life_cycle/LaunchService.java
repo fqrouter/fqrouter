@@ -48,6 +48,10 @@ public class LaunchService extends IntentService {
         LogUtils.i("ver: " + getMyVersion(this));
         boolean rooted = ShellUtils.checkRooted();
         LogUtils.i("rooted: " + rooted);
+        if (!rooted && isOldVersionRunning()) {
+            handleFatalError(LogUtils.e("old version is still running"));
+            return;
+        }
         if (isVpnRunning()) {
             LogUtils.i("manager is already running in vpn mode");
             sendBroadcast(new LaunchedIntent(true));
@@ -188,6 +192,19 @@ public class LaunchService extends IntentService {
             Thread.sleep(1000);
         } catch (InterruptedException e) {
             throw new RuntimeException(e);
+        }
+    }
+
+    private static boolean isOldVersionRunning() {
+        try {
+            String content = HttpUtils.get("http://127.0.0.1:8318/ping");
+            return content.equals("PONG") || content.equals("VPN PONG");
+        } catch (HttpUtils.Error e) {
+            LogUtils.e("ping failed: [" + e.responseCode + "] " + e.output);
+            return false;
+        } catch (Exception e) {
+            LogUtils.e("ping failed: " + e);
+            return false;
         }
     }
 

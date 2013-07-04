@@ -9,13 +9,14 @@ public class LogUtils {
 
     private static File logFile;
 
-    public static void e(String msg) {
+    public static String e(String msg) {
         try {
             Log.e("fqrouter", msg);
             writeLogFile("ERROR", msg);
         } catch (Exception e) {
             System.out.println(msg);
         }
+        return msg;
     }
 
     public static String e(String msg, Throwable exception) {
