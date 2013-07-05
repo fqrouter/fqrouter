@@ -67,7 +67,7 @@
     <string name="pref_ssh_public_servers">SSH 个人代理</string>
     <string name="pref_bypass_category">直接穿过 GFW</string>
     <string name="pref_bypass_youtube_scrambler">Youtube 混淆器</string>
-    <string name="pref_bypass_youtube_scrambler_summary">混淆 HTTP 协议迷惑 GFW，这样就不用走代理了
+    <string name="pref_bypass_youtube_scrambler_summary">不走代理直接播放youtube的视频。如果不好使，把这个选项勾掉
     </string>
     <string name="pref_tcp_scrambler">TCP 混淆</string>
     <string name="pref_tcp_scrambler_summary">混淆 TCP 协议迷惑 GFW，这样就不用走代理了
