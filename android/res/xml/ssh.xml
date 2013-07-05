@@ -3,24 +3,24 @@
 <PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android">
     <EditTextPreference
             android:key="SshHost"
-            android:title="Host"
-            android:summary="ip or domain name"/>
+            android:title="@string/pref_ssh_host"
+            android:summary="@string/pref_ssh_host_summary"/>
     <EditTextPreference
             android:key="SshPort"
-            android:title="Port"
+            android:title="@string/pref_ssh_port"
             android:inputType="number"/>
     <EditTextPreference
             android:key="SshUsername"
-            android:title="Username"/>
+            android:title="@string/pref_ssh_username"/>
     <EditTextPreference
             android:key="SshPassword"
-            android:title="Password"/>
+            android:title="@string/pref_ssh_password"/>
     <EditTextPreference
             android:key="SshConnectionsCount"
-            android:title="SSH Connections Count"
+            android:title="@string/pref_ssh_connections_count"
             android:inputType="number"/>
     <Preference
             android:key="SshDelete"
-            android:title=">> Delete"
+            android:title="@string/pref_delete"
             android:defaultValue=""/>
 </PreferenceScreen>

@@ -3,20 +3,20 @@
 <PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android">
     <EditTextPreference
             android:key="ShadowsocksHost"
-            android:title="Host"
-            android:summary="ip or domain name"/>
+            android:title="@string/pref_shadowsocks_host"
+            android:summary="@string/pref_shadowsocks_host_summary"/>
     <EditTextPreference
             android:key="ShadowsocksPort"
-            android:title="Port"
+            android:title="@string/pref_shadowsocks_port"
             android:inputType="number"/>
     <EditTextPreference
             android:key="ShadowsocksPassword"
-            android:title="Password"/>
+            android:title="@string/pref_shadowsocks_password"/>
     <ListPreference
             android:key="ShadowsocksEncryptionMethod"
-            android:title="Encryption Method"/>
+            android:title="@string/pref_shadowsocks_encryption_method"/>
     <Preference
             android:key="ShadowsocksDelete"
-            android:title=">> Delete"
+            android:title="@string/pref_delete"
             android:defaultValue=""/>
 </PreferenceScreen>

@@ -3,21 +3,21 @@
 <PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android">
     <EditTextPreference
             android:key="GoAgentAppId"
-            android:title="AppId"
-            android:summary="appid deployed to google application engine"
+            android:title="@string/pref_goagent_appid"
+            android:summary="@string/pref_goagent_appid_summary"
             android:defaultValue=""/>
     <EditTextPreference
             android:key="GoAgentPath"
-            android:title="Path"
-            android:summary="do not need to change"
+            android:title="@string/pref_goagent_path"
+            android:summary="@string/pref_goagent_path_summary"
             android:defaultValue="/2"/>
     <EditTextPreference
             android:key="GoAgentPassword"
-            android:title="Password"
-            android:summary="do not need to change"
+            android:title="@string/pref_goagent_password"
+            android:summary="@string/pref_goagent_password_summary"
             android:defaultValue=""/>
     <Preference
             android:key="GoAgentDelete"
-            android:title=">> Delete"
+            android:title="@string/pref_delete"
             android:defaultValue=""/>
 </PreferenceScreen>

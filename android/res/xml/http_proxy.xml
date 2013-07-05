@@ -3,37 +3,37 @@
 <PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android">
     <EditTextPreference
             android:key="HttpProxyHost"
-            android:title="Host"
-            android:summary="ip or domain name"/>
+            android:title="@string/pref_http_proxy_host"
+            android:summary="@string/pref_http_proxy_host_summary"/>
     <EditTextPreference
             android:key="HttpProxyPort"
-            android:title="Port"
+            android:title="@string/pref_http_proxy_port"
             android:inputType="number"/>
     <EditTextPreference
             android:key="HttpProxyUsername"
-            android:title="Username"/>
+            android:title="@string/pref_http_proxy_username"/>
     <EditTextPreference
             android:key="HttpProxyPassword"
-            android:title="Password"/>
+            android:title="@string/pref_http_proxy_password"/>
     <ListPreference
             android:key="HttpProxyTrafficType"
-            android:title="Traffic Type"
-            android:summary="use the proxy for http or https or both"/>
+            android:title="@string/pref_http_proxy_traffic_type"
+            android:summary="@string/pref_http_proxy_traffic_type_summary"/>
     <ListPreference
             android:key="HttpProxyTransportType"
-            android:title="Transport Type"
-            android:summary="the connection to proxy server is secured or not"/>
+            android:title="@string/pref_http_proxy_transport_type"
+            android:summary="@string/pref_http_proxy_transport_type_summary"/>
     <ListPreference
             android:key="HttpProxySpdyVersion"
-            android:title="SPDY Version"
-            android:summary="you can ignore this if transport type is not spdy"/>
+            android:title="@string/pref_http_proxy_spdy_version"
+            android:summary="@string/pref_http_proxy_spdy_version_summary"/>
     <EditTextPreference
             android:key="HttpProxySpdyConnectionsCount"
-            android:title="SPDY Connections Count"
+            android:title="@string/pref_http_proxy_spdy_connections_count"
             android:inputType="number"
-            android:summary="you can ignore this if transport type is not spdy"/>
+            android:summary="@string/pref_http_proxy_spdy_connections_count_summary"/>
     <Preference
             android:key="HttpProxyDelete"
-            android:title=">> Delete"
+            android:title="@string/pref_delete"
             android:defaultValue=""/>
 </PreferenceScreen>

@@ -44,7 +44,7 @@ public class PickAndPlayActivity extends ListActivity {
             @Override
             public void run() {
                 try {
-                    updateStatus("scanning...");
+                    updateStatus(_(R.string.status_scanning));
                     HttpUtils.get("http://127.0.0.1:8318/pick-and-play/scan?factor=" + factor, new IOUtils.LineRead() {
                         @Override
                         public void onLineRead(String line) {
@@ -60,7 +60,7 @@ public class PickAndPlayActivity extends ListActivity {
                             }
                         }
                     }, 0);
-                    updateStatus("scan completed!");
+                    updateStatus(_(R.string.status_scan_completed));
                 } catch (Exception e) {
                     updateStatus("scan failed");
                     LogUtils.e("failed to scan lan", e);
@@ -69,9 +69,13 @@ public class PickAndPlayActivity extends ListActivity {
         }).start();
     }
 
+    private String _(int id) {
+        return getResources().getString(id);
+    }
+
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
-        addMenuItem(menu, ITEM_ID_RESCAN, "Rescan");
+        addMenuItem(menu, ITEM_ID_RESCAN, _(R.string.menu_rescan));
         return super.onCreateOptionsMenu(menu);
     }
 
@@ -110,7 +114,7 @@ public class PickAndPlayActivity extends ListActivity {
     }
 
     private void onNewDeviceDiscovered(final String ip, final String mac, final String hostName, final boolean isPicked) {
-        updateStatus("scanning " + ip + "...");
+        updateStatus(R.string.status_scanning + " " + ip + "...");
         handler.postDelayed(new Runnable() {
             @Override
             public void run() {
@@ -145,7 +149,7 @@ public class PickAndPlayActivity extends ListActivity {
                         wifiLock.acquire();
                         HttpUtils.post("http://127.0.0.1:8318/pick-and-play/forge-default-gateway", "ip=" + URLEncoder.encode(ip, "UTF-8") +
                                 "&mac=" + URLEncoder.encode(mac, "UTF-8"));
-                        updateStatus("picked " + ip + ", free internet is accessible from that device now");
+                        updateStatus(String.format(_(R.string.pick_and_play_picked_hint), ip));
                     } else {
                         if ("0".equals(HttpUtils.post("http://127.0.0.1:8318/pick-and-play/restore-default-gateway", "ip=" + URLEncoder.encode(ip, "UTF-8")))) {
                             wifiLock.release();

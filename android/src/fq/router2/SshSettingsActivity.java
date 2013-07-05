@@ -84,8 +84,8 @@ public class SshSettingsActivity extends PreferenceActivity implements SharedPre
         String sshHost = ((EditTextPreference) findPreference("SshHost")).getText();
         if (!sshHost.trim().isEmpty()) {
             findPreference("SshPassword").setSummary(
-                    "leave password empty if you are using private key authentication. " +
-                            "put private key at /data/data/fq.router2/etc/ssh/" + sshHost);
+                    getResources().getString(R.string.pref_ssh_private_key_hint) +  " " +
+                            "/data/data/fq.router2/etc/ssh/" + sshHost);
         }
     }
 

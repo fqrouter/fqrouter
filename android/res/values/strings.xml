@@ -48,4 +48,103 @@
     <string name="status_downloaded">Downloaded</string>
     <string name="status_downloading">Downloading</string>
     <string name="status_download_failed">failed to download</string>
+    <string name="button_free_internet">Free Internet</string>
+    <string name="button_wifi_repeater">Wifi Repeater</string>
+    <string name="button_pick_and_play"><![CDATA[Pick & Play]]></string>
+    <string name="help_pick_and_play">scan the currently connected wifi network to discover your other devices (iphone, windows pc, etc). pick any device from the list, then that device will route via fqrouter to access restricted website such as youtube or twitter.</string>
+    <string name="pref_wifi_hotspot_ssid">SSID</string>
+    <string name="pref_wifi_hotspot_ssid_summary">the wifi network name you see (English Only)</string>
+    <string name="pref_wifi_hotspot_password">Password</string>
+    <string name="pref_wifi_hotspot_category">Wifi Hotspot</string>
+    <string name="pref_goagent_category">GoAgent</string>
+    <string name="pref_goagent_public_servers">GoAgent Public Servers</string>
+    <string name="pref_goagent_public_servers_summary">goagent appids shared by others, especially thanks the gfanqiang
+        project
+    </string>
+    <string name="pref_goagent_private_servers">GoAgent Private Servers</string>
+    <string name="pref_shadowsocks_category">Shadowsocks</string>
+    <string name="pref_shadowsocks_public_servers">Shadowsocks Public Servers</string>
+    <string name="pref_shadowsocks_public_servers_summary">shadowsocks servers shared by others</string>
+    <string name="pref_shadowsocks_private_servers">Shadowsocks Private Servers</string>
+    <string name="pref_http_proxy_category">HTTP Proxy</string>
+    <string name="pref_http_proxy_public_servers">HTTP Proxy Public Servers</string>
+    <string name="pref_http_proxy_public_servers_summary">http proxy servers shared by others</string>
+    <string name="pref_http_proxy_private_servers">HTTP Proxy Private Servers</string>
+    <string name="pref_ssh_category">SSH</string>
+    <string name="pref_ssh_public_servers">SSH Private Servers</string>
+    <string name="pref_bypass_category">Bypass GFW</string>
+    <string name="pref_bypass_youtube_scrambler">Youtube Scrambler</string>
+    <string name="pref_bypass_youtube_scrambler_summary">scramble at HTTP level, so that GFW can let us go, without
+        using a proxy server
+    </string>
+    <string name="pref_tcp_scrambler">TCP Scrambler</string>
+    <string name="pref_tcp_scrambler_summary">scramble at TCP level, so that GFW can let us go, without using a proxy
+        server
+    </string>
+    <string name="pref_shortcut_category">Shortcut</string>
+    <string name="pref_shortcut_china_shortcut">China Shortcut</string>
+    <string name="pref_shortcut_china_shortcut_summary">if server is china ip, access directly</string>
+    <string name="pref_shortcut_direct_access">Direct Access If Possible</string>
+    <string name="pref_shortcut_direct_access_summary">try access directly first, use proxy only if tried and failed
+        (including ip blocked, url keyword, etc)
+    </string>
+    <string name="pref_general_category">General</string>
+    <string name="pref_general_auto_update">Auto Update</string>
+    <string name="pref_general_auto_update_summary">check update automatically</string>
+    <string name="pref_goagent_appid">AppId</string>
+    <string name="pref_goagent_appid_summary">appid deployed to google application engine</string>
+    <string name="pref_goagent_path">Path</string>
+    <string name="pref_goagent_path_summary">do not need to change</string>
+    <string name="pref_goagent_password">Password</string>
+    <string name="pref_goagent_password_summary">do not need to change</string>
+    <string name="pref_delete"><![CDATA[>> Delete]]></string>
+    <string name="pref_http_proxy_host">Host</string>
+    <string name="pref_http_proxy_host_summary">ip or domain name</string>
+    <string name="pref_http_proxy_port">Port</string>
+    <string name="pref_http_proxy_username">Username</string>
+    <string name="pref_http_proxy_password">Password</string>
+    <string name="pref_http_proxy_traffic_type">Traffic Type</string>
+    <string name="pref_http_proxy_traffic_type_summary">use the proxy for http or https or both</string>
+    <string name="pref_http_proxy_transport_type">Transport Type</string>
+    <string name="pref_http_proxy_transport_type_summary">the connection to proxy server is secured or not</string>
+    <string name="pref_http_proxy_spdy_version">SPDY Version</string>
+    <string name="pref_http_proxy_spdy_version_summary">you can ignore this if transport type is not spdy</string>
+    <string name="pref_http_proxy_spdy_connections_count">SPDY Connections Count</string>
+    <string name="pref_http_proxy_spdy_connections_count_summary">you can ignore this if transport type is not spdy
+    </string>
+    <string name="pref_shadowsocks_host">Host</string>
+    <string name="pref_shadowsocks_host_summary">ip or domain name</string>
+    <string name="pref_shadowsocks_port">Port</string>
+    <string name="pref_shadowsocks_password">Password</string>
+    <string name="pref_shadowsocks_encryption_method">Encryption Method</string>
+    <string name="pref_ssh_host">Host</string>
+    <string name="pref_ssh_host_summary">ip or domain name</string>
+    <string name="pref_ssh_port">Port</string>
+    <string name="pref_ssh_username">Username</string>
+    <string name="pref_ssh_password">Password</string>
+    <string name="pref_ssh_connections_count">SSH Connections Count</string>
+    <string name="p2p_agreement_alert_message">fqrouter will not upload the details of your private server to anywhere.
+        However, by the nature of P2P network, you must allow fqrouter to use your mobile phone as a P2P network node in
+        wifi network. fqrouter@gmail.com
+    </string>
+    <string name="p2p_agreement_alert_title">P2P Agreement</string>
+    <string name="p2p_agreement_alert_yes">Yes</string>
+    <string name="p2p_agreement_alert_no">No</string>
+    <string name="pref_add"><![CDATA[>> Add]]></string>
+    <string name="pref_host_not_set">Incomplete Private Server Settings</string>
+    <string name="pref_restart_wifi_repeater">You need to restart wifi hotspot to apply the changes</string>
+    <string name="pref_restart_app">You need to restart fqrouter to apply the changes</string>
+    <string name="pref_batch_add"><![CDATA[>> Batch Add]]></string>
+    <string name="pref_goagent_batch_add_input_title">Add one a time</string>
+    <string name="pref_goagent_batch_add_input_message">AppId</string>
+    <string name="pref_goagent_batch_add_input_add_more">Add more</string>
+    <string name="pref_goagent_batch_add_input_done">Done</string>
+    <string name="pref_wifi_hotspot_password_constraint">Password must be 8 characters or longer</string>
+    <string name="pref_ssh_private_key_hint">leave password empty if you are using private key authentication. put
+        private key at
+    </string>
+    <string name="status_scanning">scanning...</string>
+    <string name="menu_rescan">Rescan</string>
+    <string name="pick_and_play_picked_hint">picked %s, free internet is accessible from that device now</string>
+    <string name="status_scan_completed">scan completed</string>
 </resources>

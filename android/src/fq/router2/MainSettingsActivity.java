@@ -15,12 +15,6 @@ import java.util.List;
 
 public class MainSettingsActivity extends PreferenceActivity implements SharedPreferences.OnSharedPreferenceChangeListener {
 
-    private final static String P2P_AGREEMENT = "" +
-            "fqrouter will not upload the details of your private server to anywhere. " +
-            "However, by the nature of P2P network, " +
-            "you must allow fqrouter to use your mobile phone as a P2P network node in wifi network. " +
-            "fqrouter@gmail.com";
-
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -32,7 +26,7 @@ public class MainSettingsActivity extends PreferenceActivity implements SharedPr
                     public boolean onPreferenceChange(Preference preference, Object newValue) {
                         String password = (String) newValue;
                         if (password.length() < 8) {
-                            showToast("Password must be 8 characters or longer");
+                            showToast(_(R.string.pref_wifi_hotspot_password_constraint));
                             return false;
                         }
                         return true;
@@ -103,15 +97,15 @@ public class MainSettingsActivity extends PreferenceActivity implements SharedPr
         final ListPreference picker = (ListPreference) findPreference("GoAgentPrivateServersPicker");
         List<GoAgentSettingsActivity.Server> servers = GoAgentSettingsActivity.loadServers();
         CharSequence[] entries = new CharSequence[servers.size() + 2];
-        entries[servers.size()] = ">> Add";
-        entries[servers.size() + 1] = ">> Batch Add";
+        entries[servers.size()] = _(R.string.pref_add);
+        entries[servers.size() + 1] = _(R.string.pref_batch_add);
         CharSequence[] entryValues = new CharSequence[servers.size() + 2];
-        entryValues[servers.size()] = ">> Add";
-        entryValues[servers.size() + 1] = ">> Batch Add";
+        entryValues[servers.size()] = _(R.string.pref_add);
+        entryValues[servers.size() + 1] = _(R.string.pref_batch_add);
         for (int i = 0; i < servers.size(); i++) {
             GoAgentSettingsActivity.Server server = servers.get(i);
             if (server.appid.equals("")) {
-                entries[i] = "APPID NOT SET";
+                entries[i] = _(R.string.pref_host_not_set);
             } else {
                 entries[i] = server.appid;
             }
@@ -125,13 +119,13 @@ public class MainSettingsActivity extends PreferenceActivity implements SharedPr
         final ListPreference picker = (ListPreference) findPreference("ShadowsocksPrivateServersPicker");
         List<ShadowsocksSettingsActivity.Server> servers = ShadowsocksSettingsActivity.loadServers();
         CharSequence[] entries = new CharSequence[servers.size() + 1];
-        entries[servers.size()] = ">> Add";
+        entries[servers.size()] = _(R.string.pref_add);
         CharSequence[] entryValues = new CharSequence[servers.size() + 1];
-        entryValues[servers.size()] = ">> Add";
+        entryValues[servers.size()] = _(R.string.pref_add);
         for (int i = 0; i < servers.size(); i++) {
             ShadowsocksSettingsActivity.Server server = servers.get(i);
             if (server.host.equals("")) {
-                entries[i] = "HOST NOT SET";
+                entries[i] = _(R.string.pref_host_not_set);
             } else {
                 entries[i] = server.host;
             }
@@ -145,13 +139,13 @@ public class MainSettingsActivity extends PreferenceActivity implements SharedPr
         final ListPreference picker = (ListPreference) findPreference("HttpProxyPrivateServersPicker");
         List<HttpProxySettingsActivity.Server> servers = HttpProxySettingsActivity.loadServers();
         CharSequence[] entries = new CharSequence[servers.size() + 1];
-        entries[servers.size()] = ">> Add";
+        entries[servers.size()] = _(R.string.pref_add);
         CharSequence[] entryValues = new CharSequence[servers.size() + 1];
-        entryValues[servers.size()] = ">> Add";
+        entryValues[servers.size()] = _(R.string.pref_add);
         for (int i = 0; i < servers.size(); i++) {
             HttpProxySettingsActivity.Server server = servers.get(i);
             if (server.host.equals("")) {
-                entries[i] = "HOST NOT SET";
+                entries[i] = _(R.string.pref_host_not_set);
             } else {
                 entries[i] = server.host;
             }
@@ -165,13 +159,13 @@ public class MainSettingsActivity extends PreferenceActivity implements SharedPr
         final ListPreference picker = (ListPreference) findPreference("SshPrivateServersPicker");
         List<SshSettingsActivity.Server> servers = SshSettingsActivity.loadServers();
         CharSequence[] entries = new CharSequence[servers.size() + 1];
-        entries[servers.size()] = ">> Add";
+        entries[servers.size()] = _(R.string.pref_add);
         CharSequence[] entryValues = new CharSequence[servers.size() + 1];
-        entryValues[servers.size()] = ">> Add";
+        entryValues[servers.size()] = _(R.string.pref_add);
         for (int i = 0; i < servers.size(); i++) {
             SshSettingsActivity.Server server = servers.get(i);
             if (server.host.equals("")) {
-                entries[i] = "HOST NOT SET";
+                entries[i] = _(R.string.pref_host_not_set);
             } else {
                 entries[i] = server.host;
             }
@@ -181,18 +175,22 @@ public class MainSettingsActivity extends PreferenceActivity implements SharedPr
         picker.setEntryValues(entryValues);
     }
 
+    private String _(int id) {
+        return getResources().getString(id);
+    }
+
     @Override
     public void onSharedPreferenceChanged(SharedPreferences sharedPreferences, String key) {
         if (key.startsWith("WifiHotspot")) {
-            showToast("You need to restart wifi hotspot to apply the changes");
+            showToast(_(R.string.pref_restart_wifi_repeater));
         } else {
-            showToast("You need to restart fqrouter to apply the changes");
+            showToast(_(R.string.pref_restart_app));
         }
         LaunchService.updateConfigFile(this);
     }
 
     private void onGoAgentPrivateServerPicked(String value) {
-        if (">> Add".equals(value)) {
+        if (_(R.string.pref_add).equals(value)) {
             showP2PAgreement(new DialogInterface.OnClickListener() {
 
                 @Override
@@ -205,7 +203,7 @@ public class MainSettingsActivity extends PreferenceActivity implements SharedPr
                     startActivity(intent);
                 }
             });
-        } else if (">> Batch Add".equals(value)) {
+        } else if (_(R.string.pref_batch_add).equals(value)) {
             showP2PAgreement(new DialogInterface.OnClickListener() {
 
                 @Override
@@ -223,12 +221,12 @@ public class MainSettingsActivity extends PreferenceActivity implements SharedPr
     private void showGoAgentBatchAdd() {
         final AlertDialog.Builder alert = new AlertDialog.Builder(this);
 
-        alert.setTitle("Add one a time");
-        alert.setMessage("AppId");
+        alert.setTitle(R.string.pref_goagent_batch_add_input_title);
+        alert.setMessage(R.string.pref_goagent_batch_add_input_message);
         final EditText input = new EditText(this);
         alert.setView(input);
 
-        alert.setPositiveButton("Add more", new DialogInterface.OnClickListener() {
+        alert.setPositiveButton(R.string.pref_goagent_batch_add_input_add_more, new DialogInterface.OnClickListener() {
             public void onClick(DialogInterface dialog, int whichButton) {
                 addGoAgentPrivateServer(input.getText().toString());
                 input.setText("");
@@ -241,7 +239,7 @@ public class MainSettingsActivity extends PreferenceActivity implements SharedPr
             }
         });
 
-        alert.setNegativeButton("Done", new DialogInterface.OnClickListener() {
+        alert.setNegativeButton(R.string.pref_goagent_batch_add_input_done, new DialogInterface.OnClickListener() {
             public void onClick(DialogInterface dialog, int whichButton) {
                 addGoAgentPrivateServer(input.getText().toString());
             }
@@ -262,7 +260,7 @@ public class MainSettingsActivity extends PreferenceActivity implements SharedPr
     }
 
     private void onShadowsocksPrivateServerPicked(String value) {
-        if (">> Add".equals(value)) {
+        if (_(R.string.pref_add).equals(value)) {
             showP2PAgreement(new DialogInterface.OnClickListener() {
                 @Override
                 public void onClick(DialogInterface dialog, int which) {
@@ -282,7 +280,7 @@ public class MainSettingsActivity extends PreferenceActivity implements SharedPr
     }
 
     private void onHttpProxyPrivateServerPicked(String value) {
-        if (">> Add".equals(value)) {
+        if (_(R.string.pref_add).equals(value)) {
             showP2PAgreement(new DialogInterface.OnClickListener() {
                 @Override
                 public void onClick(DialogInterface dialog, int which) {
@@ -302,7 +300,7 @@ public class MainSettingsActivity extends PreferenceActivity implements SharedPr
     }
 
     private void onSshPrivateServerPicked(String value) {
-        if (">> Add".equals(value)) {
+        if (_(R.string.pref_add).equals(value)) {
             showP2PAgreement(new DialogInterface.OnClickListener() {
                 @Override
                 public void onClick(DialogInterface dialog, int which) {
@@ -324,10 +322,10 @@ public class MainSettingsActivity extends PreferenceActivity implements SharedPr
     private void showP2PAgreement(DialogInterface.OnClickListener onAgreed) {
         new AlertDialog.Builder(this)
                 .setIcon(android.R.drawable.ic_dialog_alert)
-                .setTitle("P2P Agreement")
-                .setMessage(P2P_AGREEMENT)
-                .setPositiveButton("Yes", onAgreed)
-                .setNegativeButton("No", null)
+                .setTitle(R.string.p2p_agreement_alert_title)
+                .setMessage(R.string.p2p_agreement_alert_message)
+                .setPositiveButton(R.string.p2p_agreement_alert_yes, onAgreed)
+                .setNegativeButton(R.string.p2p_agreement_alert_no, null)
                 .show();
     }
 

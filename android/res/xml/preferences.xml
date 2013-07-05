@@ -1,85 +1,85 @@
 <?xml version="1.0" encoding="utf-8"?>
 <PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android">
-    <PreferenceCategory android:title="Wifi Hotspot" android:key="WifiHotspot">
+    <PreferenceCategory android:title="@string/pref_wifi_hotspot_category" android:key="WifiHotspot">
         <EditTextPreference
                 android:key="WifiHotspotSSID"
-                android:title="SSID"
-                android:summary="the wifi network name you see"
+                android:title="@string/pref_wifi_hotspot_ssid"
+                android:summary="@string/pref_wifi_hotspot_ssid_summary"
                 android:defaultValue="fqrouter"/>
         <EditTextPreference
                 android:key="WifiHotspotPassword"
-                android:title="Password"
+                android:title="@string/pref_wifi_hotspot_password"
                 android:defaultValue="12345678"/>
 
     </PreferenceCategory>
-    <PreferenceCategory android:title="GoAgent">
+    <PreferenceCategory android:title="@string/pref_goagent_category">
         <CheckBoxPreference
                 android:key="GoAgentPublicServersEnabled"
-                android:title="Public Servers"
-                android:summary="goagent appids shared by others, especially thanks the gfanqiang project"
+                android:title="@string/pref_goagent_public_servers"
+                android:summary="@string/pref_goagent_public_servers_summary"
                 android:defaultValue="true"/>
         <ListPreference
                 android:key="GoAgentPrivateServersPicker"
-                android:title="Private Servers"
+                android:title="@string/pref_goagent_private_servers"
                 android:defaultValue=""/>
     </PreferenceCategory>
-    <PreferenceCategory android:title="Shadowsocks">
+    <PreferenceCategory android:title="@string/pref_shadowsocks_category">
         <CheckBoxPreference
                 android:key="ShadowsocksPublicServersEnabled"
-                android:title="Public Servers"
-                android:summary="shadowsocks servers shared by others"
+                android:title="@string/pref_shadowsocks_public_servers"
+                android:summary="@string/pref_shadowsocks_public_servers_summary"
                 android:defaultValue="true"/>
         <ListPreference
                 android:key="ShadowsocksPrivateServersPicker"
-                android:title="Private Servers"
+                android:title="@string/pref_shadowsocks_private_servers"
                 android:defaultValue=""/>
     </PreferenceCategory>
-    <PreferenceCategory android:title="HTTP Proxy">
+    <PreferenceCategory android:title="@string/pref_http_proxy_category">
         <CheckBoxPreference
                 android:key="HttpProxyPublicServersEnabled"
-                android:title="Public Servers"
-                android:summary="http proxy servers shared by others"
+                android:title="@string/pref_http_proxy_public_servers"
+                android:summary="@string/pref_http_proxy_public_servers_summary"
                 android:defaultValue="true"/>
         <ListPreference
                 android:key="HttpProxyPrivateServersPicker"
-                android:title="Private Servers"
+                android:title="@string/pref_http_proxy_private_servers"
                 android:defaultValue=""/>
     </PreferenceCategory>
-    <PreferenceCategory android:title="SSH Proxy">
+    <PreferenceCategory android:title="@string/pref_ssh_category">
         <ListPreference
                 android:key="SshPrivateServersPicker"
-                android:title="Private Servers"
+                android:title="@string/pref_ssh_public_servers"
                 android:defaultValue=""/>
     </PreferenceCategory>
-    <PreferenceCategory android:title="Bypass GFW" android:key="Bypass">
+    <PreferenceCategory android:title="@string/pref_bypass_category" android:key="Bypass">
         <CheckBoxPreference
                 android:key="YoutubeScramblerEnabled"
-                android:title="Youtube Scrambler"
-                android:summary="scramble at HTTP level, so that GFW can let us go, without using a proxy server"
+                android:title="@string/pref_bypass_youtube_scrambler"
+                android:summary="@string/pref_bypass_youtube_scrambler_summary"
                 android:defaultValue="true"/>
         <CheckBoxPreference
                 android:key="TcpScramblerEnabled"
-                android:title="TCP Scrambler"
-                android:summary="scramble at TCP level, so that GFW can let us go, without using a proxy server"
+                android:title="@string/pref_tcp_scrambler"
+                android:summary="@string/pref_tcp_scrambler_summary"
                 android:defaultValue="true"/>
     </PreferenceCategory>
-    <PreferenceCategory android:title="Shortcut">
+    <PreferenceCategory android:title="@string/pref_shortcut_category">
         <CheckBoxPreference
                 android:key="ChinaShortcutEnabled"
-                android:title="China Shortcut"
-                android:summary="if server is china ip, access directly"
+                android:title="@string/pref_shortcut_china_shortcut"
+                android:summary="@string/pref_shortcut_china_shortcut_summary"
                 android:defaultValue="true"/>
         <CheckBoxPreference
                 android:key="DirectAccessEnabled"
-                android:title="Direct Access If Possible"
-                android:summary="try access directly first, use proxy only if tried and failed (including ip blocked, url keyword, etc)"
+                android:title="@string/pref_shortcut_direct_access"
+                android:summary="@string/pref_shortcut_direct_access_summary"
                 android:defaultValue="true"/>
     </PreferenceCategory>
-    <PreferenceCategory android:title="General">
+    <PreferenceCategory android:title="@string/pref_general_category">
         <CheckBoxPreference
                 android:key="AutoUpdateEnabled"
-                android:title="Auto Update"
-                android:summary="check update automatically"
+                android:title="@string/pref_general_auto_update"
+                android:summary="@string/pref_general_auto_update_summary"
                 android:defaultValue="true"/>
     </PreferenceCategory>
 </PreferenceScreen>

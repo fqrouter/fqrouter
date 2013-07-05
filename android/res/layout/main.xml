@@ -7,21 +7,21 @@
     <ToggleButton
             android:layout_width="160dp"
             android:layout_height="88dp"
-            android:textOn="Free Internet"
-            android:textOff="Free Internet"
+            android:textOn="@string/button_free_internet"
+            android:textOff="@string/button_free_internet"
             android:id="@+id/freeInternetButton" android:layout_gravity="center_horizontal|top" android:textSize="10pt"
             android:textStyle="bold" android:longClickable="true" android:layout_marginTop="48dp"/>
     <ToggleButton
             android:layout_width="160dp"
             android:layout_height="88dp"
-            android:textOn="Wifi Repeater"
-            android:textOff="Wifi Repeater"
+            android:textOn="@string/button_wifi_repeater"
+            android:textOff="@string/button_wifi_repeater"
             android:id="@+id/wifiRepeaterButton" android:layout_gravity="left|bottom" android:textStyle="bold"
             android:textSize="10pt" android:longClickable="true"/>
     <Button
             android:layout_width="160dp"
             android:layout_height="88dp"
-            android:text="Pick &amp; Play"
+            android:text="@string/button_pick_and_play"
             android:id="@+id/pickAndPlayButton" android:layout_gravity="right|bottom" android:textSize="10pt"
             android:textStyle="bold" android:longClickable="true"/>
     <ImageView
