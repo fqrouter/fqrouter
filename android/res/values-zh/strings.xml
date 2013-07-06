@@ -134,4 +134,6 @@
     <string name="menu_rescan">重新扫描</string>
     <string name="pick_and_play_picked_hint">选取了 %s，现在那个设备应该已经翻墙</string>
     <string name="status_scan_completed">扫描完毕</string>
+    <string name="pref_general_auto_access_check">自动检查是否可以访问 youtube/twitter</string>
+    <string name="pref_general_auto_access_check_summary">在启动后检查 youtube/twitter 是否可以访问</string>
 </resources>

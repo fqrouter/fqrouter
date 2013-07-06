@@ -67,6 +67,8 @@ def start_fqsocks():
 
 def configure(args):
     args += ['--google-host', 'goagent-google-ip.fqrouter.com']
+    if not config.read().get('auto_access_check_enabled', True):
+        args += ['--disable-access-check']
     if not config.read().get('china_shortcut_enabled', True):
         args += ['--disable-china-shortcut']
     if not config.read().get('direct_access_enabled', True):

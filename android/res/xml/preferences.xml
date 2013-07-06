@@ -77,6 +77,11 @@
     </PreferenceCategory>
     <PreferenceCategory android:title="@string/pref_general_category">
         <CheckBoxPreference
+                android:key="AutoAccessCheckEnabled"
+                android:title="@string/pref_general_auto_access_check"
+                android:summary="@string/pref_general_auto_access_check_summary"
+                android:defaultValue="true"/>
+        <CheckBoxPreference
                 android:key="AutoUpdateEnabled"
                 android:title="@string/pref_general_auto_update"
                 android:summary="@string/pref_general_auto_update_summary"
