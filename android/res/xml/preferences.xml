@@ -77,6 +77,10 @@
     </PreferenceCategory>
     <PreferenceCategory android:title="@string/pref_general_category">
         <CheckBoxPreference
+                android:key="NotificationEnabled"
+                android:title="@string/pref_general_notification_enabled"
+                android:defaultValue="true"/>
+        <CheckBoxPreference
                 android:key="AutoAccessCheckEnabled"
                 android:title="@string/pref_general_auto_access_check"
                 android:summary="@string/pref_general_auto_access_check_summary"

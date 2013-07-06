@@ -136,4 +136,5 @@
     <string name="status_scan_completed">扫描完毕</string>
     <string name="pref_general_auto_access_check">自动检查是否可以访问 youtube/twitter</string>
     <string name="pref_general_auto_access_check_summary">在启动后检查 youtube/twitter 是否可以访问</string>
+    <string name="pref_general_notification_enabled">状态栏显示图标</string>
 </resources>

@@ -326,6 +326,9 @@ public class MainActivity extends Activity implements
     }
 
     private void showNotification(String text) {
+        if (!PreferenceManager.getDefaultSharedPreferences(this).getBoolean("NotificationEnabled", true)) {
+            return;
+        }
         Intent intent = new Intent(this, MainActivity.class);
         PendingIntent pIntent = PendingIntent.getActivity(this, 0, intent, 0);
         Notification notification = new NotificationCompat.Builder(this)
