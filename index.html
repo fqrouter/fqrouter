@@ -3,7 +3,7 @@
 <head>
     <meta charset="utf-8">
     <meta http-equiv="X-UA-Compatible" content="chrome=1">
-    <title>fqrouter by fqrouter</title>
+    <title>fqrouter</title>
 
     <link rel="stylesheet" href="stylesheets/styles.css">
     <link rel="stylesheet" href="stylesheets/pygment_trac.css">
@@ -25,70 +25,57 @@
 
 
         <ul>
-            <li><a href="http://fqrouter.tumblr.com/android-latest">Download <strong>APK File</strong></a></li>
-            <li><a href="http://fqrouter.tumblr.com">View My <strong>Blog</strong></a></li>
+            <li><a href="https://play.google.com/store/apps/details?id=fq.router2">Download <strong>APK File</strong></a></li>
+            <li><a href="http://fqrt.4pu.com">View My <strong>Blog</strong></a></li>
             <li><a href="https://github.com/fqrouter/fqrouter">View On <strong>GitHub</strong></a></li>
         </ul>
     </header>
     <section>
-        <h3>What's fqrouter Vision</h3>
-
-        <p>It is a software designed to help you by-pass Great Firewall of China (GFW). Different from similar
-            softwares, it is designed to run as router instead of running as a client installed on some device.
-            Being router means, you can have one thing (Android mobile phone, for example) running fqrouter,
-            then other devices can just connect the wireless network created by fqrouter.
-            Those devices can enjoy all the benefits provided without worrying about how it is being implemented.
-            The unique feature fqrouter provides is to be able to start the wifi hotspot without breaking existing wifi
-            connection,
-            this technology is known as wifi-repeater, and it has never been implemented before on Android mobile.
-        </p>
-
-        <p>
-            However, not all android mobile phones in use supports "wifi-repeating", especially those old models.
-            To help those users, there two sub-optimal solutions. First, if mobile is using 3G connection, wifi
-            hotspot can be started using the system default method (wifi just for hotspot, no repeating required, so
-            no special requirement on hardware).
-            Second, fqrouter can list all the other devices in the same wifi network, then "pick & play". Device being
-            picked will be redirected to a new gateway, which allows it to surf free internet via fqrouter.
-        </p>
-
-        <p>Besides the unique "router" proposition, fqrouter also features several ways to by-pass GFW, and combine all
-            those methods together as a best solution. The biggest highlight is there are ways to access a lot of
-            blocked websites without the help of server or proxy. Although the method alone can not allow you to access
-            ALL blocked websites (ip blocked is no luck), it can be combined with other by-pass technologies,
-            such as uni-directional proxy or traditional SSH/VPN to make a complete solution. The fallback from "direct
-            access" to "via proxy" happens automatically, you even do not need to refresh the browser.
+        <h3>What's fqrouter</h3>
+        <p>It is a software designed to help you circumvent Great Firewall of China (GFW).
+            Fqrouter has a number of public proxies built-in, so it works out of box by just one click.
+            It works on Android mobile, without ROOT permission.
+            If ROOT permission is given, it can also run as "router".
+            Being router means, not only the Android mobile running fqrouter is able to access restricted websites,
+            it can "share" the free internet to other devices.
         </p>
     </section>
     <section>
-        <h3>Current Status</h3>
-
-        <p>fqrouter is not ready for its prime time yet. We are working on these things concurrently: </p>
-        <h4>GFW By-passs Methods</h4>
+        <h3>GFW Circumvention</h3>
+        <p>fqrouter use the following methods concurrently to circumvent GFW:</p>
         <ol>
-            <li>[90%] No Proxy: NIDS injection attack, for websites without ip/port blocked</li>
-            <li>[90%] No Proxy: hosted domain resolving not blocked ip, just for google.com</li>
-            <li>[90%] Public Full proxy: via public/free https proxy (proxy both upstream and downstream)</li>
-            <li>[70%] Public/Private Full proxy: via goagent (http only, appid from <a
-                    href="http://code.google.com/p/gfanqiang/">gfanqiang</a>)
-            </li>
-            <li>[00%] Private Full proxy: via SSH</li>
-            <li>[00%] Private Full proxy: via shadowsocks</li>
-            <li>[00%] Private Full proxy: via SPDY</li>
-            <li>[00%] Half Proxy (proxy only upstream)</li>
+            <li>Bypass: scramble TCP protocol, to avoid URL keyword filtering</li>
+            <li>Bypass: scramble HTTP protocol, to avoid URL keyword filtering</li>
+            <li>Bypass: manually query DNS to resolve correct ip to avoid DNS hijacking</li>
+            <li>Bypass: resolving google.com to not blocked ip to avoid SSL packet drop</li>
+            <li>Proxy: GoAgent/SSH/HTTP/SPDY/Shadowsocks</li>
         </ol>
-        <h4>Free Internet Sharing Methods</h4>
+        <p>fqrouter can bypass GFW, but there are cases (IP blocked) fqrouter has to fallback to use proxy.
+        To avoid maximize the stability and speed, fqrouter will try to use proxies smartly:</p>
         <ol>
-            <li>[90%] Share as "Wifi Repeater" (Hardware support required)</li>
-            <li>[90%] Share using system wifi hotspot (only feasible in 3G environment)</li>
-            <li>[80%] Pick & Play: let other devices in same wifi network surf free internet via fqrouter (No hardware
-                support required)
-            </li>
+            <li>Direct Access: for China ip</li>
+            <li>Direct Access: direct connection is tried first, use proxy only if direct access blocked</li>
+            <li>Fallback: one proxy died will fallback to another, without corrupting the connection</li>
+            <li>Fallback: when scrambler not working, fallback to proxy transparently</li>
+            <li>Load balancing: proxies used in round robin way</li>
         </ol>
+    </section>
+    <section>
+        <h3>Free Internet Sharing</h3>
+        <p>There are a number of ways to share free internet to other devices via fqrouter.</p>
+        <ol>
+            <li>wifi in => fqrouter => wifi out (A.K.A wifi repeater)</li>
+            <li>Pick & Play</li>
+            <li>3G in => fqrouter => wifi out (Android built-in)</li>
+            <li>3G/wifi in => fqrouter => usb out (Android built-in)</li>
+            <li>3G/wifi in => fqrouter => bluetooth out (Android built-in)</li>
+            <li>lan in => fqrouter => wifi out (some set-top box)</li>
+        </ol>
+        <p>Wifi repeater is a unique feature, however it requires hardware/driver support</p>
+        <p>Pick & Play scan the devices in your LAN, and forge the default gateway to redirect their traffic via fqrouter</p>
     </section>
     <section>
         <h3>History</h3>
-
         <p>fqrotuer project was started as a ROM for <a href="http://wiki.openwrt.org/toh/tp-link/tl-wr703n">tplink-wr703n</a>,
             a mini wireless router capable of running 3rd party OS <a href="https://openwrt.org/">OpenWRT</a>.
             At that time, I did not believe it is possible to make Android mobile phone as wireless router. But after
