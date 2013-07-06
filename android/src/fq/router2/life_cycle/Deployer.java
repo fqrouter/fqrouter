@@ -9,6 +9,7 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.lang.reflect.Method;
 
 public class Deployer {
 
@@ -183,7 +184,7 @@ public class Deployer {
         }
         LogUtils.i("unzipping payload.zip");
         Process process = Runtime.getRuntime().exec(
-        ShellUtils.BUSYBOX_FILE + " unzip -o -q payload.zip", new String[0], ShellUtils.DATA_DIR);
+                ShellUtils.BUSYBOX_FILE + " unzip -o -q payload.zip", new String[0], ShellUtils.DATA_DIR);
         ShellUtils.waitFor("unzip", process);
         if (!new File("/data/data/fq.router2/payload.zip").delete()) {
             LogUtils.i("failed to delete payload.zip after unzip");
@@ -249,11 +250,17 @@ public class Deployer {
     }
 
     private void makeExecutable(File file) throws Exception {
-        if (file.setExecutable(true, true)) {
+        try {
+            Method setExecutableMethod = File.class.getMethod("setExecutable", boolean.class, boolean.class);
+            if ((Boolean) setExecutableMethod.invoke(file, true, true)) {
+                LogUtils.i("successfully made " + file.getName() + " executable");
+            } else {
+                LogUtils.i("failed to make " + file.getName() + " executable");
+                ShellUtils.sudo(ShellUtils.findCommand("chmod"), "0700", file.getCanonicalPath());
+            }
+        } catch (NoSuchMethodException e) {
+            ShellUtils.execute("/data/data/fq.router2/busybox", "chmod", "0700", file.getAbsolutePath());
             LogUtils.i("successfully made " + file.getName() + " executable");
-        } else {
-            LogUtils.i("failed to make " + file.getName() + " executable");
-            ShellUtils.sudo(ShellUtils.findCommand("chmod"), "0700", file.getCanonicalPath());
         }
     }
 

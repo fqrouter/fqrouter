@@ -78,7 +78,7 @@
     <string name="pref_shortcut_direct_access">直接可以直连的服务器</string>
     <string name="pref_shortcut_direct_access_summary">每个连接先尝试直连，只在不得不走代理的时候才走代理（包括IP被封，URL关键字等情况）
     </string>
-    <string name="pref_general_category">总体</string>
+    <string name="pref_general_category">总体设置</string>
     <string name="pref_general_auto_update">自动检查更新</string>
     <string name="pref_general_auto_update_summary"></string>
     <string name="pref_goagent_appid">AppId</string>
