@@ -185,7 +185,15 @@ public class Deployer {
         LogUtils.i("unzipping payload.zip");
         Process process = Runtime.getRuntime().exec(
                 ShellUtils.BUSYBOX_FILE + " unzip -o -q payload.zip", new String[0], ShellUtils.DATA_DIR);
-        ShellUtils.waitFor("unzip", process);
+        try {
+            ShellUtils.waitFor("unzip", process);
+        } catch (Exception e) {
+            LogUtils.e("unzip failed", e);
+            Thread.sleep(3);
+            process = Runtime.getRuntime().exec(
+                    ShellUtils.BUSYBOX_FILE + " unzip -o -q payload.zip", new String[0], ShellUtils.DATA_DIR);
+            ShellUtils.waitFor("unzip", process);
+        }
         if (!new File("/data/data/fq.router2/payload.zip").delete()) {
             LogUtils.i("failed to delete payload.zip after unzip");
         }
