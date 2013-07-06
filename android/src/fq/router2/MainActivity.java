@@ -329,7 +329,7 @@ public class MainActivity extends Activity implements
         Intent intent = new Intent(this, MainActivity.class);
         PendingIntent pIntent = PendingIntent.getActivity(this, 0, intent, 0);
         Notification notification = new NotificationCompat.Builder(this)
-                .setSmallIcon(R.drawable.small_star)
+                .setSmallIcon(R.drawable.small_icon)
                 .setContentTitle(_(R.string.notification_title))
                 .setContentText(text)
                 .setContentIntent(pIntent)
