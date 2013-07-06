@@ -48,7 +48,6 @@ public class Deployer {
                     ManagerProcess.kill();
                 } catch (Exception e) {
                     LogUtils.e("failed to kill manager before redeploy", e);
-                    LogUtils.i("failed to kill manager before redeploy");
                     // ignore and continue
                 }
                 clearDataDirectory();
@@ -121,7 +120,11 @@ public class Deployer {
 
     private void deleteDirectory(String path) throws Exception {
         if (new File(path).exists()) {
-            ShellUtils.execute("/data/data/fq.router2/busybox", "rm", "-rf", path);
+            try {
+                ShellUtils.execute("/data/data/fq.router2/busybox", "rm", "-rf", path);
+            } catch (Exception e) {
+                LogUtils.e("failed to delete " + path, e);
+            }
         }
         if (new File(path).exists()) {
             LogUtils.e("failed to delete " + path);
