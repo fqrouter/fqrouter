@@ -80,6 +80,7 @@ public class MainActivity extends Activity implements
         super.onCreate(savedInstanceState);
         setContentView(R.layout.main);
         PreferenceManager.setDefaultValues(this, R.xml.preferences, true);
+        setTitle("fqrouter " + LaunchService.getMyVersion(this));
         setupUI();
         LaunchedIntent.register(this);
         UpdateFoundIntent.register(this);
