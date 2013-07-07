@@ -47,7 +47,7 @@
     <string name="button_pick_and_play"><![CDATA[Pick & Play]]></string>
     <string name="help_pick_and_play">扫描当前网络中的其他设备（iPhone，个人电脑等）。然后从扫描出来的列表中选取你希望翻墙的设备，这样那台设备就可以通过fqrouter翻墙了。</string>
     <string name="pref_wifi_hotspot_ssid">无线网络名</string>
-    <string name="pref_wifi_hotspot_ssid_summary">在无线列表中名称（只能填英文）</string>
+    <string name="pref_wifi_hotspot_ssid_summary">在无线列表中的名称（只能填英文）</string>
     <string name="pref_wifi_hotspot_password">密码</string>
     <string name="pref_wifi_hotspot_category">Wifi 热点</string>
     <string name="pref_goagent_category">GoAgent</string>
