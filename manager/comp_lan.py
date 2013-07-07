@@ -11,6 +11,7 @@ from utils import shell
 LOGGER = logging.getLogger('fqrouter.%s' % __name__)
 
 picked_devices = {}
+recently_scanned_devices = {}
 fqlan_process = None
 
 
@@ -65,28 +66,46 @@ def handle_is_started(environ, start_response):
 
 
 def handle_scan(environ, start_response):
+    if recently_scanned_devices:
+        start_response(httplib.OK, [('Content-Type', 'text/plain')])
+        for mac, (ip, hostname) in recently_scanned_devices.items():
+            yield str('%s,%s,%s,%s\n' % (ip, mac, hostname, 'TRUE' if ip in picked_devices else 'FALSE'))
     try:
-        scan_process = subprocess.Popen(
-            [shell.PYTHON_PATH, '-m', 'fqlan',
-             '--log-level', 'INFO',
-             '--log-file', '/data/data/fq.router2/log/scan.log',
-             '--lan-interface', comp_wifi.WIFI_INTERFACE,
-             '--ifconfig-command', '/data/data/fq.router2/busybox',
-             '--ip-command', '/data/data/fq.router2/busybox',
-             'scan', '--hostname', '--mark', '0xcafe', '--factor', environ['REQUEST_ARGUMENTS']['factor'].value],
-            stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-        _, output = scan_process.communicate()
+        factor = environ['REQUEST_ARGUMENTS']['factor'].value
+        lines = scan(factor)
     except:
         LOGGER.exception('failed to scan')
-        start_response(httplib.INTERNAL_SERVER_ERROR, [('Content-Type', 'text/plain')])
+        if not recently_scanned_devices:
+            start_response(httplib.INTERNAL_SERVER_ERROR, [('Content-Type', 'text/plain')])
         return
+    lines = [line.strip() for line in lines if line.strip()]
+    devices = {}
+    for line in lines:
+        ip, mac, hostname = json.loads(line)
+        if mac in recently_scanned_devices:
+            continue
+        recently_scanned_devices[mac] = (ip, hostname)
+        devices[mac] = (ip, hostname)
     try:
         start_response(httplib.OK, [('Content-Type', 'text/plain')])
-        for line in output.splitlines():
-            ip, mac, hostname = json.loads(line)
+        for mac, (ip, hostname) in devices.items():
             yield str('%s,%s,%s,%s\n' % (ip, mac, hostname, 'TRUE' if ip in picked_devices else 'FALSE'))
     except:
         LOGGER.exception('failed to return scan results')
+
+
+def scan(factor):
+    args = [shell.PYTHON_PATH, '-m', 'fqlan',
+            '--log-level', 'INFO',
+            '--log-file', '/data/data/fq.router2/log/scan.log',
+            '--lan-interface', comp_wifi.WIFI_INTERFACE,
+            '--ifconfig-command', '/data/data/fq.router2/busybox',
+            '--ip-command', '/data/data/fq.router2/busybox',
+            'scan', '--hostname', '--mark', '0xcafe', '--factor', factor]
+    LOGGER.info('scan: %s' % str(args))
+    scan_process = subprocess.Popen(args, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+    _, output = scan_process.communicate()
+    return output.splitlines()
 
 
 def restart_fqlan():
