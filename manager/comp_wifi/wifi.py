@@ -656,18 +656,15 @@ def start_p2p_persistent_network(iface, control_socket_dir, ssid, password, sets
     if get_working_hotspot_iface():
         return index
     LOGGER.error('reset wifi interface to fix unexpected GO creation')
-    try:
-        disable_wifi_p2p_service()
-        shell_execute('stop p2p_supplicant')
-        shell_execute('netcfg wlan0 down')
-        gevent.sleep(1)
-        shell_execute('netcfg wlan0 up')
-        gevent.sleep(1)
-        shell_execute('start p2p_supplicant')
-        gevent.sleep(1)
-        do_p2p_group_add('p2p0', get_p2p_supplicant_control_socket_dir(), index, frequency)
-    finally:
-        enable_wifi_p2p_service()
+    disable_wifi_p2p_service()
+    shell_execute('stop p2p_supplicant')
+    shell_execute('netcfg wlan0 down')
+    gevent.sleep(1)
+    shell_execute('netcfg wlan0 up')
+    gevent.sleep(1)
+    shell_execute('start p2p_supplicant')
+    gevent.sleep(1)
+    do_p2p_group_add('p2p0', get_p2p_supplicant_control_socket_dir(), index, frequency)
     return index
 
 

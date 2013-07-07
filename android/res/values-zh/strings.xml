@@ -143,4 +143,5 @@
     </string>
     <string name="report_error_alert_ok">没问题！</string>
     <string name="report_error_alert_no">那再说吧</string>
+    <string name="pref_wifi_hotspot_reset">重置无线</string>
 </resources>

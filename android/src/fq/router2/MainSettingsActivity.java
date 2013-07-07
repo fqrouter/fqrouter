@@ -9,6 +9,8 @@ import android.preference.*;
 import android.widget.EditText;
 import android.widget.Toast;
 import fq.router2.life_cycle.LaunchService;
+import fq.router2.utils.HttpUtils;
+import fq.router2.utils.LogUtils;
 import fq.router2.utils.ShellUtils;
 
 import java.util.List;
@@ -65,11 +67,31 @@ public class MainSettingsActivity extends PreferenceActivity implements SharedPr
                         return false;
                     }
                 });
+        findPreference("WifiHotspotReset").setOnPreferenceClickListener(new Preference.OnPreferenceClickListener() {
+            @Override
+            public boolean onPreferenceClick(Preference preference) {
+                resetWifi();
+                return false;
+            }
+        });
         if (!ShellUtils.isRooted()) {
             getPreferenceScreen().removePreference(findPreference("WifiHotspot"));
             PreferenceCategory bypassCategoryPref = (PreferenceCategory) findPreference("Bypass");
             bypassCategoryPref.removePreference(bypassCategoryPref.findPreference("TcpScramblerEnabled"));
         }
+    }
+
+    private void resetWifi() {
+        new Thread(new Runnable() {
+            @Override
+            public void run() {
+                try {
+                    HttpUtils.post("http://127.0.0.1:8318/wifi-repeater/reset");
+                } catch (Exception e) {
+                    LogUtils.e("failed to reset wifi", e);
+                }
+            }
+        }).start();
     }
 
 

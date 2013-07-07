@@ -6,6 +6,7 @@ from wifi import setup_lo_alias
 from wifi import start_hotspot
 from wifi import stop_hotspot
 from wifi import setup_networking
+from wifi import enable_wifi_p2p_service
 from wifi import get_ip_and_mac
 from utils import config
 
@@ -15,6 +16,7 @@ def start():
     return [
         ('POST', 'wifi-repeater/start', handle_start),
         ('POST', 'wifi-repeater/stop', handle_stop),
+        ('POST', 'wifi-repeater/reset', handle_reset),
         ('GET', 'wifi-repeater/is-started', handle_is_started),
     ]
 
@@ -40,6 +42,13 @@ def handle_start(environ, start_response):
 def handle_stop(environ, start_response):
     start_response(httplib.OK, [('Content-Type', 'text/plain')])
     yield stop_hotspot()
+
+
+def handle_reset(environ, start_response):
+    start_response(httplib.OK, [('Content-Type', 'text/plain')])
+    enable_wifi_p2p_service()
+    stop_hotspot()
+    return []
 
 
 def handle_is_started(environ, start_response):

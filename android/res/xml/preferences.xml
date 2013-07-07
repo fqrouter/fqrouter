@@ -10,7 +10,9 @@
                 android:key="WifiHotspotPassword"
                 android:title="@string/pref_wifi_hotspot_password"
                 android:defaultValue="12345678"/>
-
+        <Preference
+                android:key="WifiHotspotReset"
+                android:title="@string/pref_wifi_hotspot_reset"/>
     </PreferenceCategory>
     <PreferenceCategory android:title="@string/pref_goagent_category">
         <CheckBoxPreference
