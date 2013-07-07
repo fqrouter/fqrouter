@@ -58,7 +58,7 @@
                 android:key="YoutubeScramblerEnabled"
                 android:title="@string/pref_bypass_youtube_scrambler"
                 android:summary="@string/pref_bypass_youtube_scrambler_summary"
-                android:defaultValue="true"/>
+                android:defaultValue="false"/>
         <CheckBoxPreference
                 android:key="TcpScramblerEnabled"
                 android:title="@string/pref_tcp_scrambler"
