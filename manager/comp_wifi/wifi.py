@@ -833,6 +833,8 @@ def get_wpa_supplicant_control_socket_dir(conf_path=WPA_SUPPLICANT_CONF_PATH):
 
 
 def fix_wrong_control_socket_dir(control_socket_dir):
+    if os.path.exists('/data/system/wpa_supplicant/%s' % WIFI_INTERFACE):
+        return '/data/system/wpa_supplicant/%s' % WIFI_INTERFACE
     if os.path.exists('/data/misc/wifi/wpa_supplicant/%s' % WIFI_INTERFACE):
         return '/data/misc/wifi/wpa_supplicant/%s' % WIFI_INTERFACE
     if control_socket_dir == WIFI_INTERFACE:
