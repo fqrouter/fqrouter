@@ -515,10 +515,13 @@ def start_hotspot_on_ti(ssid, password):
     LOGGER.info('start hostapd')
     if start_hostapd():
         return
-    shell_execute('%s dev ap0 del' % IW_PATH)
+    try:
+        shell_execute('%s dev ap0 del' % IW_PATH)
+    except:
+        LOGGER.exception('failed to delete ap0')
     LOGGER.info('try start hostapd without ap0')
     if not start_hostapd():
-        raise Exception('failed to start hotspot on ti platform')
+        LOGGER.error('failed to start hotspot on ti platform')
 
 
 def start_hostapd():
