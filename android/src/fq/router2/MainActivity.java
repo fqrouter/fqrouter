@@ -328,12 +328,17 @@ public class MainActivity extends Activity implements
 
     private void showNotification(String text) {
         if (!PreferenceManager.getDefaultSharedPreferences(this).getBoolean("NotificationEnabled", true)) {
+            clearNotification();
+            return;
+        }
+        if (LaunchService.isVpnRunning()) {
+            clearNotification();
             return;
         }
         Intent intent = new Intent(this, MainActivity.class);
         PendingIntent pIntent = PendingIntent.getActivity(this, 0, intent, 0);
         Notification notification = new NotificationCompat.Builder(this)
-                .setSmallIcon(R.drawable.small_icon)
+                .setSmallIcon(R.drawable.icon)
                 .setContentTitle(_(R.string.notification_title))
                 .setContentText(text)
                 .setContentIntent(pIntent)
@@ -452,6 +457,7 @@ public class MainActivity extends Activity implements
         startBlinkingImage((ImageView) findViewById(R.id.freeInternetArrow));
         startBlinkingStatus(_(R.string.status_free_internet_connecting));
         if (isVpnMode) {
+            clearNotification();
             if (LaunchService.isVpnRunning()) {
                 onFreeInternetChanged(true);
             } else {
