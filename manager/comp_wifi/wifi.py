@@ -410,12 +410,11 @@ def start_hotspot_on_bcm(ssid, password):
         p2p_control_socket_dir = get_p2p_supplicant_control_socket_dir()
         delete_existing_p2p_persistent_networks('p2p0', p2p_control_socket_dir)
         start_p2p_persistent_network('p2p0', p2p_control_socket_dir, ssid, password, sets_channel=True)
-        log_upstream_wifi_status('after p2p persistent group created', control_socket_dir)
     else:
         LOGGER.info('start p2p persistent group using %s' % WIFI_INTERFACE)
         delete_existing_p2p_persistent_networks(WIFI_INTERFACE, control_socket_dir)
         start_p2p_persistent_network(WIFI_INTERFACE, control_socket_dir, ssid, password, sets_channel=True)
-        log_upstream_wifi_status('after p2p persistent group created', control_socket_dir)
+    log_upstream_wifi_status('after p2p persistent group created', control_socket_dir)
 
 
 def load_p2p_firmware(control_socket_dir):
@@ -440,8 +439,15 @@ def reset_wifi_interface():
 def start_hotspot_on_wcnss(ssid, password):
     control_socket_dir = get_wpa_supplicant_control_socket_dir()
     load_p2p_firmware(control_socket_dir)
-    delete_existing_p2p_persistent_networks(WIFI_INTERFACE, control_socket_dir)
-    start_p2p_persistent_network(WIFI_INTERFACE, control_socket_dir, ssid, password, sets_channel=True)
+    if 'p2p0' in list_wifi_ifaces():
+        LOGGER.info('start p2p persistent group using p2p0')
+        shell_execute('netcfg p2p0 up')
+        p2p_control_socket_dir = get_p2p_supplicant_control_socket_dir()
+        delete_existing_p2p_persistent_networks('p2p0', p2p_control_socket_dir)
+        start_p2p_persistent_network('p2p0', p2p_control_socket_dir, ssid, password, sets_channel=True)
+    else:
+        delete_existing_p2p_persistent_networks(WIFI_INTERFACE, control_socket_dir)
+        start_p2p_persistent_network(WIFI_INTERFACE, control_socket_dir, ssid, password, sets_channel=True)
     log_upstream_wifi_status('after p2p persistent group created', control_socket_dir)
 
 
