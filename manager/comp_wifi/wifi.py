@@ -360,6 +360,8 @@ def get_wifi_chipset():
             return 'bcm', '4324' # 43241
         if chipset.endswith('4076'): # sdio:c00v0097d4076
             return 'ti', 'wl12xx'
+        if chipset.endswith('A8E7'): # sdio:c00v02D0dA8E7
+            return 'ti', 'wl12xx'
         if 'platform:wcnss_wlan' == chipset:
             return 'wcnss', 'unknown'
         if 'platform:wl12xx' == chipset:
