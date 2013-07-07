@@ -113,7 +113,7 @@
     <string name="pref_ssh_username">用户名</string>
     <string name="pref_ssh_password">密码</string>
     <string name="pref_ssh_connections_count">SSH 连接数</string>
-    <string name="p2p_agreement_alert_message">fqrouter不会把你设置的个人代理共享给任何人或者机构。但是本着人人为我，我为人人的精神，你必须允许将来fqrouter使用你的手机在不产生额外流量费用的前提下做为P2P网络的节点。fqrouter@gmail.com
+    <string name="p2p_agreement_alert_message">fqrouter不会把你设置的个人代理共享给任何人或者机构。但是本着人人为我，我为人人的精神，你需要允许将来fqrouter使用你的手机在不产生额外流量费用的前提下做为P2P网络的节点。fqrouter@gmail.com
     </string>
     <string name="p2p_agreement_alert_title">P2P 许可</string>
     <string name="p2p_agreement_alert_yes">没问题</string>
@@ -137,4 +137,10 @@
     <string name="pref_general_auto_access_check">自动检查是否可以访问 youtube/twitter</string>
     <string name="pref_general_auto_access_check_summary">在启动后检查 youtube/twitter 是否可以访问</string>
     <string name="pref_general_notification_enabled">状态栏显示图标</string>
+    <string name="report_error_alert_title">帮助我也是帮助你自己</string>
+    <string name="pick_and_play_unpicked_hint">反选了 %s，那台设备的网络应该回到正常状态了</string>
+    <string name="report_error_alert_message">请认真描述你遇到的问题。否则你会浪费我很多时间，这样我就没有精力把fqrouter改进得更好用了。多谢理解！
+    </string>
+    <string name="report_error_alert_ok">没问题！</string>
+    <string name="report_error_alert_no">那再说吧</string>
 </resources>

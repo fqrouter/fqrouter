@@ -149,4 +149,11 @@
     <string name="pref_general_auto_access_check">Automatically check youtube/twitter access</string>
     <string name="pref_general_auto_access_check_summary">Check if youtube/twitter is accessible after start</string>
     <string name="pref_general_notification_enabled">Notification Bar Icon</string>
+    <string name="report_error_alert_title">Help me, help yourself</string>
+    <string name="pick_and_play_unpicked_hint">unpicked %s, network went back to normal</string>
+    <string name="report_error_alert_message">Please describe the problem in details. Otherwise you are wasting my time
+        which could be spent on making fqrouter better. Thanks for your understanding!
+    </string>
+    <string name="report_error_alert_ok">I will!</string>
+    <string name="report_error_alert_no">Maybe next time</string>
 </resources>

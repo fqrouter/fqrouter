@@ -7,6 +7,7 @@ import android.content.Intent;
 import android.net.Uri;
 import android.os.Build;
 import android.widget.Toast;
+import fq.router2.R;
 import fq.router2.life_cycle.LaunchService;
 import fq.router2.utils.IOUtils;
 import fq.router2.utils.LogUtils;
@@ -29,11 +30,9 @@ public class ErrorReportEmail {
     public void send() {
         new AlertDialog.Builder(context)
                 .setIcon(android.R.drawable.ic_dialog_alert)
-                .setTitle("Help me, help yourself")
-                .setMessage("Please describe the problem in details. " +
-                        "Otherwise you are wasting my time which could be spent on making fqrouter better. " +
-                        "Thanks for your understanding!")
-                .setPositiveButton("I will!", new DialogInterface.OnClickListener() {
+                .setTitle(R.string.report_error_alert_title)
+                .setMessage(R.string.report_error_alert_message)
+                .setPositiveButton(R.string.report_error_alert_ok, new DialogInterface.OnClickListener() {
 
                     @Override
                     public void onClick(DialogInterface dialog, int which) {
@@ -45,7 +44,7 @@ public class ErrorReportEmail {
                     }
 
                 })
-                .setNegativeButton("Maybe next time", null)
+                .setNegativeButton(R.string.report_error_alert_no, null)
                 .show();
     }
 

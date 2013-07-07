@@ -154,7 +154,7 @@ public class PickAndPlayActivity extends ListActivity {
                         if ("0".equals(HttpUtils.post("http://127.0.0.1:8318/pick-and-play/restore-default-gateway", "ip=" + URLEncoder.encode(ip, "UTF-8")))) {
                             wifiLock.release();
                         }
-                        updateStatus("unpicked " + ip + ", network went back to normal");
+                        updateStatus(String.format(_(R.string.pick_and_play_unpicked_hint), ip));
                     }
                 } catch (Exception e) {
                     LogUtils.e("failed to handle item click: " + ip, e);
