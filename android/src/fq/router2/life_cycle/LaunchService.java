@@ -90,7 +90,7 @@ public class LaunchService extends IntentService {
         }
         Deployer deployer = new Deployer(this);
         String fatalError = deployer.deploy();
-        if (!fatalError.isEmpty()) {
+        if (fatalError.length() > 0) {
             handleFatalError(fatalError);
             return;
         }
@@ -98,7 +98,7 @@ public class LaunchService extends IntentService {
         LogUtils.i("Launching...");
         if (ShellUtils.checkRooted()) {
             fatalError = launch(false);
-            if (fatalError.isEmpty()) {
+            if (fatalError.length() == 0) {
                 sendBroadcast(new LaunchedIntent(false));
             } else {
                 handleFatalError(fatalError);
@@ -109,7 +109,7 @@ public class LaunchService extends IntentService {
                 return;
             }
             fatalError = launch(true);
-            if (fatalError.isEmpty()) {
+            if (fatalError.length() == 0) {
                 sendBroadcast(new LaunchedIntent(true));
             } else {
                 handleFatalError(fatalError);

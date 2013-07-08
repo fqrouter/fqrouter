@@ -82,7 +82,7 @@ public class SshSettingsActivity extends PreferenceActivity implements SharedPre
 
     private void updatePrivateKeyHint() {
         String sshHost = ((EditTextPreference) findPreference("SshHost")).getText();
-        if (!sshHost.trim().isEmpty()) {
+        if (sshHost.trim().length() > 0) {
             findPreference("SshPassword").setSummary(
                     getResources().getString(R.string.pref_ssh_private_key_hint) +  " " +
                             "/data/data/fq.router2/etc/ssh/" + sshHost);

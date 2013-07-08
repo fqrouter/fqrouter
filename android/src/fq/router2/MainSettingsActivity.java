@@ -270,7 +270,7 @@ public class MainSettingsActivity extends PreferenceActivity implements SharedPr
     }
 
     private void addGoAgentPrivateServer(final String value) {
-        if (value.trim().isEmpty()) {
+        if (value.trim().length() == 0) {
             return;
         }
         List<GoAgentSettingsActivity.Server> servers = GoAgentSettingsActivity.loadServers();

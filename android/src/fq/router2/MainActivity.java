@@ -238,7 +238,7 @@ public class MainActivity extends Activity implements
             @Override
             public void run() {
                 TextView statusTextView = (TextView) findViewById(R.id.statusTextView);
-                if (!blinkingStatus.isEmpty()) {
+                if (blinkingStatus.length() > 0) {
                     String text = blinkingStatus;
                     for (int i = 0; i < count; i++) {
                         text += ".";

@@ -118,9 +118,9 @@ public class PickAndPlayActivity extends ListActivity {
         handler.postDelayed(new Runnable() {
             @Override
             public void run() {
-                if (!mac.isEmpty()) {
+                if (mac.length() > 0) {
                     macs.put(ip, mac);
-                    if (hostName.isEmpty()) {
+                    if (hostName.length() == 0) {
                         devices.add(ip);
                     } else {
                         devices.add(ip + " " + hostName);
