@@ -464,7 +464,14 @@ public class MainActivity extends Activity implements
                 startVpn();
             }
         } else {
-            ApkUtils.uninstall(MainActivity.this, "fq.router");
+            if (ApkUtils.isInstalled(this, "fq.router")) {
+                new Thread(new Runnable() {
+                    @Override
+                    public void run() {
+                        ApkUtils.uninstall(MainActivity.this, "fq.router");
+                    }
+                }).start();
+            }
             checkWifiRepeater();
             checkPickAndPlay();
             ConnectFreeInternetService.execute(this);
