@@ -157,4 +157,7 @@
     <string name="report_error_alert_ok">I will!</string>
     <string name="report_error_alert_no">Maybe next time</string>
     <string name="pref_wifi_hotspot_reset">Reset Wireless</string>
+    <string name="dns_polluted_alert_title">DNS Polluted</string>
+    <string name="dns_polluted_alert_message">You can not access some website is because the DNS has been polluted. Toggle airplane mode will clear the DNS pollution</string>
+    <string name="dns_polluted_alert_ack">OK</string>
 </resources>

@@ -144,4 +144,7 @@
     <string name="report_error_alert_ok">没问题！</string>
     <string name="report_error_alert_no">那再说吧</string>
     <string name="pref_wifi_hotspot_reset">重置无线</string>
+    <string name="dns_polluted_alert_title">DNS 被污染了</string>
+    <string name="dns_polluted_alert_message">你不能访问某些网站是因为DNS已经被污染了。开关一下飞行模式可以清除DNS污染。</string>
+    <string name="dns_polluted_alert_acks">明白了</string>
 </resources>

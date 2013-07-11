@@ -63,6 +63,8 @@
         </service>
         <service android:name=".free_internet.CheckFreeInternetService">
         </service>
+        <service android:name=".free_internet.CheckDnsPollutionService">
+        </service>
         <service android:name=".pick_and_play.CheckPickAndPlayService">
         </service>
         <service

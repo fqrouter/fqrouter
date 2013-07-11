@@ -23,10 +23,7 @@ import android.widget.TextView;
 import android.widget.Toast;
 import android.widget.ToggleButton;
 import fq.router2.feedback.*;
-import fq.router2.free_internet.CheckFreeInternetService;
-import fq.router2.free_internet.ConnectFreeInternetService;
-import fq.router2.free_internet.DisconnectFreeInternetService;
-import fq.router2.free_internet.FreeInternetChangedIntent;
+import fq.router2.free_internet.*;
 import fq.router2.life_cycle.*;
 import fq.router2.pick_and_play.CheckPickAndPlayService;
 import fq.router2.pick_and_play.PickAndPlayChangedIntent;
@@ -54,7 +51,8 @@ public class MainActivity extends Activity implements
         DownloadingIntent.Handler,
         DownloadedIntent.Handler,
         DownloadFailedIntent.Handler,
-        HandleFatalErrorIntent.Handler {
+        HandleFatalErrorIntent.Handler,
+        DnsPollutedIntent.Handler {
 
     public final static int SHOW_AS_ACTION_IF_ROOM = 1;
     private final static int ITEM_ID_EXIT = 1;
@@ -69,6 +67,7 @@ public class MainActivity extends Activity implements
     private String upgradeUrl;
     private boolean downloaded;
     private WifiManager.WifiLock wifiLock;
+    private static long dnsPollutionAckedAt = 0;
 
     static {
         IOUtils.createCommonDirs();
@@ -92,6 +91,7 @@ public class MainActivity extends Activity implements
         DownloadedIntent.register(this);
         DownloadFailedIntent.register(this);
         HandleFatalErrorIntent.register(this);
+        DnsPollutedIntent.register(this);
         blinkStatus(0);
         launch();
     }
@@ -108,6 +108,7 @@ public class MainActivity extends Activity implements
         checkWifiRepeater();
         checkPickAndPlay();
         checkFreeInternet();
+        CheckDnsPollutionService.execute(this);
     }
 
     private void checkWifiRepeater() {
@@ -476,6 +477,7 @@ public class MainActivity extends Activity implements
             checkPickAndPlay();
             ConnectFreeInternetService.execute(this);
         }
+        checkUpdate();
     }
 
     private void uninstallOldVersion() {
@@ -661,7 +663,6 @@ public class MainActivity extends Activity implements
         if (isConnected) {
             updateStatus(_(R.string.status_free_internet_connected));
             enableImage(freeInternetArrow);
-            checkUpdate();
         } else {
             clearStatus();
             disableImage(freeInternetArrow);
@@ -686,5 +687,22 @@ public class MainActivity extends Activity implements
             disableImage(pickAndPlayArrow);
         }
         findViewById(R.id.pickAndPlayButton).setEnabled(true);
+    }
+
+    @Override
+    public void onDnsPolluted(final long pollutedAt) {
+        if (pollutedAt > dnsPollutionAckedAt) {
+            new AlertDialog.Builder(MainActivity.this)
+                    .setIcon(android.R.drawable.ic_dialog_alert)
+                    .setTitle(R.string.dns_polluted_alert_title)
+                    .setMessage(R.string.dns_polluted_alert_message)
+                    .setPositiveButton(R.string.dns_polluted_alert_ack, new DialogInterface.OnClickListener() {
+                        @Override
+                        public void onClick(DialogInterface dialogInterface, int i) {
+                            dnsPollutionAckedAt = pollutedAt;
+                        }
+                    })
+                    .show();
+        }
     }
 }
