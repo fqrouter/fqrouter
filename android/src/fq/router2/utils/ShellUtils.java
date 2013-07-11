@@ -1,9 +1,7 @@
 package fq.router2.utils;
 
 import java.io.*;
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.Map;
+import java.util.*;
 
 
 public class ShellUtils {
@@ -23,11 +21,11 @@ public class ShellUtils {
 
     public static Process executeNoWait(Map<String, String> env, String... command) throws IOException {
         LogUtils.i("command: " + Arrays.toString(command));
-        ProcessBuilder processBuilder = new ProcessBuilder(command);
-        processBuilder.environment().putAll(env);
-        return processBuilder
-                .redirectErrorStream(true)
-                .start();
+        List<String> envp = new ArrayList<String>();
+        for (Map.Entry<String, String> entry : env.entrySet()) {
+            envp.add(entry.getKey() + "=" + entry.getValue());
+        }
+        return Runtime.getRuntime().exec(command, envp.toArray(new String[envp.size()]));
     }
 
     public static String sudo(Map<String, String> env, String... command) throws Exception {
@@ -65,7 +63,6 @@ public class ShellUtils {
         }
         LogUtils.i("sudo: " + Arrays.toString(command));
         ProcessBuilder processBuilder = new ProcessBuilder();
-        processBuilder.environment().putAll(env);
         Process process = processBuilder
                 .command(findCommand("su"))
                 .redirectErrorStream(true)
@@ -73,6 +70,12 @@ public class ShellUtils {
         OutputStreamWriter stdin = new OutputStreamWriter(process.getOutputStream());
         try {
             stdin.write("echo going to run some command\n");
+            for (Map.Entry<String, String> entry : env.entrySet()) {
+                stdin.write(entry.getKey());
+                stdin.write("=");
+                stdin.write(entry.getValue());
+                stdin.write(" ");
+            }
             for (String c : command) {
                 stdin.write(c);
                 stdin.write(" ");
