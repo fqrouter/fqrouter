@@ -27,10 +27,7 @@ import fq.router2.free_internet.*;
 import fq.router2.life_cycle.*;
 import fq.router2.pick_and_play.CheckPickAndPlayService;
 import fq.router2.pick_and_play.PickAndPlayChangedIntent;
-import fq.router2.utils.ApkUtils;
-import fq.router2.utils.IOUtils;
-import fq.router2.utils.LogUtils;
-import fq.router2.utils.ShellUtils;
+import fq.router2.utils.*;
 import fq.router2.wifi_repeater.CheckWifiRepeaterService;
 import fq.router2.wifi_repeater.StartWifiRepeaterService;
 import fq.router2.wifi_repeater.StopWifiRepeaterService;
@@ -696,7 +693,25 @@ public class MainActivity extends Activity implements
                     .setIcon(android.R.drawable.ic_dialog_alert)
                     .setTitle(R.string.dns_polluted_alert_title)
                     .setMessage(R.string.dns_polluted_alert_message)
-                    .setPositiveButton(R.string.dns_polluted_alert_ack, new DialogInterface.OnClickListener() {
+                    .setPositiveButton(R.string.dns_polluted_alert_fix, new DialogInterface.OnClickListener() {
+                        @Override
+                        public void onClick(DialogInterface dialogInterface, int i) {
+                            dnsPollutionAckedAt = pollutedAt;
+                            new Thread(new Runnable() {
+                                @Override
+                                public void run() {
+                                    try {
+                                        AirplaneModeUtils.toggle(MainActivity.this);
+                                        showToast(R.string.dns_polluted_alert_toggle_succeed);
+                                    } catch (Exception e) {
+                                        LogUtils.e("failed to toggle airplane mode", e);
+                                        showToast(R.string.dns_polluted_alert_toggle_failed);
+                                    }
+                                }
+                            }).start();
+                        }
+                    })
+                    .setNegativeButton(R.string.dns_polluted_alert_ack, new DialogInterface.OnClickListener() {
                         @Override
                         public void onClick(DialogInterface dialogInterface, int i) {
                             dnsPollutionAckedAt = pollutedAt;
@@ -704,5 +719,14 @@ public class MainActivity extends Activity implements
                     })
                     .show();
         }
+    }
+
+    private void showToast(final int message) {
+        handler.postDelayed(new Runnable() {
+            @Override
+            public void run() {
+                Toast.makeText(MainActivity.this, message, 5000).show();
+            }
+        }, 0);
     }
 }
