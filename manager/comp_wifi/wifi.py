@@ -495,8 +495,8 @@ def start_hotspot_on_ti(ssid, password):
                 '%s dev %s interface add ap0 type managed' % (IW_PATH, WIFI_INTERFACE))
         except:
             LOGGER.exception('failed to add ap0')
-        shell_execute(
-            '%s phy phy0 interface add ap0 type managed' % IW_PATH)
+            shell_execute(
+                '%s phy phy0 interface add ap0 type managed' % IW_PATH)
     assert 'ap0' in list_wifi_ifaces()
     shell_execute('netcfg')
     try:
