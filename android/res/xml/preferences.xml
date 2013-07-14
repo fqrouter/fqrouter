@@ -77,7 +77,7 @@
                 android:summary="@string/pref_shortcut_direct_access_summary"
                 android:defaultValue="true"/>
     </PreferenceCategory>
-    <PreferenceCategory android:title="@string/pref_general_category">
+    <PreferenceCategory android:title="@string/pref_general_category" android:key="General">
         <CheckBoxPreference
                 android:key="NotificationEnabled"
                 android:title="@string/pref_general_notification_enabled"
@@ -92,5 +92,9 @@
                 android:title="@string/pref_general_auto_update"
                 android:summary="@string/pref_general_auto_update_summary"
                 android:defaultValue="true"/>
+        <CheckBoxPreference
+                android:key="AutoLaunchEnabled"
+                android:title="@string/pref_general_launch_after_booted"
+                android:defaultValue="false"/>
     </PreferenceCategory>
 </PreferenceScreen>

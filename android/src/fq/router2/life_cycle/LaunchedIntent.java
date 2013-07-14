@@ -6,7 +6,7 @@ import android.content.IntentFilter;
 import fq.router2.utils.LoggedBroadcastReceiver;
 
 public class LaunchedIntent extends Intent {
-    private final static String ACTION_LAUNCHED = "Launched";
+    public final static String ACTION_LAUNCHED = "Launched";
 
     public LaunchedIntent(boolean isVpnMode) {
         setAction(ACTION_LAUNCHED);

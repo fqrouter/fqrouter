@@ -150,4 +150,5 @@
     <string name="dns_polluted_alert_fix">帮我弄了吧</string>
     <string name="dns_polluted_alert_toggle_failed">没搞定，你还是自己手工开关一下飞行模式吧</string>
     <string name="dns_polluted_alert_toggle_succeed">DNS污染应该已经被清理干净了</string>
+    <string name="pref_general_launch_after_booted">开机自启</string>
 </resources>

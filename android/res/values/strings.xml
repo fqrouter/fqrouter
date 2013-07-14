@@ -163,4 +163,5 @@
     <string name="dns_polluted_alert_fix">Toggle it now</string>
     <string name="dns_polluted_alert_toggle_failed">Failed to toggle airplane mode, you need to do it manually</string>
     <string name="dns_polluted_alert_toggle_succeed">DNS pollution should be cleared now</string>
+    <string name="pref_general_launch_after_booted">Launch automatically after mobile booted</string>
 </resources>

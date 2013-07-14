@@ -76,6 +76,8 @@ public class MainSettingsActivity extends PreferenceActivity implements SharedPr
         });
         if (!ShellUtils.isRooted()) {
             getPreferenceScreen().removePreference(findPreference("WifiHotspot"));
+            PreferenceCategory generalCategoryPref = (PreferenceCategory) findPreference("General");
+            generalCategoryPref.removePreference(generalCategoryPref.findPreference("AutoLaunchEnabled"));
             PreferenceCategory bypassCategoryPref = (PreferenceCategory) findPreference("Bypass");
             bypassCategoryPref.removePreference(bypassCategoryPref.findPreference("TcpScramblerEnabled"));
         }
