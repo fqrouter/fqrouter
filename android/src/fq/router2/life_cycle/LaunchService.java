@@ -238,6 +238,7 @@ public class LaunchService extends IntentService {
             configJson.put("china_shortcut_enabled", preferences.getBoolean("ChinaShortcutEnabled", true));
             configJson.put("direct_access_enabled", preferences.getBoolean("DirectAccessEnabled", true));
             configJson.put("auto_access_check_enabled", preferences.getBoolean("AutoAccessCheckEnabled", true));
+            configJson.put("full_google_play_enabled", preferences.getBoolean("FullGooglePlayEnabled", true));
             configJson.put("goagent_public_servers_enabled",
                     preferences.getBoolean("GoAgentPublicServersEnabled", true));
             configJson.put("shadowsocks_public_servers_enabled",

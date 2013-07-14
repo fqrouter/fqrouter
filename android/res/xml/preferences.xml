@@ -76,6 +76,11 @@
                 android:title="@string/pref_shortcut_direct_access"
                 android:summary="@string/pref_shortcut_direct_access_summary"
                 android:defaultValue="true"/>
+        <CheckBoxPreference
+                android:key="FullGooglePlayEnabled"
+                android:title="@string/pref_shortcut_full_google_play"
+                android:summary="@string/pref_shortcut_full_google_play_summary"
+                android:defaultValue="true"/>
     </PreferenceCategory>
     <PreferenceCategory android:title="@string/pref_general_category" android:key="General">
         <CheckBoxPreference

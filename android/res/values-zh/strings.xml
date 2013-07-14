@@ -151,4 +151,6 @@
     <string name="dns_polluted_alert_toggle_failed">没搞定，你还是自己手工开关一下飞行模式吧</string>
     <string name="dns_polluted_alert_toggle_succeed">DNS污染应该已经被清理干净了</string>
     <string name="pref_general_launch_after_booted">开机自启</string>
+    <string name="pref_shortcut_full_google_play">完整版Google市场</string>
+    <string name="pref_shortcut_full_google_play_summary">如果不好使，请重启手机</string>
 </resources>
