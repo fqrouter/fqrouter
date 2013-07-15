@@ -439,7 +439,8 @@ def reset_wifi_interface():
 def start_hotspot_on_wcnss(ssid, password):
     control_socket_dir = get_wpa_supplicant_control_socket_dir()
     load_p2p_firmware(control_socket_dir)
-    if 'p2p0' in list_wifi_ifaces() and 'MI 2' != shell_execute('getprop ro.product.model').strip():
+    is_xiaomi_2 = shell_execute('getprop ro.product.model').strip().startswith('MI 2')
+    if 'p2p0' in list_wifi_ifaces() and not is_xiaomi_2:
         LOGGER.info('start p2p persistent group using p2p0')
         shell_execute('netcfg p2p0 up')
         p2p_control_socket_dir = get_p2p_supplicant_control_socket_dir()
