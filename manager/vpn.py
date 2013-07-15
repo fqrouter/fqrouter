@@ -7,6 +7,7 @@ import socket
 import httplib
 import fqdns
 import fqsocks.fqsocks
+import fqsocks.networking
 import contextlib
 from uuid import uuid4
 
@@ -112,7 +113,7 @@ def get_original_destination(sock, src_ip, src_port):
     return nat_map.get(src_port)
 
 
-fqsocks.fqsocks.SPI['get_original_destination'] = get_original_destination
+fqsocks.networking.SPI['get_original_destination'] = get_original_destination
 
 
 def create_tcp_socket(server_ip, server_port, connect_timeout):
@@ -132,7 +133,7 @@ def create_tcp_socket(server_ip, server_port, connect_timeout):
 
 
 fqdns.SPI['create_tcp_socket'] = create_tcp_socket
-fqsocks.fqsocks.SPI['create_tcp_socket'] = create_tcp_socket
+fqsocks.networking.SPI['create_tcp_socket'] = create_tcp_socket
 
 
 def create_udp_socket():
@@ -152,7 +153,7 @@ def create_udp_socket():
 
 
 fqdns.SPI['create_udp_socket'] = create_udp_socket
-fqsocks.fqsocks.SPI['create_udp_socket'] = create_udp_socket
+fqsocks.networking.SPI['create_udp_socket'] = create_udp_socket
 
 
 def generate_socket_id():
