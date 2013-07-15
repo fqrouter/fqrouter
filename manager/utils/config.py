@@ -5,7 +5,12 @@ import os
 def read():
     with open('/data/data/fq.router2/etc/fqrouter.json') as f:
         config_json = f.read()
-    return json.loads(config_json)
+    config = json.loads(config_json)
+    if os.path.exists('/data/data/fq.router2/etc/fqrouter-overrides.json'):
+        with open('/data/data/fq.router2/etc/fqrouter-overrides.json') as f:
+            config_json = f.read()
+        config.update(json.loads(config_json))
+    return config
 
 
 def list_goagent_private_servers():

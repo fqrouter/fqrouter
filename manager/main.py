@@ -35,6 +35,12 @@ def handle_ping(environ, start_response):
 
 def handle_free_internet_connect(environ, start_response):
     components = [comp_dns, comp_scrambler, comp_proxy, comp_shortcut]
+    if not config.read().get('comp_dns_enabled', True):
+        LOGGER.info('dns component disabled by config')
+        components.remove(comp_dns)
+    if not config.read().get('comp_proxy_enabled', True):
+        LOGGER.info('proxy component disabled by config')
+        components.remove(comp_proxy)
     if not config.read().get('tcp_scrambler_enabled', True):
         LOGGER.info('scrambler component disabled by config')
         components.remove(comp_scrambler)
@@ -67,7 +73,12 @@ def is_free_internet_connected():
 
 
 def run():
-    start_components(comp_wifi, comp_lan)
+    if config.read().get('comp_wifi_enabled', True):
+        start_components(comp_wifi, comp_lan)
+    else:
+        LOGGER.info('wifi component disabled by config')
+        comp_wifi.setup_lo_alias()
+        start_components(comp_lan)
     httpd.HANDLERS[('GET', 'ping')] = handle_ping
     httpd.HANDLERS[('POST', 'free-internet/connect')] = handle_free_internet_connect
     httpd.HANDLERS[('POST', 'free-internet/disconnect')] = handle_free_internet_disconnect
