@@ -218,13 +218,17 @@ def dump_unix_sockets():
 
 
 def get_working_hotspot_iface():
-    hotspot_iface = get_p2p_persistent_iface() or \
-                    get_working_hotspot_iface_using_nl80211() or \
-                    get_working_hotspot_iface_using_wext()
-    if WIFI_INTERFACE == hotspot_iface:
+    try:
+        hotspot_iface = get_p2p_persistent_iface() or \
+                        get_working_hotspot_iface_using_nl80211() or \
+                        get_working_hotspot_iface_using_wext()
+        if WIFI_INTERFACE == hotspot_iface:
+            return None
+        else:
+            return hotspot_iface
+    except:
+        LOGGER.exception('failed to get working hotspot iface')
         return None
-    else:
-        return hotspot_iface
 
 
 def get_working_hotspot_iface_using_wext():
@@ -764,7 +768,10 @@ def reset_p2p_channels(iface, control_socket_dir, channel, reg_class):
 
 
 def get_p2p_persistent_iface():
-    for line in shell_execute('netcfg').splitlines(False):
+    netcfg_output = shell_execute('netcfg')
+    if 'tiwlan' in netcfg_output: # stop further action to avoid mobile restart
+        raise Exception('tiwlan does not support wifi repeater')
+    for line in netcfg_output.splitlines(False):
         if line.startswith('p2p-'):
             return line.split(' ')[0]
         if line.startswith('ap0'):
