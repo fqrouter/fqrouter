@@ -70,6 +70,10 @@ def stop_hotspot():
         except:
             LOGGER.exception('failed to killall hostapd')
         try:
+            shell_execute('stop ap_daemon')
+        except:
+            LOGGER.exception('failed to stop ap_daemon')
+        try:
             control_socket_dir = get_p2p_supplicant_control_socket_dir()
             stop_p2p_persistent_network(control_socket_dir, 'p2p0', 'p2p0')
             stop_p2p_persistent_network(control_socket_dir, 'p2p0', working_hotspot_iface)
@@ -480,10 +484,12 @@ def start_hotspot_on_mtk(ssid, password):
     log_upstream_wifi_status('before load ap firmware', control_socket_dir)
     load_ap_firmware()
     shell_execute('netcfg ap0 up')
+    try:
+        shell_execute('start ap_daemon')
+    except:
+        LOGGER.exception('failed to start ap_daemon')
     gevent.sleep(2)
     log_upstream_wifi_status('after loaded ap firmware', control_socket_dir)
-    if 'ap0' == get_working_hotspot_iface_using_nl80211():
-        return
     control_socket_dir = get_wpa_supplicant_control_socket_dir()
     shell_execute('%s -p %s -i ap0 reconfigure' % (P2P_CLI_PATH, control_socket_dir))
     delete_existing_p2p_persistent_networks('ap0', control_socket_dir)
