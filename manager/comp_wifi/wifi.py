@@ -70,10 +70,6 @@ def stop_hotspot():
         except:
             LOGGER.exception('failed to killall hostapd')
         try:
-            shell_execute('stop ap_daemon')
-        except:
-            LOGGER.exception('failed to stop ap_daemon')
-        try:
             control_socket_dir = get_p2p_supplicant_control_socket_dir()
             stop_p2p_persistent_network(control_socket_dir, 'p2p0', 'p2p0')
             stop_p2p_persistent_network(control_socket_dir, 'p2p0', working_hotspot_iface)
@@ -287,7 +283,15 @@ def start_hotspot_interface(wifi_chipset_family, ssid, password):
     elif 'ti' == wifi_chipset_family:
         start_hotspot_on_ti(ssid, password)
     elif 'mtk' == wifi_chipset_family:
-        start_hotspot_on_mtk(ssid, password)
+        is_jiecao = shell_execute('getprop ro.product.model').strip().startswith('Charmpin')
+        if is_jiecao:
+            start_hotspot_on_bcm(ssid, password)
+        else:
+            try:
+                start_hotspot_on_mtk(ssid, password)
+            except:
+                LOGGER.exception('failed to start_hotspot_on_mtk, try bcm way')
+                start_hotspot_on_bcm(ssid, password)
     else:
         raise Exception('wifi chipset family %s is not supported: %s' % wifi_chipset_family)
     hotspot_interface = get_working_hotspot_iface()
@@ -484,11 +488,8 @@ def start_hotspot_on_mtk(ssid, password):
     log_upstream_wifi_status('before load ap firmware', control_socket_dir)
     load_ap_firmware()
     shell_execute('netcfg ap0 up')
-    try:
-        shell_execute('start ap_daemon')
-    except:
-        LOGGER.exception('failed to start ap_daemon')
     gevent.sleep(2)
+    shell_execute('getprop init.svc.ap_daemon') # log ap_daemon status
     log_upstream_wifi_status('after loaded ap firmware', control_socket_dir)
     control_socket_dir = get_wpa_supplicant_control_socket_dir()
     shell_execute('%s -p %s -i ap0 reconfigure' % (P2P_CLI_PATH, control_socket_dir))
@@ -498,6 +499,8 @@ def start_hotspot_on_mtk(ssid, password):
     shell_execute('%s -p %s -i ap0 p2p_group_remove ap0' % (P2P_CLI_PATH, control_socket_dir))
     shell_execute('%s -p %s -i ap0 p2p_group_add persistent=%s' % (P2P_CLI_PATH, control_socket_dir, network_index))
     log_upstream_wifi_status('after p2p persistent group created', control_socket_dir)
+    if not get_working_hotspot_iface():
+        raise Exception('failed to use ap firmware to start hotspot')
 
 
 def start_hotspot_on_ti(ssid, password):
