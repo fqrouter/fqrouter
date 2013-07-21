@@ -1,7 +1,7 @@
 import logging
 import re
 import shlex
-import shell
+import subprocess
 
 LOGGER = logging.getLogger('fqrouter.%s' % __name__)
 RE_CHAIN_NAME = re.compile(r'Chain (.+) \(')
@@ -13,7 +13,7 @@ def insert_rules(rules):
     for signature, rule_args in reversed(rules): # insert the last one first
         table, chain, _ = rule_args
         if chain not in ['OUTPUT', 'INPUT', 'FORWARD', 'PREROUTING', 'POSTROUTING'] and chain not in created_chains:
-            shell.call(shlex.split('iptables -t %s -N %s' % (table, chain)))
+            subprocess.call(shlex.split('iptables -t %s -N %s' % (table, chain)))
             created_chains.add(chain)
         if contains_rule(table, chain, signature):
             LOGGER.info('skip insert rule: -t %s -I %s %s' % rule_args)
@@ -54,15 +54,15 @@ def delete_chain(target):
                 index = len(chain_rules) - i
                 if target == rule['target']:
                     delete_rule(table, chain, str(index))
-        shell.call(shlex.split('iptables -t %s --flush %s' % (table, target)))
-        shell.call(shlex.split('iptables -t %s -X %s' % (table, target)))
+        subprocess.call(shlex.split('iptables -t %s --flush %s' % (table, target)))
+        subprocess.call(shlex.split('iptables -t %s -X %s' % (table, target)))
 
 
 def insert_rule(optional, table, chain, rule_text):
     command = 'iptables -t %s -I %s %s' % (table, chain, rule_text)
     LOGGER.info('insert %s rule: %s' % ('optional' if optional else 'mandatory', command))
     try:
-        shell.check_call(shlex.split(command))
+        subprocess.check_call(shlex.split(command))
     except:
         if optional:
             LOGGER.exception('skip optional iptables rule')
@@ -73,7 +73,7 @@ def delete_rule(table, chain, rule_text):
     command = 'iptables -t %s -D %s %s' % (table, chain, rule_text)
     LOGGER.info('delete rule: %s' % command)
     try:
-        shell.check_call(shlex.split(command))
+        subprocess.check_call(shlex.split(command))
     except:
         LOGGER.exception('failed to delete rule: %s' % command)
 
@@ -98,7 +98,7 @@ def contains_rule(table, chain, signature):
 def dump_table(table):
     command = 'iptables -t %s -L -v -n' % table
     LOGGER.debug('command: %s' % command)
-    output = shell.check_output(shlex.split(command))
+    output = subprocess.check_output(shlex.split(command))
     LOGGER.debug('output: %s' % output)
     return parse(output)
 

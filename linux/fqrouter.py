@@ -49,11 +49,13 @@ def setup():
         '--listen 10.1.2.3:8319 '
         # '--log-level DEBUG '
         '--http-request-mark 0xbabe '
-        '--proxy dynamic,n=8,type=ss,dns_record=ss#n#.fqrouter.com,priority=3 '
-        '--proxy dynamic,n=20,dns_record=proxy#n#.fqrouter.com,is_public=True,priority=4 '
-        '--proxy dynamic,n=5,dns_record=proxy2#n#.fqrouter.com,priority=2 '
-        '--proxy dynamic,n=10,type=goagent,dns_record=goagent#n#.fqrouter.com,priority=1 '
-        '--enable-youtube-scrambler '
+        '--proxy spdy-connect,proxy_ip=www.amonotot.com,proxy_port=443,username=test,password=abcabc,requested_spdy_version=spdy/3 '
+        '--proxy spdy-relay,proxy_ip=www.amonotot.com,proxy_port=443,username=test,password=abcabc,requested_spdy_version=spdy/3 '
+        # '--proxy dynamic,n=8,type=ss,dns_record=ss#n#.fqrouter.com,priority=3 '
+        # '--proxy dynamic,n=20,dns_record=proxy#n#.fqrouter.com,is_public=True,priority=4 '
+        # '--proxy dynamic,n=5,dns_record=proxy2#n#.fqrouter.com,priority=2 '
+        # '--proxy dynamic,n=10,type=goagent,dns_record=goagent#n#.fqrouter.com,priority=1 '
+        # '--enable-youtube-scrambler '
         '--google-host goagent-google-ip.fqrouter.com '
         '--disable-access-check',
         shell=True,

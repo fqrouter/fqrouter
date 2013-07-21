@@ -1,20 +1,18 @@
 package fq.router2.life_cycle;
 
-import android.app.AlertDialog;
 import android.app.IntentService;
 import android.content.Context;
-import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.pm.PackageInfo;
-import android.content.pm.PackageManager;
-import android.net.Uri;
 import android.os.Build;
 import android.preference.PreferenceManager;
-import fq.router2.feedback.DownloadService;
 import fq.router2.feedback.HandleFatalErrorIntent;
 import fq.router2.free_internet.SocksVpnService;
-import fq.router2.utils.*;
+import fq.router2.utils.HttpUtils;
+import fq.router2.utils.IOUtils;
+import fq.router2.utils.LogUtils;
+import fq.router2.utils.ShellUtils;
 import org.json.JSONObject;
 
 import java.io.File;
@@ -165,11 +163,34 @@ public class LaunchService extends IntentService {
             return process;
         } else {
             try {
-                LogUtils.i(ShellUtils.sudo(
-                        env, Deployer.PYTHON_LAUNCHER +
-                        " -c \"import os; print 'current user id: %s' % os.getuid()\"").trim());
+
+                Process process = ShellUtils.executeNoWait(env, ShellUtils.BUSYBOX_FILE.getCanonicalPath(), "sh");
+                OutputStreamWriter stdin = new OutputStreamWriter(process.getOutputStream());
+                try {
+                    String command = Deployer.PYTHON_LAUNCHER + " -c \"import os; print(os.getuid())\"";
+                    stdin.write(command);
+                    stdin.write("\nexit\n");
+                } finally {
+                    stdin.close();
+                }
+                String normalUserId = ShellUtils.waitFor("getuid", process).trim();
+                LogUtils.i("normal uid: " + normalUserId);
+                try {
+                    LogUtils.i("sudo uid: " + ShellUtils.sudo(
+                            env, Deployer.PYTHON_LAUNCHER +
+                            " -c \"import os; print(os.getuid())\"").trim());
+                } catch (Exception e) {
+                    LogUtils.e("failed to get sudo uid", e);
+                }
+                try {
+                    LogUtils.i("setuid: " + ShellUtils.sudo(
+                            env, Deployer.PYTHON_LAUNCHER +
+                            " -c \"import os; os.setuid(" + normalUserId + "); print(os.getuid())\"").trim());
+                } catch (Exception e) {
+                    LogUtils.e("failed to setuid", e);
+                }
             } catch (Exception e) {
-                LogUtils.e("log current user id failed", e);
+                LogUtils.e("failed to get normal uid", e);
             }
             return ShellUtils.sudoNoWait(env, Deployer.PYTHON_LAUNCHER + " " +
                     Deployer.MANAGER_MAIN_PY.getAbsolutePath() + " > /data/data/fq.router2/log/current-python.log 2>&1");

@@ -19,6 +19,10 @@ public class ShellUtils {
         return waitFor(Arrays.toString(command), process);
     }
 
+    public static String execute(Map<String, String> env, String... command) throws Exception {
+        return waitFor(Arrays.toString(command), executeNoWait(env, command));
+    }
+
     public static Process executeNoWait(Map<String, String> env, String... command) throws IOException {
         LogUtils.i("command: " + Arrays.toString(command));
         List<String> envp = new ArrayList<String>();
@@ -69,7 +73,6 @@ public class ShellUtils {
                 .start();
         OutputStreamWriter stdin = new OutputStreamWriter(process.getOutputStream());
         try {
-            stdin.write("echo going to run some command\n");
             for (Map.Entry<String, String> entry : env.entrySet()) {
                 stdin.write(entry.getKey());
                 stdin.write("=");
