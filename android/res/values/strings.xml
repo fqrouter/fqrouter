@@ -151,7 +151,7 @@
     <string name="pref_general_notification_enabled">Notification Bar Icon</string>
     <string name="report_error_alert_title">Help me, help yourself</string>
     <string name="pick_and_play_unpicked_hint">unpicked %s, network went back to normal</string>
-    <string name="report_error_alert_message">Please describe the problem in details. Otherwise you are wasting my time
+    <string name="report_error_alert_message">Please describe the problem in details (which website you can not access). Otherwise you are wasting my time
         which could be spent on making fqrouter better. Thanks for your understanding!
     </string>
     <string name="report_error_alert_ok">I will!</string>

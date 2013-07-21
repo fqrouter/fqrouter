@@ -139,7 +139,7 @@
     <string name="pref_general_notification_enabled">状态栏显示图标</string>
     <string name="report_error_alert_title">帮助我也是帮助你自己</string>
     <string name="pick_and_play_unpicked_hint">反选了 %s，那台设备的网络应该回到正常状态了</string>
-    <string name="report_error_alert_message">请认真描述你遇到的问题。否则你会浪费我很多时间，这样我就没有精力把fqrouter改进得更好用了。多谢理解！
+    <string name="report_error_alert_message">请认真描述你遇到的问题（哪个网站无法访问）。否则你会浪费我很多时间，这样我就没有精力把fqrouter改进得更好用了。多谢理解！
     </string>
     <string name="report_error_alert_ok">没问题！</string>
     <string name="report_error_alert_no">那再说吧</string>
