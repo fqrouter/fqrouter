@@ -80,6 +80,9 @@ class CheckingGoAgentProxy(fqsocks.GoAgentProxy):
             self.died = True
             raise
 
+    def query_version(self):
+        pass
+
 
 for appid in T1_APP_IDS:
     fqsocks.mandatory_proxies.append(CheckingGoAgentProxy(appid))
@@ -94,7 +97,7 @@ def check_baidu_access():
 
 def keep_fqsocks_busy():
     goagent.GoAgentProxy.GOOGLE_HOSTS = ['goagent-google-ip.fqrouter.com']
-    goagent.GoAgentProxy.refresh(fqsocks.mandatory_proxies, fqsocks.create_udp_socket, fqsocks.create_tcp_socket)
+    goagent.GoAgentProxy.refresh(fqsocks.mandatory_proxies)
     while True:
         pool = gevent.pool.Pool(size=16)
         greenlets = []
