@@ -18,6 +18,7 @@ import comp_shortcut
 import comp_lan
 import subprocess
 import shlex
+import urllib2
 
 ROOT_DIR = os.path.dirname(__file__)
 LOG_DIR = '/data/data/fq.router2/log'
@@ -83,7 +84,20 @@ def run():
     httpd.HANDLERS[('POST', 'free-internet/connect')] = handle_free_internet_connect
     httpd.HANDLERS[('POST', 'free-internet/disconnect')] = handle_free_internet_disconnect
     httpd.HANDLERS[('GET', 'free-internet/is-connected')] = handle_free_internet_is_connected
+    gevent.spawn(check_ping)
     httpd.serve_forever()
+
+
+def check_ping():
+    gevent.sleep(1)
+    try:
+        if 'PONG/2' == urllib2.urlopen('http://127.0.0.1:8318/ping').read():
+            LOGGER.info('check ping succeed')
+        else:
+            raise Exception('ping does not respond correctly')
+    except:
+        LOGGER.exception('check ping failed')
+        sys.exit(1)
 
 
 def start_components(*components):

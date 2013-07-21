@@ -19,6 +19,7 @@ import comp_proxy
 
 from utils import httpd
 from utils import config
+import urllib2
 
 
 LOGGER = logging.getLogger('fqrouter.%s' % __name__)
@@ -177,6 +178,17 @@ def handle_ping(environ, start_response):
     yield 'VPN PONG/2'
 
 
+def check_ping():
+    gevent.sleep(1)
+    try:
+        if 'VPN PONG/2' == urllib2.urlopen('http://127.0.0.1:8318/ping').read():
+            LOGGER.info('check ping succeed')
+        else:
+            raise Exception('ping does not respond correctly')
+    except:
+        LOGGER.exception('check ping failed')
+        sys.exit(1)
+
 def read_tun_fd():
     LOGGER.info('connecting to fdsock')
     while True:
@@ -206,7 +218,8 @@ if '__main__' == __name__:
         LOGGER.exception('failed to patch ssl')
     LOGGER.info('environment: %s' % os.environ.items())
     httpd.HANDLERS[('GET', 'ping')] = handle_ping
-    greenlets = [gevent.spawn(httpd.serve_forever)]
+    greenlets = [gevent.spawn(httpd.serve_forever),
+                 gevent.spawn(check_ping)]
     try:
         tun_fd = read_tun_fd()
         LOGGER.info('tun fd: %s' % tun_fd)
