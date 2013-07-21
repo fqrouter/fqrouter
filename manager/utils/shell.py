@@ -1,16 +1,23 @@
 import logging
 from gevent import subprocess
 import gevent
+import os
 
 LOGGER = logging.getLogger('fqrouter.%s' % __name__)
 
 PYTHON_PATH = '/data/data/fq.router2/python/bin/python'
-
+IS_ROOT = 0 == os.getuid()
 
 def launch_python(name, args, on_exit=None):
     command = [PYTHON_PATH, '-m', name] + list(args)
     LOGGER.info('launch python: %s' % ' '.join(command))
-    proc = subprocess.Popen(command, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
+    try:
+        proc = subprocess.Popen(command, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
+    except:
+        LOGGER.exception('failed to start python in normal mode, try su')
+        proc = subprocess.Popen('su', stdout=subprocess.PIPE, stderr=subprocess.STDOUT, stdin=subprocess.PIPE)
+        proc.stdin.write(' '.join(command))
+        proc.stdin.write('\n')
     gevent.sleep(0.5)
     if proc.poll() is not None:
         try:
