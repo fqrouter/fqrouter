@@ -159,6 +159,18 @@ def setup_logging():
 
 if '__main__' == __name__:
     setup_logging()
+    try:
+        LOGGER.info('subprocess echo: %s' % subprocess.check_output(['echo', 'hello']))
+    except:
+        LOGGER.exception('failed to subprocess echo')
+        try:
+            os.setuid(int(sys.argv[2]))
+        except:
+            LOGGER.exception('failed to setuid')
+        try:
+            LOGGER.info('setuid subprocess echo: %s' % subprocess.check_output(['echo', 'hello']))
+        except:
+            LOGGER.exception('failed to setuid subprocess echo')
     gevent.monkey.patch_all(ssl=False)
     try:
         gevent.monkey.patch_ssl()
@@ -168,6 +180,8 @@ if '__main__' == __name__:
         action = sys.argv[1]
         if 'clean' == action:
             clean()
+        elif 'run' == action:
+            run()
         else:
             raise Exception('unknown action: %s' % action)
     else:

@@ -162,39 +162,22 @@ public class LaunchService extends IntentService {
             }
             return process;
         } else {
-            try {
-
-                Process process = ShellUtils.executeNoWait(env, ShellUtils.BUSYBOX_FILE.getCanonicalPath(), "sh");
-                OutputStreamWriter stdin = new OutputStreamWriter(process.getOutputStream());
-                try {
-                    String command = Deployer.PYTHON_LAUNCHER + " -c \"import os; print(os.getuid())\"";
-                    stdin.write(command);
-                    stdin.write("\nexit\n");
-                } finally {
-                    stdin.close();
-                }
-                String normalUserId = ShellUtils.waitFor("getuid", process).trim();
-                LogUtils.i("normal uid: " + normalUserId);
-                try {
-                    LogUtils.i("sudo uid: " + ShellUtils.sudo(
-                            env, Deployer.PYTHON_LAUNCHER +
-                            " -c \"import os; print(os.getuid())\"").trim());
-                } catch (Exception e) {
-                    LogUtils.e("failed to get sudo uid", e);
-                }
-                try {
-                    LogUtils.i("setuid: " + ShellUtils.sudo(
-                            env, Deployer.PYTHON_LAUNCHER +
-                            " -c \"import os; os.setuid(" + normalUserId + "); print(os.getuid())\"").trim());
-                } catch (Exception e) {
-                    LogUtils.e("failed to setuid", e);
-                }
-            } catch (Exception e) {
-                LogUtils.e("failed to get normal uid", e);
-            }
             return ShellUtils.sudoNoWait(env, Deployer.PYTHON_LAUNCHER + " " +
-                    Deployer.MANAGER_MAIN_PY.getAbsolutePath() + " > /data/data/fq.router2/log/current-python.log 2>&1");
+                    Deployer.MANAGER_MAIN_PY.getAbsolutePath() + " run " + getUid(env) + " > /data/data/fq.router2/log/current-python.log 2>&1");
         }
+    }
+
+    private String getUid(Map<String, String> env) throws Exception {
+        Process process = ShellUtils.executeNoWait(env, ShellUtils.BUSYBOX_FILE.getCanonicalPath(), "sh");
+        OutputStreamWriter stdin = new OutputStreamWriter(process.getOutputStream());
+        try {
+            String command = Deployer.PYTHON_LAUNCHER + " -c \"import os; print(os.getuid())\"";
+            stdin.write(command);
+            stdin.write("\nexit\n");
+        } finally {
+            stdin.close();
+        }
+        return ShellUtils.waitFor("getuid", process).trim();
     }
 
     public static String getMyVersion(Context context) {
