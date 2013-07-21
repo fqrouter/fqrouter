@@ -41,20 +41,24 @@ def setup():
         'serve --listen 127.0.0.1:5353 '
         '--enable-hosted-domain '
         '--enable-china-domain',
-        shell=True, stderr=subprocess.STDOUT, stdout=subprocess.PIPE))
+        shell=True,
+        stderr=subprocess.STDOUT, stdout=subprocess.PIPE
+    ))
     processes.append(subprocess.Popen(
         'python -m fqsocks --outbound-ip 10.1.2.3 '
         '--listen 10.1.2.3:8319 '
         # '--log-level DEBUG '
         '--http-request-mark 0xbabe '
-        '--proxy dynamic,n=7,type=ss,dns_record=ss#n#.fqrouter.com,priority=3 '
+        '--proxy dynamic,n=8,type=ss,dns_record=ss#n#.fqrouter.com,priority=3 '
         '--proxy dynamic,n=20,dns_record=proxy#n#.fqrouter.com,is_public=True,priority=4 '
         '--proxy dynamic,n=5,dns_record=proxy2#n#.fqrouter.com,priority=2 '
         '--proxy dynamic,n=10,type=goagent,dns_record=goagent#n#.fqrouter.com,priority=1 '
         '--enable-youtube-scrambler '
         '--google-host goagent-google-ip.fqrouter.com '
         '--disable-access-check',
-        shell=True))
+        shell=True,
+        # stderr=subprocess.STDOUT, stdout=subprocess.PIPE
+    ))
     processes.append(subprocess.Popen('python -m fqting --queue-number 2 --mark 0xcafe --log-level DEBUG', shell=True))
 
 
