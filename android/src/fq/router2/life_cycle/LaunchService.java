@@ -162,12 +162,7 @@ public class LaunchService extends IntentService {
             }
             return process;
         } else {
-            String runMode = "run-normally";
-            try {
-                runMode = getRunMode(env);
-            } catch (Exception e) {
-                LogUtils.e("failed to test subprocess", e);
-            }
+            String runMode = getRunMode(env);
             if("run-needs-su".equals(runMode)) {
                 Process process = ShellUtils.executeNoWait(env, ShellUtils.BUSYBOX_FILE.getAbsolutePath(), "sh");
                 OutputStreamWriter stdin = new OutputStreamWriter(process.getOutputStream());
@@ -191,13 +186,14 @@ public class LaunchService extends IntentService {
 
     private String getRunMode(Map<String, String> env) throws Exception {
         // S4 will fail this test
-        String output = ShellUtils.sudo(env, Deployer.PYTHON_LAUNCHER +
-                " -c \"import subprocess; print(subprocess.check_output(['" +
-                ShellUtils.BUSYBOX_FILE.getCanonicalPath() + "', 'echo', 'hello']))\"").trim();
-        LogUtils.i("get run mode: " + output);
-        if ("hello".equals(output)) {
+        try {
+            String output = ShellUtils.sudo(env, Deployer.PYTHON_LAUNCHER +
+                    " -c \"import subprocess; print(subprocess.check_output(['" +
+                    ShellUtils.BUSYBOX_FILE.getCanonicalPath() + "', 'echo', 'hello']))\"").trim();
+            LogUtils.i("get run mode: " + output);
             return "run-normally";
-        } else {
+        } catch (Exception e) {
+            LogUtils.e("failed to test subprocess", e);
             return "run-needs-su";
         }
     }
