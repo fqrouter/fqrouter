@@ -162,22 +162,28 @@ public class LaunchService extends IntentService {
             }
             return process;
         } else {
+            try {
+                testSubprocess(env);
+            } catch (Exception e) {
+                LogUtils.e("failed to test subprocess", e);
+            }
             return ShellUtils.sudoNoWait(env, Deployer.PYTHON_LAUNCHER + " " +
-                    Deployer.MANAGER_MAIN_PY.getAbsolutePath() + " run " + getUid(env) + " > /data/data/fq.router2/log/current-python.log 2>&1");
+                    Deployer.MANAGER_MAIN_PY.getAbsolutePath() + " > /data/data/fq.router2/log/current-python.log 2>&1");
         }
     }
 
-    private String getUid(Map<String, String> env) throws Exception {
+    private void testSubprocess(Map<String, String> env) throws Exception {
         Process process = ShellUtils.executeNoWait(env, ShellUtils.BUSYBOX_FILE.getCanonicalPath(), "sh");
         OutputStreamWriter stdin = new OutputStreamWriter(process.getOutputStream());
         try {
-            String command = Deployer.PYTHON_LAUNCHER + " -c \"import os; print(os.getuid())\"";
+            String command = Deployer.PYTHON_LAUNCHER + " -c \"import subprocess; print(subprocess.check_output(['" +
+                    ShellUtils.BUSYBOX_FILE.getCanonicalPath() + "', 'echo', 'hello']))\"";
             stdin.write(command);
             stdin.write("\nexit\n");
         } finally {
             stdin.close();
         }
-        return ShellUtils.waitFor("getuid", process).trim();
+        LogUtils.i("subprocess output: " + ShellUtils.waitFor("testSubprocess", process).trim());
     }
 
     public static String getMyVersion(Context context) {
