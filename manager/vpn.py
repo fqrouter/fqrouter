@@ -135,7 +135,6 @@ def create_tcp_socket(server_ip, server_port, connect_timeout):
         return sock
 
 
-fqdns.SPI['create_tcp_socket'] = create_tcp_socket
 fqsocks.networking.SPI['create_tcp_socket'] = create_tcp_socket
 
 
