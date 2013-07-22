@@ -1,3 +1,7 @@
+import gevent.monkey
+
+gevent.monkey.patch_all(ssl=False)
+
 import logging
 import logging.handlers
 import sys
@@ -12,13 +16,11 @@ import contextlib
 from uuid import uuid4
 
 import gevent
-import gevent.monkey
 import gevent.socket
 import dpkt
 import comp_proxy
 
 from utils import httpd
-from utils import config
 import urllib2
 
 
@@ -211,7 +213,6 @@ def read_tun_fd():
 
 if '__main__' == __name__:
     setup_logging()
-    gevent.monkey.patch_all(ssl=False)
     try:
         gevent.monkey.patch_ssl()
     except:

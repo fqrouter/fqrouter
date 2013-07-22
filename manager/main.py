@@ -1,10 +1,12 @@
+import gevent.monkey
+
+gevent.monkey.patch_all(ssl=False)
+
 import os
 import logging
 import logging.handlers
 import sys
 import httplib
-
-import gevent.monkey
 
 from utils import shutdown_hook
 from utils import config
@@ -157,28 +159,23 @@ def setup_logging():
     logging.getLogger('wifi').addHandler(handler)
 
 
+class FakeOSModule(object):
+    def __init__(self):
+        pass
+
+    def __getattr__(self, item):
+        return getattr(os, item)
+
+    def close(self, fd):
+        try:
+            os.close(fd)
+        except:
+            LOGGER.exception('failed to close fd: %s' % fd)
+
+
 if '__main__' == __name__:
     setup_logging()
-    try:
-        subprocess.check_call(['echo', 'hello'])
-        LOGGER.info('before patch: subprocess echo')
-    except:
-        LOGGER.exception('before patch: failed to subprocess echo')
-
-    orig_close = os.close
-
-    def patched_close(fd):
-        try:
-            orig_close(fd)
-        except:
-            pass
-    os.close = patched_close
-    try:
-        subprocess.check_call(['echo', 'hello'])
-        LOGGER.info('after patch: subprocess echo')
-    except:
-        LOGGER.exception('after patch: failed to subprocess echo')
-    gevent.monkey.patch_all(ssl=False)
+    subprocess.os = FakeOSModule()
     try:
         gevent.monkey.patch_ssl()
     except:
