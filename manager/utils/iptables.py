@@ -2,25 +2,8 @@ import logging
 import re
 import shlex
 import subprocess
-import os
 
 LOGGER = logging.getLogger('fqrouter.%s' % __name__)
-
-class FakeOSModule(object):
-    def __init__(self):
-        pass
-
-    def __getattr__(self, item):
-        return getattr(os, item)
-
-    def close(self, fd):
-        try:
-            os.close(fd)
-        except:
-            LOGGER.exception('failed to close fd: %s' % fd)
-
-subprocess.os = FakeOSModule()
-
 RE_CHAIN_NAME = re.compile(r'Chain (.+) \(')
 RE_SPACE = re.compile(r'\s+')
 
@@ -85,6 +68,7 @@ def insert_rule(optional, table, chain, rule_text):
             LOGGER.exception('skip optional iptables rule')
         else:
             raise
+
 
 def delete_rule(table, chain, rule_text):
     command = 'iptables -t %s -D %s %s' % (table, chain, rule_text)

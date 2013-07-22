@@ -159,23 +159,8 @@ def setup_logging():
     logging.getLogger('wifi').addHandler(handler)
 
 
-class FakeOSModule(object):
-    def __init__(self):
-        pass
-
-    def __getattr__(self, item):
-        return getattr(os, item)
-
-    def close(self, fd):
-        try:
-            os.close(fd)
-        except:
-            LOGGER.exception('failed to close fd: %s' % fd)
-
-
 if '__main__' == __name__:
     setup_logging()
-    subprocess.os = FakeOSModule()
     try:
         gevent.monkey.patch_ssl()
     except:
