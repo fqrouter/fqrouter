@@ -160,17 +160,24 @@ def setup_logging():
 if '__main__' == __name__:
     setup_logging()
     try:
-        LOGGER.info('subprocess echo: %s' % subprocess.check_output(['echo', 'hello']))
+        subprocess.check_call(['echo', 'hello'])
+        LOGGER.info('before patch: subprocess echo')
     except:
-        LOGGER.exception('failed to subprocess echo')
+        LOGGER.exception('before patch: failed to subprocess echo')
+
+    orig_close = os.close
+
+    def patched_close(fd):
         try:
-            os.setuid(int(sys.argv[2]))
+            orig_close(fd)
         except:
-            LOGGER.exception('failed to setuid')
-        try:
-            LOGGER.info('setuid subprocess echo: %s' % subprocess.check_output(['echo', 'hello']))
-        except:
-            LOGGER.exception('failed to setuid subprocess echo')
+            pass
+    os.close = patched_close
+    try:
+        subprocess.check_call(['echo', 'hello'])
+        LOGGER.info('after patch: subprocess echo')
+    except:
+        LOGGER.exception('after patch: failed to subprocess echo')
     gevent.monkey.patch_all(ssl=False)
     try:
         gevent.monkey.patch_ssl()
