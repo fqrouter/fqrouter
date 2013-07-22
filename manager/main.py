@@ -11,6 +11,7 @@ import httplib
 from utils import shutdown_hook
 from utils import config
 from utils import httpd
+from utils import shell
 
 import comp_wifi
 import comp_dns
@@ -159,15 +160,6 @@ def setup_logging():
     logging.getLogger('wifi').addHandler(handler)
 
 
-def spike():
-    try:
-        proc = subprocess.Popen('su', stdout=subprocess.PIPE, stderr=subprocess.STDOUT, stdin=subprocess.PIPE)
-        proc.stdin.write('iptables -L -v -n\nexit\n')
-        output = proc.communicate()[0]
-        LOGGER.info('spike: %s' % output)
-    except:
-        LOGGER.exception('spike failed')
-
 if '__main__' == __name__:
     setup_logging()
     try:
@@ -178,10 +170,13 @@ if '__main__' == __name__:
         action = sys.argv[1]
         if 'clean' == action:
             clean()
-        elif 'run' == action:
+        elif 'run-normally' == action:
             run()
-        elif 'spike' == action:
-            spike()
+        elif 'run-needs-su' == action:
+            shell.USE_SU = True
+            run()
+        elif 'netd-execute' == action:
+            comp_wifi.netd_execute(sys.argv[2])
         else:
             raise Exception('unknown action: %s' % action)
     else:

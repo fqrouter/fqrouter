@@ -8,6 +8,7 @@ from wifi import stop_hotspot
 from wifi import setup_networking
 from wifi import enable_wifi_p2p_service
 from wifi import get_ip_and_mac
+from wifi import netd_execute
 from utils import config
 
 

@@ -103,7 +103,7 @@ def scan(factor):
             '--ip-command', '/data/data/fq.router2/busybox',
             'scan', '--hostname', '--mark', '0xcafe', '--factor', factor]
     LOGGER.info('scan: %s' % str(args))
-    scan_process = subprocess.Popen(args, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+    scan_process = shell.Popen(args, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
     _, output = scan_process.communicate()
     return output.splitlines()
 

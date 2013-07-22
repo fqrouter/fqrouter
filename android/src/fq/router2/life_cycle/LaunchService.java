@@ -149,7 +149,7 @@ public class LaunchService extends IntentService {
         }};
         env.putAll(ShellUtils.pythonEnv());
         if (isVpnMode) {
-            Process process = ShellUtils.executeNoWait(env, ShellUtils.BUSYBOX_FILE.getCanonicalPath(), "sh");
+            Process process = ShellUtils.executeNoWait(env, ShellUtils.BUSYBOX_FILE.getAbsolutePath(), "sh");
             OutputStreamWriter stdin = new OutputStreamWriter(process.getOutputStream());
             try {
                 String command = Deployer.PYTHON_LAUNCHER + " " + Deployer.MANAGER_VPN_PY.getAbsolutePath() +
@@ -162,28 +162,44 @@ public class LaunchService extends IntentService {
             }
             return process;
         } else {
+            String runMode = "run-normally";
             try {
-                testSubprocess(env);
+                runMode = getRunMode(env);
             } catch (Exception e) {
                 LogUtils.e("failed to test subprocess", e);
             }
-            return ShellUtils.sudoNoWait(env, Deployer.PYTHON_LAUNCHER + " " +
-                    Deployer.MANAGER_MAIN_PY.getAbsolutePath() + " > /data/data/fq.router2/log/current-python.log 2>&1");
+            if("run-needs-su".equals(runMode)) {
+                Process process = ShellUtils.executeNoWait(env, ShellUtils.BUSYBOX_FILE.getAbsolutePath(), "sh");
+                OutputStreamWriter stdin = new OutputStreamWriter(process.getOutputStream());
+                try {
+                    String command = Deployer.PYTHON_LAUNCHER + " " + Deployer.MANAGER_MAIN_PY.getAbsolutePath() +
+                            " run-needs-su > /data/data/fq.router2/log/current-python.log 2>&1";
+                    LogUtils.i("write to stdin: " + command);
+                    stdin.write(command);
+                    stdin.write("\nexit\n");
+                } finally {
+                    stdin.close();
+                }
+                return process;
+            } else {
+                return ShellUtils.sudoNoWait(env, Deployer.PYTHON_LAUNCHER + " " +
+                        Deployer.MANAGER_MAIN_PY.getAbsolutePath() + " " + runMode +
+                        " > /data/data/fq.router2/log/current-python.log 2>&1");
+            }
         }
     }
 
-    private void testSubprocess(Map<String, String> env) throws Exception {
-        Process process = ShellUtils.executeNoWait(env, ShellUtils.BUSYBOX_FILE.getCanonicalPath(), "sh");
-        OutputStreamWriter stdin = new OutputStreamWriter(process.getOutputStream());
-        try {
-            String command = Deployer.PYTHON_LAUNCHER + " " + Deployer.MANAGER_MAIN_PY.getAbsolutePath() +
-                    " spike";
-            stdin.write(command);
-            stdin.write("\nexit\n");
-        } finally {
-            stdin.close();
+    private String getRunMode(Map<String, String> env) throws Exception {
+        // S4 will fail this test
+        String output = ShellUtils.sudo(env, Deployer.PYTHON_LAUNCHER +
+                " -c \"import subprocess; print(subprocess.check_output(['" +
+                ShellUtils.BUSYBOX_FILE.getCanonicalPath() + "', 'echo', 'hello']))\"").trim();
+        LogUtils.i("get run mode: " + output);
+        if ("hello".equals(output)) {
+            return "run-normally";
+        } else {
+            return "run-needs-su";
         }
-        LogUtils.i("subprocess output: " + ShellUtils.waitFor("testSubprocess", process).trim());
     }
 
     public static String getMyVersion(Context context) {

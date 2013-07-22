@@ -9,6 +9,7 @@ from gevent import subprocess
 import gevent
 
 from utils import iptables
+from utils import shell
 import hostapd_template
 
 
@@ -617,8 +618,11 @@ def setup_network_interface_ip(iface, ip, netmask):
 
 def enable_ipv4_forward():
     LOGGER.info('enable ipv4 forward')
-    with open('/proc/sys/net/ipv4/ip_forward', 'w') as f:
-        f.write('1')
+    if shell.USE_SU:
+        shell_execute('/data/data/fq.router2/busybox echo 1 > /proc/sys/net/ipv4/ip_forward')
+    else:
+        with open('/proc/sys/net/ipv4/ip_forward', 'w') as f:
+            f.write('1')
 
 
 def log_upstream_wifi_status(log, control_socket_dir):
@@ -647,16 +651,16 @@ def start_p2p_persistent_network(iface, control_socket_dir, ssid, password, sets
         set_driver_param(wpa_supplicant_control_socket_dir, WIFI_INTERFACE, 'use_p2p_group_interface=1')
     index = shell_execute('%s -p %s -i %s add_network' % (P2P_CLI_PATH, control_socket_dir, iface)).strip()
 
-    def set_network(param):
-        shell_execute('%s -p %s -i %s set_network %s %s' % (P2P_CLI_PATH, control_socket_dir, iface, index, param))
+    def set_network(*params):
+        shell_execute([P2P_CLI_PATH, '-p', control_socket_dir, '-i', iface, 'set_network', index] + list(params))
 
-    set_network('mode 3')
-    set_network('disabled 2')
-    set_network('ssid \'"%s"\'' % ssid)
-    set_network('key_mgmt WPA-PSK')
-    set_network('proto RSN')
-    set_network('pairwise CCMP')
-    set_network('psk \'"%s"\'' % password)
+    set_network('mode', '3')
+    set_network('disabled', '2')
+    set_network('ssid', '\'"%s"\'' % ssid if shell.USE_SU else '"%s"' % ssid)
+    set_network('key_mgmt', 'WPA-PSK')
+    set_network('proto', 'RSN')
+    set_network('pairwise', 'CCMP')
+    set_network('psk', '\'"%s"\'' % password if shell.USE_SU else '"%s"' % password)
     frequency, channel = get_upstream_frequency_and_channel()
     if channel:
         channel = channel if sets_channel else 0
@@ -835,6 +839,9 @@ def get_p2p_supplicant_control_socket_dir():
 
 
 def get_wpa_supplicant_control_socket_dir(conf_path=WPA_SUPPLICANT_CONF_PATH):
+    if shell.USE_SU:
+        content = shell_execute('/data/data/fq.router2/busybox cat %s' % conf_path)
+        return parse_wpa_supplicant_conf(content)
     try:
         if not os.path.exists(conf_path):
             raise Exception('can not find wpa_supplicant.conf')
@@ -886,6 +893,8 @@ def parse_wpa_supplicant_conf(content):
 
 
 def netd_execute(command):
+    if shell.USE_SU:
+        return shell.launch_python('main', ['netd-execute', '"%s"' % command])
     global netd_sequence_number
     netd_socket = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
     try:
@@ -910,7 +919,7 @@ def netd_execute(command):
 def shell_execute(command):
     LOGGER.info('execute: %s' % command)
     try:
-        output = subprocess.check_output(shlex.split(command), stderr=subprocess.STDOUT)
+        output = shell.check_output(shlex.split(command) if isinstance(command, basestring) else command)
         LOGGER.info('succeed, output: %s' % output)
     except subprocess.CalledProcessError, e:
         LOGGER.error('failed, output: %s' % e.output)
