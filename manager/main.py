@@ -159,6 +159,15 @@ def setup_logging():
     logging.getLogger('wifi').addHandler(handler)
 
 
+def spike():
+    try:
+        proc = subprocess.Popen('su', stdout=subprocess.PIPE, stderr=subprocess.STDOUT, stdin=subprocess.PIPE)
+        proc.stdin.write('iptables -L -v -n\nexit\n')
+        output = proc.communicate()[0]
+        LOGGER.info('spike: %s' % output)
+    except:
+        LOGGER.exception('spike failed')
+
 if '__main__' == __name__:
     setup_logging()
     try:
@@ -171,6 +180,8 @@ if '__main__' == __name__:
             clean()
         elif 'run' == action:
             run()
+        elif 'spike' == action:
+            spike()
         else:
             raise Exception('unknown action: %s' % action)
     else:

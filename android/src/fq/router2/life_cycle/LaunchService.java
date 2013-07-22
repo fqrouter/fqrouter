@@ -176,8 +176,8 @@ public class LaunchService extends IntentService {
         Process process = ShellUtils.executeNoWait(env, ShellUtils.BUSYBOX_FILE.getCanonicalPath(), "sh");
         OutputStreamWriter stdin = new OutputStreamWriter(process.getOutputStream());
         try {
-            String command = Deployer.PYTHON_LAUNCHER + " -c \"import subprocess; print(subprocess.check_output(['" +
-                    ShellUtils.BUSYBOX_FILE.getCanonicalPath() + "', 'echo', 'hello']))\"";
+            String command = Deployer.PYTHON_LAUNCHER + " " + Deployer.MANAGER_MAIN_PY.getAbsolutePath() +
+                    " spike";
             stdin.write(command);
             stdin.write("\nexit\n");
         } finally {
