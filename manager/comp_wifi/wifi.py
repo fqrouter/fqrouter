@@ -32,7 +32,6 @@ P2P_SUPPLICANT_CONF_PATH = '/data/misc/wifi/p2p_supplicant.conf'
 P2P_CLI_PATH = '/data/data/fq.router2/wifi-tools/p2p_cli'
 IW_PATH = '/data/data/fq.router2/wifi-tools/iw'
 HOSTAPD_PATH = '/data/data/fq.router2/wifi-tools/hostapd'
-IWCONFIG_PATH = '/data/data/fq.router2/wifi-tools/iwconfig'
 IWLIST_PATH = '/data/data/fq.router2/wifi-tools/iwlist'
 DNSMASQ_PATH = '/data/data/fq.router2/wifi-tools/dnsmasq'
 KILLALL_PATH = '/data/data/fq.router2/busybox killall'
@@ -220,27 +219,13 @@ def dump_unix_sockets():
 
 def get_working_hotspot_iface():
     try:
-        hotspot_iface = get_p2p_persistent_iface() or \
-                        get_working_hotspot_iface_using_nl80211() or \
-                        get_working_hotspot_iface_using_wext()
+        hotspot_iface = get_p2p_persistent_iface() or get_working_hotspot_iface_using_nl80211()
         if WIFI_INTERFACE == hotspot_iface:
             return None
         else:
             return hotspot_iface
     except:
         LOGGER.exception('failed to get working hotspot iface')
-        return None
-
-
-def get_working_hotspot_iface_using_wext():
-    try:
-        if 'Mode:Master' in shell_execute('%s %s' % (IWCONFIG_PATH, 'wl0.1')):
-            return 'wl0.1'
-        if 'Mode:Master' in shell_execute('%s %s' % (IWCONFIG_PATH, WIFI_INTERFACE)):
-            return WIFI_INTERFACE
-        return None
-    except:
-        LOGGER.exception('failed to get working hotspot iface using wext')
         return None
 
 
