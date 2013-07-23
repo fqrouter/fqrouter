@@ -19,6 +19,7 @@ import gevent
 import gevent.socket
 import dpkt
 import comp_proxy
+import traceback
 
 from utils import httpd
 import urllib2
@@ -175,6 +176,11 @@ def setup_logging():
 
 
 def handle_ping(environ, start_response):
+    try:
+        LOGGER.info('VPN PONG/2')
+    except:
+        traceback.print_exc()
+        sys.exit(1)
     start_response(httplib.OK, [('Content-Type', 'text/plain')])
     yield 'VPN PONG/2'
 
