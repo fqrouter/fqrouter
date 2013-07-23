@@ -22,6 +22,9 @@ import comp_lan
 import subprocess
 import shlex
 import urllib2
+import traceback
+
+FQROUTER_VERSION = 'UNKNOWN'
 
 ROOT_DIR = os.path.dirname(__file__)
 LOG_DIR = '/data/data/fq.router2/log'
@@ -34,12 +37,12 @@ ALL_COMPONENTS = [comp_wifi, comp_dns, comp_scrambler, comp_proxy, comp_lan, com
 
 def handle_ping(environ, start_response):
     try:
-        LOGGER.info('PONG/2')
+        LOGGER.info('PONG/%s' % FQROUTER_VERSION)
     except:
         traceback.print_exc()
         sys.exit(1)
     start_response(httplib.OK, [('Content-Type', 'text/plain')])
-    yield 'PONG/2'
+    yield 'PONG/%s' % FQROUTER_VERSION
 
 
 def handle_free_internet_connect(environ, start_response):
@@ -99,7 +102,7 @@ def run():
 def check_ping():
     gevent.sleep(1)
     try:
-        if 'PONG/2' == urllib2.urlopen('http://127.0.0.1:8318/ping').read():
+        if 'PONG/%s' % FQROUTER_VERSION == urllib2.urlopen('http://127.0.0.1:8318/ping').read():
             LOGGER.info('check ping succeed')
         else:
             raise Exception('ping does not respond correctly')
@@ -109,7 +112,6 @@ def check_ping():
 
 
 def start_components(*components):
-    LOGGER.info('environment: %s' % os.environ.items())
     for comp in components:
         try:
             shutdown_hook.add(comp.stop)
@@ -167,6 +169,8 @@ def setup_logging():
 
 if '__main__' == __name__:
     setup_logging()
+    LOGGER.info('environment: %s' % os.environ.items())
+    FQROUTER_VERSION = os.getenv('FQROUTER_VERSION')
     try:
         gevent.monkey.patch_ssl()
     except:

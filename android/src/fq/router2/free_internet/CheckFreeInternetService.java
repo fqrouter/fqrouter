@@ -15,9 +15,9 @@ public class CheckFreeInternetService extends IntentService {
     @Override
     protected void onHandleIntent(Intent intent) {
         try {
-            boolean connectedInVpnMode = LaunchService.ping(true) &&
+            boolean connectedInVpnMode = LaunchService.ping(this, true) &&
                     LaunchService.isVpnRunning();
-            boolean connectedInRootMode = LaunchService.ping(false) &&
+            boolean connectedInRootMode = LaunchService.ping(this, false) &&
                     "TRUE".equals(HttpUtils.get("http://127.0.0.1:8318/free-internet/is-connected"));
             sendBroadcast(new FreeInternetChangedIntent(connectedInRootMode || connectedInVpnMode));
         } catch (Exception e) {

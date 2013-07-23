@@ -24,7 +24,7 @@ import traceback
 from utils import httpd
 import urllib2
 
-
+FQROUTER_VERSION = 'UNKNOWN'
 LOGGER = logging.getLogger('fqrouter.%s' % __name__)
 LOG_DIR = '/data/data/fq.router2/log'
 MANAGER_LOG_FILE = os.path.join(LOG_DIR, 'manager.log')
@@ -177,18 +177,18 @@ def setup_logging():
 
 def handle_ping(environ, start_response):
     try:
-        LOGGER.info('VPN PONG/2')
+        LOGGER.info('VPN PONG/%s' % FQROUTER_VERSION)
     except:
         traceback.print_exc()
         sys.exit(1)
     start_response(httplib.OK, [('Content-Type', 'text/plain')])
-    yield 'VPN PONG/2'
+    yield 'VPN PONG/%s' % FQROUTER_VERSION
 
 
 def check_ping():
     gevent.sleep(1)
     try:
-        if 'VPN PONG/2' == urllib2.urlopen('http://127.0.0.1:8318/ping').read():
+        if 'VPN PONG/%s' % FQROUTER_VERSION == urllib2.urlopen('http://127.0.0.1:8318/ping').read():
             LOGGER.info('check ping succeed')
         else:
             raise Exception('ping does not respond correctly')
@@ -218,11 +218,12 @@ def read_tun_fd():
 
 if '__main__' == __name__:
     setup_logging()
+    LOGGER.info('environment: %s' % os.environ.items())
+    FQROUTER_VERSION = os.getenv('FQROUTER_VERSION')
     try:
         gevent.monkey.patch_ssl()
     except:
         LOGGER.exception('failed to patch ssl')
-    LOGGER.info('environment: %s' % os.environ.items())
     httpd.HANDLERS[('GET', 'ping')] = handle_ping
     greenlets = [gevent.spawn(httpd.serve_forever),
                  gevent.spawn(check_ping)]

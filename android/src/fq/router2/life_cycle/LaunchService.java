@@ -55,12 +55,12 @@ public class LaunchService extends IntentService {
             sendBroadcast(new LaunchedIntent(true));
             return;
         }
-        if (ping(false)) {
+        if (ping(this, false)) {
             LogUtils.i("manager is already running in root mode");
             sendBroadcast(new LaunchedIntent(false));
             return;
         }
-        if (ping(true)) {
+        if (ping(this, true)) {
             LogUtils.i("Restart manager");
             try {
                 ManagerProcess.kill();
@@ -119,7 +119,7 @@ public class LaunchService extends IntentService {
         try {
             Process process = executeManager(isVpnMode);
             for (int i = 0; i < 30; i++) {
-                if (ping(isVpnMode)) {
+                if (ping(this, isVpnMode)) {
                     return "";
                 }
                 if (hasProcessExited(process)) {
@@ -227,10 +227,11 @@ public class LaunchService extends IntentService {
         }
     }
 
-    public static boolean ping(boolean isVpnMode) {
+    public static boolean ping(Context context, boolean isVpnMode) {
         try {
+            String myVersion = getMyVersion(context);
             String content = HttpUtils.get("http://127.0.0.1:8318/ping");
-            if (isVpnMode ? "VPN PONG/2".equals(content) : "PONG/2".equals(content)) {
+            if (isVpnMode ? ("VPN PONG/" + myVersion).equals(content) : ("PONG/" + myVersion).equals(content)) {
                 return true;
             } else {
                 LogUtils.e("ping failed: " + content);
