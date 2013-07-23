@@ -117,7 +117,7 @@ def start_hotspot(ssid, password):
             LOGGER.info('chipset is: %s %s' % (wifi_chipset_family, wifi_chipset_model))
             if 'unsupported' == wifi_chipset_family:
                 return False, 'wifi chipset [%s] is not supported' % wifi_chipset_model
-            hotspot_interface = start_hotspot_interface(wifi_chipset_family, wifi_chipset_model, ssid, password)
+            hotspot_interface = start_hotspot_interface(wifi_chipset_family, ssid, password)
             setup_networking(hotspot_interface)
             LOGGER.info('=== Started Hotspot ===')
             dump_wifi_status()
@@ -257,13 +257,13 @@ def list_wifi_ifaces():
     return ifaces
 
 
-def start_hotspot_interface(wifi_chipset_family, wifi_chipset_model, ssid, password):
+def start_hotspot_interface(wifi_chipset_family, ssid, password):
     try:
         shell_execute('start p2p_supplicant')
     except:
         LOGGER.exception('failed to start p2p_supplicant')
     if 'bcm' == wifi_chipset_family:
-        start_hotspot_on_bcm(wifi_chipset_model, ssid, password)
+        start_hotspot_on_bcm(ssid, password)
     elif 'wcnss' == wifi_chipset_family:
         start_hotspot_on_wcnss(ssid, password)
     elif 'ti' == wifi_chipset_family:
@@ -271,13 +271,13 @@ def start_hotspot_interface(wifi_chipset_family, wifi_chipset_model, ssid, passw
     elif 'mtk' == wifi_chipset_family:
         is_jiecao = shell_execute('getprop ro.product.model').strip().startswith('Charmpin')
         if is_jiecao:
-            start_hotspot_on_bcm(wifi_chipset_model, ssid, password)
+            start_hotspot_on_bcm(ssid, password)
         else:
             try:
                 start_hotspot_on_mtk(ssid, password)
             except:
                 LOGGER.exception('failed to start_hotspot_on_mtk, try bcm way')
-                start_hotspot_on_bcm(wifi_chipset_model, ssid, password)
+                start_hotspot_on_bcm(ssid, password)
     else:
         raise Exception('wifi chipset family %s is not supported: %s' % wifi_chipset_family)
     hotspot_interface = get_working_hotspot_iface()
@@ -398,12 +398,12 @@ def get_mediatek_wifi_chipset():
         return ''
 
 
-def start_hotspot_on_bcm(wifi_chipset_model, ssid, password):
+def start_hotspot_on_bcm(ssid, password):
     control_socket_dir = get_wpa_supplicant_control_socket_dir()
     load_p2p_firmware(control_socket_dir)
-    if 'p2p0' in list_wifi_ifaces() and '4335' != wifi_chipset_model:
+    if 'p2p0' in list_wifi_ifaces():
     # bcmdhd can optionally have p2p0 interface
-        LOGGER.info('start p2p persistent group using p2p0 on chipset %s' % wifi_chipset_model)
+        LOGGER.info('start p2p persistent group using p2p0')
         shell_execute('netcfg p2p0 up')
         p2p_control_socket_dir = get_p2p_supplicant_control_socket_dir()
         delete_existing_p2p_persistent_networks('p2p0', p2p_control_socket_dir)
