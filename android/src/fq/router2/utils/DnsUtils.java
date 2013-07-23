@@ -15,11 +15,15 @@ import java.util.HashSet;
 import java.util.List;
 
 public class DnsUtils {
-
     private final static InetSocketAddress[] DNS_SERVERS = new InetSocketAddress[]{
             new InetSocketAddress("8.8.8.8", 53),
-            new InetSocketAddress("208.67.222.222", 5353),
-            new InetSocketAddress("209.244.0.3", 53)
+            new InetSocketAddress("208.67.222.222", 443),
+            new InetSocketAddress("208.67.220.220", 443),
+            new InetSocketAddress("199.91.73.222", 3389),
+            new InetSocketAddress("87.118.100.175", 110),
+            new InetSocketAddress("87.118.85.241", 110),
+            new InetSocketAddress("77.109.139.29", 110),
+            new InetSocketAddress("77.109.138.45", 110)
     };
     private final static HashSet<String> WRONG_ANSWERS = new HashSet<String>() {{
         for (String ip : new String[]{
