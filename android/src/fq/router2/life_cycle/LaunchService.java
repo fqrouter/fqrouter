@@ -191,7 +191,11 @@ public class LaunchService extends IntentService {
                     " -c \"import subprocess; print(subprocess.check_output(['" +
                     ShellUtils.BUSYBOX_FILE.getCanonicalPath() + "', 'echo', 'hello']))\"").trim();
             LogUtils.i("get run mode: " + output);
-            return "run-normally";
+            if ("hello".equals(output)) {
+                return "run-normally";
+            } else {
+                return "run-needs-su";
+            }
         } catch (Exception e) {
             LogUtils.e("failed to test subprocess", e);
             return "run-needs-su";
