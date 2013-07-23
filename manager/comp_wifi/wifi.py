@@ -418,7 +418,7 @@ def start_hotspot_on_bcm(wifi_chipset_model, ssid, password):
     load_p2p_firmware(control_socket_dir)
     if 'p2p0' in list_wifi_ifaces() and '4335' != wifi_chipset_model:
     # bcmdhd can optionally have p2p0 interface
-        LOGGER.info('start p2p persistent group using p2p0')
+        LOGGER.info('start p2p persistent group using p2p0 on chipset %s' % wifi_chipset_model)
         shell_execute('netcfg p2p0 up')
         p2p_control_socket_dir = get_p2p_supplicant_control_socket_dir()
         delete_existing_p2p_persistent_networks('p2p0', p2p_control_socket_dir)
