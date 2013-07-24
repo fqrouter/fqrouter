@@ -85,7 +85,7 @@ def configure(args):
     if config.read().get('shadowsocks_public_servers_enabled', True):
         args += ['--proxy', 'dynamic,n=7,type=ss,dns_record=ss#n#.fqrouter.com,priority=2']
     for server in config.list_shadowsocks_private_servers():
-        proxy_config = 'ss,proxy_ip=%s,proxy_port=%s,password=%s,encrypt_method=%s' % (
+        proxy_config = 'ss,proxy_host=%s,proxy_port=%s,password=%s,encrypt_method=%s' % (
             server['host'], server['port'], server['password'], server['encryption_method'])
         args += ['--proxy', proxy_config]
     if config.read().get('http_proxy_public_servers_enabled', True):
@@ -93,7 +93,7 @@ def configure(args):
         args += ['--proxy', 'dynamic,n=5,dns_record=proxy2#n#.fqrouter.com,priority=2']
     for server in config.list_http_proxy_private_servers():
         if 'spdy (webvpn)' == server['transport_type']:
-            proxy_config = 'proxy_ip=%s,proxy_port=%s,username=%s,password=%s,requested_spdy_version=%s' % \
+            proxy_config = 'proxy_host=%s,proxy_port=%s,username=%s,password=%s,requested_spdy_version=%s' % \
                            (server['host'], server['port'], server['username'], server['password'],
                             server['spdy_version'])
             for i in range(server['spdy_connections_count']):
@@ -106,7 +106,7 @@ def configure(args):
                     args += ['--proxy', 'spdy-connect,%s' % proxy_config]
         else:
             is_secured = 'True' if 'ssl' == server['transport_type'] else 'False'
-            proxy_config = 'proxy_ip=%s,proxy_port=%s,username=%s,password=%s,is_secured=%s' % \
+            proxy_config = 'proxy_host=%s,proxy_port=%s,username=%s,password=%s,is_secured=%s' % \
                            (server['host'], server['port'], server['username'], server['password'], is_secured)
             if 'http only' == server['traffic_type']:
                 args += ['--proxy', 'http-relay,%s' % proxy_config]
@@ -116,7 +116,7 @@ def configure(args):
                 args += ['--proxy', 'http-relay,%s' % proxy_config]
                 args += ['--proxy', 'http-connect,%s' % proxy_config]
     for server in config.list_ssh_private_servers():
-        proxy_config = 'proxy_ip=%s,proxy_port=%s,username=%s,password=%s' % \
+        proxy_config = 'proxy_host=%s,proxy_port=%s,username=%s,password=%s' % \
                        (server['host'], server['port'], server['username'], server['password'])
         for i in range(server['connections_count']):
             args += ['--proxy', 'ssh,%s' % proxy_config]

@@ -233,12 +233,13 @@ if '__main__' == __name__:
     except:
         LOGGER.exception('failed to get tun fd')
         sys.exit(1)
-    greenlets.append(gevent.spawn(redirect_tun_traffic, tun_fd))
     greenlets.append(gevent.spawn(serve_udp))
+    greenlets.append(gevent.spawn(redirect_tun_traffic, tun_fd))
     args = [
         '--log-level', 'INFO',
         '--log-file', '/data/data/fq.router2/log/fqsocks.log',
-        '--listen', '10.25.1.1:12345']
+        '--listen', '10.25.1.1:12345',
+        '--disable-access-check']
     args = comp_proxy.configure(args)
     greenlets.append(gevent.spawn(fqsocks.fqsocks.main, args))
     for greenlet in greenlets:
