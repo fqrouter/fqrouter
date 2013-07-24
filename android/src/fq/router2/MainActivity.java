@@ -64,7 +64,7 @@ public class MainActivity extends Activity implements
     private String upgradeUrl;
     private boolean downloaded;
     private WifiManager.WifiLock wifiLock;
-    private static long dnsPollutionAckedAt = 0;
+    private static boolean dnsPollutionAcked = false;
 
     static {
         IOUtils.createCommonDirs();
@@ -688,7 +688,7 @@ public class MainActivity extends Activity implements
 
     @Override
     public void onDnsPolluted(final long pollutedAt) {
-        if (pollutedAt > dnsPollutionAckedAt) {
+        if (!dnsPollutionAcked) {
             new AlertDialog.Builder(MainActivity.this)
                     .setIcon(android.R.drawable.ic_dialog_alert)
                     .setTitle(R.string.dns_polluted_alert_title)
@@ -696,7 +696,7 @@ public class MainActivity extends Activity implements
                     .setPositiveButton(R.string.dns_polluted_alert_fix, new DialogInterface.OnClickListener() {
                         @Override
                         public void onClick(DialogInterface dialogInterface, int i) {
-                            dnsPollutionAckedAt = pollutedAt;
+                            dnsPollutionAcked = true;
                             new Thread(new Runnable() {
                                 @Override
                                 public void run() {
@@ -714,7 +714,7 @@ public class MainActivity extends Activity implements
                     .setNegativeButton(R.string.dns_polluted_alert_ack, new DialogInterface.OnClickListener() {
                         @Override
                         public void onClick(DialogInterface dialogInterface, int i) {
-                            dnsPollutionAckedAt = pollutedAt;
+                            dnsPollutionAcked = true;
                         }
                     })
                     .show();
