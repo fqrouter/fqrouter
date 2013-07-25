@@ -277,6 +277,10 @@ def start_hotspot_interface(wifi_chipset_family, ssid, password):
                 start_hotspot_on_mtk(ssid, password)
             except:
                 LOGGER.exception('failed to start_hotspot_on_mtk, try bcm way')
+                try:
+                    shell_execute('start p2p_supplicant')
+                except:
+                    LOGGER.exception('failed to start p2p_supplicant')
                 start_hotspot_on_bcm(ssid, password)
     else:
         raise Exception('wifi chipset family %s is not supported: %s' % wifi_chipset_family)
