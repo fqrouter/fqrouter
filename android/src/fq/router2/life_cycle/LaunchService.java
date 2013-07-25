@@ -168,7 +168,7 @@ public class LaunchService extends IntentService {
                 OutputStreamWriter stdin = new OutputStreamWriter(process.getOutputStream());
                 try {
                     String command = Deployer.PYTHON_LAUNCHER + " " + Deployer.MANAGER_MAIN_PY.getAbsolutePath() +
-                            " run-needs-su > /data/data/fq.router2/log/current-python.log 2>&1";
+                            " run > /data/data/fq.router2/log/current-python.log 2>&1";
                     LogUtils.i("write to stdin: " + command);
                     stdin.write(command);
                     stdin.write("\nexit\n");
@@ -178,8 +178,8 @@ public class LaunchService extends IntentService {
                 return process;
             } else {
                 return ShellUtils.sudoNoWait(env, Deployer.PYTHON_LAUNCHER + " " +
-                        Deployer.MANAGER_MAIN_PY.getAbsolutePath() + " " + runMode +
-                        " > /data/data/fq.router2/log/current-python.log 2>&1");
+                        Deployer.MANAGER_MAIN_PY.getAbsolutePath() +
+                        " run > /data/data/fq.router2/log/current-python.log 2>&1");
             }
         }
     }

@@ -167,6 +167,13 @@ def setup_logging():
     logging.getLogger('wifi').addHandler(handler)
 
 
+def needs_su():
+    if os.getuid() == 0:
+        return False
+    else:
+        return True
+
+
 if '__main__' == __name__:
     setup_logging()
     LOGGER.info('environment: %s' % os.environ.items())
@@ -175,18 +182,14 @@ if '__main__' == __name__:
         gevent.monkey.patch_ssl()
     except:
         LOGGER.exception('failed to patch ssl')
-    if len(sys.argv) > 1:
-        action = sys.argv[1]
-        if 'clean' == action:
-            clean()
-        elif 'run-normally' == action:
-            run()
-        elif 'run-needs-su' == action:
-            shell.USE_SU = True
-            run()
-        elif 'netd-execute' == action:
-            comp_wifi.netd_execute(sys.argv[2])
-        else:
-            raise Exception('unknown action: %s' % action)
-    else:
+    action = sys.argv[1]
+    if 'clean' == action:
+        shell.USE_SU = needs_su()
+        clean()
+    elif 'run' == action:
+        shell.USE_SU = needs_su()
         run()
+    elif 'netd-execute' == action:
+        comp_wifi.netd_execute(sys.argv[2])
+    else:
+        raise Exception('unknown action: %s' % action)

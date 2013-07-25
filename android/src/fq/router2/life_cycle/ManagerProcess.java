@@ -7,7 +7,9 @@ public class ManagerProcess {
 
     public static void kill() throws Exception {
         try {
-            ShellUtils.sudo(ShellUtils.pythonEnv(), Deployer.PYTHON_LAUNCHER + " " + Deployer.MANAGER_MAIN_PY + " clean");
+            ShellUtils.execute(
+                    ShellUtils.pythonEnv(), Deployer.PYTHON_LAUNCHER.getAbsolutePath(),
+                    Deployer.MANAGER_MAIN_PY.getAbsolutePath(), " clean");
         } catch (Exception e) {
             LogUtils.e("failed to clean", e);
         }
