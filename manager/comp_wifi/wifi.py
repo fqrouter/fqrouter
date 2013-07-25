@@ -370,6 +370,8 @@ def get_wifi_chipset():
             return 'mtk', '6620'
         if chipset.endswith('6628'):
             return 'mtk', '6628'
+        if chipset.endswith('5931'): # sdio:c00v037Ad5931
+            return 'mtk', '5931'
     else:
         if shell_execute('getprop ro.mediatek.platform').strip():
             return 'mtk', 'unknown'
