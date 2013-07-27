@@ -158,7 +158,7 @@
     <string name="report_error_alert_no">Maybe next time</string>
     <string name="pref_wifi_hotspot_reset">Reset Wireless</string>
     <string name="dns_polluted_alert_title">DNS Polluted</string>
-    <string name="dns_polluted_alert_message">You can not access some website is because the DNS has been polluted. Toggle airplane mode will clear the DNS pollution</string>
+    <string name="dns_polluted_alert_message">You can not access some website is because the DNS has been polluted. Toggle airplane mode will clear the DNS pollution. Other devices route via fqrouter might also suffer from DNS pollution, clear DNS cache using the way suitable for target device.</string>
     <string name="dns_polluted_alert_ack">OK</string>
     <string name="dns_polluted_alert_fix">Toggle it now</string>
     <string name="dns_polluted_alert_toggle_failed">Failed to toggle airplane mode, you need to do it manually</string>
