@@ -74,7 +74,7 @@
     <string name="pref_ssh_public_servers">SSH Private Servers</string>
     <string name="pref_bypass_category">Bypass GFW</string>
     <string name="pref_bypass_youtube_scrambler">Youtube Scrambler</string>
-    <string name="pref_bypass_youtube_scrambler_summary">direct play youtube without using proxy. if not working, uncheck this option.
+    <string name="pref_bypass_youtube_scrambler_summary">scramble youtube traffic, so that GFW can let us go, without using a proxy
     </string>
     <string name="pref_tcp_scrambler">TCP Scrambler</string>
     <string name="pref_tcp_scrambler_summary">scramble at TCP level, so that GFW can let us go, without using a proxy
