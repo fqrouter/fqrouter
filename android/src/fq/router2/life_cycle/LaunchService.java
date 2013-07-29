@@ -162,7 +162,7 @@ public class LaunchService extends IntentService {
             }
             return process;
         } else {
-            String runMode = getRunMode(env);
+            String runMode = ManagerProcess.getRunMode();
             if("run-needs-su".equals(runMode)) {
                 Process process = ShellUtils.executeNoWait(env, ShellUtils.BUSYBOX_FILE.getAbsolutePath(), "sh");
                 OutputStreamWriter stdin = new OutputStreamWriter(process.getOutputStream());
@@ -181,24 +181,6 @@ public class LaunchService extends IntentService {
                         Deployer.MANAGER_MAIN_PY.getAbsolutePath() +
                         " run > /data/data/fq.router2/log/current-python.log 2>&1");
             }
-        }
-    }
-
-    private String getRunMode(Map<String, String> env) throws Exception {
-        // S4 will fail this test
-        try {
-            String output = ShellUtils.sudo(env, Deployer.PYTHON_LAUNCHER +
-                    " -c \"import subprocess; print(subprocess.check_output(['" +
-                    ShellUtils.BUSYBOX_FILE.getCanonicalPath() + "', 'echo', 'hello']))\"").trim();
-            LogUtils.i("get run mode: " + output);
-            if ("hello".equals(output)) {
-                return "run-normally";
-            } else {
-                return "run-needs-su";
-            }
-        } catch (Exception e) {
-            LogUtils.e("failed to test subprocess", e);
-            return "run-needs-su";
         }
     }
 

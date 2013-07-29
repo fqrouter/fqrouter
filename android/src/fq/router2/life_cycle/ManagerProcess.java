@@ -7,9 +7,15 @@ public class ManagerProcess {
 
     public static void kill() throws Exception {
         try {
-            ShellUtils.execute(
-                    ShellUtils.pythonEnv(), Deployer.PYTHON_LAUNCHER.getAbsolutePath(),
-                    Deployer.MANAGER_MAIN_PY.getAbsolutePath(), " clean");
+            if ("run-needs-su".equals(getRunMode())) {
+                ShellUtils.execute(
+                        ShellUtils.pythonEnv(), Deployer.PYTHON_LAUNCHER.getAbsolutePath(),
+                        Deployer.MANAGER_MAIN_PY.getAbsolutePath(), "clean");
+            } else {
+                ShellUtils.sudo(
+                        ShellUtils.pythonEnv(), Deployer.PYTHON_LAUNCHER.getAbsolutePath(),
+                        Deployer.MANAGER_MAIN_PY.getAbsolutePath(), "clean");
+            }
         } catch (Exception e) {
             LogUtils.e("failed to clean", e);
         }
@@ -37,6 +43,24 @@ public class ManagerProcess {
             }
         } catch (Exception e) {
             return false;
+        }
+    }
+
+    public static String getRunMode() throws Exception {
+        // S4 will fail this test
+        try {
+            String output = ShellUtils.sudo(ShellUtils.pythonEnv(), Deployer.PYTHON_LAUNCHER +
+                    " -c \"import subprocess; print(subprocess.check_output(['" +
+                    ShellUtils.BUSYBOX_FILE.getCanonicalPath() + "', 'echo', 'hello']))\"").trim();
+            LogUtils.i("get run mode: " + output);
+            if ("hello".equals(output)) {
+                return "run-normally";
+            } else {
+                return "run-needs-su";
+            }
+        } catch (Exception e) {
+            LogUtils.e("failed to test subprocess", e);
+            return "run-needs-su";
         }
     }
 }
