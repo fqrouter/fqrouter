@@ -171,4 +171,11 @@
     <string name="pref_wifi_hotspot_reset_summary">if wifi repeater failed to start and break your can no longer connect
         to wifi, you can fix it by this button
     </string>
+    <string name="wifi_repeater_risk_alert_title">It might not work</string>
+    <string name="wifi_repeater_risk_alert_cancel">Cancel</string>
+    <string name="wifi_repeater_risk_alert_message">I can assure you, it will not do any harm to hardware. However, it
+        might cause mobile restart on unsupported mobile. There is a \"reset wifi\" button in settings menu to reset
+        wifi config files.
+    </string>
+    <string name="wifi_repeater_risk_alert_ok">OK</string>
 </resources>

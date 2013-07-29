@@ -33,6 +33,7 @@ import fq.router2.wifi_repeater.StartWifiRepeaterService;
 import fq.router2.wifi_repeater.StopWifiRepeaterService;
 import fq.router2.wifi_repeater.WifiRepeaterChangedIntent;
 
+import java.io.File;
 import java.lang.reflect.Method;
 import java.util.HashSet;
 import java.util.Set;
@@ -402,17 +403,42 @@ public class MainActivity extends Activity implements
         return getResources().getString(id);
     }
 
-    private void toggleWifiRepeater(ToggleButton button) {
+    private void toggleWifiRepeater(final ToggleButton button) {
         startBlinkingImage((ImageView) findViewById(R.id.wifiRepeaterArrow));
         if (button.isChecked()) {
-            startBlinkingStatus(_(R.string.status_wifi_repeater_starting));
-            disableWifiRepeaterButton();
-            StartWifiRepeaterService.execute(this);
+            final File flagFile = new File("/data/data/fq.router2/etc/wifi-repeater-risk-notified");
+            if (flagFile.exists()) {
+                startWifiRepater();
+            } else {
+                new AlertDialog.Builder(this)
+                        .setIcon(android.R.drawable.ic_dialog_alert)
+                        .setTitle(R.string.wifi_repeater_risk_alert_title)
+                        .setMessage(R.string.wifi_repeater_risk_alert_message)
+                        .setPositiveButton(R.string.wifi_repeater_risk_alert_ok, new DialogInterface.OnClickListener() {
+
+                            @Override
+                            public void onClick(DialogInterface dialog, int which) {
+                                IOUtils.writeToFile(flagFile, "OK");
+                                startWifiRepater();
+                                button.setChecked(true);
+                            }
+
+                        })
+                        .setNegativeButton(R.string.wifi_repeater_risk_alert_cancel, null)
+                        .show();
+                button.setChecked(false);
+            }
         } else {
             startBlinkingStatus(_(R.string.status_wifi_repeater_stopping));
             disableWifiRepeaterButton();
             StopWifiRepeaterService.execute(this);
         }
+    }
+
+    private void startWifiRepater() {
+        startBlinkingStatus(_(R.string.status_wifi_repeater_starting));
+        disableWifiRepeaterButton();
+        StartWifiRepeaterService.execute(this);
     }
 
     public void disableFreeInternetButton() {
