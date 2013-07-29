@@ -1,9 +1,11 @@
 package fq.router2;
 
 import android.app.AlertDialog;
+import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.SharedPreferences;
+import android.net.wifi.WifiManager;
 import android.os.Bundle;
 import android.os.Handler;
 import android.preference.*;
@@ -92,6 +94,9 @@ public class MainSettingsActivity extends PreferenceActivity implements SharedPr
             public void run() {
                 try {
                     HttpUtils.post("http://127.0.0.1:8318/wifi-repeater/reset");
+                    WifiManager wifiManager = getWifiManager();
+                    wifiManager.setWifiEnabled(false);
+                    wifiManager.setWifiEnabled(true);
                     showToast(R.string.reset_wifi_succeeded);
                 } catch (Exception e) {
                     LogUtils.e("failed to reset wifi", e);
@@ -99,6 +104,10 @@ public class MainSettingsActivity extends PreferenceActivity implements SharedPr
                 }
             }
         }).start();
+    }
+
+    private WifiManager getWifiManager() {
+        return (WifiManager) getSystemService(Context.WIFI_SERVICE);
     }
 
     private void showToast(final int message) {

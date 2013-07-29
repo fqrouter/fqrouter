@@ -46,10 +46,6 @@ public class WifiRepeater {
         }
     }
 
-    private void reportStartFailure(Exception e) {
-        stop();
-    }
-
     private void startWifiRepeater() throws Exception {
         LogUtils.i("Starting wifi repeater");
         HttpUtils.post("http://127.0.0.1:8318/wifi-repeater/start");
@@ -80,9 +76,5 @@ public class WifiRepeater {
 
     private WifiManager getWifiManager() {
         return (WifiManager) context.getSystemService(Context.WIFI_SERVICE);
-    }
-
-    private void handleFatalError(String msg) {
-        context.sendBroadcast(new HandleFatalErrorIntent(msg));
     }
 }

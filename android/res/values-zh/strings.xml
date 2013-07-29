@@ -155,4 +155,5 @@
     <string name="pref_shortcut_full_google_play_summary">需要配合Market Unlocker使用</string>
     <string name="reset_wifi_succeeded">重置无线成功</string>
     <string name="reset_wifi_failed">重置无线失败</string>
+    <string name="pref_wifi_hotspot_reset_summary">如果无线中继启动失败，而且导致wifi再也连不上了，你可以点这个按钮修复</string>
 </resources>

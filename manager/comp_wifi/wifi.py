@@ -152,16 +152,18 @@ def backup_config_file(src, dst):
         if 'fqrouter' in content:
             raise Exception('config file has alreayd been modified by fqrouter')
         with open(dst, 'w') as f:
-            f.write(content)
+            shell_execute('cp -p %s %s' % (src, dst))
     except:
         LOGGER.exception('failed to backup %s => %s' % (src, dst))
 
 
 def restore_config_files():
     if os.path.exists('/data/data/fq.router2/backup/wpa_supplicant.conf.bak'):
-        shutil.copy('/data/data/fq.router2/backup/wpa_supplicant.conf.bak', WPA_SUPPLICANT_CONF_PATH)
+        shell_execute(
+            'cp -p %s %s' % ('/data/data/fq.router2/backup/wpa_supplicant.conf.bak', WPA_SUPPLICANT_CONF_PATH))
     if os.path.exists('/data/data/fq.router2/backup/p2p_supplicant.conf.bak'):
-        shutil.copy('/data/data/fq.router2/backup/p2p_supplicant.conf.bak', P2P_SUPPLICANT_CONF_PATH)
+        shell_execute(
+            'cp -p %s %s' % ('/data/data/fq.router2/backup/p2p_supplicant.conf.bak', P2P_SUPPLICANT_CONF_PATH))
 
 
 def dump_wifi_status():

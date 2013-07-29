@@ -168,4 +168,7 @@
     <string name="pref_shortcut_full_google_play_summary">need to work with "Market Unlocker"</string>
     <string name="reset_wifi_succeeded">Reset Wifi Succeeded</string>
     <string name="reset_wifi_failed">Reset Wifi Failed</string>
+    <string name="pref_wifi_hotspot_reset_summary">if wifi repeater failed to start and break your can no longer connect
+        to wifi, you can fix it by this button
+    </string>
 </resources>

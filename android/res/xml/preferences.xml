@@ -12,7 +12,8 @@
                 android:defaultValue="12345678"/>
         <Preference
                 android:key="WifiHotspotReset"
-                android:title="@string/pref_wifi_hotspot_reset"/>
+                android:title="@string/pref_wifi_hotspot_reset"
+                android:summary="@string/pref_wifi_hotspot_reset_summary"/>
     </PreferenceCategory>
     <PreferenceCategory android:title="@string/pref_goagent_category">
         <CheckBoxPreference
