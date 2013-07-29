@@ -153,4 +153,6 @@
     <string name="pref_general_launch_after_booted">开机自启</string>
     <string name="pref_shortcut_full_google_play">完整版Google市场</string>
     <string name="pref_shortcut_full_google_play_summary">需要配合Market Unlocker使用</string>
+    <string name="reset_wifi_succeeded">重置无线成功</string>
+    <string name="reset_wifi_failed">重置无线失败</string>
 </resources>

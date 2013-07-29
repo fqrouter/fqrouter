@@ -4,7 +4,7 @@ import socket
 import re
 import traceback
 import shlex
-
+import shutil
 from gevent import subprocess
 import gevent
 
@@ -106,6 +106,7 @@ def stop_hotspot():
 
 def start_hotspot(ssid, password):
     try:
+        backup_config_files()
         working_hotspot_iface = get_working_hotspot_iface()
         if working_hotspot_iface:
             return True, 'hotspot is already working, start skipped'
@@ -130,6 +131,37 @@ def start_hotspot(ssid, password):
         finally:
             stop_hotspot()
         return False, 'failed to start hotspot'
+
+
+def backup_config_files():
+    if not os.path.exists('/data/data/fq.router2/backup'):
+        os.mkdir('/data/data/fq.router2/backup')
+    backup_config_file(WPA_SUPPLICANT_CONF_PATH, '/data/data/fq.router2/backup/wpa_supplicant.conf.bak')
+    backup_config_file(P2P_SUPPLICANT_CONF_PATH, '/data/data/fq.router2/backup/p2p_supplicant.conf.bak')
+
+
+def backup_config_file(src, dst):
+    try:
+        if os.path.exists(dst):
+            return
+        if shell.USE_SU:
+            content = shell_execute('/data/data/fq.router2/busybox cat %s' % src)
+        else:
+            with open(src) as f:
+                content = f.read()
+        if 'fqrouter' in content:
+            raise Exception('config file has alreayd been modified by fqrouter')
+        with open(dst, 'w') as f:
+            f.write(content)
+    except:
+        LOGGER.exception('failed to backup %s => %s' % (src, dst))
+
+
+def restore_config_files():
+    if os.path.exists('/data/data/fq.router2/backup/wpa_supplicant.conf.bak'):
+        shutil.copy('/data/data/fq.router2/backup/wpa_supplicant.conf.bak', WPA_SUPPLICANT_CONF_PATH)
+    if os.path.exists('/data/data/fq.router2/backup/p2p_supplicant.conf.bak'):
+        shutil.copy('/data/data/fq.router2/backup/p2p_supplicant.conf.bak', P2P_SUPPLICANT_CONF_PATH)
 
 
 def dump_wifi_status():

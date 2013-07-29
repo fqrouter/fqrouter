@@ -5,6 +5,7 @@ import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.os.Bundle;
+import android.os.Handler;
 import android.preference.*;
 import android.widget.EditText;
 import android.widget.Toast;
@@ -16,6 +17,8 @@ import fq.router2.utils.ShellUtils;
 import java.util.List;
 
 public class MainSettingsActivity extends PreferenceActivity implements SharedPreferences.OnSharedPreferenceChangeListener {
+
+    private Handler handler = new Handler();
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
@@ -89,11 +92,22 @@ public class MainSettingsActivity extends PreferenceActivity implements SharedPr
             public void run() {
                 try {
                     HttpUtils.post("http://127.0.0.1:8318/wifi-repeater/reset");
+                    showToast(R.string.reset_wifi_succeeded);
                 } catch (Exception e) {
                     LogUtils.e("failed to reset wifi", e);
+                    showToast(R.string.reset_wifi_failed);
                 }
             }
         }).start();
+    }
+
+    private void showToast(final int message) {
+        handler.postDelayed(new Runnable() {
+            @Override
+            public void run() {
+                Toast.makeText(MainSettingsActivity.this, message, 5000).show();
+            }
+        }, 0);
     }
 
 

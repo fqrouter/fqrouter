@@ -29,8 +29,12 @@ public class ManagerProcess {
 
     public static boolean exists() {
         try {
-            ShellUtils.sudo("/data/data/fq.router2/busybox", "killall", "-0", "python");
-            return true;
+            if (ShellUtils.sudo("/data/data/fq.router2/busybox", "killall", "-0", "python").contains(
+                    "no process killed")) {
+                return false;
+            } else {
+                return true;
+            }
         } catch (Exception e) {
             return false;
         }

@@ -166,4 +166,6 @@
     <string name="pref_general_launch_after_booted">Launch automatically after mobile booted</string>
     <string name="pref_shortcut_full_google_play">Full Version Google Play</string>
     <string name="pref_shortcut_full_google_play_summary">need to work with "Market Unlocker"</string>
+    <string name="reset_wifi_succeeded">Reset Wifi Succeeded</string>
+    <string name="reset_wifi_failed">Reset Wifi Failed</string>
 </resources>
