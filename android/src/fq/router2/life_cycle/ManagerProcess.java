@@ -60,7 +60,7 @@ public class ManagerProcess {
                     " -c \"import subprocess; print(subprocess.check_output(['" +
                     ShellUtils.BUSYBOX_FILE.getCanonicalPath() + "', 'echo', 'hello']))\"").trim();
             LogUtils.i("get run mode: " + output);
-            if ("hello".equals(output)) {
+            if (output.contains("hello")) {
                 IOUtils.writeToFile(runModeCacheFile, "run-normally");
                 return "run-normally";
             } else {
