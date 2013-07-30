@@ -156,7 +156,6 @@ def create_udp_socket():
 
 
 fqdns.SPI['create_udp_socket'] = create_udp_socket
-fqsocks.networking.SPI['create_udp_socket'] = create_udp_socket
 
 
 def generate_socket_id():
@@ -238,8 +237,7 @@ if '__main__' == __name__:
     args = [
         '--log-level', 'INFO',
         '--log-file', '/data/data/fq.router2/log/fqsocks.log',
-        '--listen', '10.25.1.1:12345',
-        '--disable-access-check']
+        '--listen', '10.25.1.1:12345']
     args = comp_proxy.configure(args)
     greenlets.append(gevent.spawn(fqsocks.fqsocks.main, args))
     for greenlet in greenlets:
