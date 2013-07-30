@@ -195,7 +195,11 @@ public class LaunchService extends IntentService {
     public static String getMyVersion(Context context) {
         try {
             PackageInfo packageInfo = context.getPackageManager().getPackageInfo(context.getPackageName(), 0);
-            return packageInfo.versionName;
+            if (null == packageInfo.versionName) {
+                return "Unknown";
+            } else {
+                return packageInfo.versionName;
+            }
         } catch (Exception e) {
             LogUtils.e("failed to get package info", e);
             return "Unknown";
@@ -235,7 +239,7 @@ public class LaunchService extends IntentService {
             LogUtils.e("ping failed: [" + e.responseCode + "] " + e.output);
             return false;
         } catch (Exception e) {
-            LogUtils.e("ping failed: " + e);
+            LogUtils.e("ping failed: " + e, e);
             return false;
         }
     }
