@@ -228,6 +228,16 @@ public class MainSettingsActivity extends PreferenceActivity implements SharedPr
 
     @Override
     public void onSharedPreferenceChanged(SharedPreferences sharedPreferences, String key) {
+        if (key.contains("Shortcut") || key.contains("Scrambler") || key.contains("DirectAccess")) {
+            if (!sharedPreferences.getBoolean(key, true)) {
+                new AlertDialog.Builder(this)
+                        .setIcon(android.R.drawable.ic_dialog_alert)
+                        .setTitle(R.string.internet_speed_alert_title)
+                        .setMessage(R.string.internet_speed_alert_message)
+                        .setPositiveButton(R.string.internet_speed_alert_ok, null)
+                        .show();
+            }
+        }
         if (key.startsWith("WifiHotspot")) {
             showToast(_(R.string.pref_restart_wifi_repeater));
         } else {

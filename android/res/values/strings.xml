@@ -74,19 +74,17 @@
     <string name="pref_ssh_public_servers">SSH Private Servers</string>
     <string name="pref_bypass_category">Bypass GFW</string>
     <string name="pref_bypass_youtube_scrambler">Youtube Scrambler</string>
-    <string name="pref_bypass_youtube_scrambler_summary">scramble youtube traffic, so that GFW can let us go, without using a proxy
+    <string name="pref_bypass_youtube_scrambler_summary">scramble youtube traffic, so that GFW can let us go, without using a proxy. disable this scrambler will make internet speed much slower!
     </string>
     <string name="pref_tcp_scrambler">TCP Scrambler</string>
     <string name="pref_tcp_scrambler_summary">scramble at TCP level, so that GFW can let us go, without using a proxy
-        server
+        server. disable this scrambler will make internet speed much slower!
     </string>
     <string name="pref_shortcut_category">Shortcut</string>
     <string name="pref_shortcut_china_shortcut">China Shortcut</string>
-    <string name="pref_shortcut_china_shortcut_summary">if server is china ip, access directly</string>
+    <string name="pref_shortcut_china_shortcut_summary">if server is china ip, access directly. disable this shortcut will make internet speed much slower!</string>
     <string name="pref_shortcut_direct_access">Direct Access If Possible</string>
-    <string name="pref_shortcut_direct_access_summary">try access directly first, use proxy only if tried and failed
-        (including ip blocked, url keyword, etc)
-    </string>
+    <string name="pref_shortcut_direct_access_summary">try access directly first, use proxy only if tried and failed. disable this shortcut will make internet speed much slower!</string>
     <string name="pref_general_category">General</string>
     <string name="pref_general_auto_update">Auto Update</string>
     <string name="pref_general_auto_update_summary">check update automatically</string>
@@ -178,4 +176,9 @@
         wifi config files.
     </string>
     <string name="wifi_repeater_risk_alert_ok">OK</string>
+    <string name="internet_speed_alert_title">Don\'t disable this option</string>
+    <string name="internet_speed_alert_message">Disable it will make network speed much slower and consume more public
+        resources
+    </string>
+    <string name="internet_speed_alert_ok">OK</string>
 </resources>

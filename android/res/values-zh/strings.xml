@@ -67,16 +67,16 @@
     <string name="pref_ssh_public_servers">SSH 个人代理</string>
     <string name="pref_bypass_category">直接穿过 GFW</string>
     <string name="pref_bypass_youtube_scrambler">Youtube 混淆器</string>
-    <string name="pref_bypass_youtube_scrambler_summary">混淆 Youtube 流量迷惑 GFW，这样就不用走代理了
+    <string name="pref_bypass_youtube_scrambler_summary">混淆 Youtube 流量迷惑 GFW，这样就不用走代理了。禁用此选项会使得网速慢很多！
     </string>
     <string name="pref_tcp_scrambler">TCP 混淆器</string>
-    <string name="pref_tcp_scrambler_summary">混淆 TCP 协议迷惑 GFW，这样就不用走代理了
+    <string name="pref_tcp_scrambler_summary">混淆 TCP 协议迷惑 GFW，这样就不用走代理了。禁用此选项会使得网速慢很多！
     </string>
     <string name="pref_shortcut_category">直连服务器</string>
     <string name="pref_shortcut_china_shortcut">直连中国的服务器</string>
-    <string name="pref_shortcut_china_shortcut_summary">如果服务器的IP是中国的，就不走代理</string>
+    <string name="pref_shortcut_china_shortcut_summary">如果服务器的IP是中国的，就不走代理。禁用此选项会使得网速慢很多！</string>
     <string name="pref_shortcut_direct_access">直接可以直连的服务器</string>
-    <string name="pref_shortcut_direct_access_summary">每个连接先尝试直连，只在不得不走代理的时候才走代理（包括IP被封，URL关键字等情况）
+    <string name="pref_shortcut_direct_access_summary">每个连接先尝试直连，只在不得不走代理的时候才走代理。禁用此选项会使得网速慢很多！
     </string>
     <string name="pref_general_category">总体设置</string>
     <string name="pref_general_auto_update">自动检查更新</string>
@@ -160,4 +160,7 @@
     <string name="wifi_repeater_risk_alert_message">无线中继肯定不会对硬件造成任何损坏。然而，在不支持的手机上可能会导致重启。在设置菜单里有一个“重置无线”的按钮可以重置无线的配置文件。</string>
     <string name="wifi_repeater_risk_alert_ok">OK</string>
     <string name="wifi_repeater_risk_alert_cancel">取消</string>
+    <string name="internet_speed_alert_title">请不要禁用该选项</string>
+    <string name="internet_speed_alert_message">禁用它会使得网速变慢，而且会消耗非常多的公共资源。如确实有需要，请添加个人代理。</string>
+    <string name="internet_speed_alert_ok">明白了</string>
 </resources>

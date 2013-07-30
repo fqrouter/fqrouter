@@ -58,9 +58,10 @@ def start_fqsocks():
         '--log-level', 'INFO',
         '--log-file', '/data/data/fq.router2/log/fqsocks.log',
         '--outbound-ip', '10.1.2.3', # send from 10.1.2.3 so we can skip redirecting those traffic
-        '--listen', '10.1.2.3:8319',
-        '--http-request-mark', '0xbabe' # trigger scrambler
+        '--listen', '10.1.2.3:8319'
     ]
+    if config.read().get('tcp_scrambler_enabled', True):
+        args += ['--http-request-mark', '0xbabe'] # trigger scrambler
     args = configure(args)
     fqsocks_process = shell.launch_python('fqsocks', args, on_exit=stop)
 
