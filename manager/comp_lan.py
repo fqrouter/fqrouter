@@ -95,7 +95,7 @@ def handle_scan(environ, start_response):
 
 
 def scan(factor):
-    args = [shell.PYTHON_PATH, '-m', 'fqlan',
+    args = [shell.BUSYBOX_PATH, 'sh', shell.PYTHON_PATH, '-m', 'fqlan',
             '--log-level', 'INFO',
             '--log-file', '/data/data/fq.router2/log/scan.log',
             '--lan-interface', comp_wifi.WIFI_INTERFACE,
