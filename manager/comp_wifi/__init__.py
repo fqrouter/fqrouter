@@ -11,10 +11,17 @@ from wifi import restore_config_files
 from wifi import get_ip_and_mac
 from wifi import netd_execute
 from utils import config
+import logging
+
+
+LOGGER = logging.getLogger('fqrouter.%s' % __name__)
 
 
 def start():
-    setup_lo_alias()
+    try:
+        setup_lo_alias()
+    except:
+        LOGGER.exception('failed to setup lo alias')
     return [
         ('POST', 'wifi-repeater/start', handle_start),
         ('POST', 'wifi-repeater/stop', handle_stop),

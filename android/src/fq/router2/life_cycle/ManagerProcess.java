@@ -9,21 +9,27 @@ import java.io.File;
 public class ManagerProcess {
 
     public static void kill() throws Exception {
-        try {
-            if ("run-needs-su".equals(getRunMode())) {
-                ShellUtils.execute(
-                        ShellUtils.pythonEnv(), Deployer.PYTHON_LAUNCHER.getAbsolutePath(),
-                        Deployer.MANAGER_MAIN_PY.getAbsolutePath(), "clean");
-            } else {
-                ShellUtils.sudo(
-                        ShellUtils.pythonEnv(), Deployer.PYTHON_LAUNCHER.getAbsolutePath(),
-                        Deployer.MANAGER_MAIN_PY.getAbsolutePath(), "clean");
+        if (Deployer.MANAGER_MAIN_PY.exists()) {
+            try {
+                if ("run-needs-su".equals(getRunMode())) {
+                    ShellUtils.execute(
+                            ShellUtils.pythonEnv(), Deployer.PYTHON_LAUNCHER.getAbsolutePath(),
+                            Deployer.MANAGER_MAIN_PY.getAbsolutePath(), "clean");
+                } else {
+                    ShellUtils.sudo(
+                            ShellUtils.pythonEnv(), Deployer.PYTHON_LAUNCHER.getAbsolutePath(),
+                            Deployer.MANAGER_MAIN_PY.getAbsolutePath(), "clean");
+                }
+            } catch (Exception e) {
+                LogUtils.e("failed to clean", e);
             }
-        } catch (Exception e) {
-            LogUtils.e("failed to clean", e);
         }
         LogUtils.i("killall python");
-        ShellUtils.sudo("/data/data/fq.router2/busybox", "killall", "python");
+        if (new File("/data/data/fq.router2/busybox").exists()) {
+            ShellUtils.sudo("/data/data/fq.router2/busybox", "killall", "python");
+        } else {
+            ShellUtils.sudo("killall", "python");
+        }
         for (int i = 0; i < 10; i++) {
             if (exists()) {
                 Thread.sleep(3000);
@@ -33,13 +39,22 @@ public class ManagerProcess {
             }
         }
         LogUtils.e("killall python by force");
-        ShellUtils.sudo("/data/data/fq.router2/busybox", "killall", "-KILL", "python");
+        if (new File("/data/data/fq.router2/busybox").exists()) {
+            ShellUtils.sudo("/data/data/fq.router2/busybox", "killall", "-KILL", "python");
+        } else {
+            ShellUtils.sudo("killall", "-KILL", "python");
+        }
     }
 
     public static boolean exists() {
         try {
-            if (ShellUtils.sudo("/data/data/fq.router2/busybox", "killall", "-0", "python").contains(
-                    "no process killed")) {
+            String output;
+            if (new File("/data/data/fq.router2/busybox").exists()) {
+                output = ShellUtils.sudo("/data/data/fq.router2/busybox", "killall", "-0", "python");
+            } else {
+                output = ShellUtils.sudo("killall", "-0", "python");
+            }
+            if (output.contains("no process killed")) {
                 return false;
             } else {
                 return true;
@@ -50,9 +65,18 @@ public class ManagerProcess {
     }
 
     public static String getRunMode() throws Exception {
-        File runModeCacheFile = new File("/data/data/fq.router2/etc/run-mode");
+        if (!Deployer.MANAGER_MAIN_PY.exists()) {
+            return "run-normally";
+        }
+        File runModeCacheFile = new File("/data/data/fq.router2/etc/run-mode2");
         if (runModeCacheFile.exists()) {
-            return IOUtils.readFromFile(runModeCacheFile);
+            String cacheContent = IOUtils.readFromFile(runModeCacheFile);
+            if ("run-normally".equals(cacheContent)) {
+                return "run-normally";
+            } else {
+                LogUtils.e(cacheContent);
+                return "run-needs-su";
+            }
         }
         // S4 will fail this test
         try {
@@ -64,12 +88,12 @@ public class ManagerProcess {
                 IOUtils.writeToFile(runModeCacheFile, "run-normally");
                 return "run-normally";
             } else {
-                IOUtils.writeToFile(runModeCacheFile, "run-needs-su");
+                IOUtils.writeToFile(runModeCacheFile, "wrong output: " + output);
                 return "run-needs-su";
             }
         } catch (Exception e) {
             LogUtils.e("failed to test subprocess", e);
-            IOUtils.writeToFile(runModeCacheFile, "run-needs-su");
+            IOUtils.writeToFile(runModeCacheFile, "exception: " + e);
             return "run-needs-su";
         }
     }
