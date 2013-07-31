@@ -4,12 +4,13 @@ import gevent
 
 LOGGER = logging.getLogger('fqrouter.%s' % __name__)
 
+BUSYBOX_PATH = '/data/data/fq.router2/busybox'
 PYTHON_PATH = '/data/data/fq.router2/python/bin/python-launcher.sh'
 USE_SU = False
 
 
 def launch_python(name, args, on_exit=None):
-    command = [PYTHON_PATH, '-m', name] + list(args)
+    command = [BUSYBOX_PATH, 'sh', PYTHON_PATH, '-m', name] + list(args)
     LOGGER.info('launch python: %s' % ' '.join(command))
     if USE_SU:
         proc = subprocess.Popen('su', stdout=subprocess.PIPE, stderr=subprocess.STDOUT, stdin=subprocess.PIPE)
