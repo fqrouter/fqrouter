@@ -48,7 +48,7 @@ def setup():
         'python -m fqsocks --outbound-ip 10.1.2.3 '
         '--listen 10.1.2.3:8319 '
         # '--log-level DEBUG '
-        '--http-request-mark 0xbabe '
+        # '--http-request-mark 0xbabe '
         '--proxy dynamic,n=8,type=ss,dns_record=ss#n#.fqrouter.com,priority=3 '
         '--proxy dynamic,n=20,dns_record=proxy#n#.fqrouter.com,is_public=True,priority=4 '
         '--proxy dynamic,n=5,dns_record=proxy2#n#.fqrouter.com,priority=2 '

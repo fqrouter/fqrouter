@@ -46,13 +46,15 @@ public class LaunchService extends IntentService {
         LogUtils.i("ver: " + getMyVersion(this));
         boolean rooted = ShellUtils.checkRooted();
         LogUtils.i("rooted: " + rooted);
-        try {
-            String output = ShellUtils.sudo("iptables -L -v -n");
-            if (output.contains("udp spt:53 dpt:1 NFQUEUE num 2")) {
-                LogUtils.e("left over found in iptables: " + output);
+        if (rooted) {
+            try {
+                String output = ShellUtils.sudo("iptables -L -v -n");
+                if (output.contains("udp spt:53 dpt:1 NFQUEUE num 2")) {
+                    LogUtils.e("left over found in iptables: " + output);
+                }
+            } catch (Exception e) {
+                LogUtils.e("failed to check iptables", e);
             }
-        } catch (Exception e) {
-            LogUtils.e("failed to check iptables", e);
         }
         if (!rooted && isOldVersionRunning()) {
             handleFatalError(LogUtils.e("old version is still running"));
