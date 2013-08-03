@@ -84,12 +84,12 @@ public class ManagerProcess {
                     " -c \"import subprocess; print(subprocess.check_output(['" +
                     ShellUtils.BUSYBOX_FILE.getCanonicalPath() + "', 'echo', 'hello']))\"").trim();
             LogUtils.i("get run mode: " + output);
-            if (output.contains("hello")) {
-                IOUtils.writeToFile(runModeCacheFile, "run-normally");
-                return "run-normally";
-            } else {
+            if (output.contains("Permission denied")) {
                 IOUtils.writeToFile(runModeCacheFile, "wrong output: " + output);
                 return "run-needs-su";
+            } else {
+                IOUtils.writeToFile(runModeCacheFile, "run-normally");
+                return "run-normally";
             }
         } catch (Exception e) {
             LogUtils.e("failed to test subprocess", e);
