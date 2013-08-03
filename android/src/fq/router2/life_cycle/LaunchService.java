@@ -55,6 +55,12 @@ public class LaunchService extends IntentService {
             } catch (Exception e) {
                 LogUtils.e("failed to check iptables", e);
             }
+        } else {
+            File managerLogFile = new File("/data/data/fq.router2/log/fqsocks.log");
+            if (managerLogFile.exists() && !managerLogFile.canWrite()) {
+                handleFatalError(LogUtils.e("ROOT permission lost, re-install fqrouter to fix"));
+                return;
+            }
         }
         if (!rooted && isOldVersionRunning()) {
             handleFatalError(LogUtils.e("old version is still running"));
