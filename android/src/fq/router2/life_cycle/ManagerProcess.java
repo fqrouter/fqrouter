@@ -9,7 +9,7 @@ import java.io.File;
 public class ManagerProcess {
 
     public static void kill() throws Exception {
-        if (Deployer.MANAGER_MAIN_PY.exists()) {
+        if (Deployer.MANAGER_MAIN_PY.exists() && ShellUtils.isRooted()) {
             try {
                 if ("run-needs-su".equals(getRunMode())) {
                     ShellUtils.execute(

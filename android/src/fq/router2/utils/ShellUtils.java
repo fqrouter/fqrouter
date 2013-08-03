@@ -101,24 +101,19 @@ public class ShellUtils {
     }
 
     public static String waitFor(String command, Process process) throws Exception {
-
-        BufferedReader stdout = new BufferedReader(new InputStreamReader(process.getInputStream()));
-        StringBuilder output = new StringBuilder();
+        Waiter waiter = new Waiter(command, process);
+        waiter.start();
         try {
-            String line;
-            while (null != (line = stdout.readLine())) {
-                output.append(line);
-                output.append("\n");
-            }
-        } finally {
-            stdout.close();
+            waiter.join(3000);
+        } catch (InterruptedException e) {
+            process.destroy();
+            throw new Exception("command time out: " + command);
         }
-        process.waitFor();
-        int exitValue = process.exitValue();
-        if (0 != exitValue) {
-            throw new Exception("failed to execute: " + command + ", exit value: " + exitValue + ", output: " + output);
+        if (waiter.exception != null) {
+            throw waiter.exception;
+        } else {
+            return waiter.output;
         }
-        return output.toString();
     }
 
     public static Map<String, String> pythonEnv() {
@@ -142,5 +137,44 @@ public class ShellUtils {
 
     public static boolean isRooted() {
         return Boolean.TRUE.equals(IS_ROOTED);
+    }
+
+    private static class Waiter extends Thread {
+        private final String command;
+        private final Process process;
+        private Exception exception;
+        private String output;
+
+        public Waiter(String command, Process process) {
+            this.command = command;
+            this.process = process;
+            this.exception = null;
+            this.output = null;
+        }
+
+        public void run() {
+            try {
+                BufferedReader stdout = new BufferedReader(new InputStreamReader(process.getInputStream()));
+                StringBuilder output = new StringBuilder();
+                try {
+                    String line;
+                    while (null != (line = stdout.readLine())) {
+                        output.append(line);
+                        output.append("\n");
+                    }
+                } finally {
+                    stdout.close();
+                }
+                process.waitFor();
+                int exitValue = process.exitValue();
+                if (0 != exitValue) {
+                    throw new Exception("failed to execute: " + command + ", exit value: " + exitValue + ", output: " + output);
+                }
+                this.output = output.toString();
+            } catch (Exception e) {
+                LogUtils.e("command failed: " + command, e);
+                this.exception = e;
+            }
+        }
     }
 }
