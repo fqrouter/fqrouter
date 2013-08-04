@@ -27,7 +27,6 @@ public class BootCompletedReceiver extends BroadcastReceiver {
             return;
         }
         try {
-            LogUtils.i("received: " + intent.getAction());
             if (intent.getAction().equals(Intent.ACTION_BOOT_COMPLETED)) {
                 LaunchService.execute(context);
             } else if (intent.getAction().equals(LaunchedIntent.ACTION_LAUNCHED)) {

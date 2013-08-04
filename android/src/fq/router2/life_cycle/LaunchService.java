@@ -240,14 +240,14 @@ public class LaunchService extends IntentService {
             if (isVpnMode ? ("VPN PONG/" + myVersion).equals(content) : ("PONG/" + myVersion).equals(content)) {
                 return true;
             } else {
-                LogUtils.e("ping failed: " + content);
+                LogUtils.e("ping " + isVpnMode + " failed: " + content);
                 return false;
             }
         } catch (HttpUtils.Error e) {
-            LogUtils.e("ping failed: [" + e.responseCode + "] " + e.output);
+            LogUtils.e("ping " + isVpnMode + " failed: [" + e.responseCode + "] " + e.output);
             return false;
         } catch (Exception e) {
-            LogUtils.e("ping failed: " + e, e);
+            LogUtils.e("ping " + isVpnMode + " failed: " + e, e);
             return false;
         }
     }
