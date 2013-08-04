@@ -82,6 +82,7 @@
             <intent-filter>
                 <action android:name="android.intent.action.BOOT_COMPLETED" />
                 <action android:name="Launched" />
+                <action android:name="FreeInternetChanged" />
             </intent-filter>
         </receiver>
     </application>

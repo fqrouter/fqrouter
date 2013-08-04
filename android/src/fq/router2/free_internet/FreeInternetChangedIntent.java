@@ -7,7 +7,7 @@ import fq.router2.utils.LoggedBroadcastReceiver;
 
 public class FreeInternetChangedIntent extends Intent {
 
-    private final static String ACTION_FREE_INTERNET_CHANGED = "FreeInternetChanged";
+    public final static String ACTION_FREE_INTERNET_CHANGED = "FreeInternetChanged";
 
     public FreeInternetChangedIntent(boolean isConnected) {
         setAction(ACTION_FREE_INTERNET_CHANGED);
