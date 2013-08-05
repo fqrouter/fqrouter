@@ -1,6 +1,6 @@
 import gevent.monkey
 
-gevent.monkey.patch_all(ssl=False)
+gevent.monkey.patch_all(ssl=False, thread=False)
 
 import logging
 import logging.handlers
@@ -32,6 +32,17 @@ FQDNS_LOG_FILE = os.path.join(LOG_DIR, 'fqdns.log')
 
 nat_map = {} # sport => (dst, dport), src always be 10.25.1.1
 DNS_HANDLER = fqdns.DnsHandler(enable_china_domain=True, enable_hosted_domain=True)
+
+
+def handle_free_internet_connect(environ, start_response):
+    start_response(httplib.OK, [('Content-Type', 'text/plain')])
+    fqsocks.fqsocks.refresh_proxies()
+    return []
+
+
+def handle_free_internet_disconnect(environ, start_response):
+    start_response(httplib.OK, [('Content-Type', 'text/plain')])
+    return []
 
 
 def redirect_tun_traffic(tun_fd):
@@ -195,6 +206,7 @@ def check_ping():
         LOGGER.exception('check ping failed')
         sys.exit(1)
 
+
 def read_tun_fd():
     LOGGER.info('connecting to fdsock')
     while True:
@@ -205,7 +217,7 @@ def read_tun_fd():
                 LOGGER.info('connected to fdsock2')
                 fdsock.sendall('TUN\n')
                 gevent.socket.wait_read(fdsock.fileno())
-                tun_fd=_multiprocessing.recvfd(fdsock.fileno())
+                tun_fd = _multiprocessing.recvfd(fdsock.fileno())
                 if tun_fd == 1:
                     LOGGER.error('received invalid tun fd')
                     continue
@@ -224,6 +236,8 @@ if '__main__' == __name__:
     except:
         LOGGER.exception('failed to patch ssl')
     httpd.HANDLERS[('GET', 'ping')] = handle_ping
+    httpd.HANDLERS[('POST', 'free-internet/connect')] = handle_free_internet_connect
+    httpd.HANDLERS[('POST', 'free-internet/disconnect')] = handle_free_internet_disconnect
     greenlets = [gevent.spawn(httpd.serve_forever),
                  gevent.spawn(check_ping)]
     try:
@@ -235,6 +249,7 @@ if '__main__' == __name__:
     greenlets.append(gevent.spawn(serve_udp))
     greenlets.append(gevent.spawn(redirect_tun_traffic, tun_fd))
     args = [
+        '--disable-access-check',
         '--log-level', 'INFO',
         '--log-file', '/data/data/fq.router2/log/fqsocks.log',
         '--listen', '10.25.1.1:12345']
