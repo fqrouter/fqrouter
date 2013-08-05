@@ -14,11 +14,15 @@ public class DisconnectFreeInternetService extends IntentService {
 
     @Override
     protected void onHandleIntent(Intent intent) {
+        disconnect(this);
+    }
+
+    public static void disconnect(Context context) {
         try {
             HttpUtils.post("http://127.0.0.1:8318/free-internet/disconnect");
-            sendBroadcast(new FreeInternetChangedIntent(false));
+            context.sendBroadcast(new FreeInternetChangedIntent(false));
         } catch (Exception e) {
-            sendBroadcast(new HandleFatalErrorIntent(LogUtils.e("failed to disconnect from free internet", e)));
+            context.sendBroadcast(new HandleFatalErrorIntent(LogUtils.e("failed to disconnect from free internet", e)));
         }
     }
 

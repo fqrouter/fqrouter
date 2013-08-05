@@ -1,6 +1,7 @@
 import logging
 import httplib
 import json
+import os
 
 from gevent import subprocess
 
@@ -95,7 +96,9 @@ def handle_scan(environ, start_response):
 
 
 def scan(factor):
-    args = [shell.BUSYBOX_PATH, 'sh', shell.PYTHON_PATH, '-m', 'fqlan',
+    env = os.environ.copy()
+    env['PYTHONHOME'] = shell.PYTHON_HOME
+    args = [shell.PYTHON_PATH, '-m', 'fqlan',
             '--log-level', 'INFO',
             '--log-file', '/data/data/fq.router2/log/scan.log',
             '--lan-interface', comp_wifi.WIFI_INTERFACE,
@@ -103,7 +106,7 @@ def scan(factor):
             '--ip-command', '/data/data/fq.router2/busybox',
             'scan', '--hostname', '--mark', '0xcafe', '--factor', factor]
     LOGGER.info('scan: %s' % str(args))
-    scan_process = shell.Popen(args, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+    scan_process = shell.Popen(args, stdout=subprocess.PIPE, stderr=subprocess.PIPE, env=env)
     _, output = scan_process.communicate()
     return output.splitlines()
 

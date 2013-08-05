@@ -14,11 +14,15 @@ public class ConnectFreeInternetService extends IntentService {
 
     @Override
     protected void onHandleIntent(Intent intent) {
+        connect(this);
+    }
+
+    public static void connect(Context context) {
         try {
             HttpUtils.post("http://127.0.0.1:8318/free-internet/connect");
-            sendBroadcast(new FreeInternetChangedIntent(true));
+            context.sendBroadcast(new FreeInternetChangedIntent(true));
         } catch (Exception e) {
-            sendBroadcast(new HandleFatalErrorIntent(LogUtils.e("failed to connect to free internet", e)));
+            context.sendBroadcast(new HandleFatalErrorIntent(LogUtils.e("failed to connect to free internet", e)));
         }
     }
 
