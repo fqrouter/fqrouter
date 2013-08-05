@@ -8,6 +8,7 @@ import gevent.monkey
 
 RULES = [
     # dns
+    'OUTPUT -t nat -p udp --dport 53 -m mark --mark 0xcafe -j ACCEPT',
     'OUTPUT -t nat -p udp ! -s 10.1.2.3 --dport 53 -j REDIRECT --to-ports 5353',
     'POSTROUTING -t nat -s 10.1.2.3 -j MASQUERADE',
     # proxy
@@ -33,7 +34,7 @@ def main():
 
 
 def setup():
-    for rule in RULES:
+    for rule in reversed(RULES):
         subprocess.call('iptables -I %s' % rule, shell=True)
     subprocess.call('ifconfig lo:1 10.1.2.3 netmask 255.255.255.255', shell=True)
     processes.append(subprocess.Popen(
@@ -42,7 +43,7 @@ def setup():
         '--enable-hosted-domain '
         '--enable-china-domain',
         shell=True,
-        stderr=subprocess.STDOUT, stdout=subprocess.PIPE
+        # stderr=subprocess.STDOUT, stdout=subprocess.PIPE
     ))
     processes.append(subprocess.Popen(
         'python -m fqsocks --outbound-ip 10.1.2.3 '
@@ -57,7 +58,7 @@ def setup():
         '--google-host goagent-google-ip.fqrouter.com '
         '--disable-access-check',
         shell=True,
-        # stderr=subprocess.STDOUT, stdout=subprocess.PIPE
+        stderr=subprocess.STDOUT, stdout=subprocess.PIPE
     ))
     processes.append(subprocess.Popen(
         'python -m fqting --queue-number 2 --mark 0xcafe --log-level DEBUG', shell=True,
