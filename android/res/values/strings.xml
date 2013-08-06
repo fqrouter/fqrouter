@@ -184,4 +184,5 @@
     <string name="stop_google_play_message">Need to stop google play and clear its data directory first</string>
     <string name="stop_google_play_done">Done, go next</string>
     <string name="stop_google_play_do">Do it now</string>
+    <string name="failed_to_open_google_play">Failed to open Google Play</string>
 </resources>

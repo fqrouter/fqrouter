@@ -139,8 +139,14 @@ public class MainSettingsActivity extends PreferenceActivity implements SharedPr
         new Thread(new Runnable() {
             @Override
             public void run() {
-                Intent LaunchIntent = getPackageManager().getLaunchIntentForPackage("com.android.vending");
-                startActivity(LaunchIntent);
+                try {
+                    HttpUtils.post("http://127.0.0.1:8319/force-us-ip");
+                    Intent LaunchIntent = getPackageManager().getLaunchIntentForPackage("com.android.vending");
+                    startActivity(LaunchIntent);
+                } catch (Exception e) {
+                    LogUtils.e("failed to open google play", e);
+                    showToast(R.string.failed_to_open_google_play);
+                }
             }
         }).start();
     }

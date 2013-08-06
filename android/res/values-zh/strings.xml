@@ -166,4 +166,5 @@
     <string name="stop_google_play_message">在弹出的窗口中点“强行停止”，然后再点“清除数据”,然后点回退键回到本界面</string>
     <string name="stop_google_play_done">搞定了</string>
     <string name="stop_google_play_do">这就去搞</string>
+    <string name="failed_to_open_google_play">打开Google Play失败</string>
 </resources>
