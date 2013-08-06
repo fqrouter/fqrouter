@@ -151,8 +151,7 @@
     <string name="dns_polluted_alert_toggle_failed">没搞定，你还是自己手工开关一下飞行模式吧</string>
     <string name="dns_polluted_alert_toggle_succeed">DNS污染应该已经被清理干净了</string>
     <string name="pref_general_launch_after_booted">开机自启</string>
-    <string name="pref_shortcut_full_google_play">完整版Google市场</string>
-    <string name="pref_shortcut_full_google_play_summary">需要配合Market Unlocker使用</string>
+    <string name="pref_shortcut_full_google_play">打开完整版Google市场</string>
     <string name="reset_wifi_succeeded">重置无线成功</string>
     <string name="reset_wifi_failed">重置无线失败</string>
     <string name="pref_wifi_hotspot_reset_summary">如果无线中继启动失败，而且导致wifi再也连不上了，你可以点这个按钮修复</string>

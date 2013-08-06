@@ -68,8 +68,6 @@ def start_fqsocks():
 
 def configure(args):
     args += ['--google-host', 'goagent-google-ip.fqrouter.com']
-    if config.read().get('full_google_play_enabled', True):
-        args += ['--black-ip', 'android.clients.google.com']
     if not config.read().get('auto_access_check_enabled', True):
         args += ['--disable-access-check']
     if not config.read().get('china_shortcut_enabled', True):
