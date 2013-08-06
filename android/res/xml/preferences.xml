@@ -78,7 +78,7 @@
                 android:summary="@string/pref_shortcut_direct_access_summary"
                 android:defaultValue="true"/>
         <Preference
-                android:key="FullGooglePlayEnabled"
+                android:key="OpenFullGooglePlay"
                 android:title="@string/pref_shortcut_full_google_play"
                 android:defaultValue="false"/>
     </PreferenceCategory>

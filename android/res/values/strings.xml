@@ -180,4 +180,8 @@
         resources
     </string>
     <string name="internet_speed_alert_ok">OK</string>
+    <string name="stop_google_play_title">Google play should be stopped first</string>
+    <string name="stop_google_play_message">Need to stop google play and clear its data directory first</string>
+    <string name="stop_google_play_done">Done, go next</string>
+    <string name="stop_google_play_do">Do it now</string>
 </resources>

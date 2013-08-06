@@ -162,4 +162,8 @@
     <string name="internet_speed_alert_title">请不要禁用该选项</string>
     <string name="internet_speed_alert_message">禁用它会使得网速变慢，而且会消耗非常多的公共资源。如确实有需要，请添加个人代理。</string>
     <string name="internet_speed_alert_ok">明白了</string>
+    <string name="stop_google_play_title">需要先关闭Google Play</string>
+    <string name="stop_google_play_message">在弹出的窗口中点“强行停止”，然后再点“清除数据”,然后点回退键回到本界面</string>
+    <string name="stop_google_play_done">搞定了</string>
+    <string name="stop_google_play_do">这就去搞</string>
 </resources>

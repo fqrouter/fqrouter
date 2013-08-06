@@ -12,6 +12,7 @@ import android.preference.*;
 import android.widget.EditText;
 import android.widget.Toast;
 import fq.router2.life_cycle.LaunchService;
+import fq.router2.utils.ApkUtils;
 import fq.router2.utils.HttpUtils;
 import fq.router2.utils.LogUtils;
 import fq.router2.utils.ShellUtils;
@@ -79,6 +80,13 @@ public class MainSettingsActivity extends PreferenceActivity implements SharedPr
                 return false;
             }
         });
+        findPreference("OpenFullGooglePlay").setOnPreferenceClickListener(new Preference.OnPreferenceClickListener() {
+            @Override
+            public boolean onPreferenceClick(Preference preference) {
+                openFullGooglePlay();
+                return false;
+            }
+        });
         if (!ShellUtils.isRooted()) {
             getPreferenceScreen().removePreference(findPreference("WifiHotspot"));
             PreferenceCategory generalCategoryPref = (PreferenceCategory) findPreference("General");
@@ -102,6 +110,37 @@ public class MainSettingsActivity extends PreferenceActivity implements SharedPr
                     LogUtils.e("failed to reset wifi", e);
                     showToast(R.string.reset_wifi_failed);
                 }
+            }
+        }).start();
+    }
+
+    private void openFullGooglePlay() {
+        new AlertDialog.Builder(this)
+                .setIcon(android.R.drawable.ic_dialog_info)
+                .setTitle(R.string.stop_google_play_title)
+                .setMessage(R.string.stop_google_play_message)
+                .setPositiveButton(R.string.stop_google_play_done, new DialogInterface.OnClickListener() {
+
+                    @Override
+                    public void onClick(DialogInterface dialogInterface, int i) {
+                        openGooglePlay();
+                    }
+                })
+                .setNegativeButton(R.string.stop_google_play_do, new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialogInterface, int i) {
+                        ApkUtils.showInstalledAppDetails(MainSettingsActivity.this, "com.android.vending");
+                    }
+                })
+                .show();
+    }
+
+    private void openGooglePlay() {
+        new Thread(new Runnable() {
+            @Override
+            public void run() {
+                Intent LaunchIntent = getPackageManager().getLaunchIntentForPackage("com.android.vending");
+                startActivity(LaunchIntent);
             }
         }).start();
     }
