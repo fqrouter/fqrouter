@@ -115,24 +115,40 @@ public class MainSettingsActivity extends PreferenceActivity implements SharedPr
     }
 
     private void openFullGooglePlay() {
-        new AlertDialog.Builder(this)
-                .setIcon(android.R.drawable.ic_dialog_info)
-                .setTitle(R.string.stop_google_play_title)
-                .setMessage(R.string.stop_google_play_message)
-                .setPositiveButton(R.string.stop_google_play_done, new DialogInterface.OnClickListener() {
+        if (ShellUtils.isRooted()) {
+            try {
+                ShellUtils.sudo("/data/data/fq.router2/busybox", "killall", "com.android.vending");
+            } catch (Exception e) {
+                LogUtils.e("failed to stop google play", e);
+            }
+            try {
+                ShellUtils.sudo("/data/data/fq.router2/busybox", "rm", "-rf", "/data/data/com.android.vending/*");
+            } catch (Exception e) {
+                LogUtils.e("failed to clear google play data", e);
+                showToast(R.string.failed_to_open_google_play);
+                return;
+            }
+            openGooglePlay();
+        } else {
+            new AlertDialog.Builder(this)
+                    .setIcon(android.R.drawable.ic_dialog_info)
+                    .setTitle(R.string.stop_google_play_title)
+                    .setMessage(R.string.stop_google_play_message)
+                    .setPositiveButton(R.string.stop_google_play_done, new DialogInterface.OnClickListener() {
 
-                    @Override
-                    public void onClick(DialogInterface dialogInterface, int i) {
-                        openGooglePlay();
-                    }
-                })
-                .setNegativeButton(R.string.stop_google_play_do, new DialogInterface.OnClickListener() {
-                    @Override
-                    public void onClick(DialogInterface dialogInterface, int i) {
-                        ApkUtils.showInstalledAppDetails(MainSettingsActivity.this, "com.android.vending");
-                    }
-                })
-                .show();
+                        @Override
+                        public void onClick(DialogInterface dialogInterface, int i) {
+                            openGooglePlay();
+                        }
+                    })
+                    .setNegativeButton(R.string.stop_google_play_do, new DialogInterface.OnClickListener() {
+                        @Override
+                        public void onClick(DialogInterface dialogInterface, int i) {
+                            ApkUtils.showInstalledAppDetails(MainSettingsActivity.this, "com.android.vending");
+                        }
+                    })
+                    .show();
+        }
     }
 
     private void openGooglePlay() {
