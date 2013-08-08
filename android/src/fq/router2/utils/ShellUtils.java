@@ -51,9 +51,10 @@ public class ShellUtils {
             } else {
                 return waitFor(Arrays.toString(command), executeNoWait(env, command));
             }
+        } else {
+            Process process = sudoNoWait(env, command);
+            return waitFor(Arrays.toString(command), process);
         }
-        Process process = sudoNoWait(env, command);
-        return waitFor(Arrays.toString(command), process);
     }
 
     public static String sudo(String... command) throws Exception {
@@ -104,7 +105,11 @@ public class ShellUtils {
         Waiter waiter = new Waiter(command, process);
         waiter.start();
         try {
-            waiter.join(3000);
+            if (null == IS_ROOTED) {
+                waiter.join(60 * 1000);
+            } else {
+                waiter.join(3 * 1000);
+            }
         } catch (InterruptedException e) {
             process.destroy();
             throw new Exception("command time out: " + command);
