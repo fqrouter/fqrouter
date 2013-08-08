@@ -43,7 +43,7 @@ def setup():
         '--enable-hosted-domain '
         '--enable-china-domain',
         shell=True,
-        stderr=subprocess.STDOUT, stdout=subprocess.PIPE
+        # stderr=subprocess.STDOUT, stdout=subprocess.PIPE
     ))
     processes.append(subprocess.Popen(
         'python -m fqsocks --outbound-ip 10.1.2.3 '

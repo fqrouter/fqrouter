@@ -108,7 +108,7 @@ public class ShellUtils {
             if (null == IS_ROOTED) {
                 waiter.join(60 * 1000);
             } else {
-                waiter.join(3 * 1000);
+                waiter.join(10 * 1000);
             }
         } catch (InterruptedException e) {
             process.destroy();
