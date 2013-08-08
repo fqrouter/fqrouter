@@ -87,7 +87,7 @@ public class Deployer {
             LogUtils.i("no checksum, assume it is old");
             return true;
         }
-        if (!MANAGER_MAIN_PY.exists()) {
+        if (!isPayloadComplete()) {
             LogUtils.i("payload is corrupted");
             return true;
         }
@@ -105,6 +105,10 @@ public class Deployer {
         } finally {
             inputStream.close();
         }
+    }
+
+    private boolean isPayloadComplete() {
+        return MANAGER_MAIN_PY.exists() && PYTHON_LAUNCHER.exists() && WIFI_TOOLS_DIR.exists();
     }
 
     private void clearDataDirectory() throws Exception {
@@ -198,8 +202,10 @@ public class Deployer {
             LogUtils.i("failed to delete payload.zip after unzip");
         }
         for (int i = 0; i < 5; i++) {
+            LogUtils.i("sleep 2 seconds");
             Thread.sleep(2000); // wait for the files written out
-            if (MANAGER_MAIN_PY.exists() && PYTHON_LAUNCHER.exists() && WIFI_TOOLS_DIR.exists()) {
+            if (isPayloadComplete()) {
+                LogUtils.i("payload is complete");
                 break;
             }
         }
@@ -239,13 +245,17 @@ public class Deployer {
                 makeExecutable(file);
             }
         }
-        files = WIFI_TOOLS_DIR.listFiles();
-        if (files == null) {
-            throw new Exception(WIFI_TOOLS_DIR + " not found");
-        } else {
-            for (File file : files) {
-                makeExecutable(file);
+        try {
+            files = WIFI_TOOLS_DIR.listFiles();
+            if (files == null) {
+                throw new Exception(WIFI_TOOLS_DIR + " not found");
+            } else {
+                for (File file : files) {
+                    makeExecutable(file);
+                }
             }
+        } catch (Exception e) {
+            LogUtils.e("failed to make wifi tools executable", e);
         }
 //        files = PROXY_TOOLS_DIR.listFiles();
 //        if (files == null) {
