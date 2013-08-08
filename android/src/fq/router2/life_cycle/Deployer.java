@@ -201,7 +201,7 @@ public class Deployer {
         if (!new File("/data/data/fq.router2/payload.zip").delete()) {
             LogUtils.i("failed to delete payload.zip after unzip");
         }
-        for (int i = 0; i < 5; i++) {
+        for (int i = 0; i < 10; i++) {
             LogUtils.i("sleep 2 seconds");
             Thread.sleep(2000); // wait for the files written out
             if (isPayloadComplete()) {
