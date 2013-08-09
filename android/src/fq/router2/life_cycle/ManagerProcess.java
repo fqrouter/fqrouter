@@ -28,7 +28,7 @@ public class ManagerProcess {
         if (new File("/data/data/fq.router2/busybox").exists()) {
             ShellUtils.sudo("/data/data/fq.router2/busybox", "killall", "python");
         } else {
-            ShellUtils.sudo("killall", "python");
+            ShellUtils.sudo(ShellUtils.findCommand("killall"), "python");
         }
         for (int i = 0; i < 10; i++) {
             if (exists()) {
@@ -42,7 +42,7 @@ public class ManagerProcess {
         if (new File("/data/data/fq.router2/busybox").exists()) {
             ShellUtils.sudo("/data/data/fq.router2/busybox", "killall", "-KILL", "python");
         } else {
-            ShellUtils.sudo("killall", "-KILL", "python");
+            ShellUtils.sudo(ShellUtils.findCommand("killall"), "-KILL", "python");
         }
     }
 
@@ -52,7 +52,7 @@ public class ManagerProcess {
             if (new File("/data/data/fq.router2/busybox").exists()) {
                 output = ShellUtils.sudo("/data/data/fq.router2/busybox", "killall", "-0", "python");
             } else {
-                output = ShellUtils.sudo("killall", "-0", "python");
+                output = ShellUtils.sudo(ShellUtils.findCommand("killall"), "-0", "python");
             }
             if (output.contains("no process killed")) {
                 return false;
