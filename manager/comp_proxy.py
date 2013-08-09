@@ -88,7 +88,6 @@ def configure(args):
             server['host'], server['port'], server['password'], server['encryption_method'])
         args += ['--proxy', proxy_config]
     if config.read().get('http_proxy_public_servers_enabled', True):
-        args += ['--proxy', 'dynamic,n=20,dns_record=proxy#n#.fqrouter.com,is_public=True,priority=4']
         args += ['--proxy', 'dynamic,n=5,dns_record=proxy2#n#.fqrouter.com,priority=2']
     for server in config.list_http_proxy_private_servers():
         if 'spdy (webvpn)' == server['transport_type']:
