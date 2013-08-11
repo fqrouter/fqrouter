@@ -185,4 +185,9 @@
     <string name="stop_google_play_done">Done, go next</string>
     <string name="stop_google_play_do">Do it now</string>
     <string name="failed_to_open_google_play">Failed to open Google Play</string>
+    <string name="wap_apn_alert_title">incompatible mobile network APN</string>
+    <string name="wap_apn_alert_message">fqrouter is not compatible with the current mobile network access point
+        settings, you need to set it to value other than %s
+    </string>
+    <string name="wap_apn_alert_button">Go to settings</string>
 </resources>

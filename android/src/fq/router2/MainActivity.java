@@ -1,11 +1,14 @@
 package fq.router2;
 
 import android.app.*;
+import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.graphics.ColorMatrix;
 import android.graphics.ColorMatrixColorFilter;
+import android.net.ConnectivityManager;
+import android.net.NetworkInfo;
 import android.net.Uri;
 import android.net.VpnService;
 import android.net.wifi.WifiManager;
@@ -13,6 +16,7 @@ import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
 import android.preference.PreferenceManager;
+import android.provider.Settings;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.app.NotificationCompat;
 import android.view.Menu;
@@ -66,6 +70,12 @@ public class MainActivity extends Activity implements
     private boolean downloaded;
     private WifiManager.WifiLock wifiLock;
     private static boolean dnsPollutionAcked = false;
+    private static final Set<String> WAP_APN_LIST = new HashSet<String>(){{
+        add("cmwap");
+        add("uniwap");
+        add("3gwap");
+        add("ctwap");
+    }};
 
     static {
         IOUtils.createCommonDirs();
@@ -91,7 +101,40 @@ public class MainActivity extends Activity implements
         HandleFatalErrorIntent.register(this);
         DnsPollutedIntent.register(this);
         blinkStatus(0);
-        launch();
+        String apnName = getApnName();
+        LogUtils.i("apn name: " + apnName);
+        if (apnName != null && WAP_APN_LIST.contains(apnName)) {
+            new AlertDialog.Builder(MainActivity.this)
+                    .setIcon(android.R.drawable.ic_dialog_alert)
+                    .setTitle(R.string.wap_apn_alert_title)
+                    .setMessage(String.format(_(R.string.wap_apn_alert_message), apnName))
+                    .setPositiveButton(R.string.wap_apn_alert_button, new DialogInterface.OnClickListener() {
+                        @Override
+                        public void onClick(DialogInterface dialogInterface, int i) {
+                            Intent intent = new Intent(Settings.ACTION_APN_SETTINGS);
+                            startActivity(intent);
+                            clearNotification();
+                            MainActivity.this.finish();
+                        }
+                    })
+                    .show();
+        } else {
+            launch();
+        }
+    }
+
+    private String getApnName() {
+        try {
+            ConnectivityManager conManager = (ConnectivityManager) this.getSystemService(Context.CONNECTIVITY_SERVICE);
+            NetworkInfo ni = conManager.getActiveNetworkInfo();
+            if (null == ni) {
+                return null;
+            }
+            return ni.getExtraInfo();
+        } catch (Exception e) {
+            LogUtils.e("failed to get apn name", e);
+            return null;
+        }
     }
 
     @Override

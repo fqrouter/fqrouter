@@ -167,4 +167,7 @@
     <string name="stop_google_play_done">搞定了</string>
     <string name="stop_google_play_do">这就去搞</string>
     <string name="failed_to_open_google_play">打开Google Play失败</string>
+    <string name="wap_apn_alert_title">不兼容的移动网络APN</string>
+    <string name="wap_apn_alert_message">fqrouter与当前设置的移动网络接入点（APN）不兼容，你需要把它设置为%s之外的选项</string>
+    <string name="wap_apn_alert_button">前去设置</string>
 </resources>
