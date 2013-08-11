@@ -12,5 +12,5 @@ android/jni/libevent
 android/jni/*.tar.gz
 android/jni/openssl
 android/jni/redsocks
-android/libs
 android/obj
+android/lib

@@ -26,6 +26,9 @@ import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
 import android.widget.ToggleButton;
+import com.google.analytics.tracking.android.EasyTracker;
+import com.google.analytics.tracking.android.GoogleAnalytics;
+import com.google.analytics.tracking.android.Tracker;
 import fq.router2.feedback.*;
 import fq.router2.free_internet.*;
 import fq.router2.life_cycle.*;
@@ -80,6 +83,7 @@ public class MainActivity extends Activity implements
     static {
         IOUtils.createCommonDirs();
     }
+
 
 
     @Override
@@ -143,6 +147,18 @@ public class MainActivity extends Activity implements
         if (isLaunched) {
             checkAll();
         }
+    }
+
+    @Override
+    public void onStart() {
+        super.onStart();
+        EasyTracker.getInstance().activityStart(this);
+    }
+
+    @Override
+    public void onStop() {
+        super.onStop();
+        EasyTracker.getInstance().activityStop(this);
     }
 
     private void checkAll() {

@@ -3,6 +3,7 @@ package fq.router2;
 import android.app.ListActivity;
 import android.content.Context;
 import android.net.wifi.WifiManager;
+import android.os.Build;
 import android.os.Bundle;
 import android.view.Menu;
 import android.view.MenuItem;
@@ -10,6 +11,8 @@ import android.view.View;
 import android.widget.ArrayAdapter;
 import android.widget.ListView;
 import android.widget.TextView;
+import com.google.analytics.tracking.android.GoogleAnalytics;
+import com.google.analytics.tracking.android.Tracker;
 import fq.router2.utils.HttpUtils;
 import fq.router2.utils.IOUtils;
 import fq.router2.utils.LogUtils;
@@ -27,12 +30,18 @@ public class PickAndPlayActivity extends ListActivity {
     private static final ArrayList<String> devices = new ArrayList<String>();
     private static final HashMap<String, String> macs = new HashMap<String, String>();
     private WifiManager.WifiLock wifiLock;
+    private GoogleAnalytics gaInstance;
+    private Tracker gaTracker;
 
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.pick_and_play);
+        gaInstance = GoogleAnalytics.getInstance(this);
+        gaTracker = gaInstance.getTracker("UA-37740383-2");
+        gaTracker.setCustomDimension(1, Build.MODEL);
+        gaTracker.sendEvent("pick-and-play", "enter", "", new Long(0));
         devices.clear();
         arrayAdapter = new ArrayAdapter(this, android.R.layout.simple_list_item_multiple_choice, devices);
         setListAdapter(arrayAdapter);
@@ -136,6 +145,11 @@ public class PickAndPlayActivity extends ListActivity {
 
     public void onListItemClick(ListView parent, View v, int position, long id) {
         final boolean isChecked = parent.isItemChecked(position);
+        if (isChecked) {
+            gaTracker.sendEvent("pick-and-play", "pick", "", new Long(0));
+        } else {
+            gaTracker.sendEvent("pick-and-play", "unpick", "", new Long(0));
+        }
         final String ip = devices.get(position).split(" ")[0].trim();
         final String mac = PickAndPlayActivity.macs.get(ip);
         if (null == wifiLock) {
