@@ -7,6 +7,7 @@ import android.content.SharedPreferences;
 import android.content.pm.PackageInfo;
 import android.os.Build;
 import android.preference.PreferenceManager;
+import fq.router2.R;
 import fq.router2.feedback.HandleFatalErrorIntent;
 import fq.router2.free_internet.SocksVpnService;
 import fq.router2.utils.HttpUtils;
@@ -58,7 +59,7 @@ public class LaunchService extends IntentService {
         } else {
             File managerLogFile = new File("/data/data/fq.router2/log/fqsocks.log");
             if (managerLogFile.exists() && !managerLogFile.canWrite()) {
-                handleFatalError(LogUtils.e("ROOT permission lost, re-install fqrouter to fix"));
+                handleFatalError(LogUtils.e(_(R.string.status_root_permission_lost)));
                 return;
             }
         }
@@ -94,6 +95,10 @@ public class LaunchService extends IntentService {
         deployAndLaunch();
     }
 
+    private String _(int id) {
+        return getResources().getString(id);
+    }
+
     private void deployAndLaunch() {
         try {
             LogUtils.i("Kill existing manager process");
@@ -119,7 +124,7 @@ public class LaunchService extends IntentService {
             }
         } else {
             if (Build.VERSION.SDK_INT < 14) {
-                handleFatalError("[ROOT] is required");
+                handleFatalError(_(R.string.status_root_is_requried_below_4_0));
                 return;
             }
             fatalError = launch(true);
