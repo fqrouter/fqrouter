@@ -75,7 +75,8 @@ def check_call(args):
         proc.stdin.write(' '.join(args))
         proc.stdin.write('\n')
         proc.communicate()
-        if proc.poll():
+        retcode = proc.poll()
+        if retcode and retcode != -11:
             raise subprocess.CalledProcessError(proc.poll(), args)
         return 0
     else:
@@ -91,7 +92,7 @@ def check_output(args):
         proc.stdin.write('\n')
         output = proc.communicate()[0]
         retcode = proc.poll()
-        if retcode:
+        if retcode and retcode != -11:
             raise subprocess.CalledProcessError(retcode, args, output=output)
         return output
     else:
