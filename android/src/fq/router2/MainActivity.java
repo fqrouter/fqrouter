@@ -107,7 +107,7 @@ public class MainActivity extends Activity implements
         blinkStatus(0);
         String apnName = getApnName();
         LogUtils.i("apn name: " + apnName);
-        if (apnName != null && WAP_APN_LIST.contains(apnName)) {
+        if (apnName != null && WAP_APN_LIST.contains(apnName.toLowerCase())) {
             new AlertDialog.Builder(MainActivity.this)
                     .setIcon(android.R.drawable.ic_dialog_alert)
                     .setTitle(R.string.wap_apn_alert_title)
