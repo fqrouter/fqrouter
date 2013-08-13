@@ -555,6 +555,14 @@ public class MainActivity extends Activity implements
                 startVpn();
             }
         } else {
+            if (isFirewallRunning()) {
+                new AlertDialog.Builder(MainActivity.this)
+                        .setIcon(android.R.drawable.ic_dialog_alert)
+                        .setTitle(R.string.firwall_conflict_alert_title)
+                        .setMessage(R.string.firwall_conflict_alert_message)
+                        .setPositiveButton(R.string.firwall_conflict_alert_ok, null)
+                        .show();
+            }
             if (ApkUtils.isInstalled(this, "fq.router")) {
                 new Thread(new Runnable() {
                     @Override
@@ -568,6 +576,15 @@ public class MainActivity extends Activity implements
             ConnectFreeInternetService.execute(this);
         }
         checkUpdate();
+    }
+
+    private boolean isFirewallRunning() {
+        try {
+            return ShellUtils.sudo("iptables -L -v -n").contains("wall");
+        } catch (Exception e) {
+            LogUtils.e("failed to check is firwall running", e);
+            return false;
+        }
     }
 
     private void uninstallOldVersion() {
