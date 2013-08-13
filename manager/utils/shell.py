@@ -27,7 +27,7 @@ def launch_python(name, args, on_exit=None):
         proc = subprocess.Popen(command, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, env=env)
     gevent.sleep(0.5)
     retcode = proc.poll()
-    if retcode and retcode != -11:
+    if retcode:
         try:
             output, _ = proc.communicate()
             LOGGER.error('%s exit %s output: %s' % (name, retcode, output))
@@ -77,7 +77,7 @@ def check_call(args):
         proc.stdin.write('\n')
         proc.communicate()
         retcode = proc.poll()
-        if retcode and retcode != -11:
+        if retcode:
             raise subprocess.CalledProcessError(retcode, args)
         return 0
     else:
@@ -93,7 +93,7 @@ def check_output(args):
         proc.stdin.write('\n')
         output = proc.communicate()[0]
         retcode = proc.poll()
-        if retcode and retcode != -11:
+        if retcode:
             raise subprocess.CalledProcessError(retcode, args, output=output)
         return output
     else:
