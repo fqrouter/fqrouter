@@ -107,18 +107,26 @@ public class MainActivity extends Activity implements
         blinkStatus(0);
         String apnName = getApnName();
         LogUtils.i("apn name: " + apnName);
-        if (apnName != null && WAP_APN_LIST.contains(apnName.trim().toLowerCase())) {
+        final File ignoredFile = new File("/data/data/fq.router2/etc/apn-alert-ignored");
+        if (apnName != null && WAP_APN_LIST.contains(apnName.trim().toLowerCase()) && !ignoredFile.exists()) {
             new AlertDialog.Builder(MainActivity.this)
                     .setIcon(android.R.drawable.ic_dialog_alert)
                     .setTitle(R.string.wap_apn_alert_title)
                     .setMessage(String.format(_(R.string.wap_apn_alert_message), apnName))
-                    .setPositiveButton(R.string.wap_apn_alert_button, new DialogInterface.OnClickListener() {
+                    .setPositiveButton(R.string.wap_apn_alert_change_now, new DialogInterface.OnClickListener() {
                         @Override
                         public void onClick(DialogInterface dialogInterface, int i) {
                             Intent intent = new Intent(Settings.ACTION_APN_SETTINGS);
                             startActivity(intent);
                             clearNotification();
                             MainActivity.this.finish();
+                        }
+                    })
+                    .setNegativeButton(R.string.wap_apn_alert_ignore, new DialogInterface.OnClickListener() {
+                        @Override
+                        public void onClick(DialogInterface dialogInterface, int i) {
+                            IOUtils.writeToFile(ignoredFile, "OK");
+                            launch();
                         }
                     })
                     .show();

@@ -169,7 +169,8 @@
     <string name="failed_to_open_google_play">打开Google Play失败</string>
     <string name="wap_apn_alert_title">不兼容的移动网络APN</string>
     <string name="wap_apn_alert_message">fqrouter与当前设置的移动网络接入点（APN）不兼容，你需要把它设置为%s之外的选项</string>
-    <string name="wap_apn_alert_button">前去设置</string>
+    <string name="wap_apn_alert_change_now">前去设置</string>
     <string name="status_root_permission_lost">ROOT授权丢失，请手工卸载重装fqrouter</string>
     <string name="status_root_is_requried_below_4_0">需要ROOT，除非Android版本为4.0以上</string>
+    <string name="wap_apn_alert_ignore">这不是问题</string>
 </resources>

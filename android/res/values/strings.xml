@@ -189,7 +189,8 @@
     <string name="wap_apn_alert_message">fqrouter is not compatible with the current mobile network access point
         settings, you need to set it to value other than %s
     </string>
-    <string name="wap_apn_alert_button">Go to settings</string>
+    <string name="wap_apn_alert_change_now">Go to settings</string>
     <string name="status_root_permission_lost">ROOT permission lost, re-install fqrouter to fix</string>
     <string name="status_root_is_requried_below_4_0">[ROOT] is required for Android below 4.0</string>
+    <string name="wap_apn_alert_ignore">Ignore</string>
 </resources>
