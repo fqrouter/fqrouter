@@ -193,7 +193,7 @@ public class Deployer {
             ShellUtils.waitFor("unzip", process);
         } catch (Exception e) {
             LogUtils.e("unzip failed", e);
-            Thread.sleep(3);
+            Thread.sleep(3000);
             process = Runtime.getRuntime().exec(
                     ShellUtils.BUSYBOX_FILE + " unzip -o -q payload.zip", new String[0], ShellUtils.DATA_DIR);
             ShellUtils.waitFor("unzip", process);
