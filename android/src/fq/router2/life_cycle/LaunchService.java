@@ -48,25 +48,6 @@ public class LaunchService extends IntentService {
         LogUtils.i("ver: " + getMyVersion(this));
         boolean rooted = ShellUtils.checkRooted();
         LogUtils.i("rooted: " + rooted);
-        if (rooted) {
-            try {
-                String output = ShellUtils.sudo("iptables -L -v -n");
-                if (output.contains("udp spt:53 dpt:1 NFQUEUE num 2")) {
-                    LogUtils.e("left over found in iptables: " + output);
-                }
-                if (output.contains("wall")) {
-                    handleFatalError(_(R.string.hint_firwall_conflict));
-                }
-            } catch (Exception e) {
-                LogUtils.e("failed to check iptables", e);
-            }
-        } else {
-            File managerLogFile = new File("/data/data/fq.router2/log/fqsocks.log");
-            if (managerLogFile.exists() && !managerLogFile.canWrite()) {
-                handleFatalError(LogUtils.e(_(R.string.status_root_permission_lost)));
-                return;
-            }
-        }
         if (!rooted && isOldVersionRunning()) {
             handleFatalError(LogUtils.e("old version is still running"));
             return;
@@ -95,6 +76,22 @@ public class LaunchService extends IntentService {
                 handleFatalError(LogUtils.e("failed to stop exiting process", e));
             }
             return;
+        }
+        if (rooted) {
+            try {
+                String output = ShellUtils.sudo("iptables -L -v -n");
+                if (output.contains("udp spt:53 dpt:1 NFQUEUE num 2")) {
+                    LogUtils.e("left over found in iptables: " + output);
+                }
+            } catch (Exception e) {
+                LogUtils.e("failed to check iptables", e);
+            }
+        } else {
+            File managerLogFile = new File("/data/data/fq.router2/log/fqsocks.log");
+            if (managerLogFile.exists() && !managerLogFile.canWrite()) {
+                handleFatalError(LogUtils.e(_(R.string.status_root_permission_lost)));
+                return;
+            }
         }
         deployAndLaunch();
     }

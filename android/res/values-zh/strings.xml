@@ -173,5 +173,4 @@
     <string name="status_root_permission_lost">ROOT授权丢失，请手工卸载重装fqrouter</string>
     <string name="status_root_is_requried_below_4_0">需要ROOT，除非Android版本为4.0以上</string>
     <string name="wap_apn_alert_ignore">这不是问题</string>
-    <string name="hint_firwall_conflict">fqrouter不能与防火墙软件同时运行，它可能导致各种诡异问题</string>
 </resources>

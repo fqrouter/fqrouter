@@ -193,7 +193,4 @@
     <string name="status_root_permission_lost">ROOT permission lost, re-install fqrouter to fix</string>
     <string name="status_root_is_requried_below_4_0">[ROOT] is required for Android below 4.0</string>
     <string name="wap_apn_alert_ignore">Ignore</string>
-    <string name="hint_firwall_conflict">fqrouter can not run with other firewall software side by side, it might cause
-        unexpected problem
-    </string>
 </resources>
