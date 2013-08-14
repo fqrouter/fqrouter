@@ -5,6 +5,7 @@ import android.app.NotificationManager;
 import android.content.Context;
 import android.content.Intent;
 import fq.router2.utils.LogUtils;
+import fq.router2.utils.StartedAtFlag;
 
 public class ExitService extends IntentService {
 
@@ -19,6 +20,7 @@ public class ExitService extends IntentService {
 
     private void exit() {
         LogUtils.i("Exiting...");
+        StartedAtFlag.delete();
         try {
             ManagerProcess.kill();
         } catch (Exception e) {

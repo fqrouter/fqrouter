@@ -57,7 +57,8 @@ public class MainActivity extends Activity implements
         DownloadedIntent.Handler,
         DownloadFailedIntent.Handler,
         HandleFatalErrorIntent.Handler,
-        DnsPollutedIntent.Handler {
+        DnsPollutedIntent.Handler,
+        HandleAlertIntent.Handler {
 
     public final static int SHOW_AS_ACTION_IF_ROOM = 1;
     private final static int ITEM_ID_EXIT = 1;
@@ -104,6 +105,7 @@ public class MainActivity extends Activity implements
         DownloadFailedIntent.register(this);
         HandleFatalErrorIntent.register(this);
         DnsPollutedIntent.register(this);
+        HandleAlertIntent.register(this);
         blinkStatus(0);
         String apnName = getApnName();
         LogUtils.i("apn name: " + apnName);

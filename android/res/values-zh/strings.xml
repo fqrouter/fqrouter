@@ -173,4 +173,7 @@
     <string name="status_root_permission_lost">ROOT授权丢失，请手工卸载重装fqrouter</string>
     <string name="status_root_is_requried_below_4_0">需要ROOT，除非Android版本为4.0以上</string>
     <string name="wap_apn_alert_ignore">这不是问题</string>
+    <string name="abnormal_exit_alert_title">上次没有正常退出</string>
+    <string name="abnormal_exit_alert_message">fqrouter上次没有被正常退出，它可能是因为软件升级的时候fqrouter仍然在后台运行导致的。如果你遇到了问题，请尝试重启手机。</string>
+    <string name="abnormal_exit_alert_ok">明白了</string>
 </resources>

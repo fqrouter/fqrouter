@@ -1,5 +1,6 @@
 package fq.router2.life_cycle;
 
+import android.app.AlertDialog;
 import android.app.IntentService;
 import android.content.Context;
 import android.content.Intent;
@@ -9,12 +10,10 @@ import android.os.Build;
 import android.preference.PreferenceManager;
 import android.widget.Toast;
 import fq.router2.R;
+import fq.router2.feedback.HandleAlertIntent;
 import fq.router2.feedback.HandleFatalErrorIntent;
 import fq.router2.free_internet.SocksVpnService;
-import fq.router2.utils.HttpUtils;
-import fq.router2.utils.IOUtils;
-import fq.router2.utils.LogUtils;
-import fq.router2.utils.ShellUtils;
+import fq.router2.utils.*;
 import org.json.JSONObject;
 
 import java.io.File;
@@ -93,6 +92,11 @@ public class LaunchService extends IntentService {
                 return;
             }
         }
+        if (StartedAtFlag.read() > 0) {
+            sendBroadcast(new HandleAlertIntent(HandleAlertIntent.ALERT_TYPE_ABNORMAL_EXIT));
+            StartedAtFlag.delete();
+        }
+        StartedAtFlag.create();
         deployAndLaunch();
     }
 
