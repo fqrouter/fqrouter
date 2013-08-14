@@ -117,6 +117,10 @@ public class SocksVpnService extends VpnService {
             if ("TUN".equals(parts[0])) {
                 fdSocket.setFileDescriptorsForSend(new FileDescriptor[]{tunFD});
                 outputStream.write('*');
+            } else if ("PING".equals(parts[0])) {
+                OutputStreamWriter outputStreamWriter = new OutputStreamWriter(outputStream);
+                outputStreamWriter.write("PONG");
+                outputStreamWriter.close();
             } else if ("OPEN UDP".equals(parts[0])) {
                 String socketId = parts[1];
                 passUdpFileDescriptor(fdSocket, outputStream, socketId);

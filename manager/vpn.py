@@ -195,36 +195,59 @@ def handle_ping(environ, start_response):
     yield 'VPN PONG/%s' % FQROUTER_VERSION
 
 
-def check_ping():
-    gevent.sleep(1)
-    try:
-        if 'VPN PONG/%s' % FQROUTER_VERSION == urllib2.urlopen('http://127.0.0.1:8318/ping').read():
-            LOGGER.info('check ping succeed')
+def read_tun_fd_until_ready():
+    LOGGER.info('connecting to fdsock')
+    while True:
+        tun_fd = read_tun_fd()
+        if tun_fd:
+            return tun_fd
         else:
-            raise Exception('ping does not respond correctly')
-    except:
-        LOGGER.exception('check ping failed')
-        sys.exit(1)
+            LOGGER.info('retry in 3 seconds')
+            gevent.sleep(3)
 
 
 def read_tun_fd():
-    LOGGER.info('connecting to fdsock')
+    fdsock = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
+    with contextlib.closing(fdsock):
+        try:
+            fdsock.connect('\0fdsock2')
+            fdsock.sendall('TUN\n')
+            gevent.socket.wait_read(fdsock.fileno())
+            tun_fd = _multiprocessing.recvfd(fdsock.fileno())
+            if tun_fd == 1:
+                LOGGER.error('received invalid tun fd')
+                return None
+            return tun_fd
+        except:
+            return None
+
+
+def fdsock_ping():
+    fdsock = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
+    with contextlib.closing(fdsock):
+        try:
+            fdsock.connect('\0fdsock2')
+            fdsock.sendall('PING\n')
+            gevent.socket.wait_read(fdsock.fileno())
+            response = fdsock.recv(8192)
+            if response != 'PONG':
+                LOGGER.error('received invalid response: [%s]' % response)
+                return False
+            return True
+        except:
+            LOGGER.exception('failed to fdsock ping')
+            return False
+
+
+def heartbeat():
     while True:
-        fdsock = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
-        with contextlib.closing(fdsock):
-            try:
-                fdsock.connect('\0fdsock2')
-                LOGGER.info('connected to fdsock2')
-                fdsock.sendall('TUN\n')
-                gevent.socket.wait_read(fdsock.fileno())
-                tun_fd = _multiprocessing.recvfd(fdsock.fileno())
-                if tun_fd == 1:
-                    LOGGER.error('received invalid tun fd')
-                    continue
-                return tun_fd
-            except:
-                LOGGER.info('retry in 3 seconds')
-                gevent.sleep(3)
+        if fdsock_ping():
+            gevent.sleep(15)
+        else:
+            gevent.sleep(3)
+            if not fdsock_ping():
+                LOGGER.critical('fdsock ping failed, java process died')
+                os._exit(1)
 
 
 if '__main__' == __name__:
@@ -238,14 +261,14 @@ if '__main__' == __name__:
     httpd.HANDLERS[('GET', 'ping')] = handle_ping
     httpd.HANDLERS[('POST', 'free-internet/connect')] = handle_free_internet_connect
     httpd.HANDLERS[('POST', 'free-internet/disconnect')] = handle_free_internet_disconnect
-    greenlets = [gevent.spawn(httpd.serve_forever),
-                 gevent.spawn(check_ping)]
+    greenlets = [gevent.spawn(httpd.serve_forever)]
     try:
-        tun_fd = read_tun_fd()
+        tun_fd = read_tun_fd_until_ready()
         LOGGER.info('tun fd: %s' % tun_fd)
     except:
         LOGGER.exception('failed to get tun fd')
         sys.exit(1)
+    gevent.spawn(heartbeat)
     greenlets.append(gevent.spawn(serve_udp))
     greenlets.append(gevent.spawn(redirect_tun_traffic, tun_fd))
     args = [
