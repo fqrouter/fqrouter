@@ -7,6 +7,7 @@ import android.content.SharedPreferences;
 import android.content.pm.PackageInfo;
 import android.os.Build;
 import android.preference.PreferenceManager;
+import android.widget.Toast;
 import fq.router2.R;
 import fq.router2.feedback.HandleFatalErrorIntent;
 import fq.router2.free_internet.SocksVpnService;
@@ -52,6 +53,9 @@ public class LaunchService extends IntentService {
                 String output = ShellUtils.sudo("iptables -L -v -n");
                 if (output.contains("udp spt:53 dpt:1 NFQUEUE num 2")) {
                     LogUtils.e("left over found in iptables: " + output);
+                }
+                if (output.contains("wall")) {
+                    handleFatalError(_(R.string.hint_firwall_conflict));
                 }
             } catch (Exception e) {
                 LogUtils.e("failed to check iptables", e);
