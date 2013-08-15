@@ -6,19 +6,19 @@ import java.security.MessageDigest;
 
 public class IOUtils {
 
+    public static File ETC_DIR = new File("/data/data/fq.router2/etc");
+    public static File VAR_DIR = new File("/data/data/fq.router2/var");
+    public static File LOG_DIR = new File("/data/data/fq.router2/log");
 
     public static void createCommonDirs() {
-        File etcDir = new File("/data/data/fq.router2/etc");
-        if (!etcDir.exists()) {
-            etcDir.mkdir();
+        if (!ETC_DIR.exists()) {
+            ETC_DIR.mkdir();
         }
-        File varDir = new File("/data/data/fq.router2/var");
-        if (!varDir.exists()) {
-            varDir.mkdir();
+        if (!VAR_DIR.exists()) {
+            VAR_DIR.mkdir();
         }
-        File logDir = new File("/data/data/fq.router2/log");
-        if (!logDir.exists()) {
-            logDir.mkdir();
+        if (!LOG_DIR.exists()) {
+            LOG_DIR.mkdir();
         }
     }
 
