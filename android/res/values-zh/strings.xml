@@ -177,4 +177,8 @@
     <string name="abnormal_exit_alert_message">fqrouter上次没有被正常退出，它可能是因为软件升级的时候fqrouter仍然在后台运行导致的。如果你遇到了问题，请尝试重启手机。</string>
     <string name="abnormal_exit_alert_ok">明白了</string>
     <string name="pref_open_advanced_settings">高级设置</string>
+    <string name="hosts_modified_alert_title">Hosts文件被修改了</string>
+    <string name="hosts_modified_alert_message">如果使用了未及时更新的hosts文件，可能会导致某些网站无法访问。使用fqrouter不推荐修改hosts文件</string>
+    <string name="hosts_modified_alert_revert">清空Hosts文件</string>
+    <string name="hosts_modified_alert_ignore">不再提示</string>
 </resources>

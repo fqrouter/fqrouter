@@ -200,4 +200,10 @@
     </string>
     <string name="abnormal_exit_alert_ok">OK</string>
     <string name="pref_open_advanced_settings">Advanced Settings</string>
+    <string name="hosts_modified_alert_title">Hosts file modified</string>
+    <string name="hosts_modified_alert_message">If the modified hosts file is not up to date, it might cause some
+        website not accessible. Using fqrouter does not recommend modifying the hosts file
+    </string>
+    <string name="hosts_modified_alert_revert">Clear Hosts</string>
+    <string name="hosts_modified_alert_ignore">Ignore</string>
 </resources>

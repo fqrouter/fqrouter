@@ -1,6 +1,7 @@
 package fq.router2.life_cycle;
 
 import android.content.Context;
+import fq.router2.feedback.HandleAlertIntent;
 import fq.router2.utils.IOUtils;
 import fq.router2.utils.LogUtils;
 import fq.router2.utils.ShellUtils;
@@ -36,6 +37,13 @@ public class Deployer {
             makeExecutable(ShellUtils.BUSYBOX_FILE);
         } catch (Exception e) {
             return logFatalError("failed to copy busybox", e);
+        }
+        try {
+            if (ShellUtils.sudo(ShellUtils.BUSYBOX_FILE + " cat /system/etc/hosts").contains("google")) {
+                context.sendBroadcast(new HandleAlertIntent(HandleAlertIntent.ALERT_TYPE_HOSTS_MODIFIED));
+            }
+        } catch (Exception e) {
+            LogUtils.e("failed to check hosts file", e);
         }
         boolean foundPayloadUpdate;
         try {
