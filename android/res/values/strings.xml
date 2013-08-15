@@ -144,7 +144,7 @@
     <string name="menu_rescan">Rescan</string>
     <string name="pick_and_play_picked_hint">picked %s, free internet is accessible from that device now</string>
     <string name="status_scan_completed">scan completed</string>
-    <string name="pref_general_auto_access_check">Automatically check youtube/twitter access</string>
+    <string name="pref_general_auto_access_check">Automatically check effectiveness</string>
     <string name="pref_general_auto_access_check_summary">Check if youtube/twitter is accessible after start</string>
     <string name="pref_general_notification_enabled">Notification Bar Icon</string>
     <string name="report_error_alert_title">Help me, help yourself</string>
@@ -162,7 +162,7 @@
     <string name="dns_polluted_alert_toggle_failed">Failed to toggle airplane mode, you need to do it manually</string>
     <string name="dns_polluted_alert_toggle_succeed">DNS pollution should be cleared now</string>
     <string name="pref_general_launch_after_booted">Launch at boot time</string>
-    <string name="pref_shortcut_full_google_play">Open Full Version Google Play</string>
+    <string name="pref_open_full_google_play">Open Full Version Google Play</string>
     <string name="reset_wifi_succeeded">Reset Wifi Succeeded</string>
     <string name="reset_wifi_failed">Reset Wifi Failed</string>
     <string name="pref_wifi_hotspot_reset_summary">if wifi repeater failed to start and break your can no longer connect
@@ -199,4 +199,5 @@
         your mobile.
     </string>
     <string name="abnormal_exit_alert_ok">OK</string>
+    <string name="pref_open_advanced_settings">Advanced Settings</string>
 </resources>

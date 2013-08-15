@@ -54,34 +54,6 @@
                 android:title="@string/pref_ssh_public_servers"
                 android:defaultValue=""/>
     </PreferenceCategory>
-    <PreferenceCategory android:title="@string/pref_bypass_category" android:key="Bypass">
-        <CheckBoxPreference
-                android:key="YoutubeScramblerEnabled"
-                android:title="@string/pref_bypass_youtube_scrambler"
-                android:summary="@string/pref_bypass_youtube_scrambler_summary"
-                android:defaultValue="true"/>
-        <CheckBoxPreference
-                android:key="TcpScramblerEnabled"
-                android:title="@string/pref_tcp_scrambler"
-                android:summary="@string/pref_tcp_scrambler_summary"
-                android:defaultValue="true"/>
-    </PreferenceCategory>
-    <PreferenceCategory android:title="@string/pref_shortcut_category">
-        <CheckBoxPreference
-                android:key="ChinaShortcutEnabled"
-                android:title="@string/pref_shortcut_china_shortcut"
-                android:summary="@string/pref_shortcut_china_shortcut_summary"
-                android:defaultValue="true"/>
-        <CheckBoxPreference
-                android:key="DirectAccessEnabled"
-                android:title="@string/pref_shortcut_direct_access"
-                android:summary="@string/pref_shortcut_direct_access_summary"
-                android:defaultValue="true"/>
-        <Preference
-                android:key="OpenFullGooglePlay"
-                android:title="@string/pref_shortcut_full_google_play"
-                android:defaultValue="false"/>
-    </PreferenceCategory>
     <PreferenceCategory android:title="@string/pref_general_category" android:key="General">
         <CheckBoxPreference
                 android:key="NotificationEnabled"
@@ -102,4 +74,10 @@
                 android:title="@string/pref_general_launch_after_booted"
                 android:defaultValue="false"/>
     </PreferenceCategory>
+    <Preference
+            android:key="OpenAdvancedSettings"
+            android:title="@string/pref_open_advanced_settings"/>
+    <Preference
+            android:key="OpenFullGooglePlay"
+            android:title="@string/pref_open_full_google_play"/>
 </PreferenceScreen>

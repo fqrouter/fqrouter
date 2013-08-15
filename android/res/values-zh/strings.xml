@@ -134,7 +134,7 @@
     <string name="menu_rescan">重新扫描</string>
     <string name="pick_and_play_picked_hint">选取了 %s，现在那个设备应该已经翻墙了</string>
     <string name="status_scan_completed">扫描完毕</string>
-    <string name="pref_general_auto_access_check">自动检查是否可以访问 youtube/twitter</string>
+    <string name="pref_general_auto_access_check">自动评估效果</string>
     <string name="pref_general_auto_access_check_summary">在启动后检查 youtube/twitter 是否可以访问</string>
     <string name="pref_general_notification_enabled">状态栏显示图标</string>
     <string name="report_error_alert_title">帮助我也是帮助你自己</string>
@@ -151,7 +151,7 @@
     <string name="dns_polluted_alert_toggle_failed">没搞定，你还是自己手工开关一下飞行模式吧</string>
     <string name="dns_polluted_alert_toggle_succeed">DNS污染应该已经被清理干净了</string>
     <string name="pref_general_launch_after_booted">开机自启</string>
-    <string name="pref_shortcut_full_google_play">打开完整版Google市场</string>
+    <string name="pref_open_full_google_play">打开完整版Google市场</string>
     <string name="reset_wifi_succeeded">重置无线成功</string>
     <string name="reset_wifi_failed">重置无线失败</string>
     <string name="pref_wifi_hotspot_reset_summary">如果无线中继启动失败，而且导致wifi再也连不上了，你可以点这个按钮修复</string>
@@ -176,4 +176,5 @@
     <string name="abnormal_exit_alert_title">上次没有正常退出</string>
     <string name="abnormal_exit_alert_message">fqrouter上次没有被正常退出，它可能是因为软件升级的时候fqrouter仍然在后台运行导致的。如果你遇到了问题，请尝试重启手机。</string>
     <string name="abnormal_exit_alert_ok">明白了</string>
+    <string name="pref_open_advanced_settings">高级设置</string>
 </resources>

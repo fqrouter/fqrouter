@@ -45,6 +45,8 @@
         </activity>
         <activity android:name=".SshSettingsActivity">
         </activity>
+        <activity android:name=".AdvancedSettingsActivity">
+        </activity>
         <service android:name=".life_cycle.LaunchService">
         </service>
         <service android:name=".life_cycle.ExitService">
