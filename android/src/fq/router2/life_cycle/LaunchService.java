@@ -263,6 +263,9 @@ public class LaunchService extends IntentService {
     }
 
     private void handleFatalError(String message) {
+        if (ShellUtils.isRooted() && "run-needs-su".equals(ManagerProcess.getRunMode())) {
+            sendBroadcast(new HandleAlertIntent(HandleAlertIntent.ALERT_TYPE_RUN_NEEDS_SU));
+        }
         sendBroadcast(new HandleFatalErrorIntent(message));
     }
 

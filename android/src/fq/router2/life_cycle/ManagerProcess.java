@@ -64,7 +64,7 @@ public class ManagerProcess {
         }
     }
 
-    public static String getRunMode() throws Exception {
+    public static String getRunMode() {
         if (!Deployer.MANAGER_MAIN_PY.exists()) {
             return "run-normally";
         }

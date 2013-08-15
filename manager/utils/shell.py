@@ -18,11 +18,9 @@ def launch_python(name, args, on_exit=None):
     env = os.environ.copy()
     env['PYTHONHOME'] = PYTHON_HOME
     if USE_SU:
-        proc = subprocess.Popen('su', stdout=subprocess.PIPE, stderr=subprocess.STDOUT, stdin=subprocess.PIPE, env=env)
-        proc.terminate = functools.partial(sudo_kill, proc.pid)
-        proc.stdin.write('exec ')
-        proc.stdin.write(' '.join(command))
-        proc.stdin.write('\n')
+        proc = subprocess.Popen(
+            ['su', '-c', 'PYTHONHOME=%s' % PYTHON_HOME] + command,
+            stdout=subprocess.PIPE, stderr=subprocess.STDOUT, stdin=subprocess.PIPE, env=env)
     else:
         proc = subprocess.Popen(command, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, env=env)
     gevent.sleep(0.5)
@@ -33,7 +31,7 @@ def launch_python(name, args, on_exit=None):
             LOGGER.error('%s exit %s output: %s' % (name, retcode, output))
         except:
             LOGGER.exception('failed to log %s exit output' % name)
-        raise Exception('failed to start %s' % name)
+        raise Exception('failed to start %s, retcode %s' % (name, retcode))
     LOGGER.info('%s started: %s' % (name, proc.pid))
     gevent.spawn(monitor_process, name, proc, on_exit)
     return proc
@@ -57,11 +55,7 @@ def monitor_process(name, proc, on_exit):
 
 def call(args):
     if USE_SU:
-        proc = subprocess.Popen('su', stdin=subprocess.PIPE)
-        proc.terminate = functools.partial(sudo_kill, proc.pid)
-        proc.stdin.write('exec ')
-        proc.stdin.write(' '.join(args))
-        proc.stdin.write('\n')
+        proc = subprocess.Popen(['su', '-c'] + args)
         proc.communicate()
         return proc.poll()
     else:
@@ -70,11 +64,7 @@ def call(args):
 
 def check_call(args):
     if USE_SU:
-        proc = subprocess.Popen('su', stdin=subprocess.PIPE)
-        proc.terminate = functools.partial(sudo_kill, proc.pid)
-        proc.stdin.write('exec ')
-        proc.stdin.write(' '.join(args))
-        proc.stdin.write('\n')
+        proc = subprocess.Popen(['su', '-c'] + args)
         proc.communicate()
         retcode = proc.poll()
         if retcode:
@@ -86,11 +76,7 @@ def check_call(args):
 
 def check_output(args):
     if USE_SU:
-        proc = subprocess.Popen('su', stdout=subprocess.PIPE, stderr=subprocess.STDOUT, stdin=subprocess.PIPE)
-        proc.terminate = functools.partial(sudo_kill, proc.pid)
-        proc.stdin.write('exec ')
-        proc.stdin.write(' '.join(args))
-        proc.stdin.write('\n')
+        proc = subprocess.Popen(['su', '-c'] + args, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
         output = proc.communicate()[0]
         retcode = proc.poll()
         if retcode:
@@ -102,17 +88,7 @@ def check_output(args):
 
 def Popen(args, **kwargs):
     if USE_SU:
-        proc = subprocess.Popen('su', stdin=subprocess.PIPE, **kwargs)
-        proc.terminate = functools.partial(sudo_kill, proc.pid)
-        proc.stdin.write('exec ')
-        proc.stdin.write(' '.join(args))
-        proc.stdin.write('\n')
-        return proc
+        return subprocess.Popen(['su', '-c'] + args, **kwargs)
     else:
         return subprocess.Popen(args, **kwargs)
 
-def sudo_kill(pid):
-    LOGGER.info('kill %s' % pid)
-    proc = subprocess.Popen('su', stdin=subprocess.PIPE)
-    proc.stdin.write('exec /data/data/fq.router2/busybox kill %s\n' % pid)
-    proc.communicate()

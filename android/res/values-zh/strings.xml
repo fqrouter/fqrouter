@@ -181,4 +181,7 @@
     <string name="hosts_modified_alert_message">如果使用了未及时更新的hosts文件，可能会导致某些网站无法访问。使用fqrouter不推荐修改hosts文件</string>
     <string name="hosts_modified_alert_revert">清空Hosts文件</string>
     <string name="hosts_modified_alert_ignore">不再提示</string>
+    <string name="run_needs_su_alert_title">ROOT了不好使</string>
+    <string name="run_needs_su_alert_message">你可以退出然后不给ROOT权限重新进入，fqrouter可能可以用VPN模式启动</string>
+    <string name="run_needs_su_alert_ok">明白了</string>
 </resources>

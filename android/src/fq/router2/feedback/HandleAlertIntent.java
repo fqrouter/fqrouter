@@ -16,6 +16,7 @@ import java.io.File;
 public class HandleAlertIntent extends Intent {
     public final static String ALERT_TYPE_ABNORMAL_EXIT = "AbnormalExit";
     public final static String ALERT_TYPE_HOSTS_MODIFIED = "HostsModified";
+    public final static  String ALERT_TYPE_RUN_NEEDS_SU = "RunNeedsSu";
     private final static String ACTION_HANDLE_ALERT = "HandleAlert";
 
     public HandleAlertIntent(String alertType) {
@@ -33,6 +34,8 @@ public class HandleAlertIntent extends Intent {
                     showAbnormalExitAlert(context);
                 } else if (ALERT_TYPE_HOSTS_MODIFIED.equals(alertType)) {
                     showHostsModifiedAlert(context);
+                } else if (ALERT_TYPE_RUN_NEEDS_SU.equals(alertType)) {
+                    showRunNeedsSuAlert(context);
                 }
             }
         }, new IntentFilter(ACTION_HANDLE_ALERT));
@@ -72,6 +75,15 @@ public class HandleAlertIntent extends Intent {
                         IOUtils.writeToFile(ignoredFile, "OK");
                     }
                 })
+                .show();
+    }
+
+    private static void showRunNeedsSuAlert(Context context) {
+        new AlertDialog.Builder(context)
+                .setIcon(android.R.drawable.ic_dialog_alert)
+                .setTitle(R.string.run_needs_su_alert_title)
+                .setMessage(R.string.run_needs_su_alert_message)
+                .setPositiveButton(R.string.run_needs_su_alert_ok, null)
                 .show();
     }
 

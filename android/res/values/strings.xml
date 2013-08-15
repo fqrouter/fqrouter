@@ -206,4 +206,9 @@
     </string>
     <string name="hosts_modified_alert_revert">Clear Hosts</string>
     <string name="hosts_modified_alert_ignore">Ignore</string>
+    <string name="run_needs_su_alert_title">ROOT not working</string>
+    <string name="run_needs_su_alert_message">You may exit and restart without ROOT permission, fqrouter might work in
+        VPN mode
+    </string>
+    <string name="run_needs_su_alert_ok">OK</string>
 </resources>
