@@ -62,11 +62,18 @@ public class HandleAlertIntent extends Intent {
                 .setPositiveButton(R.string.hosts_modified_alert_revert, new DialogInterface.OnClickListener() {
                     @Override
                     public void onClick(DialogInterface dialogInterface, int i) {
-                        try {
-                            ShellUtils.sudo(ShellUtils.BUSYBOX_FILE + " rm /system/etc/hosts");
-                        } catch (Exception e) {
-                            LogUtils.e("failed to delete hosts file", e);
-                        }
+                        new Thread(new Runnable() {
+                            @Override
+                            public void run() {
+                                try {
+                                    ShellUtils.sudo(ShellUtils.BUSYBOX_FILE + " mount -o remount,rw /system");
+                                    ShellUtils.sudo(ShellUtils.BUSYBOX_FILE + " rm /system/etc/hosts");
+                                    ShellUtils.sudo(ShellUtils.BUSYBOX_FILE + " mount -o remount,ro /system");
+                                } catch (Exception e) {
+                                    LogUtils.e("failed to delete hosts file", e);
+                                }
+                            }
+                        }).start();
                     }
                 })
                 .setNegativeButton(R.string.hosts_modified_alert_ignore, new DialogInterface.OnClickListener() {
