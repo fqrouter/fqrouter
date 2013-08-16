@@ -141,13 +141,13 @@ def clean():
         stop_components(*ALL_COMPONENTS)
         try:
             LOGGER.info('iptables -L -v -n')
-            LOGGER.info(subprocess.check_output(shlex.split('iptables -L -v -n'), stderr=subprocess.STDOUT))
+            LOGGER.info(shell.check_output(shlex.split('iptables -L -v -n')))
         except subprocess.CalledProcessError, e:
             LOGGER.error('failed to dump filter table: %s' % (sys.exc_info()[1]))
             LOGGER.error(e.output)
         try:
             LOGGER.info('iptables -t nat -L -v -n')
-            LOGGER.info(subprocess.check_output(shlex.split('iptables -t nat -L -v -n'), stderr=subprocess.STDOUT))
+            LOGGER.info(shell.check_output(shlex.split('iptables -t nat -L -v -n')))
         except subprocess.CalledProcessError, e:
             LOGGER.error('failed to dump nat table: %s' % (sys.exc_info()[1]))
             LOGGER.error(e.output)
