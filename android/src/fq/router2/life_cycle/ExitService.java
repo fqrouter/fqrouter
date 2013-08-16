@@ -4,6 +4,9 @@ import android.app.IntentService;
 import android.app.NotificationManager;
 import android.content.Context;
 import android.content.Intent;
+import android.os.Build;
+import com.google.analytics.tracking.android.GoogleAnalytics;
+import com.google.analytics.tracking.android.Tracker;
 import fq.router2.utils.IOUtils;
 import fq.router2.utils.LogUtils;
 import fq.router2.utils.ShellUtils;
@@ -23,8 +26,13 @@ public class ExitService extends IntentService {
     }
 
     private void exit() {
-        LogUtils.i("Exiting...");
-        StartedAtFlag.delete();
+        long elapsedTime = StartedAtFlag.delete();
+        GoogleAnalytics gaInstance = GoogleAnalytics.getInstance(this);
+        Tracker gaTracker = gaInstance.getTracker("UA-37740383-2");
+        gaTracker.setCustomDimension(1, Build.MODEL);
+        gaTracker.setCustomDimension(2, String.valueOf(ShellUtils.isRooted()));
+        gaTracker.sendTiming("engagement", elapsedTime, "session", "session");
+        LogUtils.i("Exiting, session life " + elapsedTime + "..." );
         if (ShellUtils.isRooted()) {
             try {
                 for (File file : new File[]{IOUtils.ETC_DIR, IOUtils.LOG_DIR, IOUtils.VAR_DIR}) {

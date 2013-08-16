@@ -3,6 +3,7 @@ package fq.router2;
 import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.preference.*;
+import com.google.analytics.tracking.android.EasyTracker;
 import fq.router2.utils.IOUtils;
 import fq.router2.utils.LogUtils;
 import org.json.JSONArray;
@@ -64,6 +65,18 @@ public class ShadowsocksSettingsActivity extends PreferenceActivity implements S
         PreferenceManager
                 .getDefaultSharedPreferences(this)
                 .unregisterOnSharedPreferenceChangeListener(this);
+    }
+
+    @Override
+    public void onStart() {
+        super.onStart();
+        EasyTracker.getInstance().activityStart(this);
+    }
+
+    @Override
+    public void onStop() {
+        super.onStop();
+        EasyTracker.getInstance().activityStop(this);
     }
 
     @Override

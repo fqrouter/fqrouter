@@ -7,6 +7,7 @@ import android.preference.PreferenceActivity;
 import android.preference.PreferenceCategory;
 import android.preference.PreferenceManager;
 import android.widget.Toast;
+import com.google.analytics.tracking.android.EasyTracker;
 import fq.router2.life_cycle.LaunchService;
 import fq.router2.utils.ShellUtils;
 
@@ -20,6 +21,18 @@ public class AdvancedSettingsActivity extends PreferenceActivity implements Shar
             PreferenceCategory bypassCategoryPref = (PreferenceCategory) findPreference("Bypass");
             bypassCategoryPref.removePreference(bypassCategoryPref.findPreference("TcpScramblerEnabled"));
         }
+    }
+
+    @Override
+    public void onStart() {
+        super.onStart();
+        EasyTracker.getInstance().activityStart(this);
+    }
+
+    @Override
+    public void onStop() {
+        super.onStop();
+        EasyTracker.getInstance().activityStop(this);
     }
 
     @Override

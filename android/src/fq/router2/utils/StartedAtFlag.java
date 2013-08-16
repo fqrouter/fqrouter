@@ -12,9 +12,13 @@ public class StartedAtFlag {
         file.setReadable(true, false);
     }
 
-    public static void delete() {
+    public static long delete() {
         if (file.exists()) {
+            long elapsedTime = read();
             file.delete();
+            return elapsedTime;
+        } else {
+            return 0;
         }
     }
 
@@ -22,7 +26,7 @@ public class StartedAtFlag {
         if (file.exists()) {
             Long startedAt = Long.valueOf(IOUtils.readFromFile(file));
             LogUtils.e("started at " + startedAt + ", current is " + System.currentTimeMillis());
-            return startedAt;
+            return System.currentTimeMillis() - startedAt;
         } else {
             return 0;
         }

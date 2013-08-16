@@ -219,22 +219,26 @@ public class MainActivity extends Activity implements
 
     @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
-        if (ASK_VPN_PERMISSION == requestCode) {
-            if (resultCode == RESULT_OK) {
-                if (LaunchService.SOCKS_VPN_SERVICE_CLASS == null) {
-                    onHandleFatalError("vpn class not loaded");
+        try {
+            if (ASK_VPN_PERMISSION == requestCode) {
+                if (resultCode == RESULT_OK) {
+                    if (LaunchService.SOCKS_VPN_SERVICE_CLASS == null) {
+                        onHandleFatalError("vpn class not loaded");
+                    } else {
+                        updateStatus(_(R.string.status_launch_vpn));
+                        stopService(new Intent(this, LaunchService.SOCKS_VPN_SERVICE_CLASS));
+                        startService(new Intent(this, LaunchService.SOCKS_VPN_SERVICE_CLASS));
+                        uninstallOldVersion();
+                    }
                 } else {
-                    updateStatus(_(R.string.status_launch_vpn));
-                    stopService(new Intent(this, LaunchService.SOCKS_VPN_SERVICE_CLASS));
-                    startService(new Intent(this, LaunchService.SOCKS_VPN_SERVICE_CLASS));
-                    uninstallOldVersion();
+                    onHandleFatalError(_(R.string.status_vpn_rejected));
+                    LogUtils.e("failed to start vpn service: " + resultCode);
                 }
             } else {
-                onHandleFatalError(_(R.string.status_vpn_rejected));
-                LogUtils.e("failed to start vpn service: " + resultCode);
+                super.onActivityResult(requestCode, resultCode, data);
             }
-        } else {
-            super.onActivityResult(requestCode, resultCode, data);
+        } catch (Exception e) {
+            LogUtils.e("failed to handle onActivityResult", e);
         }
     }
 

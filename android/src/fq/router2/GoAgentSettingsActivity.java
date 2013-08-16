@@ -6,6 +6,7 @@ import android.preference.EditTextPreference;
 import android.preference.Preference;
 import android.preference.PreferenceActivity;
 import android.preference.PreferenceManager;
+import com.google.analytics.tracking.android.EasyTracker;
 import fq.router2.utils.IOUtils;
 import fq.router2.utils.LogUtils;
 import org.json.JSONArray;
@@ -34,6 +35,18 @@ public class GoAgentSettingsActivity extends PreferenceActivity implements Share
                         return true;
                     }
                 });
+    }
+
+    @Override
+    public void onStart() {
+        super.onStart();
+        EasyTracker.getInstance().activityStart(this);
+    }
+
+    @Override
+    public void onStop() {
+        super.onStop();
+        EasyTracker.getInstance().activityStop(this);
     }
 
     @Override

@@ -11,6 +11,7 @@ import android.view.View;
 import android.widget.ArrayAdapter;
 import android.widget.ListView;
 import android.widget.TextView;
+import com.google.analytics.tracking.android.EasyTracker;
 import com.google.analytics.tracking.android.GoogleAnalytics;
 import com.google.analytics.tracking.android.Tracker;
 import fq.router2.utils.HttpUtils;
@@ -46,6 +47,18 @@ public class PickAndPlayActivity extends ListActivity {
         arrayAdapter = new ArrayAdapter(this, android.R.layout.simple_list_item_multiple_choice, devices);
         setListAdapter(arrayAdapter);
         scan(1);
+    }
+
+    @Override
+    public void onStart() {
+        super.onStart();
+        EasyTracker.getInstance().activityStart(this);
+    }
+
+    @Override
+    public void onStop() {
+        super.onStop();
+        EasyTracker.getInstance().activityStop(this);
     }
 
     private void scan(final int factor) {
