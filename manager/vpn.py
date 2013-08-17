@@ -20,9 +20,9 @@ import gevent.socket
 import dpkt
 import comp_proxy
 import traceback
+import urllib2
 
 from utils import httpd
-import urllib2
 
 FQROUTER_VERSION = 'UNKNOWN'
 LOGGER = logging.getLogger('fqrouter.%s' % __name__)
@@ -190,9 +190,20 @@ def handle_ping(environ, start_response):
         LOGGER.info('VPN PONG/%s' % FQROUTER_VERSION)
     except:
         traceback.print_exc()
-        sys.exit(1)
+        os._exit(1)
     start_response(httplib.OK, [('Content-Type', 'text/plain')])
     yield 'VPN PONG/%s' % FQROUTER_VERSION
+
+
+def handle_exit(environ, start_response):
+    gevent.spawn(exit_later)
+    start_response(httplib.OK, [('Content-Type', 'text/plain')])
+    return ['EXITING']
+
+
+def exit_later():
+    gevent.sleep(0.5)
+    os._exit(1)
 
 
 def read_tun_fd_until_ready():
@@ -222,34 +233,6 @@ def read_tun_fd():
             return None
 
 
-def fdsock_ping():
-    fdsock = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
-    with contextlib.closing(fdsock):
-        try:
-            fdsock.connect('\0fdsock2')
-            fdsock.sendall('PING\n')
-            gevent.socket.wait_read(fdsock.fileno())
-            response = fdsock.recv(8192)
-            if response != 'PONG':
-                LOGGER.error('received invalid response: [%s]' % response)
-                return False
-            return True
-        except:
-            LOGGER.exception('failed to fdsock ping')
-            return False
-
-
-def heartbeat():
-    while True:
-        if fdsock_ping():
-            gevent.sleep(15)
-        else:
-            gevent.sleep(3)
-            if not fdsock_ping():
-                LOGGER.critical('fdsock ping failed, java process died')
-                os._exit(1)
-
-
 if '__main__' == __name__:
     setup_logging()
     LOGGER.info('environment: %s' % os.environ.items())
@@ -258,7 +241,15 @@ if '__main__' == __name__:
         gevent.monkey.patch_ssl()
     except:
         LOGGER.exception('failed to patch ssl')
+    try:
+        response = urllib2.urlopen('http://127.0.0.1:8318/exit', '').read()
+        if 'EXITING' == response:
+            LOGGER.critical('!!! find previous instance, exiting !!!')
+            gevent.sleep(3)
+    except:
+        LOGGER.exception('failed to exit previous')
     httpd.HANDLERS[('GET', 'ping')] = handle_ping
+    httpd.HANDLERS[('POST', 'exit')] = handle_exit
     httpd.HANDLERS[('POST', 'free-internet/connect')] = handle_free_internet_connect
     httpd.HANDLERS[('POST', 'free-internet/disconnect')] = handle_free_internet_disconnect
     greenlets = [gevent.spawn(httpd.serve_forever)]
@@ -268,7 +259,6 @@ if '__main__' == __name__:
     except:
         LOGGER.exception('failed to get tun fd')
         sys.exit(1)
-    gevent.spawn(heartbeat)
     greenlets.append(gevent.spawn(serve_udp))
     greenlets.append(gevent.spawn(redirect_tun_traffic, tun_fd))
     args = [
