@@ -1,5 +1,5 @@
 while true
 do
     ./check-goagent-appids.py | ./update-goagent-dns.py && echo "DONE! `date`"
-    sleep 450
+    sleep 180
 done

@@ -4,18 +4,9 @@ import os
 import random
 
 sys.path.append(os.path.join(os.path.dirname(__file__), '..'))
-import urllib2
-import functools
-import httplib
 import gevent
 import gevent.monkey
-import gevent.pool
-import gevent.event
-import subprocess
-import signal
-import atexit
-from fqsocks import fqsocks
-from fqsocks import goagent
+import gevent.queue
 import traceback
 import _goagent
 
@@ -250,25 +241,36 @@ if len(sys.argv) > 1:
 
 random.shuffle(T1_APP_IDS)
 
-def main():
-    gevent.monkey.patch_all()
-    good_app_ids_count = 0
-    _goagent.http_util.dns_resolve = lambda *args, **kwargs: ['203.208.46.210', '203.208.46.209', '203.208.46.212']
-    for appid in T1_APP_IDS + T2_APP_IDS:
+APP_ID_QUEUE = gevent.queue.Queue(items=T1_APP_IDS + T2_APP_IDS)
+good_app_ids_count = 0
+
+def check():
+    global good_app_ids_count
+    while True:
+        appid = APP_ID_QUEUE.get()
         try:
             app_status = _goagent.gae_urlfetch(
                 'GET', 'http://www.baidu.com', {}, '',
-               'https://%s.appspot.com/2?' % appid).app_status
+                'https://%s.appspot.com/2?' % appid).app_status
             sys.stderr.write('%s => %s\n' % (appid, app_status))
             sys.stderr.flush()
             if app_status == 200:
                 print(appid)
                 good_app_ids_count += 1
-                if good_app_ids_count == 10:
-                    break
+                if good_app_ids_count >= 10:
+                    return
         except:
             sys.stderr.write(traceback.format_exc())
             sys.stderr.flush()
+
+def main():
+    gevent.monkey.patch_all()
+    _goagent.http_util.dns_resolve = lambda *args, **kwargs: ['203.208.46.210', '203.208.46.209', '203.208.46.212']
+    greenlets = []
+    for i in range(8):
+        greenlets.append(gevent.spawn(check))
+    for greenlet in greenlets:
+        greenlet.join()
     print('')
 
 
