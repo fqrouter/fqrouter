@@ -12,6 +12,7 @@ from utils import shutdown_hook
 from utils import config
 from utils import httpd
 from utils import shell
+from utils import iptables
 
 import comp_wifi
 import comp_dns
@@ -85,6 +86,8 @@ def is_free_internet_connected():
 
 
 def run():
+    iptables.init_fq_chains()
+    shutdown_hook.add(iptables.flush_fq_chain)
     if config.read().get('comp_wifi_enabled', True):
         start_components(comp_wifi, comp_lan)
     else:
@@ -114,7 +117,6 @@ def check_ping():
 def start_components(*components):
     for comp in components:
         try:
-            shutdown_hook.add(comp.stop)
             handlers = comp.start()
             for method, url, handler in handlers or []:
                 httpd.HANDLERS[(method, url)] = handler
@@ -138,7 +140,7 @@ def stop_components(*components):
 def clean():
     LOGGER.info('clean...')
     try:
-        stop_components(*ALL_COMPONENTS)
+        iptables.flush_fq_chain()
         try:
             LOGGER.info('iptables -L -v -n')
             LOGGER.info(shell.check_output(shlex.split('iptables -L -v -n')))

@@ -9,12 +9,9 @@ RE_SPACE = re.compile(r'\s+')
 
 
 def insert_rules(rules):
-    created_chains = set()
     for signature, rule_args in reversed(rules): # insert the last one first
+        rule_args = update_rule_args(rule_args)
         table, chain, _ = rule_args
-        if chain not in ['OUTPUT', 'INPUT', 'FORWARD', 'PREROUTING', 'POSTROUTING'] and chain not in created_chains:
-            shell.call(shlex.split('iptables -t %s -N %s' % (table, chain)))
-            created_chains.add(chain)
         if contains_rule(table, chain, signature):
             LOGGER.info('skip insert rule: -t %s -I %s %s' % rule_args)
         else:
@@ -24,6 +21,7 @@ def insert_rules(rules):
 def delete_rules(rules):
     for signature, rule_args in rules:
         try:
+            rule_args = update_rule_args(rule_args)
             table, chain, _ = rule_args
             for i in range(16):
                 if contains_rule(table, chain, signature):
@@ -35,27 +33,47 @@ def delete_rules(rules):
             LOGGER.exception('failed to delete rule: -t %s -D %s %s' % rule_args)
 
 
-def delete_nfqueue_rules(queue_number):
-    signature = 'NFQUEUE num %s' % queue_number
+def update_rule_args(rule_args):
+    rule_args = list(rule_args)
+    rule_args[1] = 'fq_%s' % rule_args[1]
+    return tuple(rule_args)
+
+
+def flush_fq_chain():
     for table in ('filter', 'nat'):
         rules = dump_table(table)
         for chain, chain_rules in rules.items():
-            for i, rule in enumerate(reversed(chain_rules)):
-                index = len(chain_rules) - i
-                if signature in rule['extra']:
-                    delete_rule(table, chain, str(index))
+            if chain.startswith('fq_'):
+                shell.call(shlex.split('iptables -t %s --flush %s' % (table, chain)))
 
 
-def delete_chain(target):
-    for table in ('filter', 'nat'):
-        rules = dump_table(table)
-        for chain, chain_rules in rules.items():
-            for i, rule in enumerate(reversed(chain_rules)):
-                index = len(chain_rules) - i
-                if target == rule['target']:
-                    delete_rule(table, chain, str(index))
-        shell.call(shlex.split('iptables -t %s --flush %s' % (table, target)))
-        shell.call(shlex.split('iptables -t %s -X %s' % (table, target)))
+def init_fq_chains():
+    init_fq_chains_for_table('filter', ['OUTPUT', 'FORWARD', 'INPUT'])
+    init_fq_chains_for_table('nat', ['PREROUTING', 'INPUT', 'OUTPUT', 'POSTROUTING'])
+
+
+def init_fq_chains_for_table(table, chains):
+    rules = dump_table(table)
+    for chain in chains:
+        fq_chain = 'fq_%s' % chain
+        if fq_chain not in rules:
+            shell.call(shlex.split('iptables -t %s -N %s' % (table, fq_chain)))
+        ensure_first_target(table, chain, rules.get(chain, []), fq_chain)
+
+
+def ensure_first_target(table, from_chain, from_chain_rules, to_chain):
+    if not from_chain_rules:
+        shell.call(shlex.split('iptables -t %s -I %s -j %s' % (table, from_chain, to_chain)))
+        return
+    if to_chain == from_chain_rules[0]['target']:
+        return
+    to_be_deleted = []
+    for i, rule in enumerate(from_chain_rules):
+        if to_chain == rule['target']:
+            to_be_deleted.append(i + 1)
+    for i in reversed(to_be_deleted):
+        shell.call(shlex.split('iptables -t %s -D %s %s' % (table, from_chain, i)))
+    shell.call(shlex.split('iptables -t %s -I %s -j %s' % (table, from_chain, to_chain)))
 
 
 def insert_rule(optional, table, chain, rule_text):
@@ -130,19 +148,3 @@ def parse(output):
             LOGGER.debug('parsed rule: %s' % str(rule))
             rules.setdefault(current_chain, []).append(rule)
     return rules
-
-
-if '__main__' == __name__:
-    logging.basicConfig(level=logging.DEBUG)
-    sample_output = """
-Chain PREROUTING (policy ACCEPT 0 packets, 0 bytes)
- pkts bytes target     prot opt in     out     source               destination
-
-Chain OUTPUT (policy ACCEPT 15 packets, 1260 bytes)
- pkts bytes target     prot opt in     out     source               destination
-   37  2165 DNAT       udp  --  *      *       0.0.0.0/0            0.0.0.0/0           udp dpt:53 to:8.8.8.8:53
-
-Chain POSTROUTING (policy ACCEPT 52 packets, 3425 bytes)
- pkts bytes target     prot opt in     out     source               destination
- """
-    delete_nfqueue_rules(1)
