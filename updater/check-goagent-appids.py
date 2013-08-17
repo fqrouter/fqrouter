@@ -247,6 +247,8 @@ good_app_ids_count = 0
 def check():
     global good_app_ids_count
     while True:
+        if good_app_ids_count >= 10:
+            return
         appid = APP_ID_QUEUE.get()
         try:
             app_status = _goagent.gae_urlfetch(
@@ -255,10 +257,10 @@ def check():
             sys.stderr.write('%s => %s\n' % (appid, app_status))
             sys.stderr.flush()
             if app_status == 200:
-                print(appid)
-                good_app_ids_count += 1
                 if good_app_ids_count >= 10:
                     return
+                print(appid)
+                good_app_ids_count += 1
         except:
             sys.stderr.write(traceback.format_exc())
             sys.stderr.flush()
