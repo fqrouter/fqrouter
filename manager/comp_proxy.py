@@ -76,19 +76,25 @@ def configure(args):
         args += ['--disable-direct-access']
     if config.read().get('youtube_scrambler_enabled', True):
         args += ['--enable-youtube-scrambler']
+    public_server_types = []
     if config.read().get('goagent_public_servers_enabled', True):
-        args += ['--proxy', 'dynamic,n=10,type=goagent,dns_record=goagent#n#.fqrouter.com,priority=1']
+        public_server_types.append('goagent')
+    if config.read().get('shadowsocks_public_servers_enabled', True):
+        public_server_types.append('ss')
+    if config.read().get('http_proxy_public_servers_enabled', True):
+        public_server_types.append('http-connect')
+        public_server_types.append('http-relay')
+        public_server_types.append('spdy-connect')
+        public_server_types.append('spdy-relay')
+    if public_server_types:
+        args += ['--proxy', 'directory,src=proxies.fqrouter.com,%s' % ','.join(['%s=True' % t for t in public_server_types])]
     for server in config.list_goagent_private_servers():
         proxy_config = 'goagent,appid=%s,path=%s,password=%s' % (server['appid'], server['path'], server['password'])
         args += ['--proxy', proxy_config]
-    if config.read().get('shadowsocks_public_servers_enabled', True):
-        args += ['--proxy', 'dynamic,n=7,type=ss,dns_record=ss#n#.fqrouter.com,priority=2']
     for server in config.list_shadowsocks_private_servers():
         proxy_config = 'ss,proxy_host=%s,proxy_port=%s,password=%s,encrypt_method=%s' % (
             server['host'], server['port'], server['password'], server['encryption_method'])
         args += ['--proxy', proxy_config]
-    if config.read().get('http_proxy_public_servers_enabled', True):
-        args += ['--proxy', 'dynamic,n=5,dns_record=proxy2#n#.fqrouter.com,priority=2']
     for server in config.list_http_proxy_private_servers():
         if 'spdy (webvpn)' == server['transport_type']:
             proxy_config = 'proxy_host=%s,proxy_port=%s,username=%s,password=%s,requested_spdy_version=%s' % \
