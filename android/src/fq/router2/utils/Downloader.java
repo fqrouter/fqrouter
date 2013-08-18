@@ -13,6 +13,7 @@ import java.util.concurrent.Executors;
 
 public class Downloader {
 
+    private static ExecutorService executorService;
     public static void download(String url, String downloadTo, int concurrency, ProgressUpdated callback) {
         try {
             if (!new FileDownloader(new URL(url), new File(downloadTo), concurrency, callback).download()) {
@@ -121,7 +122,6 @@ public class Downloader {
         private int addressIndex;
         private final Queue<Chunk> chunks = new ConcurrentLinkedQueue<Chunk>();
         private final Queue<String> errors = new ConcurrentLinkedQueue<String>();
-        private final ExecutorService executorService;
         private List<Inet4Address> addresses;
 
 
@@ -261,6 +261,16 @@ public class Downloader {
                 }
             }
             throw new Exception("give up getting headers");
+        }
+    }
+
+    public static void shutdown() {
+        try {
+            if (null != executorService) {
+                executorService.shutdownNow();
+            }
+        } catch (Exception e) {
+            LogUtils.e("failed to shutdown executor service", e);
         }
     }
 }

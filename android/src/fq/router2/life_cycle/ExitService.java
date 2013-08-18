@@ -7,10 +7,7 @@ import android.content.Intent;
 import android.os.Build;
 import com.google.analytics.tracking.android.GoogleAnalytics;
 import com.google.analytics.tracking.android.Tracker;
-import fq.router2.utils.IOUtils;
-import fq.router2.utils.LogUtils;
-import fq.router2.utils.ShellUtils;
-import fq.router2.utils.StartedAtFlag;
+import fq.router2.utils.*;
 
 import java.io.File;
 
@@ -44,6 +41,7 @@ public class ExitService extends IntentService {
                 LogUtils.e("failed to chmod files to non-root", e);
             }
         }
+        Downloader.shutdown();
         try {
             ManagerProcess.kill();
         } catch (Exception e) {

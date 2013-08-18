@@ -573,7 +573,6 @@ public class MainActivity extends Activity implements
             checkPickAndPlay();
             ConnectFreeInternetService.execute(this);
         }
-        checkUpdate();
     }
 
     private void uninstallOldVersion() {
@@ -759,6 +758,7 @@ public class MainActivity extends Activity implements
         if (isConnected) {
             updateStatus(_(R.string.status_free_internet_connected));
             enableImage(freeInternetArrow);
+            checkUpdate();
         } else {
             clearStatus();
             disableImage(freeInternetArrow);

@@ -7,9 +7,12 @@ import org.apache.http.conn.ClientConnectionManager;
 import org.apache.http.conn.scheme.PlainSocketFactory;
 import org.apache.http.conn.scheme.Scheme;
 import org.apache.http.conn.scheme.SchemeRegistry;
+import org.apache.http.conn.ssl.SSLSocketFactory;
 import org.apache.http.impl.client.DefaultHttpClient;
 import org.apache.http.impl.conn.tsccm.ThreadSafeClientConnManager;
 import org.apache.http.params.BasicHttpParams;
+import org.apache.http.params.HttpConnectionParams;
+import org.apache.http.params.HttpParams;
 
 import javax.net.ssl.HostnameVerifier;
 import javax.net.ssl.HttpsURLConnection;
@@ -57,18 +60,22 @@ public class HttpsUtils {
     }
 
     private static HttpResponse execute(HttpUriRequest request) throws IOException {
-        return new DefaultHttpClient() {
+        DefaultHttpClient httpClient = new DefaultHttpClient() {
             @Override
             protected ClientConnectionManager createClientConnectionManager() {
                 SchemeRegistry schreg = new SchemeRegistry();
-                org.apache.http.conn.ssl.SSLSocketFactory sslSocketFactory = org.apache.http.conn.ssl.SSLSocketFactory.getSocketFactory();
-                sslSocketFactory.setHostnameVerifier(org.apache.http.conn.ssl.SSLSocketFactory.ALLOW_ALL_HOSTNAME_VERIFIER);
+                SSLSocketFactory sslSocketFactory = SSLSocketFactory.getSocketFactory();
+                sslSocketFactory.setHostnameVerifier(SSLSocketFactory.ALLOW_ALL_HOSTNAME_VERIFIER);
                 schreg.register(new Scheme("https", sslSocketFactory, 443));
                 PlainSocketFactory plainSocketFactory = PlainSocketFactory.getSocketFactory();
                 schreg.register(new Scheme("http", plainSocketFactory, 80));
                 return new ThreadSafeClientConnManager(new BasicHttpParams(), schreg);
             }
-        }.execute(request);
+        };
+        HttpParams httpParameters = httpClient.getParams();
+        HttpConnectionParams.setConnectionTimeout(httpParameters, 5 * 1000);
+        HttpConnectionParams.setSoTimeout(httpParameters, 15 * 1000);
+        return httpClient.execute(request);
     }
 
     public static void download(
