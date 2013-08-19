@@ -211,4 +211,5 @@
         VPN mode
     </string>
     <string name="run_needs_su_alert_ok">OK</string>
+    <string name="menu_main_screen">Main Screen</string>
 </resources>
