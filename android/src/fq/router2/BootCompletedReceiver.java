@@ -44,18 +44,8 @@ public class BootCompletedReceiver extends BroadcastReceiver {
                         return;
                     }
                     if (notificationEnabled) {
-                        Intent mainActivityIntent = new Intent(context, MainActivity.class);
-                        PendingIntent pIntent = PendingIntent.getActivity(context, 0, mainActivityIntent, 0);
-                        Notification notification = new NotificationCompat.Builder(context)
-                                .setSmallIcon(R.drawable.icon)
-                                .setContentTitle(context.getResources().getString(R.string.notification_title))
-                                .setContentText(context.getResources().getString(R.string.status_free_internet_connected))
-                                .setContentIntent(pIntent)
-                                .build();
-                        NotificationManager notificationManager =
-                                (NotificationManager) context.getSystemService(Context.NOTIFICATION_SERVICE);
-                        notification.flags |= Notification.FLAG_ONGOING_EVENT;
-                        notificationManager.notify(1983, notification);
+                        MainActivity.displayNotification(
+                                context, context.getResources().getString(R.string.status_free_internet_connected));
                     }
                 }
             }

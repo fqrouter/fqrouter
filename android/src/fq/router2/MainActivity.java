@@ -58,7 +58,8 @@ public class MainActivity extends Activity implements
         DownloadFailedIntent.Handler,
         HandleFatalErrorIntent.Handler,
         DnsPollutedIntent.Handler,
-        HandleAlertIntent.Handler {
+        HandleAlertIntent.Handler,
+        ExitIntent.Handler {
 
     public final static int SHOW_AS_ACTION_IF_ROOM = 1;
     private final static int ITEM_ID_EXIT = 1;
@@ -106,6 +107,7 @@ public class MainActivity extends Activity implements
         HandleFatalErrorIntent.register(this);
         DnsPollutedIntent.register(this);
         HandleAlertIntent.register(this);
+        ExitIntent.register(this);
         blinkStatus(0);
         String apnName = getApnName();
         LogUtils.i("apn name: " + apnName);
@@ -407,16 +409,23 @@ public class MainActivity extends Activity implements
             clearNotification();
             return;
         }
-        Intent intent = new Intent(this, MainActivity.class);
-        PendingIntent pIntent = PendingIntent.getActivity(this, 0, intent, 0);
-        Notification notification = new NotificationCompat.Builder(this)
+        displayNotification(this, text);
+    }
+
+    public static void displayNotification(Context context, String text) {
+        Intent openIntent = new Intent(context, MainActivity.class);
+        Notification notification = new NotificationCompat.Builder(context)
                 .setSmallIcon(R.drawable.icon)
-                .setContentTitle(_(R.string.notification_title))
+                .setContentTitle(context.getResources().getString(R.string.notification_title))
                 .setContentText(text)
-                .setContentIntent(pIntent)
+                .setContentIntent(PendingIntent.getActivity(context, 0, openIntent, 0))
+                .addAction(
+                        android.R.drawable.ic_menu_close_clear_cancel,
+                        context.getResources().getString(R.string.menu_exit),
+                        PendingIntent.getBroadcast(context, 0, new ExitIntent(), 0))
                 .build();
         NotificationManager notificationManager =
-                (NotificationManager) getSystemService(NOTIFICATION_SERVICE);
+                (NotificationManager) context.getSystemService(NOTIFICATION_SERVICE);
         notification.flags |= Notification.FLAG_ONGOING_EVENT;
         notificationManager.notify(1983, notification);
     }
@@ -447,7 +456,7 @@ public class MainActivity extends Activity implements
         }
     }
 
-    private void exit() {
+    public void exit() {
         if (LaunchService.isVpnRunning()) {
             Toast.makeText(this, R.string.vpn_exit_hint, 5000).show();
             return;
@@ -457,6 +466,7 @@ public class MainActivity extends Activity implements
         ExitService.execute(this);
         startBlinkingImage((ImageView) findViewById(R.id.star));
         startBlinkingStatus(_(R.string.status_exiting));
+        showNotification(_(R.string.status_exiting));
     }
 
     private void toggleFreeInternet(ToggleButton button) {
