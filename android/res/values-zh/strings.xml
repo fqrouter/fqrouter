@@ -174,7 +174,7 @@
     <string name="status_root_is_requried_below_4_0">需要ROOT，除非Android版本为4.0以上</string>
     <string name="wap_apn_alert_ignore">这不是问题</string>
     <string name="abnormal_exit_alert_title">上次没有正常退出</string>
-    <string name="abnormal_exit_alert_message">fqrouter上次没有被正常退出，它可能是因为软件升级的时候fqrouter仍然在后台运行导致的。如果你遇到了问题，请尝试重启手机。</string>
+    <string name="abnormal_exit_alert_message">fqrouter上次没有被正常退出，它可能是因为软件升级的时候fqrouter仍然在后台运行导致的。异常启动一般不会造成什么影响，如果你遇到了无法翻墙或者退出无法上网等现象，请尝试重启手机。</string>
     <string name="abnormal_exit_alert_ok">明白了</string>
     <string name="pref_open_advanced_settings">高级设置</string>
     <string name="hosts_modified_alert_title">Hosts文件被修改了</string>

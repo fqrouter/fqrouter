@@ -23,7 +23,7 @@ def launch_python(name, args, on_exit=None):
         proc.terminate = functools.partial(sudo_kill, proc.pid)
         proc.stdin.write('PYTHONHOME=%s ' % PYTHON_HOME)
         proc.stdin.write(' '.join(command))
-        proc.stdin.write('\n')
+        proc.stdin.write('\nexit\n')
     else:
         proc = subprocess.Popen(command, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, env=env)
     gevent.sleep(0.5)

@@ -1,5 +1,6 @@
 package fq.router2.free_internet;
 
+import android.app.PendingIntent;
 import android.content.Intent;
 import android.net.LocalServerSocket;
 import android.net.LocalSocket;
@@ -46,7 +47,10 @@ public class SocksVpnService extends VpnService {
             if (tunPFD != null) {
                 throw new RuntimeException("another VPN is still running");
             }
+            Intent mainActivityIntent = new Intent(this, MainActivity.class);
+            PendingIntent pIntent = PendingIntent.getActivity(this, 0, mainActivityIntent, 0);
             tunPFD = new Builder()
+                    .setConfigureIntent(pIntent)
                     .setSession("fqrouter2")
                     .addAddress("10.25.1.1", 24)
                     .addRoute("0.0.0.0", 0)
