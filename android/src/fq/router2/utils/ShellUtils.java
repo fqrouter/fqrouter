@@ -133,6 +133,11 @@ public class ShellUtils {
     public static boolean checkRooted() {
         IS_ROOTED = null;
         try {
+            try {
+                LogUtils.i("su version: " + execute(findCommand("su"), "-v").trim());
+            } catch (Exception e) {
+                LogUtils.e("failed to get su version", e);
+            }
             IS_ROOTED = sudo("echo", "hello").contains("hello");
         } catch (Exception e) {
             IS_ROOTED = false;
