@@ -87,5 +87,15 @@
                 <action android:name="FreeInternetChanged" />
             </intent-filter>
         </receiver>
+        <receiver android:name=".ExitReceiver">
+            <intent-filter>
+                <action android:name="Exit" />
+            </intent-filter>
+        </receiver>
+        <receiver android:name=".ExitedReceiver">
+            <intent-filter>
+                <action android:name="Exited" />
+            </intent-filter>
+        </receiver>
     </application>
 </manifest> 

@@ -59,7 +59,7 @@ public class MainActivity extends Activity implements
         HandleFatalErrorIntent.Handler,
         DnsPollutedIntent.Handler,
         HandleAlertIntent.Handler,
-        ExitIntent.Handler {
+        ExitingIntent.Handler {
 
     public final static int SHOW_AS_ACTION_IF_ROOM = 1;
     private final static int ITEM_ID_EXIT = 1;
@@ -107,7 +107,7 @@ public class MainActivity extends Activity implements
         HandleFatalErrorIntent.register(this);
         DnsPollutedIntent.register(this);
         HandleAlertIntent.register(this);
-        ExitIntent.register(this);
+        ExitingIntent.register(this);
         blinkStatus(0);
         String apnName = getApnName();
         LogUtils.i("apn name: " + apnName);
@@ -465,12 +465,9 @@ public class MainActivity extends Activity implements
             Toast.makeText(this, R.string.vpn_exit_hint, 5000).show();
             return;
         }
-        isLaunched = false;
-        disableAll();
         ExitService.execute(this);
-        startBlinkingImage((ImageView) findViewById(R.id.star));
-        startBlinkingStatus(_(R.string.status_exiting));
         showNotification(_(R.string.status_exiting));
+        sendBroadcast(new ExitingIntent());
     }
 
     private void toggleFreeInternet(ToggleButton button) {
@@ -646,7 +643,6 @@ public class MainActivity extends Activity implements
 
     @Override
     public void onExited() {
-        clearNotification();
         finish();
     }
 
@@ -841,5 +837,13 @@ public class MainActivity extends Activity implements
                 Toast.makeText(MainActivity.this, message, 5000).show();
             }
         }, 0);
+    }
+
+    @Override
+    public void onExiting() {
+        isLaunched = false;
+        disableAll();
+        startBlinkingImage((ImageView) findViewById(R.id.star));
+        startBlinkingStatus(_(R.string.status_exiting));
     }
 }
