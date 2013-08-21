@@ -212,4 +212,5 @@
     </string>
     <string name="run_needs_su_alert_ok">OK</string>
     <string name="menu_main_screen">Main Screen</string>
+    <string name="pref_open_full_google_play_summary">This is not a permanent fix. Google Play data will be cleared</string>
 </resources>

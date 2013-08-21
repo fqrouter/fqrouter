@@ -79,5 +79,6 @@
             android:title="@string/pref_open_advanced_settings"/>
     <Preference
             android:key="OpenFullGooglePlay"
-            android:title="@string/pref_open_full_google_play"/>
+            android:title="@string/pref_open_full_google_play"
+            android:summary="@string/pref_open_full_google_play_summary"/>
 </PreferenceScreen>
