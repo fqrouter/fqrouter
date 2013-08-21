@@ -81,4 +81,7 @@
             android:key="OpenFullGooglePlay"
             android:title="@string/pref_open_full_google_play"
             android:summary="@string/pref_open_full_google_play_summary"/>
+    <Preference
+            android:key="OpenAbout"
+            android:title="@string/pref_open_about"/>
 </PreferenceScreen>
