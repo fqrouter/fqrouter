@@ -38,5 +38,6 @@ public class ConnectivityChangeReceiver extends BroadcastReceiver {
 
     private void clearStates() throws Exception {
         HttpUtils.post("http://127.0.0.1:8319/clear-states");
+        HttpUtils.post("http://127.0.0.1:8318/pick-and-play/clear");
     }
 }

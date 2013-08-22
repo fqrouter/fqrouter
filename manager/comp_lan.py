@@ -21,6 +21,7 @@ def start():
         ('GET', 'pick-and-play/scan', handle_scan),
         ('POST', 'pick-and-play/forge-default-gateway', handle_forge_default_gateway),
         ('POST', 'pick-and-play/restore-default-gateway', handle_restore_default_gateway),
+        ('POST', 'pick-and-play/clear', handle_clear),
         ('GET', 'pick-and-play/is-started', handle_is_started)
     ]
 
@@ -124,3 +125,12 @@ def restart_fqlan():
                   '--ifconfig-command', '/data/data/fq.router2/busybox',
                   '--ip-command', '/data/data/fq.router2/busybox',
                   'forge'] + ['%s,%s' % (ip, mac) for ip, mac in picked_devices.items()], on_exit=stop)
+
+
+def handle_clear(environ, start_response):
+    picked_devices.clear()
+    recently_scanned_devices.clear()
+    restart_fqlan()
+    LOGGER.info('cleared pick & play')
+    start_response(httplib.OK, [('Content-Type', 'text/plain')])
+    yield 'OK'
