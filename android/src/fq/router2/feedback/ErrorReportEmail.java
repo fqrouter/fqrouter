@@ -55,7 +55,7 @@ public class ErrorReportEmail {
         i.putExtra(Intent.EXTRA_SUBJECT, "android fqrouter error report for version " + LaunchService.getMyVersion(context));
         String error = createLogFiles();
         i.putExtra(Intent.EXTRA_TEXT, getErrorMailBody() + error);
-        attachLogFiles(i, "manager.log", "fqsocks.log", "logcat.log", "getprop.log", "dmesg.log",
+        attachLogFiles(i, "manager.log", "fqsocks.log", "fqsocks.log.1", "logcat.log", "getprop.log",
                 "iptables.log", "wifi.log", "wifi.log.1", "fqdns.log", "fqting.log", "fqlan.log", "scan.log",
                 "current-java.log", "current-python.log");
         return i;
@@ -71,12 +71,6 @@ public class ErrorReportEmail {
         } catch (Exception e) {
             LogUtils.e("failed to execute getprop", e);
             error += "\n" + "failed to execute getprop" + "\n" + e;
-        }
-        try {
-            ShellUtils.sudo(ShellUtils.findCommand("dmesg"), ">", LOG_DIR + "/dmesg.log");
-        } catch (Exception e) {
-            LogUtils.e("failed to execute dmesg", e);
-            error += "\n" + "failed to execute dmesg" + "\n" + e;
         }
         try {
             ShellUtils.sudo(ShellUtils.findCommand("logcat"),
@@ -113,6 +107,7 @@ public class ErrorReportEmail {
         }
         error += copyLog("manager.log");
         error += copyLog("fqsocks.log");
+        error += copyLog("fqsocks.log.1");
         error += copyLog("fqdns.log");
         error += copyLog("fqting.log");
         error += copyLog("fqlan.log");
