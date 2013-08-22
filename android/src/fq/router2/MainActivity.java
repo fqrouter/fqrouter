@@ -424,7 +424,7 @@ public class MainActivity extends Activity implements
                         context.getResources().getString(R.string.menu_exit),
                         PendingIntent.getBroadcast(context, 0, new ExitIntent(), 0))
                 .addAction(
-                        android.R.drawable.ic_menu_edit,
+                        android.R.drawable.ic_menu_manage,
                         context.getResources().getString(R.string.menu_main_screen),
                         PendingIntent.getActivity(context, 0, openIntent, 0))
                 .build();
