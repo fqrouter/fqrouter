@@ -232,7 +232,7 @@ T2_APP_IDS = ['fgabootstrap001', 'fgabootstrap002', 'fgabootstrap003', 'fgaboots
               'wowdonate-100-07', 'gfanqiang030-1', 'gfanqiang001-6', 'gfanqiang017-6', 'lovejiani049',
               'wowdonate-sd-39']
 
-for i in range(1, 31):
+for i in range(1, 60):
     T2_APP_IDS.append('goagentbiz%s' % i)
 
 if len(sys.argv) > 1:
