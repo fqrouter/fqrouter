@@ -134,7 +134,11 @@ public class ShellUtils {
         IS_ROOTED = null;
         try {
             try {
-                LogUtils.i("su version: " + execute(findCommand("su"), "-v").trim());
+                Process process = executeNoWait(new HashMap<String, String>(), findCommand("su"), "-v");
+                OutputStreamWriter writer = new OutputStreamWriter(process.getOutputStream());
+                writer.write("exit\n");
+                writer.close();
+                LogUtils.i("su version: " + waitFor("su -v", process).trim());
             } catch (Exception e) {
                 LogUtils.e("failed to get su version", e);
             }
