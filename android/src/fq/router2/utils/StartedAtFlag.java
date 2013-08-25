@@ -8,26 +8,44 @@ public class StartedAtFlag {
 
     public static void create() {
         delete();
+        IOUtils.createCommonDirs();
         IOUtils.writeToFile(file, String.valueOf(System.currentTimeMillis()));
         file.setReadable(true, false);
     }
 
     public static long delete() {
-        if (file.exists()) {
-            long elapsedTime = read();
-            file.delete();
-            return elapsedTime;
-        } else {
+        try {
+            if (file.exists()) {
+                long elapsedTime = read();
+                file.delete();
+                if (elapsedTime < 0) {
+                    return 0;
+                }
+                return elapsedTime;
+            } else {
+                return 0;
+            }
+        } catch (Exception e) {
+            LogUtils.e("failed to delete started at flag", e);
             return 0;
         }
     }
 
     public static long read() {
-        if (file.exists()) {
-            Long startedAt = Long.valueOf(IOUtils.readFromFile(file));
-            LogUtils.e("started at " + startedAt + ", current is " + System.currentTimeMillis());
-            return System.currentTimeMillis() - startedAt;
-        } else {
+        try {
+            if (file.exists()) {
+                String content = IOUtils.readFromFile(file);
+                if (content.trim().length() == 0) {
+                    return 0;
+                }
+                Long startedAt = Long.valueOf(content);
+                LogUtils.e("started at " + startedAt + ", current is " + System.currentTimeMillis());
+                return System.currentTimeMillis() - startedAt;
+            } else {
+                return 0;
+            }
+        } catch (Exception e) {
+            LogUtils.e("failed to read started at flag", e);
             return 0;
         }
     }

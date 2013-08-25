@@ -92,11 +92,15 @@ public class LaunchService extends IntentService {
                 return;
             }
         }
-        if (StartedAtFlag.read() > 0) {
-            sendBroadcast(new HandleAlertIntent(HandleAlertIntent.ALERT_TYPE_ABNORMAL_EXIT));
-            StartedAtFlag.delete();
+        try {
+            if (StartedAtFlag.read() > 0) {
+                sendBroadcast(new HandleAlertIntent(HandleAlertIntent.ALERT_TYPE_ABNORMAL_EXIT));
+                StartedAtFlag.delete();
+            }
+            StartedAtFlag.create();
+        } catch (Exception e) {
+            LogUtils.e("failed to check started at flag", e);
         }
-        StartedAtFlag.create();
         deployAndLaunch();
     }
 

@@ -24,11 +24,13 @@ public class ExitService extends IntentService {
 
     private void exit() {
         long elapsedTime = StartedAtFlag.delete();
-        GoogleAnalytics gaInstance = GoogleAnalytics.getInstance(this);
-        Tracker gaTracker = gaInstance.getTracker("UA-37740383-2");
-        gaTracker.setCustomDimension(1, Build.MODEL);
-        gaTracker.setCustomDimension(2, String.valueOf(ShellUtils.isRooted()));
-        gaTracker.sendTiming("engagement", elapsedTime, "session", "session");
+        if (elapsedTime > 0) {
+            GoogleAnalytics gaInstance = GoogleAnalytics.getInstance(this);
+            Tracker gaTracker = gaInstance.getTracker("UA-37740383-2");
+            gaTracker.setCustomDimension(1, Build.MODEL);
+            gaTracker.setCustomDimension(2, String.valueOf(ShellUtils.isRooted()));
+            gaTracker.sendTiming("engagement", elapsedTime, "session", "session");
+        }
         LogUtils.i("Exiting, session life " + elapsedTime + "..." );
         if (ShellUtils.isRooted()) {
             try {

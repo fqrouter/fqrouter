@@ -11,14 +11,18 @@ public class IOUtils {
     public static File LOG_DIR = new File("/data/data/fq.router2/log");
 
     public static void createCommonDirs() {
-        if (!ETC_DIR.exists()) {
-            ETC_DIR.mkdir();
-        }
-        if (!VAR_DIR.exists()) {
-            VAR_DIR.mkdir();
-        }
-        if (!LOG_DIR.exists()) {
-            LOG_DIR.mkdir();
+        try {
+            if (!ETC_DIR.exists()) {
+                ETC_DIR.mkdir();
+            }
+            if (!VAR_DIR.exists()) {
+                VAR_DIR.mkdir();
+            }
+            if (!LOG_DIR.exists()) {
+                LOG_DIR.mkdir();
+            }
+        } catch (Exception e) {
+            LogUtils.e("failed to create common dirs", e);
         }
     }
 
