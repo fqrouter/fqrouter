@@ -135,8 +135,7 @@ def create_tcp_socket(server_ip, server_port, connect_timeout):
     fdsock = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
     with contextlib.closing(fdsock):
         fdsock.connect('\0fdsock2')
-        socket_id = generate_socket_id()
-        fdsock.sendall('OPEN TCP,%s,%s,%s,%s\n' % (socket_id, server_ip, server_port, connect_timeout * 1000))
+        fdsock.sendall('OPEN TCP,%s,%s,%s\n' % (server_ip, server_port, connect_timeout * 1000))
         gevent.socket.wait_read(fdsock.fileno())
         fd = _multiprocessing.recvfd(fdsock.fileno())
         if fd == 1:
@@ -154,8 +153,7 @@ def create_udp_socket():
     fdsock = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
     with contextlib.closing(fdsock):
         fdsock.connect('\0fdsock2')
-        socket_id = generate_socket_id()
-        fdsock.sendall('OPEN UDP,%s\n' % socket_id)
+        fdsock.sendall('OPEN UDP\n')
         gevent.socket.wait_read(fdsock.fileno())
         fd = _multiprocessing.recvfd(fdsock.fileno())
         if fd == 1:
@@ -167,10 +165,6 @@ def create_udp_socket():
 
 
 fqdns.SPI['create_udp_socket'] = create_udp_socket
-
-
-def generate_socket_id():
-    return str(uuid4()).replace('-', '')[:5]
 
 
 def setup_logging():

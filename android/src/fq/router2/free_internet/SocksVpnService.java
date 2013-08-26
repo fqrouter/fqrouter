@@ -126,14 +126,12 @@ public class SocksVpnService extends VpnService {
                 outputStreamWriter.write("PONG");
                 outputStreamWriter.close();
             } else if ("OPEN UDP".equals(parts[0])) {
-                String socketId = parts[1];
-                passUdpFileDescriptor(fdSocket, outputStream, socketId);
+                passUdpFileDescriptor(fdSocket, outputStream);
             } else if ("OPEN TCP".equals(parts[0])) {
-                String socketId = parts[1];
-                String dstIp = parts[2];
-                int dstPort = Integer.parseInt(parts[3]);
-                int connectTimeout = Integer.parseInt(parts[4]);
-                passTcpFileDescriptor(fdSocket, outputStream, socketId, dstIp, dstPort, connectTimeout);
+                String dstIp = parts[1];
+                int dstPort = Integer.parseInt(parts[2]);
+                int connectTimeout = Integer.parseInt(parts[3]);
+                passTcpFileDescriptor(fdSocket, outputStream, dstIp, dstPort, connectTimeout);
             } else {
                 throw new UnsupportedOperationException("fdsock unable to handle: " + request);
             }
@@ -154,43 +152,55 @@ public class SocksVpnService extends VpnService {
 
     private void passTcpFileDescriptor(
             LocalSocket fdSocket, OutputStream outputStream,
-            String socketId, String dstIp, int dstPort, int connectTimeout) throws Exception {
+            String dstIp, int dstPort, int connectTimeout) throws Exception {
         Socket sock = new Socket();
         sock.setTcpNoDelay(true); // force file descriptor being created
-        if (protect(sock)) {
-            try {
-                sock.connect(new InetSocketAddress(dstIp, dstPort), connectTimeout);
-                ParcelFileDescriptor fd = ParcelFileDescriptor.fromSocket(sock);
-                fdSocket.setFileDescriptorsForSend(new FileDescriptor[]{fd.getFileDescriptor()});
-                outputStream.write('*');
-                outputStream.flush();
-                fd.close();
-            } catch (ConnectException e) {
-                LogUtils.e("connect " + dstIp + ":" + dstPort + " failed");
-                outputStream.write('!');
-                sock.close();
-            } catch (SocketTimeoutException e) {
-                LogUtils.e("connect " + dstIp + ":" + dstPort + " failed");
-                outputStream.write('!');
-                sock.close();
-            } finally {
-                outputStream.flush();
+        try {
+            if (protect(sock)) {
+                try {
+                    sock.connect(new InetSocketAddress(dstIp, dstPort), connectTimeout);
+                    ParcelFileDescriptor fd = ParcelFileDescriptor.fromSocket(sock);
+                    try {
+                        fdSocket.setFileDescriptorsForSend(new FileDescriptor[]{fd.getFileDescriptor()});
+                        outputStream.write('*');
+                        outputStream.flush();
+                    } finally {
+                        fd.close();
+                    }
+                } catch (ConnectException e) {
+                    LogUtils.e("connect " + dstIp + ":" + dstPort + " failed");
+                    outputStream.write('!');
+                } catch (SocketTimeoutException e) {
+                    LogUtils.e("connect " + dstIp + ":" + dstPort + " failed");
+                    outputStream.write('!');
+                } finally {
+                    outputStream.flush();
+                }
+            } else {
+                LogUtils.e("protect tcp socket failed");
             }
-        } else {
-            LogUtils.e("protect tcp socket failed");
+        } finally {
+            sock.close();
         }
     }
 
-    private void passUdpFileDescriptor(LocalSocket fdSocket, OutputStream outputStream, String socketId) throws Exception {
+    private void passUdpFileDescriptor(LocalSocket fdSocket, OutputStream outputStream) throws Exception {
         DatagramSocket sock = new DatagramSocket();
-        if (protect(sock)) {
-            ParcelFileDescriptor fd = ParcelFileDescriptor.fromDatagramSocket(sock);
-            fdSocket.setFileDescriptorsForSend(new FileDescriptor[]{fd.getFileDescriptor()});
-            outputStream.write('*');
-            outputStream.flush();
-            fd.close();
-        } else {
-            LogUtils.e("protect udp socket failed");
+        try {
+            if (protect(sock)) {
+                ParcelFileDescriptor fd = ParcelFileDescriptor.fromDatagramSocket(sock);
+                try {
+                    fdSocket.setFileDescriptorsForSend(new FileDescriptor[]{fd.getFileDescriptor()});
+                    outputStream.write('*');
+                    outputStream.flush();
+                } finally {
+                    fd.close();
+                }
+            } else {
+                LogUtils.e("protect udp socket failed");
+            }
+        } finally {
+            sock.close();
         }
     }
 
