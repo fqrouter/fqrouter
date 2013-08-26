@@ -33,6 +33,10 @@
             android:inputType="number"
             android:summary="@string/pref_http_proxy_spdy_connections_count_summary"/>
     <Preference
+            android:key="HttpProxySave"
+            android:title="@string/pref_save"
+            android:defaultValue=""/>
+    <Preference
             android:key="HttpProxyDelete"
             android:title="@string/pref_delete"
             android:defaultValue=""/>

@@ -113,11 +113,6 @@
     <string name="pref_ssh_username">用户名</string>
     <string name="pref_ssh_password">密码</string>
     <string name="pref_ssh_connections_count">SSH 连接数</string>
-    <string name="p2p_agreement_alert_message">fqrouter不会把你设置的个人代理共享给任何人或者机构。但是本着人人为我，我为人人的精神，你需要允许将来fqrouter使用你的手机在不产生额外流量费用的前提下做为P2P网络的节点。fqrouter@gmail.com
-    </string>
-    <string name="p2p_agreement_alert_title">P2P 许可</string>
-    <string name="p2p_agreement_alert_yes">没问题</string>
-    <string name="p2p_agreement_alert_no">那算了</string>
     <string name="pref_add"><![CDATA[>> 添加]]></string>
     <string name="pref_host_not_set">个人代理配置不完整</string>
     <string name="pref_restart_wifi_repeater">改动要在无线中继重启后才会生效</string>
@@ -189,4 +184,5 @@
     <string name="pref_open_about">关于</string>
     <string name="about_info_title">fqrouter %s</string>
     <string name="about_info_close">关闭</string>
+    <string name="pref_save"><![CDATA[>> 保存]]></string>
 </resources>

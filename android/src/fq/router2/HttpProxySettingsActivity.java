@@ -32,6 +32,14 @@ public class HttpProxySettingsActivity extends PreferenceActivity implements Sha
                         return true;
                     }
                 });
+        findPreference("HttpProxySave").setOnPreferenceClickListener(
+                new Preference.OnPreferenceClickListener() {
+                    @Override
+                    public boolean onPreferenceClick(Preference preference) {
+                        HttpProxySettingsActivity.this.finish();
+                        return true;
+                    }
+                });
     }
 
     @Override

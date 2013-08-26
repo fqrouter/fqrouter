@@ -358,26 +358,14 @@ public class MainSettingsActivity extends PreferenceActivity implements SharedPr
 
     private void onGoAgentPrivateServerPicked(String value) {
         if (_(R.string.pref_add).equals(value)) {
-            showP2PAgreement(new DialogInterface.OnClickListener() {
-
-                @Override
-                public void onClick(DialogInterface dialog, int which) {
-                    Intent intent = new Intent(MainSettingsActivity.this, GoAgentSettingsActivity.class);
-                    List<GoAgentSettingsActivity.Server> servers = GoAgentSettingsActivity.loadServers();
-                    servers.add(new GoAgentSettingsActivity.Server());
-                    GoAgentSettingsActivity.saveServers(servers);
-                    intent.putExtra("index", servers.size() - 1);
-                    startActivity(intent);
-                }
-            });
+            Intent intent = new Intent(MainSettingsActivity.this, GoAgentSettingsActivity.class);
+            List<GoAgentSettingsActivity.Server> servers = GoAgentSettingsActivity.loadServers();
+            servers.add(new GoAgentSettingsActivity.Server());
+            GoAgentSettingsActivity.saveServers(servers);
+            intent.putExtra("index", servers.size() - 1);
+            startActivity(intent);
         } else if (_(R.string.pref_batch_add).equals(value)) {
-            showP2PAgreement(new DialogInterface.OnClickListener() {
-
-                @Override
-                public void onClick(DialogInterface dialog, int which) {
-                    showGoAgentBatchAdd();
-                }
-            });
+            showGoAgentBatchAdd();
         } else {
             Intent intent = new Intent(this, GoAgentSettingsActivity.class);
             intent.putExtra("index", Integer.valueOf(value));
@@ -428,17 +416,12 @@ public class MainSettingsActivity extends PreferenceActivity implements SharedPr
 
     private void onShadowsocksPrivateServerPicked(String value) {
         if (_(R.string.pref_add).equals(value)) {
-            showP2PAgreement(new DialogInterface.OnClickListener() {
-                @Override
-                public void onClick(DialogInterface dialog, int which) {
-                    Intent intent = new Intent(MainSettingsActivity.this, ShadowsocksSettingsActivity.class);
-                    List<ShadowsocksSettingsActivity.Server> servers = ShadowsocksSettingsActivity.loadServers();
-                    servers.add(new ShadowsocksSettingsActivity.Server());
-                    ShadowsocksSettingsActivity.saveServers(servers);
-                    intent.putExtra("index", servers.size() - 1);
-                    startActivity(intent);
-                }
-            });
+            Intent intent = new Intent(MainSettingsActivity.this, ShadowsocksSettingsActivity.class);
+            List<ShadowsocksSettingsActivity.Server> servers = ShadowsocksSettingsActivity.loadServers();
+            servers.add(new ShadowsocksSettingsActivity.Server());
+            ShadowsocksSettingsActivity.saveServers(servers);
+            intent.putExtra("index", servers.size() - 1);
+            startActivity(intent);
         } else {
             Intent intent = new Intent(this, ShadowsocksSettingsActivity.class);
             intent.putExtra("index", Integer.valueOf(value));
@@ -448,17 +431,12 @@ public class MainSettingsActivity extends PreferenceActivity implements SharedPr
 
     private void onHttpProxyPrivateServerPicked(String value) {
         if (_(R.string.pref_add).equals(value)) {
-            showP2PAgreement(new DialogInterface.OnClickListener() {
-                @Override
-                public void onClick(DialogInterface dialog, int which) {
-                    Intent intent = new Intent(MainSettingsActivity.this, HttpProxySettingsActivity.class);
-                    List<HttpProxySettingsActivity.Server> servers = HttpProxySettingsActivity.loadServers();
-                    servers.add(new HttpProxySettingsActivity.Server());
-                    HttpProxySettingsActivity.saveServers(servers);
-                    intent.putExtra("index", servers.size() - 1);
-                    startActivity(intent);
-                }
-            });
+            Intent intent = new Intent(MainSettingsActivity.this, HttpProxySettingsActivity.class);
+            List<HttpProxySettingsActivity.Server> servers = HttpProxySettingsActivity.loadServers();
+            servers.add(new HttpProxySettingsActivity.Server());
+            HttpProxySettingsActivity.saveServers(servers);
+            intent.putExtra("index", servers.size() - 1);
+            startActivity(intent);
         } else {
             Intent intent = new Intent(this, HttpProxySettingsActivity.class);
             intent.putExtra("index", Integer.valueOf(value));
@@ -468,32 +446,17 @@ public class MainSettingsActivity extends PreferenceActivity implements SharedPr
 
     private void onSshPrivateServerPicked(String value) {
         if (_(R.string.pref_add).equals(value)) {
-            showP2PAgreement(new DialogInterface.OnClickListener() {
-                @Override
-                public void onClick(DialogInterface dialog, int which) {
-                    Intent intent = new Intent(MainSettingsActivity.this, SshSettingsActivity.class);
-                    List<SshSettingsActivity.Server> servers = SshSettingsActivity.loadServers();
-                    servers.add(new SshSettingsActivity.Server());
-                    SshSettingsActivity.saveServers(servers);
-                    intent.putExtra("index", servers.size() - 1);
-                    startActivity(intent);
-                }
-            });
+            Intent intent = new Intent(MainSettingsActivity.this, SshSettingsActivity.class);
+            List<SshSettingsActivity.Server> servers = SshSettingsActivity.loadServers();
+            servers.add(new SshSettingsActivity.Server());
+            SshSettingsActivity.saveServers(servers);
+            intent.putExtra("index", servers.size() - 1);
+            startActivity(intent);
         } else {
             Intent intent = new Intent(this, SshSettingsActivity.class);
             intent.putExtra("index", Integer.valueOf(value));
             startActivity(intent);
         }
-    }
-
-    private void showP2PAgreement(DialogInterface.OnClickListener onAgreed) {
-        new AlertDialog.Builder(this)
-                .setIcon(android.R.drawable.ic_dialog_alert)
-                .setTitle(R.string.p2p_agreement_alert_title)
-                .setMessage(R.string.p2p_agreement_alert_message)
-                .setPositiveButton(R.string.p2p_agreement_alert_yes, onAgreed)
-                .setNegativeButton(R.string.p2p_agreement_alert_no, null)
-                .show();
     }
 
     private void showToast(String text) {

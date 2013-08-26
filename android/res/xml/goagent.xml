@@ -17,6 +17,10 @@
             android:summary="@string/pref_goagent_password_summary"
             android:defaultValue=""/>
     <Preference
+            android:key="GoAgentSave"
+            android:title="@string/pref_save"
+            android:defaultValue=""/>
+    <Preference
             android:key="GoAgentDelete"
             android:title="@string/pref_delete"
             android:defaultValue=""/>

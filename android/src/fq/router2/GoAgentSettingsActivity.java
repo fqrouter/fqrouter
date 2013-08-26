@@ -35,6 +35,14 @@ public class GoAgentSettingsActivity extends PreferenceActivity implements Share
                         return true;
                     }
                 });
+        findPreference("GoAgentSave").setOnPreferenceClickListener(
+                new Preference.OnPreferenceClickListener() {
+                    @Override
+                    public boolean onPreferenceClick(Preference preference) {
+                        GoAgentSettingsActivity.this.finish();
+                        return true;
+                    }
+                });
     }
 
     @Override

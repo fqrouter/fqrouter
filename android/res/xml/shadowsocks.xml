@@ -16,6 +16,10 @@
             android:key="ShadowsocksEncryptionMethod"
             android:title="@string/pref_shadowsocks_encryption_method"/>
     <Preference
+            android:key="ShadowsocksSave"
+            android:title="@string/pref_save"
+            android:defaultValue=""/>
+    <Preference
             android:key="ShadowsocksDelete"
             android:title="@string/pref_delete"
             android:defaultValue=""/>

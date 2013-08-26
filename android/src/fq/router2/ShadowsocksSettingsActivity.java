@@ -32,6 +32,14 @@ public class ShadowsocksSettingsActivity extends PreferenceActivity implements S
                         return true;
                     }
                 });
+        findPreference("ShadowsocksSave").setOnPreferenceClickListener(
+                new Preference.OnPreferenceClickListener() {
+                    @Override
+                    public boolean onPreferenceClick(Preference preference) {
+                        ShadowsocksSettingsActivity.this.finish();
+                        return true;
+                    }
+                });
     }
 
     @Override

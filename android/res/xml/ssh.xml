@@ -20,6 +20,10 @@
             android:title="@string/pref_ssh_connections_count"
             android:inputType="number"/>
     <Preference
+            android:key="SshSave"
+            android:title="@string/pref_save"
+            android:defaultValue=""/>
+    <Preference
             android:key="SshDelete"
             android:title="@string/pref_delete"
             android:defaultValue=""/>

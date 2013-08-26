@@ -35,6 +35,14 @@ public class SshSettingsActivity extends PreferenceActivity implements SharedPre
                         return true;
                     }
                 });
+        findPreference("SshSave").setOnPreferenceClickListener(
+                new Preference.OnPreferenceClickListener() {
+                    @Override
+                    public boolean onPreferenceClick(Preference preference) {
+                        SshSettingsActivity.this.finish();
+                        return true;
+                    }
+                });
     }
 
     @Override

@@ -120,13 +120,6 @@
     <string name="pref_ssh_username">Username</string>
     <string name="pref_ssh_password">Password</string>
     <string name="pref_ssh_connections_count">SSH Connections Count</string>
-    <string name="p2p_agreement_alert_message">fqrouter will not upload the details of your private server to anywhere.
-        However, by the nature of P2P network, you must allow fqrouter to use your mobile phone as a P2P network node in
-        wifi network. fqrouter@gmail.com
-    </string>
-    <string name="p2p_agreement_alert_title">P2P Agreement</string>
-    <string name="p2p_agreement_alert_yes">Yes</string>
-    <string name="p2p_agreement_alert_no">No</string>
     <string name="pref_add"><![CDATA[>> Add]]></string>
     <string name="pref_host_not_set">Incomplete Private Server Settings</string>
     <string name="pref_restart_wifi_repeater">You need to restart wifi hotspot to apply the changes</string>
@@ -216,4 +209,5 @@
     <string name="pref_open_about">About</string>
     <string name="about_info_title">fqrouter %s</string>
     <string name="about_info_close">Close</string>
+    <string name="pref_save"><![CDATA[>> Save]]></string>
 </resources>
