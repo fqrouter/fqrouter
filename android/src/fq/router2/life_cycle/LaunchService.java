@@ -278,7 +278,7 @@ public class LaunchService extends IntentService {
             SharedPreferences preferences = PreferenceManager.getDefaultSharedPreferences(context);
             JSONObject configJson = new JSONObject();
             configJson.put("wifi_hotspot_ssid", preferences.getString("WifiHotspotSSID", "fqrouter"));
-            configJson.put("wifi_hotspot_password", preferences.getString("WifiHotspotPassword", "p@55word"));
+            configJson.put("wifi_hotspot_password", preferences.getString("WifiHotspotPassword", "12345678"));
             configJson.put("tcp_scrambler_enabled", preferences.getBoolean("TcpScramblerEnabled", true));
             configJson.put("youtube_scrambler_enabled", preferences.getBoolean("YoutubeScramblerEnabled", true));
             configJson.put("china_shortcut_enabled", preferences.getBoolean("ChinaShortcutEnabled", true));

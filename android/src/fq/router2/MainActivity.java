@@ -22,10 +22,7 @@ import android.support.v4.app.NotificationCompat;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
-import android.widget.ImageView;
-import android.widget.TextView;
-import android.widget.Toast;
-import android.widget.ToggleButton;
+import android.widget.*;
 import com.google.analytics.tracking.android.EasyTracker;
 import com.google.analytics.tracking.android.GoogleAnalytics;
 import com.google.analytics.tracking.android.Tracker;
@@ -73,7 +70,6 @@ public class MainActivity extends Activity implements
     private String blinkingStatus = "";
     private String upgradeUrl;
     private boolean downloaded;
-    private WifiManager.WifiLock wifiLock;
     private static boolean dnsPollutionAcked = false;
     private static final Set<String> WAP_APN_LIST = new HashSet<String>(){{
         add("cmwap");
@@ -248,7 +244,7 @@ public class MainActivity extends Activity implements
         findViewById(R.id.wifiRepeaterButton).setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                toggleWifiRepeater((ToggleButton) view);
+                startActivity(new Intent(MainActivity.this, WifiRepeaterActivity.class));
             }
         });
         findViewById(R.id.freeInternetButton).setOnClickListener(new View.OnClickListener() {
@@ -487,37 +483,6 @@ public class MainActivity extends Activity implements
         return getResources().getString(id);
     }
 
-    private void toggleWifiRepeater(final ToggleButton button) {
-        startBlinkingImage((ImageView) findViewById(R.id.wifiRepeaterArrow));
-        if (button.isChecked()) {
-            final File flagFile = new File("/data/data/fq.router2/etc/wifi-repeater-risk-notified");
-            if (flagFile.exists()) {
-                startWifiRepater();
-            } else {
-                new AlertDialog.Builder(this)
-                        .setIcon(android.R.drawable.ic_dialog_alert)
-                        .setTitle(R.string.wifi_repeater_risk_alert_title)
-                        .setMessage(R.string.wifi_repeater_risk_alert_message)
-                        .setPositiveButton(R.string.wifi_repeater_risk_alert_ok, new DialogInterface.OnClickListener() {
-
-                            @Override
-                            public void onClick(DialogInterface dialog, int which) {
-                                IOUtils.writeToFile(flagFile, "OK");
-                                startWifiRepater();
-                                button.setChecked(true);
-                            }
-
-                        })
-                        .setNegativeButton(R.string.wifi_repeater_risk_alert_cancel, null)
-                        .show();
-                button.setChecked(false);
-            }
-        } else {
-            startBlinkingStatus(_(R.string.status_wifi_repeater_stopping));
-            disableWifiRepeaterButton();
-            StopWifiRepeaterService.execute(this);
-        }
-    }
 
     private void startWifiRepater() {
         startBlinkingStatus(_(R.string.status_wifi_repeater_starting));
@@ -542,8 +507,8 @@ public class MainActivity extends Activity implements
 
 
     public void enableWifiRepeaterButton(final boolean isStarted) {
-        ToggleButton button = (ToggleButton) findViewById(R.id.wifiRepeaterButton);
-        button.setChecked(isStarted);
+        Button button = (Button) findViewById(R.id.wifiRepeaterButton);
+//        button.setChecked(isStarted);
         button.setEnabled(true);
     }
 
@@ -646,20 +611,6 @@ public class MainActivity extends Activity implements
         finish();
     }
 
-    private void updateWifiLock(boolean isStarted) {
-        WifiManager wifiManager = (WifiManager) getSystemService(WIFI_SERVICE);
-        if (null == wifiLock) {
-            wifiLock = wifiManager.createWifiLock(WifiManager.WIFI_MODE_FULL_HIGH_PERF, "fqrouter wifi hotspot");
-        }
-        if (isStarted) {
-            wifiLock.acquire();
-        } else {
-            if (wifiLock.isHeld()) {
-                wifiLock.release();
-            }
-        }
-    }
-
     @Override
     public void onDownloadFailed(final String url, String downloadTo) {
         ActivityCompat.invalidateOptionsMenu(this);
@@ -748,7 +699,6 @@ public class MainActivity extends Activity implements
 
     @Override
     public void onWifiRepeaterChanged(boolean isStarted) {
-        updateWifiLock(isStarted);
         stopBlinkingImage((ImageView) findViewById(R.id.wifiRepeaterArrow));
         stopBlinkingStatus();
         clearStatus();

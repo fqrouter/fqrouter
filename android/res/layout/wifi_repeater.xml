@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+              android:orientation="vertical"
+              android:layout_width="match_parent"
+              android:layout_height="match_parent" android:padding="16dp">
+
+    <TextView
+            android:layout_width="fill_parent"
+            android:layout_height="wrap_content"
+            android:text="@string/wifi_repeater_hint"
+            android:id="@+id/hintTextView" android:linksClickable="false" android:autoText="false"/>
+    <TextView
+            android:layout_width="fill_parent"
+            android:layout_height="wrap_content"
+            android:text="@string/wifi_repeater_ssid"
+            android:id="@+id/ssidTextView" android:layout_marginTop="16dp"/>
+    <EditText
+            android:layout_width="fill_parent"
+            android:layout_height="wrap_content"
+            android:id="@+id/ssidEditText"/>
+    <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/wifi_repeater_password"
+            android:id="@+id/passwordTextView"/>
+    <EditText
+            android:layout_width="fill_parent"
+            android:layout_height="wrap_content"
+            android:id="@+id/passwordEditText"/>
+    <ToggleButton
+            android:layout_width="160dp"
+            android:layout_height="64dp"
+            android:textOn="@string/button_wifi_repeater"
+            android:textOff="@string/button_wifi_repeater"
+            android:id="@+id/wifiRepeaterToggleButton" android:layout_gravity="center_vertical|right"
+            android:layout_marginTop="16dp" android:textSize="8pt" android:longClickable="false"/>
+</LinearLayout>

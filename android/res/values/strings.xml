@@ -49,13 +49,11 @@
     <string name="status_downloading">Downloading</string>
     <string name="status_download_failed">failed to download</string>
     <string name="button_free_internet">Free Internet</string>
-    <string name="button_wifi_repeater">Wifi Repeater</string>
     <string name="button_pick_and_play"><![CDATA[Pick & Play]]></string>
+    <string name="button_wifi_repeater">Wifi Repeater</string>
     <string name="help_pick_and_play">scan the currently connected wifi network to discover your other devices (iphone, windows pc, etc). pick any device from the list, then that device will route via fqrouter to access restricted website such as youtube or twitter.</string>
-    <string name="pref_wifi_hotspot_ssid">SSID</string>
-    <string name="pref_wifi_hotspot_ssid_summary">the wifi network name you see (English Only)</string>
-    <string name="pref_wifi_hotspot_password">Password</string>
-    <string name="pref_wifi_hotspot_category">Wifi Hotspot</string>
+    <string name="wifi_repeater_ssid">SSID (Alphabetic or numeric character only)</string>
+    <string name="wifi_repeater_password">Password (Must more than 8 characters)</string>
     <string name="pref_goagent_category">GoAgent</string>
     <string name="pref_goagent_public_servers">GoAgent Public Servers</string>
     <string name="pref_goagent_public_servers_summary">goagent appids shared by others, especially thanks the gfanqiang
@@ -147,7 +145,6 @@
     </string>
     <string name="report_error_alert_ok">I will!</string>
     <string name="report_error_alert_no">Maybe next time</string>
-    <string name="pref_wifi_hotspot_reset">Reset Wireless</string>
     <string name="dns_polluted_alert_title">DNS Polluted</string>
     <string name="dns_polluted_alert_message">You can not access some website is because the DNS has been polluted. Toggle airplane mode will clear the DNS pollution. Other devices route via fqrouter might also suffer from DNS pollution, clear DNS cache using the way suitable for target device.</string>
     <string name="dns_polluted_alert_ack">OK</string>
@@ -158,14 +155,10 @@
     <string name="pref_open_full_google_play">Open Full Version Google Play</string>
     <string name="reset_wifi_succeeded">Reset Wifi Succeeded</string>
     <string name="reset_wifi_failed">Reset Wifi Failed</string>
-    <string name="pref_wifi_hotspot_reset_summary">if wifi repeater failed to start and break your can no longer connect
-        to wifi, you can fix it by this button
-    </string>
     <string name="wifi_repeater_risk_alert_title">It might not work</string>
     <string name="wifi_repeater_risk_alert_cancel">Cancel</string>
     <string name="wifi_repeater_risk_alert_message">I can assure you, it will not do any harm to hardware. However, it
-        might cause mobile restart on unsupported mobile. There is a \"reset wifi\" button in settings menu to reset
-        wifi config files.
+        might cause mobile restart on unsupported mobile. There is a \"reset wifi\" menu on this screen to fix problem might caused by wifi repeater failure.
     </string>
     <string name="wifi_repeater_risk_alert_ok">OK</string>
     <string name="internet_speed_alert_title">Don\'t disable this option</string>
@@ -210,4 +203,14 @@
     <string name="about_info_title">fqrouter %s</string>
     <string name="about_info_close">Close</string>
     <string name="pref_save"><![CDATA[>> Save]]></string>
+    <string name="wifi_repeater_hint">Start a wifi hotspot to share free internet. Different from Android built-in 3G
+        hotspot, this wifi hotspot shares wifi instead of 3G
+    </string>
+    <string name="menu_reset_wifi">Reset Wifi</string>
+    <string name="reset_wifi_alert_title">Are you sure?</string>
+    <string name="reset_wifi_alert_message">It will reset your wifi configuration to fix problem caused by wifi repeater
+        failure. Use report error button if it does not fix your problem.
+    </string>
+    <string name="reset_wifi_alert_ok">OK</string>
+    <string name="reset_wifi_alert_cancel">Cancel</string>
 </resources>

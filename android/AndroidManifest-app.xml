@@ -16,7 +16,6 @@
     <uses-permission android:name="android.permission.WRITE_OWNER_DATA"/>
     <uses-permission android:name="android.permission.READ_OWNER_DATA"/>
     <uses-permission android:name="android.permission.READ_LOGS"/>
-    <uses-permission android:name="android.permission.INSTALL_PACKAGES" />
     <uses-permission android:name="android.permission.WRITE_SETTINGS" />
     <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
     <application android:label="@string/app_name" android:icon="@drawable/icon">
@@ -32,6 +31,11 @@
         </activity>
         <activity android:name=".PickAndPlayActivity"
                   android:label="Pick &amp; Play"
+                  android:launchMode="singleTask"
+                  android:configChanges="keyboard|keyboardHidden|orientation|screenSize">
+        </activity>
+        <activity android:name=".WifiRepeaterActivity"
+                  android:label="@string/button_wifi_repeater"
                   android:launchMode="singleTask"
                   android:configChanges="keyboard|keyboardHidden|orientation|screenSize">
         </activity>

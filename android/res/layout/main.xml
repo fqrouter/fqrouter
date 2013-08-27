@@ -11,11 +11,10 @@
             android:textOff="@string/button_free_internet"
             android:id="@+id/freeInternetButton" android:layout_gravity="center_horizontal|top" android:textSize="10pt"
             android:textStyle="bold" android:longClickable="true" android:layout_marginTop="48dp"/>
-    <ToggleButton
+    <Button
             android:layout_width="160dp"
             android:layout_height="88dp"
-            android:textOn="@string/button_wifi_repeater"
-            android:textOff="@string/button_wifi_repeater"
+            android:text="@string/button_wifi_repeater"
             android:id="@+id/wifiRepeaterButton" android:layout_gravity="left|bottom" android:textStyle="bold"
             android:textSize="10pt" android:longClickable="true"/>
     <Button

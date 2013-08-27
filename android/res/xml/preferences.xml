@@ -1,20 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
 <PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android">
-    <PreferenceCategory android:title="@string/pref_wifi_hotspot_category" android:key="WifiHotspot">
-        <EditTextPreference
-                android:key="WifiHotspotSSID"
-                android:title="@string/pref_wifi_hotspot_ssid"
-                android:summary="@string/pref_wifi_hotspot_ssid_summary"
-                android:defaultValue="fqrouter"/>
-        <EditTextPreference
-                android:key="WifiHotspotPassword"
-                android:title="@string/pref_wifi_hotspot_password"
-                android:defaultValue="12345678"/>
-        <Preference
-                android:key="WifiHotspotReset"
-                android:title="@string/pref_wifi_hotspot_reset"
-                android:summary="@string/pref_wifi_hotspot_reset_summary"/>
-    </PreferenceCategory>
     <PreferenceCategory android:title="@string/pref_goagent_category">
         <CheckBoxPreference
                 android:key="GoAgentPublicServersEnabled"

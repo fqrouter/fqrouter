@@ -46,10 +46,8 @@
     <string name="button_wifi_repeater">无线中继</string>
     <string name="button_pick_and_play"><![CDATA[Pick & Play]]></string>
     <string name="help_pick_and_play">扫描当前网络中的其他设备（iPhone，个人电脑等）。然后从扫描出来的列表中选取你希望翻墙的设备，这样那台设备就可以通过fqrouter翻墙了。</string>
-    <string name="pref_wifi_hotspot_ssid">无线网络名</string>
-    <string name="pref_wifi_hotspot_ssid_summary">在无线列表中的名称（只能填英文）</string>
-    <string name="pref_wifi_hotspot_password">密码</string>
-    <string name="pref_wifi_hotspot_category">Wifi 热点</string>
+    <string name="wifi_repeater_ssid">无线网络名（只能填英文和数字）</string>
+    <string name="wifi_repeater_password">密码（长度必须不少于8位）</string>
     <string name="pref_goagent_category">GoAgent</string>
     <string name="pref_goagent_public_servers">GoAgent 公共代理</string>
     <string name="pref_goagent_public_servers_summary">由网友共享的goagent appid，尤其是要感谢gfanqiang项目
@@ -138,7 +136,6 @@
     </string>
     <string name="report_error_alert_ok">没问题！</string>
     <string name="report_error_alert_no">那再说吧</string>
-    <string name="pref_wifi_hotspot_reset">重置无线</string>
     <string name="dns_polluted_alert_title">DNS 被污染了</string>
     <string name="dns_polluted_alert_message">你不能访问某些网站是因为DNS已经被污染了。开关一下飞行模式可以清除DNS污染。其他设备通过fqrouter翻墙，如果遇到无法访问请使用适合该设备的方法清除DNS缓存。</string>
     <string name="dns_polluted_alert_ack">明白了</string>
@@ -149,10 +146,9 @@
     <string name="pref_open_full_google_play">打开完整版Google市场</string>
     <string name="reset_wifi_succeeded">重置无线成功</string>
     <string name="reset_wifi_failed">重置无线失败</string>
-    <string name="pref_wifi_hotspot_reset_summary">如果无线中继启动失败，而且导致wifi再也连不上了，你可以点这个按钮修复</string>
     <string name="wifi_repeater_risk_alert_title">不一定能用的</string>
-    <string name="wifi_repeater_risk_alert_message">无线中继肯定不会对硬件造成任何损坏。然而，在不支持的手机上可能会导致重启。在设置菜单里有一个“重置无线”的按钮可以重置无线的配置文件。</string>
-    <string name="wifi_repeater_risk_alert_ok">OK</string>
+    <string name="wifi_repeater_risk_alert_message">无线中继肯定不会对硬件造成任何损坏。然而，在不支持的手机上可能会导致重启。使用失败后如果遇到无法连接无线的问题，请点本窗口的“重置无线”菜单。</string>
+    <string name="wifi_repeater_risk_alert_ok">明白了</string>
     <string name="wifi_repeater_risk_alert_cancel">取消</string>
     <string name="internet_speed_alert_title">请不要禁用该选项</string>
     <string name="internet_speed_alert_message">禁用它会使得网速变慢，而且会消耗非常多的公共资源。如确实有需要，请添加个人代理。</string>
@@ -185,4 +181,11 @@
     <string name="about_info_title">fqrouter %s</string>
     <string name="about_info_close">关闭</string>
     <string name="pref_save"><![CDATA[>> 保存]]></string>
+    <string name="wifi_repeater_hint">以无线的方式共享翻墙网络。与系统自带的3G热点不同之处在于这个共享的是无线而不是3G。</string>
+    <string name="menu_reset_wifi">重置无线</string>
+    <string name="reset_wifi_alert_title">你确定要重置吗？</string>
+    <string name="reset_wifi_alert_message">重置无线配置是为了修复无线中继失败导致的无线无法连接的问题。使用后如果问题依旧，请点主界面的报告错误按钮。
+    </string>
+    <string name="reset_wifi_alert_ok">确定</string>
+    <string name="reset_wifi_alert_cancel">取消</string>
 </resources>

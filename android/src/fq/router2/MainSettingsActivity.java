@@ -32,20 +32,6 @@ public class MainSettingsActivity extends PreferenceActivity implements SharedPr
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         addPreferencesFromResource(R.xml.preferences);
-        findPreference("WifiHotspotPassword").setOnPreferenceChangeListener(
-                new Preference.OnPreferenceChangeListener() {
-
-                    @Override
-                    public boolean onPreferenceChange(Preference preference, Object newValue) {
-                        String password = (String) newValue;
-                        if (password.length() < 8) {
-                            showToast(_(R.string.pref_wifi_hotspot_password_constraint));
-                            return false;
-                        }
-                        return true;
-                    }
-
-                });
         findPreference("GoAgentPrivateServersPicker").setOnPreferenceChangeListener(
                 new Preference.OnPreferenceChangeListener() {
                     @Override
@@ -78,13 +64,6 @@ public class MainSettingsActivity extends PreferenceActivity implements SharedPr
                         return false;
                     }
                 });
-        findPreference("WifiHotspotReset").setOnPreferenceClickListener(new Preference.OnPreferenceClickListener() {
-            @Override
-            public boolean onPreferenceClick(Preference preference) {
-                resetWifi();
-                return false;
-            }
-        });
         findPreference("OpenFullGooglePlay").setOnPreferenceClickListener(new Preference.OnPreferenceClickListener() {
             @Override
             public boolean onPreferenceClick(Preference preference) {
@@ -143,24 +122,6 @@ public class MainSettingsActivity extends PreferenceActivity implements SharedPr
                 .show();
     }
 
-    private void resetWifi() {
-        new Thread(new Runnable() {
-            @Override
-            public void run() {
-                try {
-                    HttpUtils.post("http://127.0.0.1:8318/wifi-repeater/reset");
-                    WifiManager wifiManager = getWifiManager();
-                    wifiManager.setWifiEnabled(false);
-                    wifiManager.setWifiEnabled(true);
-                    showToast(R.string.reset_wifi_succeeded);
-                } catch (Exception e) {
-                    LogUtils.e("failed to reset wifi", e);
-                    showToast(R.string.reset_wifi_failed);
-                }
-            }
-        }).start();
-    }
-
     private void openFullGooglePlay() {
         if (ShellUtils.isRooted()) {
             try {
@@ -212,10 +173,6 @@ public class MainSettingsActivity extends PreferenceActivity implements SharedPr
                 }
             }
         }).start();
-    }
-
-    private WifiManager getWifiManager() {
-        return (WifiManager) getSystemService(Context.WIFI_SERVICE);
     }
 
     private void showToast(final int message) {
@@ -349,9 +306,9 @@ public class MainSettingsActivity extends PreferenceActivity implements SharedPr
     @Override
     public void onSharedPreferenceChanged(SharedPreferences sharedPreferences, String key) {
         if (key.startsWith("WifiHotspot")) {
-            showToast(_(R.string.pref_restart_wifi_repeater));
+            showToast(R.string.pref_restart_wifi_repeater);
         } else {
-            showToast(_(R.string.pref_restart_app));
+            showToast(R.string.pref_restart_app);
         }
         LaunchService.updateConfigFile(this);
     }
@@ -457,9 +414,5 @@ public class MainSettingsActivity extends PreferenceActivity implements SharedPr
             intent.putExtra("index", Integer.valueOf(value));
             startActivity(intent);
         }
-    }
-
-    private void showToast(String text) {
-        Toast.makeText(this, text, Toast.LENGTH_SHORT).show();
     }
 }
