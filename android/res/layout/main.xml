@@ -4,11 +4,10 @@
         android:layout_width="fill_parent"
         android:layout_height="fill_parent" xmlns:android="http://schemas.android.com/apk/res/android">
 
-    <ToggleButton
+    <Button
             android:layout_width="160dp"
             android:layout_height="88dp"
-            android:textOn="@string/button_free_internet"
-            android:textOff="@string/button_free_internet"
+            android:text="@string/button_free_internet"
             android:id="@+id/freeInternetButton" android:layout_gravity="center_horizontal|top" android:textSize="10pt"
             android:textStyle="bold" android:longClickable="true" android:layout_marginTop="48dp"/>
     <Button

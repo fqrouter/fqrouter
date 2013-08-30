@@ -17,6 +17,9 @@ WIFI_TOOLS_DIR = os.path.join(PAYLOAD_DIR, 'wifi-tools')
 DPKT_ZIP_FILE = os.path.join(PAYLOAD_DIR, 'dpkt.zip')
 DPKT_DIR = os.path.join(PAYLOAD_DIR, 'dpkt-fqrouter')
 DPKT_PACKAGE_DIR = os.path.join(DPKT_DIR, 'dpkt')
+JINJA2_TAR_GZ_FILE = os.path.join(PAYLOAD_DIR, 'jinja2.tar.gz')
+JINJA2_DIR = os.path.join(PAYLOAD_DIR, 'Jinja2-2.7.1')
+JINJA2_PACKAGE_DIR = os.path.join(JINJA2_DIR, 'jinja2')
 BUSYBOX_FILE = os.path.join(ASSETS_DIR, 'busybox')
 PROXY_TOOLS_DIR = os.path.join(PAYLOAD_DIR, 'proxy-tools')
 FQDNS_PY = os.path.join(PAYLOAD_DIR, 'python', 'lib', 'python2.7', 'site-packages', 'fqdns.py')
@@ -27,8 +30,6 @@ FQLAN_PY = os.path.join(PAYLOAD_DIR, 'python', 'lib', 'python2.7', 'site-package
 FQLAN_PY_SRC = os.path.join(os.path.dirname(__file__), '..', '..', 'fqlan', 'fqlan.py')
 FQSOCKS_DIR = os.path.join(PAYLOAD_DIR, 'python', 'lib', 'python2.7', 'site-packages', 'fqsocks')
 FQSOCKS_DIR_SRC = os.path.join(os.path.dirname(__file__), '..', '..', 'fqsocks', 'fqsocks')
-GOAGENT_PY = os.path.join(PAYLOAD_DIR, 'python', 'lib', 'python2.7', 'site-packages', '_goagent.py')
-GOAGENT_PY_SRC = os.path.join(os.path.dirname(__file__), '..', '..', 'goagent', 'local', 'proxy.py')
 MANAGER_DIR = os.path.join(ROOT_DIR, '../manager')
 
 
@@ -44,13 +45,14 @@ def main():
     download_wifi_tools()
     unzip_wifi_tools()
     download_dpkt()
-    untargz_dpkt()
+    unzip_dpkt()
+    download_jinja2()
+    untargz_jinja2()
     download_busybox()
     copy_fqdns()
     copy_fqting()
     copy_fqlan()
     copy_fqsocks()
-    copy_goagent()
     zip_payload()
 
 
@@ -88,12 +90,26 @@ def download_dpkt():
     urllib.urlretrieve('https://github.com/fqrouter/dpkt/archive/fqrouter.zip', DPKT_ZIP_FILE)
 
 
-def untargz_dpkt():
+def unzip_dpkt():
     if os.path.exists(DPKT_DIR):
         return
     subprocess.check_call('unzip %s' % DPKT_ZIP_FILE, cwd=PAYLOAD_DIR, shell=True)
     if not os.path.exists(os.path.join(DPKT_DIR, 'setup.py')):
         print('dpkt.zip file not as expected')
+        sys.exit(1)
+
+def download_jinja2():
+    if os.path.exists(JINJA2_TAR_GZ_FILE):
+        return
+    urllib.urlretrieve('https://pypi.python.org/packages/source/J/Jinja2/Jinja2-2.7.1.tar.gz#md5=282aed153e69f970d6e76f78ed9d027a', JINJA2_TAR_GZ_FILE)
+
+
+def untargz_jinja2():
+    if os.path.exists(JINJA2_DIR):
+        return
+    subprocess.check_call('tar xvzf %s' % JINJA2_TAR_GZ_FILE, cwd=PAYLOAD_DIR, shell=True)
+    if not os.path.exists(os.path.join(JINJA2_DIR, 'setup.py')):
+        print('jinja2.tar.gz file not as expected')
         sys.exit(1)
 
 
@@ -118,11 +134,8 @@ def copy_fqlan():
 def copy_fqsocks():
     if not os.path.exists(FQSOCKS_DIR):
         os.mkdir(FQSOCKS_DIR)
-    subprocess.check_call('cp -r %s/*.py %s' % (FQSOCKS_DIR_SRC, FQSOCKS_DIR), shell=True)
-
-
-def copy_goagent():
-    subprocess.check_call('cp %s %s' % (GOAGENT_PY_SRC, GOAGENT_PY), shell=True)
+    subprocess.check_call('cp -r %s/* %s' % (FQSOCKS_DIR_SRC, FQSOCKS_DIR), shell=True)
+    subprocess.check_call('rm %s/*.pyc' % FQSOCKS_DIR, shell=True)
 
 
 def zip_payload():
@@ -145,6 +158,7 @@ def zip_payload():
     include_directory(PROXY_TOOLS_DIR, PAYLOAD_DIR)
     include_directory(MANAGER_DIR, os.path.dirname(MANAGER_DIR))
     include_directory(DPKT_PACKAGE_DIR, DPKT_DIR, 'python/lib/python2.7/site-packages')
+    include_directory(JINJA2_PACKAGE_DIR, JINJA2_DIR, 'python/lib/python2.7/site-packages')
 
     payload_zip.close()
     time.sleep(1)

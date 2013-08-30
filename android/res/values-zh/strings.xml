@@ -188,4 +188,5 @@
     </string>
     <string name="reset_wifi_alert_ok">确定</string>
     <string name="reset_wifi_alert_cancel">取消</string>
+    <string name="status">状态</string>
 </resources>

@@ -213,4 +213,5 @@
     </string>
     <string name="reset_wifi_alert_ok">OK</string>
     <string name="reset_wifi_alert_cancel">Cancel</string>
+    <string name="status">Status</string>
 </resources>

@@ -11,7 +11,6 @@ import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
 import android.net.Uri;
 import android.net.VpnService;
-import android.net.wifi.WifiManager;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
@@ -24,8 +23,6 @@ import android.view.MenuItem;
 import android.view.View;
 import android.widget.*;
 import com.google.analytics.tracking.android.EasyTracker;
-import com.google.analytics.tracking.android.GoogleAnalytics;
-import com.google.analytics.tracking.android.Tracker;
 import fq.router2.feedback.*;
 import fq.router2.free_internet.*;
 import fq.router2.life_cycle.*;
@@ -34,7 +31,6 @@ import fq.router2.pick_and_play.PickAndPlayChangedIntent;
 import fq.router2.utils.*;
 import fq.router2.wifi_repeater.CheckWifiRepeaterService;
 import fq.router2.wifi_repeater.StartWifiRepeaterService;
-import fq.router2.wifi_repeater.StopWifiRepeaterService;
 import fq.router2.wifi_repeater.WifiRepeaterChangedIntent;
 
 import java.io.File;
@@ -250,7 +246,7 @@ public class MainActivity extends Activity implements
         findViewById(R.id.freeInternetButton).setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                toggleFreeInternet((ToggleButton) view);
+                startActivity(new Intent(Intent.ACTION_VIEW, Uri.parse("http://127.0.0.1:8319/proxies")));
             }
         });
         findViewById(R.id.pickAndPlayButton).setOnClickListener(new View.OnClickListener() {
@@ -466,38 +462,31 @@ public class MainActivity extends Activity implements
         sendBroadcast(new ExitingIntent());
     }
 
-    private void toggleFreeInternet(ToggleButton button) {
-        startBlinkingImage((ImageView) findViewById(R.id.freeInternetArrow));
-        if (button.isChecked()) {
-            startBlinkingStatus(_(R.string.status_free_internet_connecting));
-            disableFreeInternetButton();
-            ConnectFreeInternetService.execute(this);
-        } else {
-            startBlinkingStatus(_(R.string.status_free_internet_disconnecting));
-            disableFreeInternetButton();
-            DisconnectFreeInternetService.execute(this);
-        }
-    }
+//    private void toggleFreeInternet(ToggleButton button) {
+//        startBlinkingImage((ImageView) findViewById(R.id.freeInternetArrow));
+//        if (button.isChecked()) {
+//            startBlinkingStatus(_(R.string.status_free_internet_connecting));
+//            disableFreeInternetButton();
+//            ConnectFreeInternetService.execute(this);
+//        } else {
+//            startBlinkingStatus(_(R.string.status_free_internet_disconnecting));
+//            disableFreeInternetButton();
+//            DisconnectFreeInternetService.execute(this);
+//        }
+//    }
 
     private String _(int id) {
         return getResources().getString(id);
     }
 
 
-    private void startWifiRepater() {
-        startBlinkingStatus(_(R.string.status_wifi_repeater_starting));
-        disableWifiRepeaterButton();
-        StartWifiRepeaterService.execute(this);
-    }
-
     public void disableFreeInternetButton() {
         findViewById(R.id.freeInternetButton).setEnabled(false);
     }
 
 
-    public void enableFreeInternetButton(final boolean isConnected) {
-        ToggleButton button = (ToggleButton) findViewById(R.id.freeInternetButton);
-        button.setChecked(isConnected);
+    public void enableFreeInternetButton() {
+        Button button = (Button) findViewById(R.id.freeInternetButton);
         button.setEnabled(true);
     }
 
@@ -506,9 +495,8 @@ public class MainActivity extends Activity implements
     }
 
 
-    public void enableWifiRepeaterButton(final boolean isStarted) {
+    public void enableWifiRepeaterButton() {
         Button button = (Button) findViewById(R.id.wifiRepeaterButton);
-//        button.setChecked(isStarted);
         button.setEnabled(true);
     }
 
@@ -707,7 +695,7 @@ public class MainActivity extends Activity implements
         } else {
             disableImage((ImageView) findViewById(R.id.wifiRepeaterArrow));
         }
-        enableWifiRepeaterButton(isStarted);
+        enableWifiRepeaterButton();
     }
 
     @Override
@@ -723,12 +711,7 @@ public class MainActivity extends Activity implements
             clearStatus();
             disableImage(freeInternetArrow);
         }
-        if (LaunchService.isVpnRunning()) {
-            ToggleButton button = (ToggleButton) findViewById(R.id.freeInternetButton);
-            button.setChecked(isConnected);
-        } else {
-            enableFreeInternetButton(isConnected);
-        }
+        enableFreeInternetButton();
     }
 
     @Override
