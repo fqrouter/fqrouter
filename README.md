@@ -3,7 +3,7 @@
 [![Pycharm](http://www.jetbrains.com/img/logos/pycharm_logo.gif)](http://www.jetbrains.com/pycharm/)
 
 <a href="http://www.jetbrains.com/idea/">
-<img src="http://www.jetbrains.com/img/logos/logo_intellij_idea.gif" alt="Intellij idea" style="width: 129px;"/>
+<img src="http://www.jetbrains.com/img/logos/logo_intellij_idea.gif" alt="Intellij idea" style="max-width: 129px;"/>
 </a>
 
 fqrouter released under the terms of GPL v3.0
