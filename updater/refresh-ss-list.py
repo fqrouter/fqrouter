@@ -44,11 +44,15 @@ while True:
             ('198.199.92.59', 20, 'u1rRWTssNv0p', 'rc4'),
             ('88.191.139.226', 23, 'u1rRWTssNv0p', 'rc4'),
             ('192.184.80.11', 8318, 'fqrouter', 'rc4'),
+            (socket.gethostbyname('socks2.masaila.info'), 2920 + random.randint(0, 9), '111222', 'table'),
+            (socket.gethostbyname('socks3.masaila.info'), 2920 + random.randint(0, 9), '111222', 'table'),
+            (socket.gethostbyname('socks4.masaila.info'), 2920 + random.randint(0, 9), '111222', 'table'),
+            (socket.gethostbyname('socks5.masaila.info'), 2920 + random.randint(0, 9), '111222', 'table'),
             ('69.172.215.129', 8888, 'v2ex', 'aes-256-cfb')
         ]
         success = 0
         for i, (ip, port, password, encrypt_method) in enumerate(proxies):
-            if check_proxy(ip, port, password, encrypt_method):
+            if check_proxy(ip, port, password, encrypt_method) and check_proxy(ip, port, password, encrypt_method):
                 success += 1
                 subprocess.call('cli53 rrcreate fqrouter.com ss%s TXT %s:%s:%s:%s --ttl 300 --replace'
                                 % (i + 1, ip, port, password, encrypt_method), shell=True)
