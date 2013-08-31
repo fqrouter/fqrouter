@@ -245,6 +245,21 @@ random.shuffle(T1_APP_IDS)
 APP_ID_QUEUE = gevent.queue.Queue(items=T1_APP_IDS + T2_APP_IDS)
 good_app_ids_count = 0
 
+
+class FakeClient(object):
+    def __init__(self):
+        self.host = ''
+        self.dst_ip = ''
+
+    def add_resource(self, res):
+        pass
+
+
+class FakeProxy(object):
+    def __init__(self, fetch_server):
+        self.fetch_server = fetch_server
+
+
 def check():
     global good_app_ids_count
     while True:
@@ -253,8 +268,8 @@ def check():
         appid = APP_ID_QUEUE.get()
         try:
             app_status = fqsocks.goagent.gae_urlfetch(
-                'GET', 'http://www.baidu.com', {}, '',
-                'https://%s.appspot.com/2?' % appid).app_status
+                FakeClient(), FakeProxy('https://%s.appspot.com/2?' % appid),
+                'GET', 'http://www.baidu.com', {}, '').app_status
             sys.stderr.write('%s => %s\n' % (appid, app_status))
             sys.stderr.flush()
             if app_status == 200:
