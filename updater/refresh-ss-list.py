@@ -48,7 +48,20 @@ while True:
             (socket.gethostbyname('socks3.masaila.info'), 2920 + random.randint(0, 9), '111222', 'table'),
             (socket.gethostbyname('socks4.masaila.info'), 2920 + random.randint(0, 9), '111222', 'table'),
             (socket.gethostbyname('socks5.masaila.info'), 2920 + random.randint(0, 9), '111222', 'table'),
-            ('69.172.215.129', 8888, 'v2ex', 'aes-256-cfb')
+            ('209.141.36.62', 8348, '$#HAL9000!', 'aes-256-cfb')
+            # {
+            #     "configs": [
+            #         {
+            #             "server": "209.141.36.62",
+            #             "server_port": "8348",
+            #             "password": "$#HAL9000!",
+            #             "local_port": "1080",
+            #             "method": "aes-256-cfb",
+            #             "timeout": "600"
+            #         }
+            #     ],
+            #     "index": "0"
+            # }
         ]
         success = 0
         for i, (ip, port, password, encrypt_method) in enumerate(proxies):
