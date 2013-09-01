@@ -55,6 +55,9 @@ RULES = [
     ), (
         {'target': 'MASQUERADE', 'source': '10.1.2.3', 'destination': '0.0.0.0/0'},
         ('nat', 'POSTROUTING', '-s 10.1.2.3 -j MASQUERADE')
+    ), (
+        {'target': 'ACCEPT', 'source': '0.0.0.0/0', 'destination': '0.0.0.0/0'},
+        ('filter', 'FORWARD', '-j ACCEPT')
     )]
 
 
@@ -114,6 +117,7 @@ def start_hotspot(ssid, password):
             LOGGER.info('=== Before Starting Hotspot ===')
             dump_wifi_status()
             LOGGER.info('=== Start Hotspot ===')
+            enable_ipv4_forward()
             wifi_chipset_family, wifi_chipset_model = get_wifi_chipset()
             LOGGER.info('chipset is: %s %s' % (wifi_chipset_family, wifi_chipset_model))
             if 'unsupported' == wifi_chipset_family:
@@ -635,7 +639,7 @@ def setup_lo_alias():
     setup_network_interface_ip('lo:1', '10.1.2.3', '255.255.255.255')
     enable_ipv4_forward()
     shell_execute('iptables -P FORWARD ACCEPT')
-    iptables.insert_rules(RULES)
+    iptables.insert_rules(RULES, to_fq_chain=False)
 
 
 def setup_network_interface_ip(iface, ip, netmask):

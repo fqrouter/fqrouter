@@ -8,9 +8,10 @@ RE_CHAIN_NAME = re.compile(r'Chain (.+) \(')
 RE_SPACE = re.compile(r'\s+')
 
 
-def insert_rules(rules):
+def insert_rules(rules, to_fq_chain=True):
     for signature, rule_args in reversed(rules): # insert the last one first
-        rule_args = update_rule_args(rule_args)
+        if to_fq_chain:
+            rule_args = update_rule_args(rule_args)
         table, chain, _ = rule_args
         if contains_rule(table, chain, signature):
             LOGGER.info('skip insert rule: -t %s -I %s %s' % rule_args)
@@ -123,28 +124,32 @@ def dump_table(table):
 
 
 def parse(output):
-    current_chain = None
-    rules = {}
-    lines = iter(output.splitlines(False))
-    for line in lines:
-        line = line.strip()
-        if not line:
-            continue
-        match = RE_CHAIN_NAME.match(line)
-        if match:
-            current_chain = match.group(1)
-            LOGGER.debug('current_chain: %s' % current_chain)
-            lines.next() # skip the line below Chain xxx
-            continue
-        else:
-            if not current_chain:
-                LOGGER.error('found rule before chain is identified: %s' % line)
+    try:
+        current_chain = None
+        rules = {}
+        lines = iter(output.splitlines(False))
+        for line in lines:
+            line = line.strip()
+            if not line:
                 continue
-            parts = RE_SPACE.split(line)
-            rule = {}
-            rule['pkts'], rule['bytes'], rule['target'], rule['prot'], rule['opt'], \
-            rule['iface_in'], rule['iface_out'], rule['source'], rule['destination'] = parts[:9]
-            rule['extra'] = ' '.join(parts[9:])
-            LOGGER.debug('parsed rule: %s' % str(rule))
-            rules.setdefault(current_chain, []).append(rule)
-    return rules
+            match = RE_CHAIN_NAME.match(line)
+            if match:
+                current_chain = match.group(1)
+                LOGGER.debug('current_chain: %s' % current_chain)
+                lines.next() # skip the line below Chain xxx
+                continue
+            else:
+                if not current_chain:
+                    LOGGER.error('found rule before chain is identified: %s' % line)
+                    continue
+                parts = RE_SPACE.split(line)
+                rule = {}
+                rule['pkts'], rule['bytes'], rule['target'], rule['prot'], rule['opt'], \
+                rule['iface_in'], rule['iface_out'], rule['source'], rule['destination'] = parts[:9]
+                rule['extra'] = ' '.join(parts[9:])
+                LOGGER.debug('parsed rule: %s' % str(rule))
+                rules.setdefault(current_chain, []).append(rule)
+        return rules
+    except:
+        LOGGER.exception('failed to parse iptables output: %s' % output)
+        raise
