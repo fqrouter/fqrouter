@@ -22,16 +22,12 @@ import fq.router2.life_cycle.LaunchService;
 import fq.router2.utils.HttpUtils;
 import fq.router2.utils.IOUtils;
 import fq.router2.utils.LogUtils;
-import fq.router2.wifi_repeater.CheckWifiRepeaterService;
-import fq.router2.wifi_repeater.StartWifiRepeaterService;
-import fq.router2.wifi_repeater.StopWifiRepeaterService;
-import fq.router2.wifi_repeater.WifiRepeaterChangedIntent;
+import fq.router2.wifi_repeater.*;
 
 import java.io.File;
 
 public class WifiRepeaterActivity extends Activity implements WifiRepeaterChangedIntent.Handler {
 
-    private WifiManager.WifiLock wifiLock;
     private Handler handler = new Handler();
     private final static int ITEM_ID_RESET_WIFI = 1;
 
@@ -176,12 +172,12 @@ public class WifiRepeaterActivity extends Activity implements WifiRepeaterChange
                     .setNegativeButton(R.string.wifi_repeater_risk_alert_cancel, null)
                     .show();
             button.setChecked(false);
-            return;
         }
     }
 
     private void stopWifiRepeater() {
         findViewById(R.id.wifiRepeaterToggleButton).setEnabled(false);
+        stopService(new Intent(this, WifiGuardService.class));
         StopWifiRepeaterService.execute(this);
     }
 
@@ -196,27 +192,26 @@ public class WifiRepeaterActivity extends Activity implements WifiRepeaterChange
         editor.commit();
         LaunchService.updateConfigFile(this);
         StartWifiRepeaterService.execute(this);
+        findViewById(R.id.ssidEditText).setEnabled(false);
+        findViewById(R.id.passwordEditText).setEnabled(false);
     }
 
     @Override
     public void onWifiRepeaterChanged(boolean isStarted) {
-        updateWifiLock(isStarted);
+        if (isStarted) {
+            startService(new Intent(this, WifiGuardService.class));
+        } else {
+            stopService(new Intent(this, WifiGuardService.class));
+        }
         ToggleButton wifiRepeaterToggleButton = (ToggleButton) findViewById(R.id.wifiRepeaterToggleButton);
         wifiRepeaterToggleButton.setChecked(isStarted);
         wifiRepeaterToggleButton.setEnabled(true);
-    }
-
-    private void updateWifiLock(boolean isStarted) {
-        WifiManager wifiManager = (WifiManager) getSystemService(WIFI_SERVICE);
-        if (null == wifiLock) {
-            wifiLock = wifiManager.createWifiLock(WifiManager.WIFI_MODE_FULL_HIGH_PERF, "fqrouter wifi hotspot");
-        }
         if (isStarted) {
-            wifiLock.acquire();
+            findViewById(R.id.ssidEditText).setEnabled(false);
+            findViewById(R.id.passwordEditText).setEnabled(false);
         } else {
-            if (wifiLock.isHeld()) {
-                wifiLock.release();
-            }
+            findViewById(R.id.ssidEditText).setEnabled(true);
+            findViewById(R.id.passwordEditText).setEnabled(true);
         }
     }
 }

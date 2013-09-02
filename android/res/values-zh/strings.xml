@@ -181,7 +181,7 @@
     <string name="about_info_title">fqrouter %s</string>
     <string name="about_info_close">关闭</string>
     <string name="pref_save"><![CDATA[>> 保存]]></string>
-    <string name="wifi_repeater_hint">以无线的方式共享翻墙网络。与系统自带的3G热点不同之处在于这个共享的是无线而不是3G。</string>
+    <string name="wifi_repeater_hint">以无线的方式共享翻墙网络。与系统自带的便携式热点不同之处在于这个共享的是无线而不是3G。</string>
     <string name="menu_reset_wifi">重置无线</string>
     <string name="reset_wifi_alert_title">你确定要重置吗？</string>
     <string name="reset_wifi_alert_message">重置无线配置是为了修复无线中继失败导致的无线无法连接的问题。使用后如果问题依旧，请点主界面的报告错误按钮。

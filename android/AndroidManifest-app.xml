@@ -59,6 +59,8 @@
         </service>
         <service android:name=".feedback.CheckUpdateService">
         </service>
+        <service android:name=".wifi_repeater.WifiGuardService">
+        </service>
         <service android:name=".wifi_repeater.CheckWifiRepeaterService">
         </service>
         <service android:name=".wifi_repeater.StartWifiRepeaterService">

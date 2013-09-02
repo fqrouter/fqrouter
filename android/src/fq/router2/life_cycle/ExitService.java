@@ -8,6 +8,7 @@ import android.os.Build;
 import com.google.analytics.tracking.android.GoogleAnalytics;
 import com.google.analytics.tracking.android.Tracker;
 import fq.router2.utils.*;
+import fq.router2.wifi_repeater.WifiGuardService;
 
 import java.io.File;
 
@@ -49,6 +50,7 @@ public class ExitService extends IntentService {
         } catch (Exception e) {
             LogUtils.e("failed to kill manager process", e);
         }
+        stopService(new Intent(this, WifiGuardService.class));
         sendBroadcast(new ExitedIntent());
         NotificationManager notificationManager =
                 (NotificationManager) getSystemService(NOTIFICATION_SERVICE);
