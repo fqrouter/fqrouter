@@ -189,4 +189,9 @@
     <string name="reset_wifi_alert_ok">确定</string>
     <string name="reset_wifi_alert_cancel">取消</string>
     <string name="status">状态</string>
+    <string name="wifi_repeater_in_3g_env_info_title">没有连接到无线网络</string>
+    <string name="wifi_repeater_in_3g_env_info_message">你并没有连入无线网络，所以也就没有必要使用无线中继了。使用Android自带的便携式热点功能就可以共享3G网络的。
+    </string>
+    <string name="wifi_repeater_in_3g_env_info_use_sys">进系统设置开热点</string>
+    <string name="wifi_repeater_in_3g_env_info_ok">强制打开无线中继</string>
 </resources>

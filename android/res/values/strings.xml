@@ -214,4 +214,10 @@
     <string name="reset_wifi_alert_ok">OK</string>
     <string name="reset_wifi_alert_cancel">Cancel</string>
     <string name="status">Status</string>
+    <string name="wifi_repeater_in_3g_env_info_title">Wifi Is Not Connected</string>
+    <string name="wifi_repeater_in_3g_env_info_message">You are not connected to a wifi network, so there is nothing to
+        repeat with. Do you want to use Android built-in 3G hotspot instead?
+    </string>
+    <string name="wifi_repeater_in_3g_env_info_use_sys">Yes, 3G Hotspot</string>
+    <string name="wifi_repeater_in_3g_env_info_ok">Start Wifi Repeater</string>
 </resources>

@@ -4,11 +4,14 @@ import android.app.Activity;
 import android.app.AlertDialog;
 import android.content.Context;
 import android.content.DialogInterface;
+import android.content.Intent;
 import android.content.SharedPreferences;
+import android.net.wifi.WifiInfo;
 import android.net.wifi.WifiManager;
 import android.os.Bundle;
 import android.os.Handler;
 import android.preference.PreferenceManager;
+import android.provider.Settings;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
@@ -118,30 +121,62 @@ public class WifiRepeaterActivity extends Activity implements WifiRepeaterChange
 
     private void toggleWifiRepeater(final ToggleButton button) {
         if (button.isChecked()) {
-            final File flagFile = new File("/data/data/fq.router2/etc/wifi-repeater-risk-notified");
-            if (flagFile.exists()) {
-                startWifiRepeater();
-            } else {
+
+            WifiInfo wifiInfo = getWifiManager().getConnectionInfo();
+            if (0 == wifiInfo.getIpAddress()) {
                 new AlertDialog.Builder(this)
                         .setIcon(android.R.drawable.ic_dialog_alert)
-                        .setTitle(R.string.wifi_repeater_risk_alert_title)
-                        .setMessage(R.string.wifi_repeater_risk_alert_message)
-                        .setPositiveButton(R.string.wifi_repeater_risk_alert_ok, new DialogInterface.OnClickListener() {
+                        .setTitle(R.string.wifi_repeater_in_3g_env_info_title)
+                        .setMessage(R.string.wifi_repeater_in_3g_env_info_message)
+                        .setPositiveButton(R.string.wifi_repeater_in_3g_env_info_use_sys, new DialogInterface.OnClickListener() {
 
                             @Override
                             public void onClick(DialogInterface dialog, int which) {
-                                IOUtils.writeToFile(flagFile, "OK");
-                                startWifiRepeater();
-                                button.setChecked(true);
+                                startActivity(new Intent(Settings.ACTION_SETTINGS));
                             }
 
                         })
-                        .setNegativeButton(R.string.wifi_repeater_risk_alert_cancel, null)
+                        .setNegativeButton(R.string.wifi_repeater_in_3g_env_info_ok, new DialogInterface.OnClickListener() {
+
+                            @Override
+                            public void onClick(DialogInterface dialog, int which) {
+                                alertRiskThenStartWifiRepeater(button);
+                            }
+
+                        })
                         .show();
                 button.setChecked(false);
+                return;
             }
+            alertRiskThenStartWifiRepeater(button);
         } else {
             stopWifiRepeater();
+        }
+    }
+
+    private void alertRiskThenStartWifiRepeater(final ToggleButton button) {
+        final File flagFile = new File("/data/data/fq.router2/etc/wifi-repeater-risk-notified");
+        if (flagFile.exists()) {
+            startWifiRepeater();
+        } else {
+            new AlertDialog.Builder(this)
+                    .setIcon(android.R.drawable.ic_dialog_alert)
+                    .setTitle(R.string.wifi_repeater_risk_alert_title)
+                    .setMessage(R.string.wifi_repeater_risk_alert_message)
+                    .setPositiveButton(R.string.wifi_repeater_risk_alert_ok, new DialogInterface.OnClickListener() {
+
+                        @Override
+                        public void onClick(DialogInterface dialog, int which) {
+                            IOUtils.writeToFile(flagFile, "OK");
+                            startWifiRepeater();
+                            button.setChecked(true);
+                        }
+
+                    })
+                    .setNegativeButton(R.string.wifi_repeater_risk_alert_cancel, null)
+                    .show();
+            button.setChecked(false);
+            return;
         }
     }
 
