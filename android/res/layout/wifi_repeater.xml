@@ -18,7 +18,7 @@
     <EditText
             android:layout_width="fill_parent"
             android:layout_height="wrap_content"
-            android:id="@+id/ssidEditText"/>
+            android:id="@+id/ssidEditText" android:singleLine="true"/>
     <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
@@ -27,7 +27,7 @@
     <EditText
             android:layout_width="fill_parent"
             android:layout_height="wrap_content"
-            android:id="@+id/passwordEditText"/>
+            android:id="@+id/passwordEditText" android:singleLine="true"/>
     <ToggleButton
             android:layout_width="160dp"
             android:layout_height="64dp"
