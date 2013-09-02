@@ -48,7 +48,7 @@ public class SocksVpnService extends VpnService {
             if (tunPFD != null) {
                 throw new RuntimeException("another VPN is still running");
             }
-            Intent statusActivityIntent = new Intent(Intent.ACTION_VIEW, Uri.parse("http://127.0.0.1:8319/proxies"));
+            Intent statusActivityIntent = new Intent(Intent.ACTION_VIEW, Uri.parse("http://127.0.0.1:2515/proxies"));
             PendingIntent pIntent = PendingIntent.getActivity(this, 0, statusActivityIntent, 0);
             tunPFD = new Builder()
                     .setConfigureIntent(pIntent)
