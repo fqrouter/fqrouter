@@ -86,12 +86,7 @@ public class MainSettingsActivity extends PreferenceActivity implements SharedPr
                 return false;
             }
         });
-        if (ShellUtils.isRooted()) {
-            if (Build.VERSION.SDK_INT < 14) {
-                getPreferenceScreen().removePreference(findPreference("WifiHotspot"));
-            }
-        } else {
-            getPreferenceScreen().removePreference(findPreference("WifiHotspot"));
+        if (!ShellUtils.isRooted()) {
             PreferenceCategory generalCategoryPref = (PreferenceCategory) findPreference("General");
             generalCategoryPref.removePreference(generalCategoryPref.findPreference("AutoLaunchEnabled"));
             generalCategoryPref.removePreference(generalCategoryPref.findPreference("NotificationEnabled"));

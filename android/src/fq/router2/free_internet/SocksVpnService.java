@@ -4,6 +4,7 @@ import android.app.PendingIntent;
 import android.content.Intent;
 import android.net.LocalServerSocket;
 import android.net.LocalSocket;
+import android.net.Uri;
 import android.net.VpnService;
 import android.os.ParcelFileDescriptor;
 import fq.router2.MainActivity;
@@ -47,8 +48,8 @@ public class SocksVpnService extends VpnService {
             if (tunPFD != null) {
                 throw new RuntimeException("another VPN is still running");
             }
-            Intent mainActivityIntent = new Intent(this, MainActivity.class);
-            PendingIntent pIntent = PendingIntent.getActivity(this, 0, mainActivityIntent, 0);
+            Intent statusActivityIntent = new Intent(Intent.ACTION_VIEW, Uri.parse("http://127.0.0.1:8319/proxies"));
+            PendingIntent pIntent = PendingIntent.getActivity(this, 0, statusActivityIntent, 0);
             tunPFD = new Builder()
                     .setConfigureIntent(pIntent)
                     .setSession("fqrouter2")

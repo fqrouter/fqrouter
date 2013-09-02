@@ -30,7 +30,6 @@ import fq.router2.pick_and_play.CheckPickAndPlayService;
 import fq.router2.pick_and_play.PickAndPlayChangedIntent;
 import fq.router2.utils.*;
 import fq.router2.wifi_repeater.CheckWifiRepeaterService;
-import fq.router2.wifi_repeater.StartWifiRepeaterService;
 import fq.router2.wifi_repeater.WifiRepeaterChangedIntent;
 
 import java.io.File;
@@ -417,8 +416,9 @@ public class MainActivity extends Activity implements
                         PendingIntent.getBroadcast(context, 0, new ExitIntent(), 0))
                 .addAction(
                         android.R.drawable.ic_menu_manage,
-                        context.getResources().getString(R.string.menu_main_screen),
-                        PendingIntent.getActivity(context, 0, openIntent, 0))
+                        context.getResources().getString(R.string.menu_status),
+                        PendingIntent.getActivity(context, 0,
+                                new Intent(Intent.ACTION_VIEW, Uri.parse("http://127.0.0.1:8319/proxies")), 0))
                 .build();
         NotificationManager notificationManager =
                 (NotificationManager) context.getSystemService(NOTIFICATION_SERVICE);

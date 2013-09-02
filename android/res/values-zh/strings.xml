@@ -175,7 +175,7 @@
     <string name="run_needs_su_alert_title">ROOT了不好使</string>
     <string name="run_needs_su_alert_message">你可以退出然后不给ROOT权限重新进入，fqrouter可能可以用VPN模式启动</string>
     <string name="run_needs_su_alert_ok">明白了</string>
-    <string name="menu_main_screen">主界面</string>
+    <string name="menu_status">状态</string>
     <string name="pref_open_full_google_play_summary">并非永久性打开完整版，重启或者一段时间后会恢复。Google Play的数据会被清空</string>
     <string name="pref_open_about">关于</string>
     <string name="about_info_title">fqrouter %s</string>
