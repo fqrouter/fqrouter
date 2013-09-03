@@ -404,26 +404,30 @@ public class MainActivity extends Activity implements
     }
 
     public static void displayNotification(Context context, String text) {
-        Intent openIntent = new Intent(context, MainActivity.class);
-        Notification notification = new NotificationCompat.Builder(context)
-                .setSmallIcon(R.drawable.icon)
-                .setContentTitle(context.getResources().getString(R.string.notification_title))
-                .setContentText(text)
-                .setContentIntent(PendingIntent.getActivity(context, 0, openIntent, 0))
-                .addAction(
-                        android.R.drawable.ic_menu_close_clear_cancel,
-                        context.getResources().getString(R.string.menu_exit),
-                        PendingIntent.getBroadcast(context, 0, new ExitIntent(), 0))
-                .addAction(
-                        android.R.drawable.ic_menu_manage,
-                        context.getResources().getString(R.string.menu_status),
-                        PendingIntent.getActivity(context, 0,
-                                new Intent(Intent.ACTION_VIEW, Uri.parse("http://127.0.0.1:2515/proxies")), 0))
-                .build();
-        NotificationManager notificationManager =
-                (NotificationManager) context.getSystemService(NOTIFICATION_SERVICE);
-        notification.flags |= Notification.FLAG_ONGOING_EVENT;
-        notificationManager.notify(1983, notification);
+        try {
+            Intent openIntent = new Intent(context, MainActivity.class);
+            Notification notification = new NotificationCompat.Builder(context)
+                    .setSmallIcon(R.drawable.icon)
+                    .setContentTitle(context.getResources().getString(R.string.notification_title))
+                    .setContentText(text)
+                    .setContentIntent(PendingIntent.getActivity(context, 0, openIntent, 0))
+                    .addAction(
+                            android.R.drawable.ic_menu_close_clear_cancel,
+                            context.getResources().getString(R.string.menu_exit),
+                            PendingIntent.getBroadcast(context, 0, new ExitIntent(), 0))
+                    .addAction(
+                            android.R.drawable.ic_menu_manage,
+                            context.getResources().getString(R.string.menu_status),
+                            PendingIntent.getActivity(context, 0,
+                                    new Intent(Intent.ACTION_VIEW, Uri.parse("http://127.0.0.1:2515/proxies")), 0))
+                    .build();
+            NotificationManager notificationManager =
+                    (NotificationManager) context.getSystemService(NOTIFICATION_SERVICE);
+            notification.flags |= Notification.FLAG_ONGOING_EVENT;
+            notificationManager.notify(1983, notification);
+        } catch (Exception e) {
+            LogUtils.e("failed to display notification " + text, e);
+        }
     }
 
     private void clearNotification() {
@@ -461,19 +465,6 @@ public class MainActivity extends Activity implements
         showNotification(_(R.string.status_exiting));
         sendBroadcast(new ExitingIntent());
     }
-
-//    private void toggleFreeInternet(ToggleButton button) {
-//        startBlinkingImage((ImageView) findViewById(R.id.freeInternetArrow));
-//        if (button.isChecked()) {
-//            startBlinkingStatus(_(R.string.status_free_internet_connecting));
-//            disableFreeInternetButton();
-//            ConnectFreeInternetService.execute(this);
-//        } else {
-//            startBlinkingStatus(_(R.string.status_free_internet_disconnecting));
-//            disableFreeInternetButton();
-//            DisconnectFreeInternetService.execute(this);
-//        }
-//    }
 
     private String _(int id) {
         return getResources().getString(id);
