@@ -194,4 +194,5 @@
     </string>
     <string name="wifi_repeater_in_3g_env_info_use_sys">进系统设置开热点</string>
     <string name="wifi_repeater_in_3g_env_info_ok">强制打开无线中继</string>
+    <string name="pref_goagent_private_servers_summary">GoAgent只能代理HTTP，需要与其他代理一起工作</string>
 </resources>

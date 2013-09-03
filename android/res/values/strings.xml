@@ -220,4 +220,6 @@
     </string>
     <string name="wifi_repeater_in_3g_env_info_use_sys">Yes, 3G Hotspot</string>
     <string name="wifi_repeater_in_3g_env_info_ok">Start Wifi Repeater</string>
+    <string name="pref_goagent_private_servers_summary">GoAgent can only proxy HTTP, need to work with other proxies
+    </string>
 </resources>

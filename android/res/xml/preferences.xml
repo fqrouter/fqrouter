@@ -9,6 +9,7 @@
         <ListPreference
                 android:key="GoAgentPrivateServersPicker"
                 android:title="@string/pref_goagent_private_servers"
+                android:summary="@string/pref_goagent_private_servers_summary"
                 android:defaultValue=""/>
     </PreferenceCategory>
     <PreferenceCategory android:title="@string/pref_shadowsocks_category">
