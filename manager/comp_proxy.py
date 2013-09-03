@@ -67,6 +67,8 @@ def start_fqsocks():
 
 
 def configure(args):
+    args += ['--ip-command', '/data/data/fq.router2/busybox']
+    args += ['--ifconfig-command', '/data/data/fq.router2/busybox']
     args += ['--google-host', 'goagent-google-ip.fqrouter.com']
     args += ['--google-host', 'goagent-google-ip2.fqrouter.com']
     if not config.read().get('auto_access_check_enabled', True):
