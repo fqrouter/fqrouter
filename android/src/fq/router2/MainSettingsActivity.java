@@ -159,7 +159,7 @@ public class MainSettingsActivity extends PreferenceActivity implements SharedPr
             @Override
             public void run() {
                 try {
-                    HttpUtils.post("http://127.0.0.1:8319/force-us-ip");
+                    HttpUtils.post("http://127.0.0.1:2515/force-us-ip");
                     Intent LaunchIntent = getPackageManager().getLaunchIntentForPackage("com.android.vending");
                     startActivity(LaunchIntent);
                 } catch (Exception e) {
