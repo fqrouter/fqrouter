@@ -2,6 +2,7 @@ import logging
 import httplib
 import cgi
 import sys
+import traceback
 from gevent.wsgi import WSGIServer
 
 LOGGER = logging.getLogger('fqrouter.%s' % __name__)
@@ -23,7 +24,9 @@ def handle_request(environ, start_response):
             lines = handler(environ, lambda status, headers: start_response(get_http_response(status), headers))
         except:
             LOGGER.exception('failed to handle request: %s %s' % (method, path))
-            raise
+            start_response(get_http_response(httplib.INTERNAL_SERVER_ERROR), [('Content-Type', 'text/plain')])
+            yield traceback.format_exc()
+            return
     else:
         start_response(get_http_response(httplib.NOT_FOUND), [('Content-Type', 'text/plain')])
         lines = []
