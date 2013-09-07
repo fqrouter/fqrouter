@@ -8,8 +8,6 @@ import android.content.Intent;
 public class ExitedReceiver extends BroadcastReceiver {
     @Override
     public void onReceive(Context context, Intent intent) {
-        NotificationManager notificationManager =
-                (NotificationManager) context.getSystemService(Context.NOTIFICATION_SERVICE);
-        notificationManager.cancel(1983);
+        MainActivity.clearNotification(context);
     }
 }

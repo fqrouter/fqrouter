@@ -7,6 +7,7 @@ import android.content.Intent;
 import android.os.Build;
 import com.google.analytics.tracking.android.GoogleAnalytics;
 import com.google.analytics.tracking.android.Tracker;
+import fq.router2.MainActivity;
 import fq.router2.utils.*;
 import fq.router2.wifi_repeater.WifiGuardService;
 
@@ -52,9 +53,7 @@ public class ExitService extends IntentService {
         }
         stopService(new Intent(this, WifiGuardService.class));
         sendBroadcast(new ExitedIntent());
-        NotificationManager notificationManager =
-                (NotificationManager) getSystemService(NOTIFICATION_SERVICE);
-        notificationManager.cancel(0);
+        MainActivity.clearNotification(this);
     }
 
     public static void execute(Context context) {

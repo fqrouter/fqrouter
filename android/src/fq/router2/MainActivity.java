@@ -113,7 +113,7 @@ public class MainActivity extends Activity implements
                         public void onClick(DialogInterface dialogInterface, int i) {
                             Intent intent = new Intent(Settings.ACTION_APN_SETTINGS);
                             startActivity(intent);
-                            clearNotification();
+                            clearNotification(MainActivity.this);
                             MainActivity.this.finish();
                         }
                     })
@@ -393,11 +393,11 @@ public class MainActivity extends Activity implements
 
     private void showNotification(String text) {
         if (!PreferenceManager.getDefaultSharedPreferences(this).getBoolean("NotificationEnabled", true)) {
-            clearNotification();
+            clearNotification(this);
             return;
         }
         if (LaunchService.isVpnRunning()) {
-            clearNotification();
+            clearNotification(this);
             return;
         }
         displayNotification(this, text);
@@ -430,9 +430,9 @@ public class MainActivity extends Activity implements
         }
     }
 
-    private void clearNotification() {
+    public static void clearNotification(Context context) {
         NotificationManager notificationManager =
-                (NotificationManager) getSystemService(NOTIFICATION_SERVICE);
+                (NotificationManager) context.getSystemService(NOTIFICATION_SERVICE);
         notificationManager.cancel(1983);
     }
 
@@ -442,7 +442,7 @@ public class MainActivity extends Activity implements
         if (!textView.getText().toString().startsWith("Error:")) {
             textView.setText(status);
             if (LaunchService.isVpnRunning()) {
-                clearNotification();
+                clearNotification(this);
             } else {
                 showNotification(status);
             }
@@ -509,7 +509,7 @@ public class MainActivity extends Activity implements
         startBlinkingImage((ImageView) findViewById(R.id.freeInternetArrow));
         startBlinkingStatus(_(R.string.status_free_internet_connecting));
         if (isVpnMode) {
-            clearNotification();
+            clearNotification(this);
             if (LaunchService.isVpnRunning()) {
                 onFreeInternetChanged(true);
             } else {
@@ -587,6 +587,7 @@ public class MainActivity extends Activity implements
 
     @Override
     public void onExited() {
+        clearNotification(this);
         finish();
     }
 
@@ -660,7 +661,7 @@ public class MainActivity extends Activity implements
 
                         @Override
                         public void onClick(DialogInterface dialog, int which) {
-                            clearNotification();
+                            clearNotification(MainActivity.this);
                             MainActivity.this.finish();
                         }
 
@@ -668,7 +669,7 @@ public class MainActivity extends Activity implements
                     .setOnCancelListener(new DialogInterface.OnCancelListener() {
                         @Override
                         public void onCancel(DialogInterface dialogInterface) {
-                            clearNotification();
+                            clearNotification(MainActivity.this);
                             MainActivity.this.finish();
                         }
                     })
