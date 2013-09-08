@@ -39,9 +39,11 @@ def setup():
     subprocess.call('ifconfig lo:1 10.1.2.3 netmask 255.255.255.255', shell=True)
     processes.append(subprocess.Popen(
         'python -m fqdns --outbound-ip 10.1.2.3 '
+        # '--log-level DEBUG '
         'serve --listen 127.0.0.1:5353 '
         '--enable-hosted-domain '
-        '--enable-china-domain',
+        '--enable-china-domain '
+        '--original-upstream 10.45.30.1',
         shell=True,
         # stderr=subprocess.STDOUT, stdout=subprocess.PIPE
     ))
@@ -50,7 +52,6 @@ def setup():
         '--listen 10.1.2.3:8319 '
         # '--log-level DEBUG '
         '--http-request-mark 0xbabe '
-        '--proxy ssh,proxy_host=locvps.host.fqrouter.com,proxy_port=22,username=root,password= '
         '--proxy directory,src=proxies.fqrouter.com,goagent=True,ss=True '
         # '--proxy dynamic,n=8,type=ss,dns_record=ss#n#.fqrouter.com,priority=3 '
         # '--proxy dynamic,n=10,type=goagent,dns_record=goagent#n#.fqrouter.com,priority=1 '

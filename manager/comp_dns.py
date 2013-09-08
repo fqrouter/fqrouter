@@ -18,7 +18,8 @@ def start():
             '--log-file', '/data/data/fq.router2/log/fqdns.log',
             '--outbound-ip', '10.1.2.3', # send from 10.1.2.3 so we can skip redirecting those traffic
             'serve', '--listen', '10.1.2.3:5353',
-            '--enable-china-domain', '--enable-hosted-domain'), on_exit=stop)
+            '--enable-china-domain', '--enable-hosted-domain',
+            '--original-upstream', get_default_dns_server()), on_exit=stop)
 
 
 def stop():
@@ -57,3 +58,14 @@ def insert_iptables_rules():
 def delete_iptables_rules():
     iptables.delete_rules(RULES)
 
+
+def get_default_dns_server():
+    try:
+        default_dns_server = shell.check_output(['getprop', 'net.dns1']).strip()
+        if default_dns_server:
+            return '%s:53' % default_dns_server
+        else:
+            return ''
+    except:
+        LOGGER.exception('failed to get default dns server')
+        return ''

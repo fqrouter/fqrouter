@@ -19,6 +19,7 @@ import gevent
 import gevent.socket
 import dpkt
 import comp_proxy
+import comp_dns
 import traceback
 import urllib2
 
@@ -31,7 +32,10 @@ MANAGER_LOG_FILE = os.path.join(LOG_DIR, 'manager.log')
 FQDNS_LOG_FILE = os.path.join(LOG_DIR, 'fqdns.log')
 
 nat_map = {} # sport => (dst, dport), src always be 10.25.1.1
-DNS_HANDLER = fqdns.DnsHandler(enable_china_domain=True, enable_hosted_domain=True)
+default_dns_server = comp_dns.get_default_dns_server()
+DNS_HANDLER = fqdns.DnsHandler(
+    enable_china_domain=True, enable_hosted_domain=True,
+    original_upstream=default_dns_server.split(':') if default_dns_server else '')
 
 
 def handle_free_internet_connect(environ, start_response):
@@ -230,6 +234,7 @@ def read_tun_fd():
 if '__main__' == __name__:
     setup_logging()
     LOGGER.info('environment: %s' % os.environ.items())
+    LOGGER.info('default dns server: %s' % default_dns_server)
     FQROUTER_VERSION = os.getenv('FQROUTER_VERSION')
     try:
         gevent.monkey.patch_ssl()
