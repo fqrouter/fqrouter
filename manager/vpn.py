@@ -144,7 +144,7 @@ def create_tcp_socket(server_ip, server_port, connect_timeout):
         fd = _multiprocessing.recvfd(fdsock.fileno())
         if fd == 1:
             LOGGER.error('failed to create tcp socket: %s:%s' % (server_ip, server_port))
-            raise Exception('failed to create tcp socket: %s:%s' % (server_ip, server_port))
+            raise socket.error('failed to create tcp socket: %s:%s' % (server_ip, server_port))
         sock = socket.fromfd(fd, socket.AF_INET, socket.SOCK_STREAM)
         os.close(fd)
         return sock
@@ -162,7 +162,7 @@ def create_udp_socket():
         fd = _multiprocessing.recvfd(fdsock.fileno())
         if fd == 1:
             LOGGER.error('failed to create udp socket')
-            raise Exception('failed to create udp socket')
+            raise socket.error('failed to create udp socket')
         sock = socket.fromfd(fd, socket.AF_INET, socket.SOCK_DGRAM)
         os.close(fd)
         return sock
