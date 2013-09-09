@@ -222,4 +222,8 @@
     <string name="wifi_repeater_in_3g_env_info_ok">Start Wifi Repeater</string>
     <string name="pref_goagent_private_servers_summary">GoAgent can only proxy HTTP, need to work with other proxies
     </string>
+    <string name="pref_free_internet_connected">Free Internet Connected</string>
+    <string name="pref_free_internet_connected_summary">Proxies and scrambler are in use to protect the freedom from
+        censorship. They can be turned off temporarily. By toggling it, you can reload the proxies.
+    </string>
 </resources>

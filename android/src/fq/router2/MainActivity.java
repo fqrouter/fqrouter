@@ -184,13 +184,7 @@ public class MainActivity extends Activity implements
     }
 
     private void checkFreeInternet() {
-        if (ShellUtils.isRooted()) {
-            CheckFreeInternetService.execute(this);
-        } else {
-            if (LaunchService.isVpnRunning()) {
-                onFreeInternetChanged(true);
-            }
-        }
+        CheckFreeInternetService.execute(this);
     }
 
     private void launch() {

@@ -1,5 +1,10 @@
 <?xml version="1.0" encoding="utf-8"?>
 <PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android">
+    <CheckBoxPreference
+            android:key="FreeInternetConnected"
+            android:title="@string/pref_free_internet_connected"
+            android:summary="@string/pref_free_internet_connected_summary"
+            android:defaultValue="false"/>
     <PreferenceCategory android:title="@string/pref_goagent_category">
         <CheckBoxPreference
                 android:key="GoAgentPublicServersEnabled"

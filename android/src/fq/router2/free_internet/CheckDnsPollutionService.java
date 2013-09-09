@@ -15,7 +15,7 @@ public class CheckDnsPollutionService extends IntentService {
     @Override
     protected void onHandleIntent(Intent intent) {
         try {
-            float dnsPollutedAt = Float.parseFloat(HttpUtils.get("http://127.0.0.1:8319/dns-polluted-at")) * 1000;
+            float dnsPollutedAt = Float.parseFloat(HttpUtils.get("http://127.0.0.1:2515/dns-polluted-at")) * 1000;
             if (dnsPollutedAt > 0) {
                 sendBroadcast(new DnsPollutedIntent((long) dnsPollutedAt));
             }

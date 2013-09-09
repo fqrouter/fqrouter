@@ -16,6 +16,10 @@ import android.webkit.WebViewClient;
 import android.widget.EditText;
 import android.widget.Toast;
 import com.google.analytics.tracking.android.EasyTracker;
+import fq.router2.free_internet.CheckFreeInternetService;
+import fq.router2.free_internet.ConnectFreeInternetService;
+import fq.router2.free_internet.DisconnectFreeInternetService;
+import fq.router2.free_internet.FreeInternetChangedIntent;
 import fq.router2.life_cycle.LaunchService;
 import fq.router2.utils.ApkUtils;
 import fq.router2.utils.HttpUtils;
@@ -24,7 +28,7 @@ import fq.router2.utils.ShellUtils;
 
 import java.util.List;
 
-public class MainSettingsActivity extends PreferenceActivity implements SharedPreferences.OnSharedPreferenceChangeListener {
+public class MainSettingsActivity extends PreferenceActivity implements SharedPreferences.OnSharedPreferenceChangeListener, FreeInternetChangedIntent.Handler {
 
     private Handler handler = new Handler();
 
@@ -91,6 +95,8 @@ public class MainSettingsActivity extends PreferenceActivity implements SharedPr
             generalCategoryPref.removePreference(generalCategoryPref.findPreference("AutoLaunchEnabled"));
             generalCategoryPref.removePreference(generalCategoryPref.findPreference("NotificationEnabled"));
         }
+        FreeInternetChangedIntent.register(this);
+        CheckFreeInternetService.execute(this);
     }
 
     private void openAbout() {
@@ -300,6 +306,16 @@ public class MainSettingsActivity extends PreferenceActivity implements SharedPr
 
     @Override
     public void onSharedPreferenceChanged(SharedPreferences sharedPreferences, String key) {
+        if ("FreeInternetConnected".equals(key)) {
+            CheckBoxPreference freeInternetConnectedPref = (CheckBoxPreference) findPreference("FreeInternetConnected");
+            if (sharedPreferences.getBoolean(key, false)) {
+                ConnectFreeInternetService.execute(this);
+            } else {
+                DisconnectFreeInternetService.execute(this);
+            }
+            freeInternetConnectedPref.setEnabled(false);
+            return;
+        }
         if (key.startsWith("WifiHotspot")) {
             showToast(R.string.pref_restart_wifi_repeater);
         } else {
@@ -409,5 +425,12 @@ public class MainSettingsActivity extends PreferenceActivity implements SharedPr
             intent.putExtra("index", Integer.valueOf(value));
             startActivity(intent);
         }
+    }
+
+    @Override
+    public void onFreeInternetChanged(boolean isConnected) {
+        CheckBoxPreference freeInternetConnectedPref = (CheckBoxPreference) findPreference("FreeInternetConnected");
+        freeInternetConnectedPref.setChecked(isConnected);
+        freeInternetConnectedPref.setEnabled(true);
     }
 }

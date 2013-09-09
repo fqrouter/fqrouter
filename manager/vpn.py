@@ -22,7 +22,7 @@ import comp_proxy
 import comp_dns
 import traceback
 import urllib2
-
+import argparse
 from utils import httpd
 
 FQROUTER_VERSION = 'UNKNOWN'
@@ -36,17 +36,37 @@ default_dns_server = comp_dns.get_default_dns_server()
 DNS_HANDLER = fqdns.DnsHandler(
     enable_china_domain=True, enable_hosted_domain=True,
     original_upstream=default_dns_server.split(':') if default_dns_server else '')
-
+is_free_internet_connected = True
 
 def handle_free_internet_connect(environ, start_response):
+    global is_free_internet_connected
+    is_free_internet_connected = True
+    args = comp_proxy.configure([])
+    argument_parser = argparse.ArgumentParser()
+    argument_parser.add_argument('--proxy', action='append', default=[])
+    args, _ = argument_parser.parse_known_args(args)
+    for props in args.proxy:
+        props = props.split(',')
+        prop_dict = dict(p.split('=') for p in props[1:])
+        fqsocks.fqsocks.add_proxies(props[0], prop_dict)
+    fqsocks.fqsocks.last_refresh_started_at = 0
+    gevent.spawn(fqsocks.fqsocks.init_proxies)
     start_response(httplib.OK, [('Content-Type', 'text/plain')])
-    fqsocks.fqsocks.refresh_proxies()
     return []
 
 
 def handle_free_internet_disconnect(environ, start_response):
+    global is_free_internet_connected
+    is_free_internet_connected = False
+    fqsocks.fqsocks.proxy_directories = []
+    fqsocks.fqsocks.proxies = []
     start_response(httplib.OK, [('Content-Type', 'text/plain')])
     return []
+
+
+def handle_free_internet_is_connected(environ, start_response):
+    start_response(httplib.OK, [('Content-Type', 'text/plain')])
+    yield 'TRUE' if is_free_internet_connected else 'FALSE'
 
 
 def redirect_tun_traffic(tun_fd):
@@ -112,7 +132,7 @@ def handle_udp(sendto, request, address):
     try:
         src_ip, src_port = address
         dst_ip, dst_port = nat_map.get(src_port)
-        if 53 == dst_port:
+        if is_free_internet_connected and 53 == dst_port:
             DNS_HANDLER(sendto, request, address)
         else:
             sock = create_udp_socket()
@@ -251,6 +271,7 @@ if '__main__' == __name__:
     httpd.HANDLERS[('POST', 'exit')] = handle_exit
     httpd.HANDLERS[('POST', 'free-internet/connect')] = handle_free_internet_connect
     httpd.HANDLERS[('POST', 'free-internet/disconnect')] = handle_free_internet_disconnect
+    httpd.HANDLERS[('GET', 'free-internet/is-connected')] = handle_free_internet_is_connected
     greenlets = [gevent.spawn(httpd.serve_forever)]
     try:
         tun_fd = read_tun_fd_until_ready()
