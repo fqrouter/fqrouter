@@ -56,10 +56,9 @@ def setup():
         # '--proxy dynamic,n=8,type=ss,dns_record=ss#n#.fqrouter.com,priority=3 '
         # '--proxy dynamic,n=10,type=goagent,dns_record=goagent#n#.fqrouter.com,priority=1 '
         '--enable-youtube-scrambler '
-        '--google-host goagent-google-ip.fqrouter.com '
-        '--google-host goagent-google-ip2.fqrouter.com '
         # '--disable-direct-access '
-        '--disable-access-check',
+        '--google-host goagent-google-ip.fqrouter.com '
+        '--google-host goagent-google-ip2.fqrouter.com ',
         shell=True,
         # stderr=subprocess.STDOUT, stdout=subprocess.PIPE
     ))

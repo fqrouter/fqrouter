@@ -282,7 +282,6 @@ if '__main__' == __name__:
     greenlets.append(gevent.spawn(serve_udp))
     greenlets.append(gevent.spawn(redirect_tun_traffic, tun_fd))
     args = [
-        '--disable-access-check',
         '--log-level', 'INFO',
         '--log-file', '/data/data/fq.router2/log/fqsocks.log',
         '--listen', '10.25.1.1:12345']
