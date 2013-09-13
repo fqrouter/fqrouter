@@ -8,7 +8,7 @@ import gevent
 import gevent.monkey
 import gevent.queue
 import traceback
-import fqsocks.goagent
+import fqsocks.proxies.goagent
 import socket
 
 T1_APP_IDS = ['freegoagent%03d' % i for i in range(1, 1000)]
@@ -267,7 +267,7 @@ def check():
             return
         appid = APP_ID_QUEUE.get()
         try:
-            app_status = fqsocks.goagent.gae_urlfetch(
+            app_status = fqsocks.proxies.goagent.gae_urlfetch(
                 FakeClient(), FakeProxy('https://%s.appspot.com/2?' % appid),
                 'GET', 'http://www.baidu.com', {}, '').app_status
             sys.stderr.write('%s => %s\n' % (appid, app_status))
@@ -283,7 +283,7 @@ def check():
 
 def main():
     gevent.monkey.patch_all()
-    fqsocks.goagent.GoAgentProxy.GOOGLE_IPS = socket.gethostbyname_ex('goagent-google-ip.fqrouter.com')[2]
+    fqsocks.proxies.goagent.GoAgentProxy.GOOGLE_IPS = socket.gethostbyname_ex('goagent-google-ip.fqrouter.com')[2]
     greenlets = []
     for i in range(8):
         greenlets.append(gevent.spawn(check))

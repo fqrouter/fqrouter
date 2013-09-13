@@ -6,7 +6,7 @@ import datetime
 import socket
 import struct
 import logging
-from fqsocks import encrypt
+from fqsocks.proxies import encrypt
 
 LOGGER = logging.getLogger(__name__)
 
