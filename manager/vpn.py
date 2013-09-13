@@ -11,6 +11,7 @@ import socket
 import httplib
 import fqdns
 import fqsocks.fqsocks
+import fqsocks.gateways.proxy_client
 import fqsocks.networking
 import contextlib
 from uuid import uuid4
@@ -48,9 +49,9 @@ def handle_free_internet_connect(environ, start_response):
     for props in args.proxy:
         props = props.split(',')
         prop_dict = dict(p.split('=') for p in props[1:])
-        fqsocks.fqsocks.add_proxies(props[0], prop_dict)
-    fqsocks.fqsocks.last_refresh_started_at = 0
-    gevent.spawn(fqsocks.fqsocks.init_proxies)
+        fqsocks.gateways.proxy_client.add_proxies(props[0], prop_dict)
+    fqsocks.gateways.proxy_client.last_refresh_started_at = 0
+    gevent.spawn(fqsocks.gateways.proxy_client.init_proxies)
     start_response(httplib.OK, [('Content-Type', 'text/plain')])
     return []
 
@@ -58,8 +59,8 @@ def handle_free_internet_connect(environ, start_response):
 def handle_free_internet_disconnect(environ, start_response):
     global is_free_internet_connected
     is_free_internet_connected = False
-    fqsocks.fqsocks.proxy_directories = []
-    fqsocks.fqsocks.proxies = []
+    fqsocks.gateways.proxy_client.proxy_directories = []
+    fqsocks.gateways.proxy_client.proxies = []
     start_response(httplib.OK, [('Content-Type', 'text/plain')])
     return []
 
