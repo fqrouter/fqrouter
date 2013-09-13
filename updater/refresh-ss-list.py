@@ -44,38 +44,14 @@ while True:
             ('198.199.92.59', 20, 'u1rRWTssNv0p', 'rc4'),
             ('88.191.139.226', 23, 'u1rRWTssNv0p', 'rc4'),
             ('192.184.80.11', 8318, 'fqrouter', 'rc4'),
-            (socket.gethostbyname('socks2.masaila.info'), 2920 + random.randint(0, 9), '111222', 'table'),
-            (socket.gethostbyname('socks3.masaila.info'), 2920 + random.randint(0, 9), '111222', 'table'),
-            (socket.gethostbyname('socks4.masaila.info'), 2920 + random.randint(0, 9), '111222', 'table'),
-            (socket.gethostbyname('socks5.masaila.info'), 2920 + random.randint(0, 9), '111222', 'table'),
-            ('209.141.36.62', 8348, '$#HAL9000!', 'aes-256-cfb')
-            # {
-            #     "configs": [
-            #         {
-            #             "server": "209.141.36.62",
-            #             "server_port": "8348",
-            #             "password": "$#HAL9000!",
-            #             "local_port": "1080",
-            #             "method": "aes-256-cfb",
-            #             "timeout": "600"
-            #         }
-            #     ],
-            #     "index": "0"
-            # }
+            ('192.249.61.233', 8318, 'fqrouter', 'rc4'),
         ]
-        success = 0
         for i, (ip, port, password, encrypt_method) in enumerate(proxies):
             if check_proxy(ip, port, password, encrypt_method) and check_proxy(ip, port, password, encrypt_method):
-                success += 1
                 subprocess.call('cli53 rrcreate fqrouter.com ss%s TXT %s:%s:%s:%s --ttl 300 --replace'
                                 % (i + 1, ip, port, password, encrypt_method), shell=True)
             else:
                 subprocess.call('cli53 rrcreate fqrouter.com ss%s TXT "" --ttl 300 --replace' % (i + 1), shell=True)
-        if not success:
-            subprocess.call(
-                'cli53 rrcreate fqrouter.com ss1 TXT 192.184.80.11:8318:fqrouter:rc4 --ttl 300 --replace', shell=True)
-            subprocess.call(
-                'cli53 rrcreate fqrouter.com ss2 TXT 192.249.61.233:8318:fqrouter:rc4 --ttl 300 --replace', shell=True)
         print('%s done' % datetime.datetime.now())
     except:
         LOGGER.exception('failed to update proxies')
