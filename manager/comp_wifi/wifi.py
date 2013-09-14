@@ -37,6 +37,7 @@ DNSMASQ_PATH = '/data/data/fq.router2/wifi-tools/dnsmasq'
 KILLALL_PATH = '/data/data/fq.router2/busybox killall'
 IFCONFIG_PATH = '/data/data/fq.router2/busybox ifconfig'
 IP_PATH = '/data/data/fq.router2/busybox ip'
+CP_PATH = '/data/data/fq.router2/busybox cp'
 FQROUTER_HOSTAPD_CONF_PATH = '/data/data/fq.router2/hostapd.conf'
 CHANNELS = {
     '2412': 1, '2417': 2, '2422': 3, '2427': 4, '2432': 5, '2437': 6, '2442': 7,
@@ -156,7 +157,7 @@ def backup_config_file(src, dst):
         if 'fqrouter' in content:
             raise Exception('config file has alreayd been modified by fqrouter')
         with open(dst, 'w') as f:
-            shell_execute('cp -p %s %s' % (src, dst))
+            shell_execute('%s -p %s %s' % (CP_PATH, src, dst))
     except:
         LOGGER.exception('failed to backup %s => %s' % (src, dst))
 
@@ -164,10 +165,10 @@ def backup_config_file(src, dst):
 def restore_config_files():
     if os.path.exists('/data/data/fq.router2/backup/wpa_supplicant.conf.bak'):
         shell_execute(
-            'cp -p %s %s' % ('/data/data/fq.router2/backup/wpa_supplicant.conf.bak', WPA_SUPPLICANT_CONF_PATH))
+            '%s -p %s %s' % (CP_PATH, '/data/data/fq.router2/backup/wpa_supplicant.conf.bak', WPA_SUPPLICANT_CONF_PATH))
     if os.path.exists('/data/data/fq.router2/backup/p2p_supplicant.conf.bak'):
         shell_execute(
-            'cp -p %s %s' % ('/data/data/fq.router2/backup/p2p_supplicant.conf.bak', P2P_SUPPLICANT_CONF_PATH))
+            '%s -p %s %s' % (CP_PATH, '/data/data/fq.router2/backup/p2p_supplicant.conf.bak', P2P_SUPPLICANT_CONF_PATH))
 
 
 def dump_wifi_status():

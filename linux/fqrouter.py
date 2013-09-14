@@ -56,6 +56,7 @@ def setup():
         # '--proxy dynamic,n=8,type=ss,dns_record=ss#n#.fqrouter.com,priority=3 '
         # '--proxy dynamic,n=10,type=goagent,dns_record=goagent#n#.fqrouter.com,priority=1 '
         '--enable-youtube-scrambler '
+        '--disable-access-check '
         # '--disable-direct-access '
         '--google-host goagent-google-ip.fqrouter.com '
         '--google-host goagent-google-ip2.fqrouter.com ',
