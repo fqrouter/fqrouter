@@ -1,39 +1,59 @@
 import gevent.monkey
 
-gevent.monkey.patch_all(ssl=False)
+gevent.monkey.patch_all(ssl=False, thread=False)
 
-import os
 import logging
 import logging.handlers
 import sys
-import httplib
-
-from utils import shutdown_hook
-from utils import config
-from utils import httpd
-from utils import shell
-from utils import iptables
-
-import comp_wifi
-import comp_dns
-import comp_scrambler
-import comp_proxy
-import comp_shortcut
-import comp_lan
-import subprocess
-import shlex
-import urllib2
+import os
+import config
 import traceback
+import httplib
+import fqsocks.httpd
+import fqsocks.fqsocks
+import wifi
+import shell
+import iptables
+import shutdown_hook
+import shlex
+import subprocess
+import functools
+import comp_scrambler
+import comp_shortcut
+
+
+__import__('free_internet')
+__import__('wifi_repeater')
+
 
 FQROUTER_VERSION = 'UNKNOWN'
-
-ROOT_DIR = os.path.dirname(__file__)
+LOGGER = logging.getLogger('fqrouter.%s' % __name__)
 LOG_DIR = '/data/data/fq.router2/log'
 MANAGER_LOG_FILE = os.path.join(LOG_DIR, 'manager.log')
-WIFI_LOG_FILE = os.path.join(LOG_DIR, 'wifi.log')
-
-LOGGER = logging.getLogger('fqrouter.%s' % __name__)
-ALL_COMPONENTS = [comp_wifi, comp_dns, comp_scrambler, comp_proxy, comp_lan, comp_shortcut]
+FQDNS_LOG_FILE = os.path.join(LOG_DIR, 'fqdns.log')
+DNS_RULES = [
+    (
+        {'target': 'ACCEPT', 'extra': 'udp dpt:53 mark match 0xcafe', 'optional': True},
+        ('nat', 'OUTPUT', '-p udp --dport 53 -m mark --mark 0xcafe -j ACCEPT')
+    ), (
+        {'target': 'DNAT', 'extra': 'udp dpt:53 to:10.1.2.3:12345'},
+        ('nat', 'OUTPUT', '-p udp ! -s 10.1.2.3 --dport 53 -j DNAT --to-destination 10.1.2.3:12345')
+    ), (
+        {'target': 'DNAT', 'extra': 'udp dpt:53 to:10.1.2.3:12345'},
+        ('nat', 'PREROUTING', '-p udp ! -s 10.1.2.3 --dport 53 -j DNAT --to-destination 10.1.2.3:12345')
+    )]
+SOCKS_RULES = [
+    (
+        {'target': 'ACCEPT', 'destination': '127.0.0.1'},
+        ('nat', 'OUTPUT', '-p tcp -d 127.0.0.1 -j ACCEPT')
+    ), (
+        {'target': 'DNAT', 'extra': 'to:10.1.2.3:12345'},
+        ('nat', 'OUTPUT', '-p tcp ! -s 10.1.2.3 -j DNAT --to-destination 10.1.2.3:12345')
+    ), (
+        {'target': 'DNAT', 'extra': 'to:10.1.2.3:12345'},
+        ('nat', 'PREROUTING', '-p tcp ! -s 10.1.2.3 -j DNAT --to-destination 10.1.2.3:12345')
+    )]
+default_dns_server = config.get_default_dns_server()
 
 
 def handle_ping(environ, start_response):
@@ -41,87 +61,66 @@ def handle_ping(environ, start_response):
         LOGGER.info('PONG/%s' % FQROUTER_VERSION)
     except:
         traceback.print_exc()
-        sys.exit(1)
+        os._exit(1)
     start_response(httplib.OK, [('Content-Type', 'text/plain')])
     yield 'PONG/%s' % FQROUTER_VERSION
 
 
-def handle_free_internet_connect(environ, start_response):
-    components = [comp_dns, comp_scrambler, comp_proxy, comp_shortcut]
-    if not config.read().get('comp_dns_enabled', True):
-        LOGGER.info('dns component disabled by config')
-        components.remove(comp_dns)
-    if not config.read().get('comp_proxy_enabled', True):
-        LOGGER.info('proxy component disabled by config')
-        components.remove(comp_proxy)
-    if not config.read().get('tcp_scrambler_enabled', True):
-        LOGGER.info('scrambler component disabled by config')
-        components.remove(comp_scrambler)
-    if not config.read().get('china_shortcut_enabled', True):
-        LOGGER.info('shortcut component disabled by config china_short_enabled')
-        components.remove(comp_shortcut)
-    if not config.read().get('direct_access_enabled', True):
-        LOGGER.info('shortcut component disabled by config direct_access_enabled')
-        if comp_shortcut in components:
-            components.remove(comp_shortcut)
-    start_components(*components)
-    start_response(httplib.OK, [('Content-Type', 'text/plain')])
-    return []
+fqsocks.httpd.HANDLERS[('GET', 'ping')] = handle_ping
 
 
-def handle_free_internet_disconnect(environ, start_response):
-    stop_components(comp_dns, comp_scrambler, comp_proxy, comp_shortcut)
-    start_response(httplib.OK, [('Content-Type', 'text/plain')])
-    return []
+def setup_logging():
+    logging.basicConfig(stream=sys.stdout, level=logging.INFO, format='%(asctime)s %(levelname)s %(message)s')
+    handler = logging.handlers.RotatingFileHandler(
+        MANAGER_LOG_FILE, maxBytes=1024 * 256, backupCount=0)
+    handler.setFormatter(logging.Formatter('%(asctime)s %(levelname)s %(message)s'))
+    logging.getLogger('fqrouter').addHandler(handler)
+    handler = logging.handlers.RotatingFileHandler(
+        FQDNS_LOG_FILE, maxBytes=1024 * 256, backupCount=0)
+    handler.setFormatter(logging.Formatter('%(asctime)s %(levelname)s %(message)s'))
+    logging.getLogger('fqdns').addHandler(handler)
 
 
-def handle_free_internet_is_connected(environ, start_response):
-    is_connected = is_free_internet_connected()
-    start_response(httplib.OK, [('Content-Type', 'text/plain')])
-    yield 'TRUE' if is_connected else 'FALSE'
-
-
-def is_free_internet_connected():
-    return comp_dns.is_alive() and comp_proxy.is_alive()
+def needs_su():
+    if os.getuid() == 0:
+        return False
+    else:
+        return True
 
 
 def run():
     iptables.init_fq_chains()
     shutdown_hook.add(iptables.flush_fq_chain)
-    if config.read().get('comp_wifi_enabled', True):
-        start_components(comp_wifi, comp_lan)
-    else:
-        LOGGER.info('wifi component disabled by config')
-        comp_wifi.setup_lo_alias()
-        start_components(comp_lan)
-    httpd.HANDLERS[('GET', 'ping')] = handle_ping
-    httpd.HANDLERS[('POST', 'free-internet/connect')] = handle_free_internet_connect
-    httpd.HANDLERS[('POST', 'free-internet/disconnect')] = handle_free_internet_disconnect
-    httpd.HANDLERS[('GET', 'free-internet/is-connected')] = handle_free_internet_is_connected
-    httpd.serve_forever()
-
-
-def start_components(*components):
-    for comp in components:
-        try:
-            handlers = comp.start()
-            for method, url, handler in handlers or []:
-                httpd.HANDLERS[(method, url)] = handler
-            LOGGER.info('started component: %s' % comp.__name__)
-        except:
-            LOGGER.exception('failed to start component: %s' % comp.__name__)
-            comp.stop()
-            if getattr(comp, '__MANDATORY__', False):
-                raise
-            LOGGER.info('skipped component: %s' % comp.__name__)
-
-
-def stop_components(*components):
-    for comp in reversed(components):
-        try:
-            comp.stop()
-        except:
-            LOGGER.exception('failed to stop: %s' % comp.__name__)
+    iptables.insert_rules(DNS_RULES)
+    shutdown_hook.add(functools.partial(iptables.delete_rules, DNS_RULES))
+    iptables.insert_rules(SOCKS_RULES)
+    shutdown_hook.add(functools.partial(iptables.delete_rules, SOCKS_RULES))
+    wifi.setup_lo_alias()
+    try:
+        comp_scrambler.start()
+        shutdown_hook.add(comp_scrambler.stop)
+    except:
+        LOGGER.exception('failed to start comp_scrambler')
+        comp_scrambler.stop()
+    try:
+        comp_shortcut.start()
+        shutdown_hook.add(comp_shortcut.stop)
+    except:
+        LOGGER.exception('failed to start comp_shortcut')
+        comp_shortcut.stop()
+    args = [
+        '--log-level', 'INFO',
+        '--log-file', '/data/data/fq.router2/log/fqsocks.log',
+        '--ifconfig-command', '/data/data/fq.router2/busybox',
+        '--ip-command', '/data/data/fq.router2/busybox',
+        '--tcp-listen', '10.1.2.3:12345',
+        '--dns-listen', '10.1.2.3:12345',
+        '--manager-listen', '*:2515',
+        '--http-listen', '*:2516']
+    args = config.configure_fqsocks(args)
+    if config.read().get('tcp_scrambler_enabled', True):
+        args += ['--http-request-mark', '0xbabe'] # trigger scrambler
+    fqsocks.fqsocks.main(args)
 
 
 def clean():
@@ -144,33 +143,11 @@ def clean():
         LOGGER.exception('clean failed')
 
 
-def setup_logging():
-    logging.basicConfig(stream=sys.stdout, level=logging.INFO, format='%(asctime)s %(levelname)s %(message)s')
-    handler = logging.handlers.RotatingFileHandler(
-        MANAGER_LOG_FILE, maxBytes=1024 * 256, backupCount=0)
-    handler.setFormatter(logging.Formatter('%(asctime)s %(levelname)s %(message)s'))
-    logging.getLogger('fqrouter').addHandler(handler)
-    handler = logging.handlers.RotatingFileHandler(
-        WIFI_LOG_FILE, maxBytes=1024 * 512, backupCount=1)
-    handler.setFormatter(logging.Formatter('%(asctime)s %(levelname)s %(message)s'))
-    logging.getLogger('wifi').addHandler(handler)
-
-
-def needs_su():
-    if os.getuid() == 0:
-        return False
-    else:
-        return True
-
-
 if '__main__' == __name__:
     setup_logging()
     LOGGER.info('environment: %s' % os.environ.items())
+    LOGGER.info('default dns server: %s' % default_dns_server)
     FQROUTER_VERSION = os.getenv('FQROUTER_VERSION')
-    try:
-        gevent.monkey.patch_ssl()
-    except:
-        LOGGER.exception('failed to patch ssl')
     action = sys.argv[1]
     if 'clean' == action:
         shell.USE_SU = needs_su()
@@ -179,6 +156,6 @@ if '__main__' == __name__:
         shell.USE_SU = needs_su()
         run()
     elif 'netd-execute' == action:
-        comp_wifi.netd_execute(sys.argv[2])
+        wifi.netd_execute(sys.argv[2])
     else:
         raise Exception('unknown action: %s' % action)

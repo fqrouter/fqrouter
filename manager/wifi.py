@@ -8,8 +8,8 @@ import shutil
 from gevent import subprocess
 import gevent
 
-from utils import iptables
-from utils import shell
+import iptables
+import shell
 import hostapd_template
 
 

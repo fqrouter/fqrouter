@@ -1,7 +1,7 @@
 import logging
 
-from utils import shell
-from utils import iptables
+import shell
+import iptables
 
 LOGGER = logging.getLogger('fqrouter.%s' % __name__)
 fqting_process = None

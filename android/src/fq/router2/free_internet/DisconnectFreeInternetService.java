@@ -19,7 +19,7 @@ public class DisconnectFreeInternetService extends IntentService {
 
     public static void disconnect(Context context) {
         try {
-            HttpUtils.post("http://127.0.0.1:8318/free-internet/disconnect");
+            HttpUtils.post("http://127.0.0.1:2515/free-internet/disconnect");
             context.sendBroadcast(new FreeInternetChangedIntent(false));
         } catch (Exception e) {
             context.sendBroadcast(new HandleFatalErrorIntent(LogUtils.e("failed to disconnect from free internet", e)));

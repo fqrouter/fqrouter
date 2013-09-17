@@ -239,7 +239,7 @@ public class LaunchService extends IntentService {
 
     private static boolean isOldVersionRunning() {
         try {
-            String content = HttpUtils.get("http://127.0.0.1:8318/ping");
+            String content = HttpUtils.get("http://127.0.0.1:2515/ping");
             return content.equals("PONG") || content.equals("VPN PONG");
         } catch (Exception e) {
             LogUtils.e("check is old version running failed: " + e);
@@ -250,7 +250,7 @@ public class LaunchService extends IntentService {
     public static boolean ping(Context context, boolean isVpnMode) {
         try {
             String myVersion = getMyVersion(context);
-            String content = HttpUtils.get("http://127.0.0.1:8318/ping");
+            String content = HttpUtils.get("http://127.0.0.1:2515/ping");
             if (isVpnMode ? ("VPN PONG/" + myVersion).equals(content) : ("PONG/" + myVersion).equals(content)) {
                 return true;
             } else {

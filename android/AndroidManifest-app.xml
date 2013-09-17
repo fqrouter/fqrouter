@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
           package="fq.router2"
-          android:versionCode="168"
-          android:versionName="2.6.4">
+          android:versionCode="169"
+          android:versionName="2.6.5">
     <uses-sdk android:minSdkVersion="9" android:targetSdkVersion="14"/>
     <uses-permission android:name="android.permission.ACCESS_WIFI_STATE"/>
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE"/>
@@ -89,8 +89,6 @@
         <receiver android:name=".BootCompletedReceiver">
             <intent-filter>
                 <action android:name="android.intent.action.BOOT_COMPLETED" />
-                <action android:name="Launched" />
-                <action android:name="FreeInternetChanged" />
             </intent-filter>
         </receiver>
         <receiver android:name=".ExitReceiver">

@@ -7,12 +7,13 @@ import gevent
 import gevent.monkey
 
 RULES = [
+    # masquerade
+    'POSTROUTING -t nat -s 10.1.2.3 -j MASQUERADE',
     # dns
     'OUTPUT -t nat -p udp --dport 53 -m mark --mark 0xcafe -j ACCEPT',
-    'OUTPUT -t nat -p udp ! -s 10.1.2.3 --dport 53 -j REDIRECT --to-ports 5353',
-    'POSTROUTING -t nat -s 10.1.2.3 -j MASQUERADE',
+    'OUTPUT -t nat -p udp ! -s 10.1.2.3 --dport 53 -j DNAT --to-destination 10.1.2.3:12345',
     # proxy
-    'OUTPUT -t nat -p tcp ! -s 10.1.2.3 -j DNAT --to-destination 10.1.2.3:8319',
+    'OUTPUT -t nat -p tcp ! -s 10.1.2.3 -j DNAT --to-destination 10.1.2.3:12345',
     # scrambler
     'INPUT -t filter -p icmp -j NFQUEUE --queue-num 2',
     'INPUT -t filter -p udp --sport 53 --dport 1 -j NFQUEUE --queue-num 2',
@@ -38,18 +39,12 @@ def setup():
         subprocess.call('iptables -I %s' % rule, shell=True)
     subprocess.call('ifconfig lo:1 10.1.2.3 netmask 255.255.255.255', shell=True)
     processes.append(subprocess.Popen(
-        'python -m fqdns --outbound-ip 10.1.2.3 '
-        # '--log-level DEBUG '
-        'serve --listen 127.0.0.1:5353 '
-        '--enable-hosted-domain '
-        '--enable-china-domain '
-        '--original-upstream 10.45.30.1',
-        shell=True,
-        # stderr=subprocess.STDOUT, stdout=subprocess.PIPE
-    ))
-    processes.append(subprocess.Popen(
-        'python -m fqsocks --outbound-ip 10.1.2.3 '
-        '--listen 10.1.2.3:8319 '
+        'python -m fqsocks '
+        '--tcp-listen 10.1.2.3:12345 '
+        '--dns-listen 10.1.2.3:12345 '
+        '--http-listen *:2516 '
+        '--manager-listen *:2515 '
+        '--outbound-ip 10.1.2.3 '
         # '--log-level DEBUG '
         '--http-request-mark 0xbabe '
         '--proxy directory,src=proxies.fqrouter.com,goagent=True,ss=True '

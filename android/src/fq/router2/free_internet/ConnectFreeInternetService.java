@@ -19,7 +19,7 @@ public class ConnectFreeInternetService extends IntentService {
 
     public static void connect(Context context) {
         try {
-            HttpUtils.post("http://127.0.0.1:8318/free-internet/connect");
+            HttpUtils.post("http://127.0.0.1:2515/free-internet/connect");
             context.sendBroadcast(new FreeInternetChangedIntent(true));
         } catch (Exception e) {
             context.sendBroadcast(new HandleFatalErrorIntent(LogUtils.e("failed to connect to free internet", e)));

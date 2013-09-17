@@ -74,7 +74,7 @@ public class WifiRepeaterActivity extends Activity implements WifiRepeaterChange
             @Override
             public void run() {
                 try {
-                    HttpUtils.post("http://127.0.0.1:8318/wifi-repeater/reset");
+                    HttpUtils.post("http://127.0.0.1:2515/wifi-repeater/reset");
                     WifiManager wifiManager = getWifiManager();
                     wifiManager.setWifiEnabled(false);
                     wifiManager.setWifiEnabled(true);

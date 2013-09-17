@@ -14,17 +14,17 @@ import fqsocks.fqsocks
 import fqsocks.gateways.proxy_client
 import fqsocks.networking
 import contextlib
-from uuid import uuid4
-
 import gevent
 import gevent.socket
 import dpkt
-import comp_proxy
-import comp_dns
+import config
 import traceback
 import urllib2
 import argparse
-from utils import httpd
+import functools
+import fqsocks.httpd
+
+__import__('free_internet')
 
 FQROUTER_VERSION = 'UNKNOWN'
 LOGGER = logging.getLogger('fqrouter.%s' % __name__)
@@ -33,41 +33,32 @@ MANAGER_LOG_FILE = os.path.join(LOG_DIR, 'manager.log')
 FQDNS_LOG_FILE = os.path.join(LOG_DIR, 'fqdns.log')
 
 nat_map = {} # sport => (dst, dport), src always be 10.25.1.1
-default_dns_server = comp_dns.get_default_dns_server()
+default_dns_server = config.get_default_dns_server()
 DNS_HANDLER = fqdns.DnsHandler(
     enable_china_domain=True, enable_hosted_domain=True,
     original_upstream=default_dns_server.split(':') if default_dns_server else '')
-is_free_internet_connected = True
 
-def handle_free_internet_connect(environ, start_response):
-    global is_free_internet_connected
-    is_free_internet_connected = True
-    args = comp_proxy.configure([])
-    argument_parser = argparse.ArgumentParser()
-    argument_parser.add_argument('--proxy', action='append', default=[])
-    args, _ = argument_parser.parse_known_args(args)
-    for props in args.proxy:
-        props = props.split(',')
-        prop_dict = dict(p.split('=') for p in props[1:])
-        fqsocks.gateways.proxy_client.add_proxies(props[0], prop_dict)
-    fqsocks.gateways.proxy_client.last_refresh_started_at = 0
-    gevent.spawn(fqsocks.gateways.proxy_client.init_proxies)
+
+def handle_ping(environ, start_response):
+    try:
+        LOGGER.info('VPN PONG/%s' % FQROUTER_VERSION)
+    except:
+        traceback.print_exc()
+        os._exit(1)
     start_response(httplib.OK, [('Content-Type', 'text/plain')])
-    return []
+    yield 'VPN PONG/%s' % FQROUTER_VERSION
 
 
-def handle_free_internet_disconnect(environ, start_response):
-    global is_free_internet_connected
-    is_free_internet_connected = False
-    fqsocks.gateways.proxy_client.proxy_directories = []
-    fqsocks.gateways.proxy_client.proxies = []
+fqsocks.httpd.HANDLERS[('GET', 'ping')] = handle_ping
+
+
+def handle_exit(environ, start_response):
+    gevent.spawn(exit_later)
     start_response(httplib.OK, [('Content-Type', 'text/plain')])
-    return []
+    return ['EXITING']
 
 
-def handle_free_internet_is_connected(environ, start_response):
-    start_response(httplib.OK, [('Content-Type', 'text/plain')])
-    yield 'TRUE' if is_free_internet_connected else 'FALSE'
+fqsocks.httpd.HANDLERS[('POST', 'exit')] = handle_exit
 
 
 def redirect_tun_traffic(tun_fd):
@@ -115,36 +106,6 @@ def redirect_ip_packet(tun_fd):
         l4_packet.sum = 0
     gevent.socket.wait_write(tun_fd)
     os.write(tun_fd, str(ip_packet))
-
-
-def serve_udp():
-    address = ('10.25.1.1', 12345)
-    server = fqdns.HandlerDatagramServer(address, handle_udp)
-    LOGGER.info('udp server started at %r', address)
-    try:
-        server.serve_forever()
-    except:
-        LOGGER.exception('udp server failed')
-    finally:
-        LOGGER.info('udp server stopped')
-
-
-def handle_udp(sendto, request, address):
-    try:
-        src_ip, src_port = address
-        dst_ip, dst_port = nat_map.get(src_port)
-        if is_free_internet_connected and 53 == dst_port:
-            DNS_HANDLER(sendto, request, address)
-        else:
-            sock = create_udp_socket()
-            try:
-                sock.sendto(request, (dst_ip, dst_port))
-                response = sock.recv(8192)
-                sendto(response, address)
-            finally:
-                sock.close()
-    except:
-        LOGGER.exception('failed to handle udp')
 
 
 def get_original_destination(sock, src_ip, src_port):
@@ -204,22 +165,6 @@ def setup_logging():
     logging.getLogger('fqdns').addHandler(handler)
 
 
-def handle_ping(environ, start_response):
-    try:
-        LOGGER.info('VPN PONG/%s' % FQROUTER_VERSION)
-    except:
-        traceback.print_exc()
-        os._exit(1)
-    start_response(httplib.OK, [('Content-Type', 'text/plain')])
-    yield 'VPN PONG/%s' % FQROUTER_VERSION
-
-
-def handle_exit(environ, start_response):
-    gevent.spawn(exit_later)
-    start_response(httplib.OK, [('Content-Type', 'text/plain')])
-    return ['EXITING']
-
-
 def exit_later():
     gevent.sleep(0.5)
     os._exit(1)
@@ -252,6 +197,29 @@ def read_tun_fd():
             return None
 
 
+class VpnUdpHandler(object):
+    def __init__(self, dns_handler):
+        self.dns_handler = dns_handler
+
+    def __call__(self, sendto, request, address):
+        try:
+            src_ip, src_port = address
+            dst_ip, dst_port = get_original_destination(None, src_ip, src_port)
+            if 53 ==  get_original_destination(None, src_ip, src_port)[1]:
+                self.dns_handler(sendto, request, address)
+            else:
+                sock = fqdns.create_udp_socket()
+                try:
+                    sock.sendto(request, (dst_ip, dst_port))
+                    response = sock.recv(8192)
+                    sendto(response, address)
+                finally:
+                    sock.close()
+        except:
+            LOGGER.exception('failed to handle udp')
+
+fqsocks.fqsocks.DNS_HANDLER = VpnUdpHandler(fqsocks.fqsocks.DNS_HANDLER)
+
 if '__main__' == __name__:
     setup_logging()
     LOGGER.info('environment: %s' % os.environ.items())
@@ -262,31 +230,28 @@ if '__main__' == __name__:
     except:
         LOGGER.exception('failed to patch ssl')
     try:
-        response = urllib2.urlopen('http://127.0.0.1:8318/exit', '').read()
+        response = urllib2.urlopen('http://127.0.0.1:2515/exit', '').read()
         if 'EXITING' == response:
             LOGGER.critical('!!! find previous instance, exiting !!!')
             gevent.sleep(3)
     except:
         LOGGER.exception('failed to exit previous')
-    httpd.HANDLERS[('GET', 'ping')] = handle_ping
-    httpd.HANDLERS[('POST', 'exit')] = handle_exit
-    httpd.HANDLERS[('POST', 'free-internet/connect')] = handle_free_internet_connect
-    httpd.HANDLERS[('POST', 'free-internet/disconnect')] = handle_free_internet_disconnect
-    httpd.HANDLERS[('GET', 'free-internet/is-connected')] = handle_free_internet_is_connected
-    greenlets = [gevent.spawn(httpd.serve_forever)]
+    gevent.spawn(functools.partial(fqsocks.httpd.serve_forever, '', 2515))
     try:
         tun_fd = read_tun_fd_until_ready()
         LOGGER.info('tun fd: %s' % tun_fd)
     except:
         LOGGER.exception('failed to get tun fd')
         sys.exit(1)
-    greenlets.append(gevent.spawn(serve_udp))
-    greenlets.append(gevent.spawn(redirect_tun_traffic, tun_fd))
+    greenlet = gevent.spawn(redirect_tun_traffic, tun_fd)
     args = [
         '--log-level', 'INFO',
         '--log-file', '/data/data/fq.router2/log/fqsocks.log',
-        '--listen', '10.25.1.1:12345']
-    args = comp_proxy.configure(args)
-    greenlets.append(gevent.spawn(fqsocks.fqsocks.main, args))
-    for greenlet in greenlets:
-        greenlet.join()
+        '--tcp-listen', '10.25.1.1:12345',
+        '--dns-listen', '10.25.1.1:12345',
+        '--http-listen', '*:2516',
+        '--disable-manager-httpd', # already started before
+    ]
+    args = config.configure_fqsocks(args)
+    gevent.spawn(fqsocks.fqsocks.main, args)
+    greenlet.join()

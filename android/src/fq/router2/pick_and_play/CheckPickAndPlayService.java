@@ -18,7 +18,7 @@ public class CheckPickAndPlayService extends IntentService {
 
     private static boolean isStarted() {
         try {
-            return "TRUE".equals(HttpUtils.get("http://127.0.0.1:8318/pick-and-play/is-started"));
+            return "TRUE".equals(HttpUtils.get("http://127.0.0.1:2515/pick-and-play/is-started"));
         } catch (Exception e) {
             LogUtils.e("failed to check pick & play is started", e);
             return false;

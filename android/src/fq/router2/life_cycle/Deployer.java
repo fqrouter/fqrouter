@@ -116,7 +116,7 @@ public class Deployer {
     }
 
     private boolean isPayloadComplete() {
-        return MANAGER_MAIN_PY.exists() && PYTHON_LAUNCHER.exists() && WIFI_TOOLS_DIR.exists();
+        return MANAGER_VPN_PY.exists() && PYTHON_LAUNCHER.exists() && WIFI_TOOLS_DIR.exists();
     }
 
     private void clearDataDirectory() throws Exception {

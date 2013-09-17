@@ -245,7 +245,7 @@ public class MainActivity extends Activity implements
         findViewById(R.id.pickAndPlayButton).setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                startActivity(new Intent(MainActivity.this, PickAndPlayActivity.class));
+                startActivity(new Intent(Intent.ACTION_VIEW, Uri.parse("http://127.0.0.1:2515/friends")));
             }
         });
         findViewById(R.id.freeInternetArrow).setOnClickListener(new View.OnClickListener() {
@@ -500,8 +500,6 @@ public class MainActivity extends Activity implements
         enableImage(star);
         stopBlinkingStatus();
 
-        startBlinkingImage((ImageView) findViewById(R.id.freeInternetArrow));
-        startBlinkingStatus(_(R.string.status_free_internet_connecting));
         if (isVpnMode) {
             clearNotification(this);
             if (LaunchService.isVpnRunning()) {
@@ -520,7 +518,7 @@ public class MainActivity extends Activity implements
             }
             checkWifiRepeater();
             checkPickAndPlay();
-            ConnectFreeInternetService.execute(this);
+            checkFreeInternet();
         }
     }
 

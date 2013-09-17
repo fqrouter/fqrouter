@@ -19,7 +19,7 @@ public class WifiRepeater {
 
     public boolean isStarted() {
         try {
-            return "TRUE".equals(HttpUtils.get("http://127.0.0.1:8318/wifi-repeater/is-started"));
+            return "TRUE".equals(HttpUtils.get("http://127.0.0.1:2515/wifi-repeater/is-started"));
         } catch (Exception e) {
             LogUtils.e("failed to check wifi repeater is started", e);
             return false;
@@ -48,7 +48,7 @@ public class WifiRepeater {
 
     private void startWifiRepeater() throws Exception {
         LogUtils.i("Starting wifi repeater");
-        HttpUtils.post("http://127.0.0.1:8318/wifi-repeater/start");
+        HttpUtils.post("http://127.0.0.1:2515/wifi-repeater/start");
     }
 
     private String getSSID() {
@@ -64,7 +64,7 @@ public class WifiRepeater {
     public void stop() {
         try {
             LogUtils.i("Stopping wifi repeater");
-            HttpUtils.post("http://127.0.0.1:8318/wifi-repeater/stop");
+            HttpUtils.post("http://127.0.0.1:2515/wifi-repeater/stop");
         } catch (Exception e) {
             LogUtils.e("failed to stop wifi repeater", e);
         }

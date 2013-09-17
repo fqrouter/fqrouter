@@ -1,104 +1,102 @@
+import json
+import os
+import shell
 import logging
 
-from utils import shell
-from utils import iptables
-from utils import config
-
-__MANDATORY__ = True
-LOGGER = logging.getLogger('fqrouter.%s' % __name__)
-fqsocks_process = None
+LOGGER = logging.getLogger(__name__)
 
 
-def start():
-    if not is_alive():
-        insert_iptables_rules()
-        start_fqsocks()
+def read():
+    with open('/data/data/fq.router2/etc/fqrouter.json') as f:
+        config_json = f.read()
+    config = json.loads(config_json)
+    if os.path.exists('/data/data/fq.router2/etc/fqrouter-overrides.json'):
+        with open('/data/data/fq.router2/etc/fqrouter-overrides.json') as f:
+            config_json = f.read()
+        config.update(json.loads(config_json))
+    return config
 
 
-def stop():
-    delete_iptables_rules()
+def list_goagent_private_servers():
+    path = '/data/data/fq.router2/etc/goagent.json'
+    if not os.path.exists(path):
+        return []
+    with open(path) as f:
+        config_json = f.read()
+    return json.loads(config_json)
+
+
+def list_shadowsocks_private_servers():
+    path = '/data/data/fq.router2/etc/shadowsocks.json'
+    if not os.path.exists(path):
+        return []
+    with open(path) as f:
+        config_json = f.read()
+    return json.loads(config_json)
+
+
+def list_http_proxy_private_servers():
+    path = '/data/data/fq.router2/etc/http-proxy.json'
+    if not os.path.exists(path):
+        return []
+    with open(path) as f:
+        config_json = f.read()
+    return json.loads(config_json)
+
+
+def list_ssh_private_servers():
+    path = '/data/data/fq.router2/etc/ssh.json'
+    if not os.path.exists(path):
+        return []
+    with open(path) as f:
+        config_json = f.read()
+    return json.loads(config_json)
+
+
+def get_default_dns_server():
     try:
-        if fqsocks_process:
-            LOGGER.info('terminate fqsocks: %s' % fqsocks_process.pid)
-            fqsocks_process.terminate()
+        default_dns_server = shell.check_output(['getprop', 'net.dns1']).strip()
+        if default_dns_server:
+            return '%s:53' % default_dns_server
+        else:
+            return ''
     except:
-        LOGGER.exception('failed to terminate fqsocks')
+        LOGGER.exception('failed to get default dns server')
+        return ''
 
-
-def is_alive():
-    if fqsocks_process:
-        return fqsocks_process.poll() is None
-    return False
-
-
-RULES = [
-    (
-        {'target': 'ACCEPT', 'destination': '127.0.0.1'},
-        ('nat', 'OUTPUT', '-p tcp -d 127.0.0.1 -j ACCEPT')
-    ), (
-        {'target': 'DNAT', 'extra': 'to:10.1.2.3:8319'},
-        ('nat', 'OUTPUT', '-p tcp ! -s 10.1.2.3 -j DNAT --to-destination 10.1.2.3:8319')
-    ), (
-        {'target': 'DNAT', 'extra': 'to:10.1.2.3:8319'},
-        ('nat', 'PREROUTING', '-p tcp ! -s 10.1.2.3 -j DNAT --to-destination 10.1.2.3:8319')
-    )]
-
-
-def insert_iptables_rules():
-    iptables.insert_rules(RULES)
-
-
-def delete_iptables_rules():
-    iptables.delete_rules(RULES)
-
-
-def start_fqsocks():
-    global fqsocks_process
-    args = [
-        '--log-level', 'INFO',
-        '--log-file', '/data/data/fq.router2/log/fqsocks.log',
-        '--outbound-ip', '10.1.2.3', # send from 10.1.2.3 so we can skip redirecting those traffic
-        '--listen', '10.1.2.3:8319'
-    ]
-    if config.read().get('tcp_scrambler_enabled', True):
-        args += ['--http-request-mark', '0xbabe'] # trigger scrambler
-    args = configure(args)
-    fqsocks_process = shell.launch_python('fqsocks', args, on_exit=stop)
-
-
-def configure(args):
+def configure_fqsocks(args):
     args += ['--ip-command', '/data/data/fq.router2/busybox']
     args += ['--ifconfig-command', '/data/data/fq.router2/busybox']
     args += ['--google-host', 'goagent-google-ip.fqrouter.com']
     args += ['--google-host', 'goagent-google-ip2.fqrouter.com']
-    if not config.read().get('auto_access_check_enabled', True):
+    if not read().get('auto_access_check_enabled', True):
         args += ['--disable-access-check']
-    if not config.read().get('china_shortcut_enabled', True):
+    if not read().get('china_shortcut_enabled', True):
         args += ['--disable-china-shortcut']
-    if not config.read().get('direct_access_enabled', True):
+    if not read().get('direct_access_enabled', True):
         args += ['--disable-direct-access']
-    if config.read().get('youtube_scrambler_enabled', True):
+    if read().get('youtube_scrambler_enabled', True):
         args += ['--enable-youtube-scrambler']
     public_server_types = []
-    if config.read().get('goagent_public_servers_enabled', True):
+    if read().get('goagent_public_servers_enabled', True):
         public_server_types.append('goagent')
-    if config.read().get('shadowsocks_public_servers_enabled', True):
+    if read().get('shadowsocks_public_servers_enabled', True):
         public_server_types.append('ss')
-    if config.read().get('http_proxy_public_servers_enabled', True):
+    if read().get('http_proxy_public_servers_enabled', True):
         public_server_types.append('http-connect')
         public_server_types.append('http-relay')
         public_server_types.append('spdy-connect')
         public_server_types.append('spdy-relay')
     if public_server_types:
         args += ['--proxy', 'directory,src=proxies.fqrouter.com,%s' % ','.join(['%s=True' % t for t in public_server_types])]
-    for server in config.list_goagent_private_servers():
+    for server in list_goagent_private_servers():
         proxy_config = 'goagent,appid=%s,path=%s,password=%s' % (server['appid'], server['path'], server['password'])
         args += ['--proxy', proxy_config]
-    for server in config.list_shadowsocks_private_servers():
+    for server in list_shadowsocks_private_servers():
         proxy_config = 'ss,proxy_host=%s,proxy_port=%s,password=%s,encrypt_method=%s' % (
             server['host'], server['port'], server['password'], server['encryption_method'])
         args += ['--proxy', proxy_config]
-    for server in config.list_http_proxy_private_servers():
+    for server in list_http_proxy_private_servers():
         if 'spdy (webvpn)' == server['transport_type']:
             proxy_config = 'proxy_host=%s,proxy_port=%s,username=%s,password=%s,requested_spdy_version=%s' % \
                            (server['host'], server['port'], server['username'], server['password'],
@@ -122,7 +120,7 @@ def configure(args):
             else:
                 args += ['--proxy', 'http-relay,%s' % proxy_config]
                 args += ['--proxy', 'http-connect,%s' % proxy_config]
-    for server in config.list_ssh_private_servers():
+    for server in list_ssh_private_servers():
         proxy_config = 'proxy_host=%s,proxy_port=%s,username=%s,password=%s' % \
                        (server['host'], server['port'], server['username'], server['password'])
         for i in range(server['connections_count']):
