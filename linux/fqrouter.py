@@ -60,7 +60,7 @@ def setup():
     ))
     processes.append(subprocess.Popen(
         'python -m fqting --queue-number 2 --mark 0xcafe --log-level DEBUG', shell=True,
-        stderr=subprocess.STDOUT, stdout=subprocess.PIPE
+        # stderr=subprocess.STDOUT, stdout=subprocess.PIPE
     ))
 
 

@@ -30,7 +30,9 @@ FQROUTER_VERSION = 'UNKNOWN'
 LOGGER = logging.getLogger('fqrouter.%s' % __name__)
 LOG_DIR = '/data/data/fq.router2/log'
 MANAGER_LOG_FILE = os.path.join(LOG_DIR, 'manager.log')
+WIFI_LOG_FILE = os.path.join(LOG_DIR, 'wifi.log')
 FQDNS_LOG_FILE = os.path.join(LOG_DIR, 'fqdns.log')
+FQLAN_LOG_FILE = os.path.join(LOG_DIR, 'fqlan.log')
 DNS_RULES = [
     (
         {'target': 'ACCEPT', 'extra': 'udp dpt:53 mark match 0xcafe', 'optional': True},
@@ -79,6 +81,14 @@ def setup_logging():
         FQDNS_LOG_FILE, maxBytes=1024 * 256, backupCount=0)
     handler.setFormatter(logging.Formatter('%(asctime)s %(levelname)s %(message)s'))
     logging.getLogger('fqdns').addHandler(handler)
+    handler = logging.handlers.RotatingFileHandler(
+        FQLAN_LOG_FILE, maxBytes=1024 * 256, backupCount=0)
+    handler.setFormatter(logging.Formatter('%(asctime)s %(levelname)s %(message)s'))
+    logging.getLogger('fqlan').addHandler(handler)
+    handler = logging.handlers.RotatingFileHandler(
+        WIFI_LOG_FILE, maxBytes=1024 * 512, backupCount=1)
+    handler.setFormatter(logging.Formatter('%(asctime)s %(levelname)s %(message)s'))
+    logging.getLogger('wifi').addHandler(handler)
 
 
 def needs_su():

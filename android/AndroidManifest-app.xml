@@ -29,11 +29,6 @@
                 <category android:name="android.intent.category.LAUNCHER"/>
             </intent-filter>
         </activity>
-        <activity android:name=".PickAndPlayActivity"
-                  android:label="Pick &amp; Play"
-                  android:launchMode="singleTask"
-                  android:configChanges="keyboard|keyboardHidden|orientation|screenSize">
-        </activity>
         <activity android:name=".WifiRepeaterActivity"
                   android:label="@string/button_wifi_repeater"
                   android:launchMode="singleTask"
