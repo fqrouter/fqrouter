@@ -3,6 +3,7 @@
 import subprocess
 import signal
 import atexit
+import os
 import gevent
 import gevent.monkey
 
@@ -46,15 +47,15 @@ def setup():
         '--manager-listen *:2515 '
         '--outbound-ip 10.1.2.3 '
         # '--log-level DEBUG '
-        '--http-request-mark 0xbabe '
-        '--proxy directory,src=proxies.fqrouter.com,goagent=True,ss=True '
+        '--config-dir %s '
+        '--proxy ss,proxy_host=crissic.host.fqrouter.com,proxy_port=8318,password=fqrouter,encrypt_method=aes-256-cfb '
+        # '--proxy directory,src=proxies.fqrouter.com,goagent=True,ss=True '
         # '--proxy dynamic,n=8,type=ss,dns_record=ss#n#.fqrouter.com,priority=3 '
         # '--proxy dynamic,n=10,type=goagent,dns_record=goagent#n#.fqrouter.com,priority=1 '
-        '--enable-youtube-scrambler '
         '--disable-access-check '
         # '--disable-direct-access '
         '--google-host goagent-google-ip.fqrouter.com '
-        '--google-host goagent-google-ip2.fqrouter.com ',
+        '--google-host goagent-google-ip2.fqrouter.com ' % os.path.join(os.path.dirname(__file__), 'etc'),
         shell=True,
         # stderr=subprocess.STDOUT, stdout=subprocess.PIPE
     ))

@@ -14,3 +14,4 @@ android/jni/openssl
 android/jni/redsocks
 android/obj
 android/lib
+linux/etc
