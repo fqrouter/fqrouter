@@ -51,8 +51,8 @@ def setup():
         '--proxy directory,src=proxies.fqrouter.com,goagent=True,ss=True '
         # '--proxy dynamic,n=8,type=ss,dns_record=ss#n#.fqrouter.com,priority=3 '
         # '--proxy dynamic,n=10,type=goagent,dns_record=goagent#n#.fqrouter.com,priority=1 '
-        '--disable-access-check '
-        # '--disable-direct-access '
+        '--no-access-check '
+        # '--no-direct-access '
         '--google-host goagent-google-ip.fqrouter.com '
         '--google-host goagent-google-ip2.fqrouter.com ' % os.path.join(os.path.dirname(__file__), 'etc'),
         shell=True,

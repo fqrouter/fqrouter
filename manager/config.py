@@ -70,13 +70,13 @@ def configure_fqsocks(args):
     args += ['--google-host', 'goagent-google-ip.fqrouter.com']
     args += ['--google-host', 'goagent-google-ip2.fqrouter.com']
     if not read().get('auto_access_check_enabled', True):
-        args += ['--disable-access-check']
+        args += ['--no-access-check']
     if not read().get('china_shortcut_enabled', True):
-        args += ['--disable-china-shortcut']
+        args += ['--no-china-shortcut']
     if not read().get('direct_access_enabled', True):
-        args += ['--disable-direct-access']
+        args += ['--no-direct-access']
     if read().get('youtube_scrambler_enabled', True):
-        args += ['--enable-youtube-scrambler']
+        args += ['--youtube-scrambler']
     public_server_types = []
     if read().get('goagent_public_servers_enabled', True):
         public_server_types.append('goagent')

@@ -123,13 +123,14 @@ def run():
         '--log-file', '/data/data/fq.router2/log/fqsocks.log',
         '--ifconfig-command', '/data/data/fq.router2/busybox',
         '--ip-command', '/data/data/fq.router2/busybox',
+        '--outbound-ip', '10.1.2.3',
         '--tcp-listen', '10.1.2.3:12345',
         '--dns-listen', '10.1.2.3:12345',
         '--manager-listen', '*:2515',
         '--http-listen', '*:2516']
     args = config.configure_fqsocks(args)
     if config.read().get('tcp_scrambler_enabled', True):
-        args += ['--http-request-mark', '0xbabe'] # trigger scrambler
+        args += ['--tcp-scrambler']
     fqsocks.fqsocks.main(args)
 
 
