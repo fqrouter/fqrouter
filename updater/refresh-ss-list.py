@@ -40,15 +40,17 @@ def check_proxy(ip, port, password, encrypt_method):
 while True:
     try:
         proxies = [
-            ('192.81.133.165', 12121, 'wendangku.org', 'aes-256-cfb'),
-            ('198.199.92.59', random.choice([21, 20, 23]), 'u1rRWTssNv0p', 'bf-cfb'),
-            ('88.191.139.226', random.choice([21, 20, 23]), 'u1rRWTssNv0p', 'rc4'),
             # ('192.184.80.11', 8318, 'fqrouter', 'rc4'),
+            ('199.188.75.60', 8318, 'fqrouter', 'rc4'),
             ('69.163.40.146', 8318, 'fqrouter', 'rc4'),
             ('176.56.236.63', 8318, 'fqrouter', 'rc4'),
             ('162.220.11.191', 8318, 'fqrouter', 'aes-256-cfb'),
             ('192.249.61.233', 8318, 'fqrouter', 'rc4'),
         ]
+        random.shuffle(proxies)
+        proxies = [('192.81.133.165', 12121, 'wendangku.org', 'aes-256-cfb'),
+                   ('198.199.92.59', random.choice([21, 20, 23]), 'u1rRWTssNv0p', 'bf-cfb'),
+                   ('88.191.139.226', random.choice([21, 20, 23]), 'u1rRWTssNv0p', 'rc4')] + proxies
         i = 1
         for ip, port, password, encrypt_method in proxies:
             if check_proxy(ip, port, password, encrypt_method) or check_proxy(ip, port, password, encrypt_method):
