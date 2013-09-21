@@ -41,20 +41,18 @@ def setup():
     subprocess.call('ifconfig lo:1 10.1.2.3 netmask 255.255.255.255', shell=True)
     processes.append(subprocess.Popen(
         'python -m fqsocks '
-        '--tcp-listen 10.1.2.3:12345 '
-        '--dns-listen 10.1.2.3:12345 '
-        '--http-listen *:2516 '
-        '--manager-listen *:2515 '
+        '--tcp-gateway-listen 10.1.2.3:12345 '
+        '--dns-server-listen 10.1.2.3:12345 '
         '--outbound-ip 10.1.2.3 '
         # '--log-level DEBUG '
-        '--config-dir %s '
+        '--config-file %s '
         '--proxy directory,src=proxies.fqrouter.com,goagent=True,ss=True '
         # '--proxy dynamic,n=8,type=ss,dns_record=ss#n#.fqrouter.com,priority=3 '
         # '--proxy dynamic,n=10,type=goagent,dns_record=goagent#n#.fqrouter.com,priority=1 '
         '--no-access-check '
         # '--no-direct-access '
         '--google-host goagent-google-ip.fqrouter.com '
-        '--google-host goagent-google-ip2.fqrouter.com ' % os.path.join(os.path.dirname(__file__), 'etc'),
+        '--google-host goagent-google-ip2.fqrouter.com ' % os.path.join(os.path.dirname(__file__), 'etc', 'fqsocks.json'),
         shell=True,
         # stderr=subprocess.STDOUT, stdout=subprocess.PIPE
     ))

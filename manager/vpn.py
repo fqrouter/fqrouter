@@ -11,6 +11,7 @@ import socket
 import httplib
 import fqdns
 import fqsocks.fqsocks
+import fqsocks.config_file
 import fqsocks.gateways.proxy_client
 import fqsocks.networking
 import contextlib
@@ -229,14 +230,17 @@ if '__main__' == __name__:
         gevent.monkey.patch_ssl()
     except:
         LOGGER.exception('failed to patch ssl')
+    fqsocks.config_file.path = '/data/data/fq.router2/etc/fqsocks.json'
+    http_manager_port = fqsocks.config_file.read_config()['http_manager']['port']
     try:
-        response = urllib2.urlopen('http://127.0.0.1:2515/exit', '').read()
+        response = urllib2.urlopen('http://127.0.0.1:%s/exit' % http_manager_port, '').read()
         if 'EXITING' == response:
             LOGGER.critical('!!! find previous instance, exiting !!!')
             gevent.sleep(3)
     except:
         LOGGER.exception('failed to exit previous')
-    gevent.spawn(functools.partial(fqsocks.httpd.serve_forever, '', 2515))
+    fqsocks.httpd.LISTEN_IP, fqsocks.httpd.LISTEN_PORT = '', http_manager_port
+    fqsocks.httpd.server_greenlet = gevent.spawn(fqsocks.httpd.serve_forever)
     try:
         tun_fd = read_tun_fd_until_ready()
         LOGGER.info('tun fd: %s' % tun_fd)
@@ -247,10 +251,9 @@ if '__main__' == __name__:
     args = [
         '--log-level', 'INFO',
         '--log-file', '/data/data/fq.router2/log/fqsocks.log',
-        '--tcp-listen', '10.25.1.1:12345',
-        '--dns-listen', '10.25.1.1:12345',
-        '--http-listen', '*:2516',
-        '--disable-manager-httpd', # already started before
+        '--tcp-gateway-listen', '10.25.1.1:12345',
+        '--dns-server-listen', '10.25.1.1:12345',
+        '--no-http-manager', # already started before
     ]
     args = config.configure_fqsocks(args)
     gevent.spawn(fqsocks.fqsocks.main, args)
