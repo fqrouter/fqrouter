@@ -49,7 +49,6 @@ def main():
         '--dns-server-listen', '10.1.2.3:12345',
         '--outbound-ip', '10.1.2.3',
         '--config-file', os.path.join(os.path.dirname(__file__), 'etc', 'fqsocks.json'),
-        '--proxy', 'directory,src=proxies.fqrouter.com,goagent=True,ss=True',
         '--no-access-check',
         '--google-host', 'goagent-google-ip.fqrouter.com',
         '--google-host', 'goagent-google-ip2.fqrouter.com'
