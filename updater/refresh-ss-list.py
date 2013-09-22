@@ -46,6 +46,7 @@ while True:
             ('176.56.236.63', 8318, 'fqrouter', 'rc4'),
             ('162.220.11.191', 8318, 'fqrouter', 'aes-256-cfb'),
             ('192.249.61.233', 8318, 'fqrouter', 'rc4'),
+            ('198.98.49.121', 8318, 'fqrouter', 'rc4'),
         ]
         random.shuffle(proxies)
         proxies = [('192.81.133.165', 12121, 'wendangku.org', 'aes-256-cfb'),

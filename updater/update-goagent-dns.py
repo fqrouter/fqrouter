@@ -12,8 +12,8 @@ while True:
     if not appid:
         break
     appids.append(appid)
-if len(appids) < 10:
-    appids += list(itertools.repeat('""', 10 - len(appids)))
+if len(appids) < 20:
+    appids += list(itertools.repeat('""', 20 - len(appids)))
 for appid in appids:
     domain = 'goagent%s' % current_index
     print('%s => %s' % (domain, appid))

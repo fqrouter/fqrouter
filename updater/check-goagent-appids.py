@@ -263,7 +263,7 @@ class FakeProxy(object):
 def check():
     global good_app_ids_count
     while True:
-        if good_app_ids_count >= 10:
+        if good_app_ids_count >= 20:
             return
         appid = APP_ID_QUEUE.get()
         try:
@@ -273,7 +273,7 @@ def check():
             sys.stderr.write('%s => %s\n' % (appid, app_status))
             sys.stderr.flush()
             if app_status == 200:
-                if good_app_ids_count >= 10:
+                if good_app_ids_count >= 20:
                     return
                 print(appid)
                 good_app_ids_count += 1
