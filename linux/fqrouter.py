@@ -4,8 +4,20 @@ import subprocess
 import signal
 import atexit
 import os
+import fqsocks.fqsocks
+import fqsocks.pages.downstream
+
 import gevent
 import gevent.monkey
+
+
+fqsocks.pages.downstream.spi_wifi_repeater = {
+    'is_started': lambda: False,
+    'is_supported': lambda: True,
+    'start': lambda ssid, password: gevent.sleep(3),
+    'stop': lambda: gevent.sleep(3),
+    'reset': lambda: gevent.sleep(3)
+}
 
 RULES = [
     # masquerade
@@ -32,30 +44,22 @@ def main():
     signal.signal(signal.SIGINT, lambda signum, fame: teardown())
     atexit.register(teardown)
     setup()
-    gevent.joinall([gevent.spawn(process.communicate) for process in processes])
+    fqsocks.fqsocks.main([
+        '--tcp-gateway-listen', '10.1.2.3:12345',
+        '--dns-server-listen', '10.1.2.3:12345',
+        '--outbound-ip', '10.1.2.3',
+        '--config-file', os.path.join(os.path.dirname(__file__), 'etc', 'fqsocks.json'),
+        '--proxy', 'directory,src=proxies.fqrouter.com,goagent=True,ss=True',
+        '--no-access-check',
+        '--google-host', 'goagent-google-ip.fqrouter.com',
+        '--google-host', 'goagent-google-ip2.fqrouter.com'
+    ])
 
 
 def setup():
     for rule in reversed(RULES):
         subprocess.call('iptables -I %s' % rule, shell=True)
     subprocess.call('ifconfig lo:1 10.1.2.3 netmask 255.255.255.255', shell=True)
-    processes.append(subprocess.Popen(
-        'python -m fqsocks '
-        '--tcp-gateway-listen 10.1.2.3:12345 '
-        '--dns-server-listen 10.1.2.3:12345 '
-        '--outbound-ip 10.1.2.3 '
-        # '--log-level DEBUG '
-        '--config-file %s '
-        '--proxy directory,src=proxies.fqrouter.com,goagent=True,ss=True '
-        # '--proxy dynamic,n=8,type=ss,dns_record=ss#n#.fqrouter.com,priority=3 '
-        # '--proxy dynamic,n=10,type=goagent,dns_record=goagent#n#.fqrouter.com,priority=1 '
-        '--no-access-check '
-        # '--no-direct-access '
-        '--google-host goagent-google-ip.fqrouter.com '
-        '--google-host goagent-google-ip2.fqrouter.com ' % os.path.join(os.path.dirname(__file__), 'etc', 'fqsocks.json'),
-        shell=True,
-        # stderr=subprocess.STDOUT, stdout=subprocess.PIPE
-    ))
     processes.append(subprocess.Popen(
         'python -m fqting --queue-number 2 --mark 0xcafe --log-level DEBUG', shell=True,
         # stderr=subprocess.STDOUT, stdout=subprocess.PIPE
@@ -70,6 +74,7 @@ def teardown():
             process.terminate()
         except:
             pass
+    os._exit(1)
 
 
 if '__main__' == __name__:

@@ -100,9 +100,9 @@ def stop_hotspot():
                 shell_execute('%s dev %s del' % (IW_PATH, working_hotspot_iface))
             except:
                 LOGGER.exception('failed to delete wifi interface')
-            return 'hotspot stopped successfully'
+            return ''
         else:
-            return 'hotspot has not been started yet'
+            return ''
     except:
         LOGGER.exception('failed to stop hotspot')
         return 'failed to stop hotspot'
@@ -113,7 +113,7 @@ def start_hotspot(ssid, password):
         backup_config_files()
         working_hotspot_iface = get_working_hotspot_iface()
         if working_hotspot_iface:
-            return True, 'hotspot is already working, start skipped'
+            return ''
         else:
             LOGGER.info('=== Before Starting Hotspot ===')
             dump_wifi_status()
@@ -122,12 +122,12 @@ def start_hotspot(ssid, password):
             wifi_chipset_family, wifi_chipset_model = get_wifi_chipset()
             LOGGER.info('chipset is: %s %s' % (wifi_chipset_family, wifi_chipset_model))
             if 'unsupported' == wifi_chipset_family:
-                return False, 'wifi chipset [%s] is not supported' % wifi_chipset_model
+                return 'wifi chipset [%s] is not supported' % wifi_chipset_model
             hotspot_interface = start_hotspot_interface(wifi_chipset_family, ssid, password)
             setup_networking(hotspot_interface)
             LOGGER.info('=== Started Hotspot ===')
             dump_wifi_status()
-            return True, 'hotspot started successfully'
+            return ''
     except:
         LOGGER.exception('failed to start hotspot')
         try:
@@ -135,7 +135,7 @@ def start_hotspot(ssid, password):
             dump_wifi_status()
         finally:
             stop_hotspot()
-        return False, 'failed to start hotspot'
+        return 'failed to start hotspot'
 
 
 def backup_config_files():

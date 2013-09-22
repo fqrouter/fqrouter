@@ -20,10 +20,9 @@ import subprocess
 import functools
 import comp_scrambler
 import comp_shortcut
-
+import fqsocks.pages.downstream
 
 __import__('free_internet')
-__import__('wifi_repeater')
 
 
 FQROUTER_VERSION = 'UNKNOWN'
@@ -151,6 +150,32 @@ def clean():
     except:
         LOGGER.exception('clean failed')
 
+
+def wifi_reset():
+    wifi.enable_wifi_p2p_service()
+    wifi.restore_config_files()
+    wifi.stop_hotspot()
+
+
+def is_wifi_repeater_supported():
+    try:
+        api_version = wifi.shell_execute('getprop ro.build.version.sdk').strip()
+        if api_version:
+            return int(api_version) >= 14
+        else:
+            return True
+    except:
+        LOGGER.exception('failed to get api version')
+        return True
+
+
+fqsocks.pages.downstream.spi_wifi_repeater = {
+    'is_supported': is_wifi_repeater_supported,
+    'is_started': wifi.get_working_hotspot_iface,
+    'start': wifi.start_hotspot,
+    'stop': wifi.stop_hotspot,
+    'reset': wifi_reset
+}
 
 if '__main__' == __name__:
     setup_logging()
