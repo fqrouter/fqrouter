@@ -78,18 +78,6 @@ def configure_fqsocks(args):
         args += ['--no-direct-access']
     if read().get('youtube_scrambler_enabled', True):
         args += ['--youtube-scrambler']
-    public_server_types = []
-    if read().get('goagent_public_servers_enabled', True):
-        public_server_types.append('goagent')
-    if read().get('shadowsocks_public_servers_enabled', True):
-        public_server_types.append('ss')
-    if read().get('http_proxy_public_servers_enabled', True):
-        public_server_types.append('http-connect')
-        public_server_types.append('http-relay')
-        public_server_types.append('spdy-connect')
-        public_server_types.append('spdy-relay')
-    if public_server_types:
-        args += ['--proxy', 'directory,src=proxies.fqrouter.com,%s' % ','.join(['%s=True' % t for t in public_server_types])]
     for server in list_goagent_private_servers():
         proxy_config = 'goagent,appid=%s,path=%s,password=%s' % (server['appid'], server['path'], server['password'])
         args += ['--proxy', proxy_config]
