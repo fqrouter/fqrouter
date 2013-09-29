@@ -50,7 +50,7 @@ while True:
         random.shuffle(proxies)
         proxies = [('192.81.133.165', 12121, 'wendangku.org', 'aes-256-cfb'),
                    ('198.199.92.59', random.choice([21, 20, 23]), 'u1rRWTssNv0p', 'bf-cfb'),
-                   ('88.191.139.226', random.choice([21, 20, 23]), 'u1rRWTssNv0p', 'rc4')] + proxies
+                   ('88.191.139.226', random.choice([21, 20, 23]), 'u1rRWTssNv0p', 'bf-cfb')] + proxies
         i = 1
         for ip, port, password, encrypt_method in proxies:
             if check_proxy(ip, port, password, encrypt_method) or check_proxy(ip, port, password, encrypt_method):
