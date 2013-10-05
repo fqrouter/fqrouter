@@ -40,7 +40,7 @@ def check_proxy(ip, port, password, encrypt_method):
 while True:
     try:
         proxies = [
-            # ('192.184.80.11', 8318, 'fqrouter', 'rc4'),
+            ('192.184.80.11', 8318, 'fqrouter', 'rc4'),
             ('199.188.75.60', 8318, 'fqrouter', 'rc4'),
             ('176.56.236.63', 8318, 'fqrouter', 'rc4'),
             ('162.220.11.191', 8318, 'fqrouter', 'aes-256-cfb'),
