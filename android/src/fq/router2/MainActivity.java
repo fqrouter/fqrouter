@@ -239,7 +239,7 @@ public class MainActivity extends Activity implements
         findViewById(R.id.freeInternetButton).setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                startActivity(new Intent(Intent.ACTION_VIEW, Uri.parse("http://127.0.0.1:2515/upstream")));
+                startActivity(new Intent(Intent.ACTION_VIEW, Uri.parse("http://127.0.0.1:2515")));
             }
         });
         findViewById(R.id.pickAndPlayButton).setOnClickListener(new View.OnClickListener() {
@@ -413,7 +413,7 @@ public class MainActivity extends Activity implements
                             android.R.drawable.ic_menu_manage,
                             context.getResources().getString(R.string.menu_status),
                             PendingIntent.getActivity(context, 0,
-                                    new Intent(Intent.ACTION_VIEW, Uri.parse("http://127.0.0.1:2515/upstream")), 0))
+                                    new Intent(Intent.ACTION_VIEW, Uri.parse("http://127.0.0.1:2515")), 0))
                     .build();
             NotificationManager notificationManager =
                     (NotificationManager) context.getSystemService(NOTIFICATION_SERVICE);

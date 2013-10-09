@@ -38,6 +38,8 @@ KILLALL_PATH = '/data/data/fq.router2/busybox killall'
 IFCONFIG_PATH = '/data/data/fq.router2/busybox ifconfig'
 IP_PATH = '/data/data/fq.router2/busybox ip'
 CP_PATH = '/data/data/fq.router2/busybox cp'
+SH_PATH = '/data/data/fq.router2/busybox sh'
+WHICH_PATH = '/data/data/fq.router2/busybox which'
 FQROUTER_HOSTAPD_CONF_PATH = '/data/data/fq.router2/hostapd.conf'
 CHANNELS = {
     '2412': 1, '2417': 2, '2422': 3, '2427': 4, '2432': 5, '2437': 6, '2442': 7,
@@ -64,6 +66,9 @@ RULES = [
 
 def stop_hotspot():
     try:
+        am_path = shell_execute('%s am' % WHICH_PATH)
+        if am_path:
+            shell_execute('%s %s startservice fq.router2/.wifi_repeater.ReleaseWifiLockService' % (SH_PATH, am_path))
         working_hotspot_iface = get_working_hotspot_iface()
         try:
             shell_execute('%s dnsmasq' % KILLALL_PATH)
@@ -110,6 +115,9 @@ def stop_hotspot():
 
 def start_hotspot(ssid, password):
     try:
+        am_path = shell_execute('%s am' % WHICH_PATH).strip()
+        if am_path:
+            shell_execute('%s %s startservice fq.router2/.wifi_repeater.AcquireWifiLockService' % (SH_PATH, am_path))
         backup_config_files()
         working_hotspot_iface = get_working_hotspot_iface()
         if working_hotspot_iface:
