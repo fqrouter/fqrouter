@@ -17,7 +17,7 @@
     <string name="menu_upgrade_manually">Upgrade Manually</string>
     <string name="menu_report_error">Report Error</string>
     <string name="menu_exit">Exit</string>
-    <string name="status_free_internet_connected">You may try youtube/twitter now</string>
+    <string name="status_launched">You may try youtube/twitter now</string>
     <string name="status_free_internet_connecting">Connecting to free internet</string>
     <string name="status_free_internet_disconnecting">Disconnecting from free internet</string>
     <string name="status_wifi_repeater_starting">Starting wifi repeater</string>
@@ -226,4 +226,17 @@
     <string name="pref_free_internet_connected_summary">Proxies and scrambler are in use to protect the freedom from
         censorship. They can be turned off temporarily. By toggling it, you can reload the proxies.
     </string>
+    <string name="status_check_apn">Check APN</string>
+    <string name="status_about_to_launch_in_root_mode">About to launch in full mode</string>
+    <string name="status_about_to_launch_in_vpn_mode">About to launch in VPN mode</string>
+    <string name="status_check_root">Check ROOT</string>
+    <string name="status_failed_to_restart_vpn">Failed to restart VPN</string>
+    <string name="status_restart_vpn">Restart VPN</string>
+    <string name="status_clean_environment">Clean environment</string>
+    <string name="status_check_host_file">Check host file</string>
+    <string name="status_clear_old_files">Clear old files</string>
+    <string name="status_copy_files">Copy files</string>
+    <string name="status_unzip_files">Unzip files</string>
+    <string name="status_starting_manager">Starting manager</string>
+    <string name="status_acquire_vpn_permission">Acquire VPN permission</string>
 </resources>

@@ -90,16 +90,6 @@
                 <action android:name="android.intent.action.BOOT_COMPLETED" />
             </intent-filter>
         </receiver>
-        <receiver android:name=".ExitReceiver">
-            <intent-filter>
-                <action android:name="Exit" />
-            </intent-filter>
-        </receiver>
-        <receiver android:name=".ExitedReceiver">
-            <intent-filter>
-                <action android:name="Exited" />
-            </intent-filter>
-        </receiver>
         <receiver android:name=".ConnectivityChangeReceiver">
             <intent-filter>
                 <action android:name="android.net.conn.CONNECTIVITY_CHANGE" />

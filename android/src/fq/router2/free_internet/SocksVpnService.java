@@ -214,7 +214,6 @@ public class SocksVpnService extends VpnService {
             }
             tunPFD = null;
         }
-        MainActivity.setExiting();
         ExitService.execute(this);
     }
 

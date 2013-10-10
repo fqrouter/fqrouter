@@ -8,6 +8,7 @@ import android.os.Build;
 import com.google.analytics.tracking.android.GoogleAnalytics;
 import com.google.analytics.tracking.android.Tracker;
 import fq.router2.MainActivity;
+import fq.router2.R;
 import fq.router2.utils.*;
 import fq.router2.wifi_repeater.WifiGuardService;
 
@@ -25,6 +26,8 @@ public class ExitService extends IntentService {
     }
 
     private void exit() {
+        MainActivity.displayNotification(this, getResources().getString(R.string.status_exiting));
+        sendBroadcast(new ExitingIntent());
         long elapsedTime = StartedAtFlag.delete();
         if (elapsedTime > 0) {
             GoogleAnalytics gaInstance = GoogleAnalytics.getInstance(this);

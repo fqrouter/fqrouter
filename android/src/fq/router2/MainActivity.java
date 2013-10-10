@@ -5,13 +5,10 @@ import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.SharedPreferences;
-import android.graphics.ColorMatrix;
-import android.graphics.ColorMatrixColorFilter;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
 import android.net.Uri;
 import android.net.VpnService;
-import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
 import android.preference.PreferenceManager;
@@ -21,16 +18,15 @@ import android.support.v4.app.NotificationCompat;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
-import android.widget.*;
+import android.widget.ProgressBar;
+import android.widget.TextView;
+import android.widget.Toast;
 import com.google.analytics.tracking.android.EasyTracker;
 import fq.router2.feedback.*;
-import fq.router2.free_internet.*;
+import fq.router2.free_internet.CheckDnsPollutionService;
+import fq.router2.free_internet.DnsPollutedIntent;
 import fq.router2.life_cycle.*;
-import fq.router2.pick_and_play.CheckPickAndPlayService;
-import fq.router2.pick_and_play.PickAndPlayChangedIntent;
 import fq.router2.utils.*;
-import fq.router2.wifi_repeater.CheckWifiRepeaterService;
-import fq.router2.wifi_repeater.WifiRepeaterChangedIntent;
 
 import java.io.File;
 import java.lang.reflect.Method;
@@ -42,16 +38,14 @@ public class MainActivity extends Activity implements
         LaunchedIntent.Handler,
         UpdateFoundIntent.Handler,
         ExitedIntent.Handler,
-        WifiRepeaterChangedIntent.Handler,
-        PickAndPlayChangedIntent.Handler,
-        FreeInternetChangedIntent.Handler,
         DownloadingIntent.Handler,
         DownloadedIntent.Handler,
         DownloadFailedIntent.Handler,
         HandleFatalErrorIntent.Handler,
         DnsPollutedIntent.Handler,
         HandleAlertIntent.Handler,
-        ExitingIntent.Handler {
+        ExitingIntent.Handler,
+        LaunchingIntent.Handler {
 
     public final static int SHOW_AS_ACTION_IF_ROOM = 1;
     private final static int ITEM_ID_EXIT = 1;
@@ -61,8 +55,6 @@ public class MainActivity extends Activity implements
     private final static int ASK_VPN_PERMISSION = 1;
     private static boolean isLaunched;
     private Handler handler = new Handler();
-    private Set<Integer> blinkingImageViews = new HashSet<Integer>();
-    private String blinkingStatus = "";
     private String upgradeUrl;
     private boolean downloaded;
     private static boolean dnsPollutionAcked = false;
@@ -85,13 +77,10 @@ public class MainActivity extends Activity implements
         setContentView(R.layout.main);
         PreferenceManager.setDefaultValues(this, R.xml.preferences, true);
         setTitle("fqrouter " + LaunchService.getMyVersion(this));
-        setupUI();
         LaunchedIntent.register(this);
+        LaunchingIntent.register(this);
         UpdateFoundIntent.register(this);
         ExitedIntent.register(this);
-        WifiRepeaterChangedIntent.register(this);
-        PickAndPlayChangedIntent.register(this);
-        FreeInternetChangedIntent.register(this);
         DownloadingIntent.register(this);
         DownloadedIntent.register(this);
         DownloadFailedIntent.register(this);
@@ -99,7 +88,7 @@ public class MainActivity extends Activity implements
         DnsPollutedIntent.register(this);
         HandleAlertIntent.register(this);
         ExitingIntent.register(this);
-        blinkStatus(0);
+        updateStatus(_(R.string.status_check_apn), 5);
         String apnName = getApnName();
         LogUtils.i("apn name: " + apnName);
         final File ignoredFile = new File("/data/data/fq.router2/etc/apn-alert-ignored");
@@ -121,12 +110,12 @@ public class MainActivity extends Activity implements
                         @Override
                         public void onClick(DialogInterface dialogInterface, int i) {
                             IOUtils.writeToFile(ignoredFile, "OK");
-                            launch();
+                            LaunchService.execute(MainActivity.this);
                         }
                     })
                     .show();
         } else {
-            launch();
+            LaunchService.execute(this);
         }
     }
 
@@ -145,14 +134,6 @@ public class MainActivity extends Activity implements
     }
 
     @Override
-    protected void onResume() {
-        super.onResume();
-        if (isLaunched) {
-            checkAll();
-        }
-    }
-
-    @Override
     public void onStart() {
         super.onStart();
         EasyTracker.getInstance().activityStart(this);
@@ -164,46 +145,6 @@ public class MainActivity extends Activity implements
         EasyTracker.getInstance().activityStop(this);
     }
 
-    private void checkAll() {
-        checkWifiRepeater();
-        checkPickAndPlay();
-        checkFreeInternet();
-        CheckDnsPollutionService.execute(this);
-    }
-
-    private void checkWifiRepeater() {
-        if (ShellUtils.isRooted() && Build.VERSION.SDK_INT >= 14) {
-            CheckWifiRepeaterService.execute(this);
-        }
-    }
-
-    private void checkPickAndPlay() {
-        if (ShellUtils.isRooted()) {
-            CheckPickAndPlayService.execute(this);
-        }
-    }
-
-    private void checkFreeInternet() {
-        CheckFreeInternetService.execute(this);
-    }
-
-    private void launch() {
-        disableAll();
-        startBlinkingImage((ImageView) findViewById(R.id.star));
-        startBlinkingStatus(_(R.string.status_launching));
-        LaunchService.execute(this);
-    }
-
-    private void disableAll() {
-        disableImage((ImageView) findViewById(R.id.freeInternetArrow));
-        disableImage((ImageView) findViewById(R.id.wifiRepeaterArrow));
-        disableImage((ImageView) findViewById(R.id.pickAndPlayArrow));
-        disableFreeInternetButton();
-        disableWifiRepeaterButton();
-        disablePickAndPlayButton();
-    }
-
-
     @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
         try {
@@ -212,10 +153,9 @@ public class MainActivity extends Activity implements
                     if (LaunchService.SOCKS_VPN_SERVICE_CLASS == null) {
                         onHandleFatalError("vpn class not loaded");
                     } else {
-                        updateStatus(_(R.string.status_launch_vpn));
+                        updateStatus(_(R.string.status_launch_vpn), 5);
                         stopService(new Intent(this, LaunchService.SOCKS_VPN_SERVICE_CLASS));
                         startService(new Intent(this, LaunchService.SOCKS_VPN_SERVICE_CLASS));
-                        uninstallOldVersion();
                     }
                 } else {
                     onHandleFatalError(_(R.string.status_vpn_rejected));
@@ -227,122 +167,6 @@ public class MainActivity extends Activity implements
         } catch (Exception e) {
             LogUtils.e("failed to handle onActivityResult", e);
         }
-    }
-
-    private void setupUI() {
-        findViewById(R.id.wifiRepeaterButton).setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                startActivity(new Intent(MainActivity.this, WifiRepeaterActivity.class));
-            }
-        });
-        findViewById(R.id.freeInternetButton).setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                startActivity(new Intent(Intent.ACTION_VIEW, Uri.parse("http://127.0.0.1:2515")));
-            }
-        });
-        findViewById(R.id.pickAndPlayButton).setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                startActivity(new Intent(Intent.ACTION_VIEW, Uri.parse("http://127.0.0.1:2515/downstream")));
-            }
-        });
-        findViewById(R.id.freeInternetArrow).setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                new AlertDialog.Builder(MainActivity.this)
-                        .setIcon(android.R.drawable.ic_dialog_info)
-                        .setTitle(R.string.free_internet_info_title)
-                        .setMessage(R.string.free_internet_info_message)
-                        .setPositiveButton(R.string.free_internet_info_button, null)
-                        .show();
-            }
-        });
-        findViewById(R.id.wifiRepeaterArrow).setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                new AlertDialog.Builder(MainActivity.this)
-                        .setIcon(android.R.drawable.ic_dialog_info)
-                        .setTitle(R.string.wifi_repeater_info_title)
-                        .setMessage(R.string.wifi_repeater_info_message)
-                        .setPositiveButton(R.string.wifi_repeater_info_button, null)
-                        .show();
-            }
-        });
-        findViewById(R.id.pickAndPlayArrow).setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                new AlertDialog.Builder(MainActivity.this)
-                        .setIcon(android.R.drawable.ic_dialog_info)
-                        .setTitle(R.string.pick_and_play_info_title)
-                        .setMessage(R.string.pick_and_play_info_message)
-                        .setPositiveButton(R.string.pick_and_play_info_button, null)
-                        .show();
-            }
-        });
-    }
-
-
-    private void startBlinkingStatus(String status) {
-        blinkingStatus = status;
-    }
-
-    private void stopBlinkingStatus() {
-        blinkingStatus = "";
-    }
-
-    private void blinkStatus(final int count) {
-        handler.postDelayed(new Runnable() {
-            @Override
-            public void run() {
-                TextView statusTextView = (TextView) findViewById(R.id.statusTextView);
-                if (blinkingStatus.length() > 0) {
-                    String text = blinkingStatus;
-                    for (int i = 0; i < count; i++) {
-                        text += ".";
-                    }
-                    statusTextView.setText(text);
-                }
-                blinkStatus((count + 1) % 4);
-            }
-        }, 500);
-    }
-
-    private void startBlinkingImage(ImageView imageView) {
-        blinkingImageViews.add(imageView.getId());
-        blinkImage(imageView, true);
-    }
-
-    private void stopBlinkingImage(ImageView imageView) {
-        blinkingImageViews.remove(imageView.getId());
-    }
-
-    private void blinkImage(final ImageView imageView, final boolean setsGrayScale) {
-        handler.postDelayed(new Runnable() {
-            @Override
-            public void run() {
-                if (blinkingImageViews.contains(imageView.getId())) {
-                    if (setsGrayScale) {
-                        disableImage(imageView);
-                    } else {
-                        enableImage(imageView);
-                    }
-                    blinkImage(imageView, !setsGrayScale);
-                }
-            }
-        }, 1000);
-    }
-
-    private void enableImage(ImageView imageView) {
-        imageView.clearColorFilter();
-    }
-
-    private void disableImage(ImageView imageView) {
-        ColorMatrix matrix = new ColorMatrix();
-        matrix.setSaturation(0); //0 means grayscale
-        ColorMatrixColorFilter cf = new ColorMatrixColorFilter(matrix);
-        imageView.setColorFilter(cf);
     }
 
     @Override
@@ -408,12 +232,11 @@ public class MainActivity extends Activity implements
                     .addAction(
                             android.R.drawable.ic_menu_close_clear_cancel,
                             context.getResources().getString(R.string.menu_exit),
-                            PendingIntent.getBroadcast(context, 0, new ExitIntent(), 0))
+                            PendingIntent.getService(context, 0, new Intent(context, ExitService.class), 0))
                     .addAction(
                             android.R.drawable.ic_menu_manage,
                             context.getResources().getString(R.string.menu_status),
-                            PendingIntent.getActivity(context, 0,
-                                    new Intent(Intent.ACTION_VIEW, Uri.parse("http://127.0.0.1:2515")), 0))
+                            PendingIntent.getActivity(context, 0, new Intent(context, MainActivity.class), 0))
                     .build();
             NotificationManager notificationManager =
                     (NotificationManager) context.getSystemService(NOTIFICATION_SERVICE);
@@ -430,24 +253,19 @@ public class MainActivity extends Activity implements
         notificationManager.cancel(1983);
     }
 
-    public void updateStatus(String status) {
+    public void updateStatus(String status, int progress) {
         LogUtils.i(status);
         TextView textView = (TextView) findViewById(R.id.statusTextView);
-        if (!textView.getText().toString().startsWith("Error:")) {
-            textView.setText(status);
-            if (LaunchService.isVpnRunning()) {
-                clearNotification(this);
-            } else {
-                showNotification(status);
-            }
-        }
+        textView.setText(status);
+        ProgressBar progressBar = (ProgressBar) findViewById(R.id.progressBar);
+        progressBar.setProgress(progress);
     }
 
     private void clearStatus() {
-        TextView textView = (TextView) findViewById(R.id.statusTextView);
-        if (!textView.getText().toString().startsWith("Error:")) {
-            textView.setText("");
-        }
+//        TextView textView = (TextView) findViewById(R.id.statusTextView);
+//        if (!textView.getText().toString().startsWith("Error:")) {
+//            textView.setText("");
+//        }
     }
 
     public void exit() {
@@ -457,88 +275,25 @@ public class MainActivity extends Activity implements
         }
         ExitService.execute(this);
         showNotification(_(R.string.status_exiting));
-        sendBroadcast(new ExitingIntent());
     }
 
     private String _(int id) {
         return getResources().getString(id);
     }
 
-
-    public void disableFreeInternetButton() {
-        findViewById(R.id.freeInternetButton).setEnabled(false);
-    }
-
-
-    public void enableFreeInternetButton() {
-        Button button = (Button) findViewById(R.id.freeInternetButton);
-        button.setEnabled(true);
-    }
-
-    public void disableWifiRepeaterButton() {
-        findViewById(R.id.wifiRepeaterButton).setEnabled(false);
-    }
-
-
-    public void enableWifiRepeaterButton() {
-        Button button = (Button) findViewById(R.id.wifiRepeaterButton);
-        button.setEnabled(true);
-    }
-
-    public void disablePickAndPlayButton() {
-        findViewById(R.id.pickAndPlayButton).setEnabled(false);
-    }
-
-
     @Override
     public void onLaunched(boolean isVpnMode) {
         isLaunched = true;
         ActivityCompat.invalidateOptionsMenu(this);
-
-        ImageView star = (ImageView) findViewById(R.id.star);
-        stopBlinkingImage(star);
-        enableImage(star);
-        stopBlinkingStatus();
-
         if (isVpnMode) {
+            sendBroadcast(new LaunchingIntent(_(R.string.status_acquire_vpn_permission), 75));
             clearNotification(this);
-            if (LaunchService.isVpnRunning()) {
-                onFreeInternetChanged(true);
-            } else {
+            if (!LaunchService.isVpnRunning()) {
                 startVpn();
             }
         } else {
-            if (ApkUtils.isInstalled(this, "fq.router")) {
-                new Thread(new Runnable() {
-                    @Override
-                    public void run() {
-                        ApkUtils.uninstall(MainActivity.this, "fq.router");
-                    }
-                }).start();
-            }
-            checkWifiRepeater();
-            checkPickAndPlay();
-            checkFreeInternet();
-        }
-    }
-
-    private void uninstallOldVersion() {
-        boolean isOldVersionInstalled = ApkUtils.isInstalled(this, "fq.router");
-        LogUtils.i("old version is installed: " + isOldVersionInstalled);
-        if (isOldVersionInstalled) {
-            new AlertDialog.Builder(this)
-                    .setIcon(android.R.drawable.ic_dialog_alert)
-                    .setTitle(R.string.uninstall_old_version_alert_title)
-                    .setMessage(R.string.uninstall_old_version_alert_message)
-                    .setPositiveButton(R.string.uninstall_old_version_alert_button, new DialogInterface.OnClickListener() {
-
-                        @Override
-                        public void onClick(DialogInterface dialog, int which) {
-                            ApkUtils.uninstall(MainActivity.this, "fq.router");
-                        }
-
-                    })
-                    .show();
+            sendBroadcast(new LaunchingIntent(_(R.string.status_launched), 100));
+            displayNotification(this, _(R.string.status_launched));
         }
     }
 
@@ -567,7 +322,7 @@ public class MainActivity extends Activity implements
 
                     @Override
                     public void onClick(DialogInterface dialog, int which) {
-                        updateStatus(_(R.string.status_downloading) + " " + Uri.parse(upgradeUrl).getLastPathSegment());
+                        updateStatus(_(R.string.status_downloading) + " " + Uri.parse(upgradeUrl).getLastPathSegment(), 5);
                         DownloadService.execute(
                                 MainActivity.this, upgradeUrl, downloadTo);
                     }
@@ -600,8 +355,8 @@ public class MainActivity extends Activity implements
     public void onDownloaded(String url, String downloadTo) {
         downloaded = true;
         ActivityCompat.invalidateOptionsMenu(this);
-        updateStatus(_(R.string.status_downloaded) + " " + Uri.parse(url).getLastPathSegment());
-        setExiting();
+        updateStatus(_(R.string.status_downloaded) + " " + Uri.parse(url).getLastPathSegment(), 5);
+        onExiting();
         try {
             ManagerProcess.kill();
         } catch (Exception e) {
@@ -632,17 +387,10 @@ public class MainActivity extends Activity implements
         }
     }
 
-    public static void setExiting() {
-        isLaunched = false;
-    }
-
     @Override
     public void onHandleFatalError(String message) {
-        blinkingImageViews.clear();
-        stopBlinkingStatus();
-        disableAll();
-        updateStatus("Error: " + message);
-        checkAll();
+        updateStatus("Error: " + message, 5);
+        CheckDnsPollutionService.execute(this);
         checkUpdate();
         if (ApkUtils.isInstalled(this, "fq.router")) {
             new AlertDialog.Builder(this)
@@ -667,49 +415,6 @@ public class MainActivity extends Activity implements
                     })
                     .show();
         }
-    }
-
-    @Override
-    public void onWifiRepeaterChanged(boolean isStarted) {
-        stopBlinkingImage((ImageView) findViewById(R.id.wifiRepeaterArrow));
-        stopBlinkingStatus();
-        clearStatus();
-        if (isStarted) {
-            enableImage((ImageView) findViewById(R.id.wifiRepeaterArrow));
-        } else {
-            disableImage((ImageView) findViewById(R.id.wifiRepeaterArrow));
-        }
-        enableWifiRepeaterButton();
-    }
-
-    @Override
-    public void onFreeInternetChanged(boolean isConnected) {
-        ImageView freeInternetArrow = (ImageView) findViewById(R.id.freeInternetArrow);
-        stopBlinkingImage(freeInternetArrow);
-        stopBlinkingStatus();
-        if (isConnected) {
-            updateStatus(_(R.string.status_free_internet_connected));
-            enableImage(freeInternetArrow);
-            checkUpdate();
-        } else {
-            clearStatus();
-            disableImage(freeInternetArrow);
-        }
-        enableFreeInternetButton();
-    }
-
-    @Override
-    public void onPickAndPlayChanged(boolean isStarted) {
-        ImageView pickAndPlayArrow = (ImageView) findViewById(R.id.pickAndPlayArrow);
-        stopBlinkingImage(pickAndPlayArrow);
-        stopBlinkingStatus();
-        clearStatus();
-        if (isStarted) {
-            enableImage(pickAndPlayArrow);
-        } else {
-            disableImage(pickAndPlayArrow);
-        }
-        findViewById(R.id.pickAndPlayButton).setEnabled(true);
     }
 
     @Override
@@ -758,9 +463,11 @@ public class MainActivity extends Activity implements
 
     @Override
     public void onExiting() {
+        showNotification(_(R.string.status_exiting));
         isLaunched = false;
-        disableAll();
-        startBlinkingImage((ImageView) findViewById(R.id.star));
-        startBlinkingStatus(_(R.string.status_exiting));
+        ActivityCompat.invalidateOptionsMenu(this);
+        findViewById(R.id.progressBar).setVisibility(View.GONE);
+        TextView statusTextView = (TextView) findViewById(R.id.statusTextView);
+        statusTextView.setText(_(R.string.status_exiting));
     }
 }

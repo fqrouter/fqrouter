@@ -21,7 +21,7 @@
     <string name="status_free_internet_disconnecting">正在关闭翻墙功能</string>
     <string name="status_wifi_repeater_starting">正在开启无线中继</string>
     <string name="status_wifi_repeater_stopping">正在关闭无线中继</string>
-    <string name="status_free_internet_connected">youtube/twitter 应该能访问了吧？</string>
+    <string name="status_launched">youtube/twitter 应该能访问了吧？</string>
     <string name="status_downloading">正在下载</string>
     <string name="status_launching">启动中</string>
     <string name="status_launch_vpn">VPN启动中</string>
@@ -197,4 +197,17 @@
     <string name="pref_goagent_private_servers_summary">GoAgent只能代理HTTP，需要与其他代理一起工作</string>
     <string name="pref_free_internet_connected">翻到墙外去了</string>
     <string name="pref_free_internet_connected_summary">正在使用代理和混淆器翻墙。它们可以被临时关闭。关了再开可以重新加载代理的设置</string>
+    <string name="status_check_apn">检查APN</string>
+    <string name="status_about_to_launch_in_root_mode">即将以完整版模式启动</string>
+    <string name="status_about_to_launch_in_vpn_mode">即将以VPN模式启动</string>
+    <string name="status_check_root">检查ROOT权限</string>
+    <string name="status_failed_to_restart_vpn">重启VPN失败</string>
+    <string name="status_restart_vpn">重启VPN</string>
+    <string name="status_clean_environment">清理环境</string>
+    <string name="status_check_host_file">检查Host文件</string>
+    <string name="status_clear_old_files">清理老版本文件</string>
+    <string name="status_copy_files">拷贝文件</string>
+    <string name="status_unzip_files">解压缩文件</string>
+    <string name="status_starting_manager">启动管理</string>
+    <string name="status_acquire_vpn_permission">获取VPN权限</string>
 </resources>

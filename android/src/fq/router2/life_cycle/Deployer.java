@@ -1,6 +1,7 @@
 package fq.router2.life_cycle;
 
 import android.content.Context;
+import fq.router2.R;
 import fq.router2.feedback.HandleAlertIntent;
 import fq.router2.utils.IOUtils;
 import fq.router2.utils.LogUtils;
@@ -38,6 +39,7 @@ public class Deployer {
         } catch (Exception e) {
             return logFatalError("failed to copy busybox", e);
         }
+        context.sendBroadcast(new LaunchingIntent(_(R.string.status_check_host_file), 25));
         try {
             if (ShellUtils.sudo(ShellUtils.BUSYBOX_FILE + " cat /system/etc/hosts").contains("google")) {
                 context.sendBroadcast(new HandleAlertIntent(HandleAlertIntent.ALERT_TYPE_HOSTS_MODIFIED));
@@ -52,6 +54,7 @@ public class Deployer {
             return logFatalError("failed to check update", e);
         }
         if (foundPayloadUpdate) {
+            context.sendBroadcast(new LaunchingIntent(_(R.string.status_clear_old_files), 30));
             try {
                 try {
                     ManagerProcess.kill();
@@ -64,6 +67,7 @@ public class Deployer {
                 return logFatalError("failed to clear data directory", e);
             }
         }
+        context.sendBroadcast(new LaunchingIntent(_(R.string.status_copy_files), 35));
         try {
             copyBusybox();
             makeExecutable(ShellUtils.BUSYBOX_FILE);
@@ -71,6 +75,7 @@ public class Deployer {
         } catch (Exception e) {
             return logFatalError("failed to copy payload.zip", e);
         }
+        context.sendBroadcast(new LaunchingIntent(_(R.string.status_unzip_files), 40));
         try {
             unzipPayloadZip();
         } catch (Exception e) {
@@ -89,6 +94,11 @@ public class Deployer {
         LogUtils.i("Deployed payload");
         return "";
     }
+
+    private String _(int id) {
+        return context.getResources().getString(id);
+    }
+
 
     private boolean shouldDeployPayload() throws Exception {
         if (!PAYLOAD_CHECKSUM.exists()) {

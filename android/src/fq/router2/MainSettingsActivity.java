@@ -321,7 +321,6 @@ public class MainSettingsActivity extends PreferenceActivity implements SharedPr
         } else {
             showToast(R.string.pref_restart_app);
         }
-        LaunchService.updateConfigFile(this);
     }
 
     private void onGoAgentPrivateServerPicked(String value) {

@@ -2,49 +2,22 @@
 
 <FrameLayout
         android:layout_width="fill_parent"
-        android:layout_height="fill_parent" xmlns:android="http://schemas.android.com/apk/res/android">
-
-    <Button
-            android:layout_width="160dp"
-            android:layout_height="88dp"
-            android:text="@string/button_free_internet"
-            android:id="@+id/freeInternetButton" android:layout_gravity="center_horizontal|top" android:textSize="10pt"
-            android:textStyle="bold" android:longClickable="true" android:layout_marginTop="48dp"/>
-    <Button
-            android:layout_width="160dp"
-            android:layout_height="88dp"
-            android:text="@string/button_wifi_repeater"
-            android:id="@+id/wifiRepeaterButton" android:layout_gravity="left|bottom" android:textStyle="bold"
-            android:textSize="10pt" android:longClickable="true"/>
-    <Button
-            android:layout_width="160dp"
-            android:layout_height="88dp"
-            android:text="@string/button_pick_and_play"
-            android:id="@+id/pickAndPlayButton" android:layout_gravity="right|bottom" android:textSize="10pt"
-            android:textStyle="bold" android:longClickable="true"/>
-    <ImageView
-            android:layout_width="80dp"
-            android:layout_height="80dp"
-            android:id="@+id/freeInternetArrow" android:layout_gravity="center" android:src="@drawable/arrow_up"
-            android:layout_marginBottom="72dp"/>
-    <ImageView
-            android:layout_width="80dp"
-            android:layout_height="80dp"
-            android:id="@+id/wifiRepeaterArrow" android:layout_gravity="center" android:src="@drawable/arrow_left"
-            android:layout_marginRight="64dp" android:layout_marginTop="72dp" android:longClickable="false"/>
-    <ImageView
-            android:layout_width="80dp"
-            android:layout_height="80dp"
-            android:id="@+id/pickAndPlayArrow" android:layout_gravity="center" android:src="@drawable/arrow_right"
-            android:layout_marginLeft="64dp" android:layout_marginTop="72dp" android:adjustViewBounds="false"
-            android:longClickable="false"/>
-    <ImageView
-            android:layout_width="80dp"
-            android:layout_height="80dp"
-            android:id="@+id/star" android:layout_gravity="center" android:src="@drawable/star"/>
+        android:layout_height="fill_parent" xmlns:android="http://schemas.android.com/apk/res/android"
+        android:clickable="false">
+    <WebView
+            android:layout_width="fill_parent"
+            android:layout_height="fill_parent"
+            android:id="@+id/webView" android:layout_gravity="center" android:visibility="gone"/>
+    <ProgressBar
+            android:layout_width="100dp"
+            android:layout_height="wrap_content"
+            android:id="@+id/progressBar" android:layout_gravity="center" android:progress="0"
+            style="@android:style/Widget.DeviceDefault.Light.ProgressBar.Horizontal"
+            />
     <TextView
             android:layout_width="fill_parent"
-            android:layout_height="48dp"
-            android:id="@+id/statusTextView" android:layout_gravity="center_horizontal|top" android:textSize="10pt"
-            android:textColor="#b40000"/>
+            android:layout_height="wrap_content"
+            android:id="@+id/statusTextView" android:layout_gravity="center" android:layout_marginTop="-70dp"
+            android:layout_marginLeft="10dp"
+            android:layout_marginRight="10dp" android:gravity="center" android:textSize="18dp"/>
 </FrameLayout>

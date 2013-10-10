@@ -1,20 +1,15 @@
 package fq.router2.life_cycle;
 
-import android.app.AlertDialog;
 import android.app.IntentService;
 import android.content.Context;
 import android.content.Intent;
-import android.content.SharedPreferences;
 import android.content.pm.PackageInfo;
 import android.os.Build;
-import android.preference.PreferenceManager;
-import android.widget.Toast;
 import fq.router2.R;
 import fq.router2.feedback.HandleAlertIntent;
 import fq.router2.feedback.HandleFatalErrorIntent;
 import fq.router2.free_internet.SocksVpnService;
 import fq.router2.utils.*;
-import org.json.JSONObject;
 
 import java.io.File;
 import java.io.OutputStreamWriter;
@@ -45,6 +40,7 @@ public class LaunchService extends IntentService {
     @Override
     protected void onHandleIntent(Intent intent) {
         LogUtils.i("ver: " + getMyVersion(this));
+        sendBroadcast(new LaunchingIntent(_(R.string.status_check_root), 10));
         boolean rooted = ShellUtils.checkRooted();
         LogUtils.i("rooted: " + rooted);
         if (!rooted && isOldVersionRunning()) {
@@ -62,11 +58,13 @@ public class LaunchService extends IntentService {
             return;
         }
         if (ping(this, true)) {
+            sendBroadcast(new LaunchingIntent(_(R.string.status_restart_vpn), 0));
             LogUtils.i("Restart manager");
             try {
                 ManagerProcess.kill();
                 Thread.sleep(1000);
                 if (ManagerProcess.exists()) {
+                    handleFatalError(_(R.string.status_failed_to_restart_vpn));
                     LogUtils.e("failed to restart manager", null);
                 } else {
                     LaunchService.execute(this);
@@ -77,6 +75,7 @@ public class LaunchService extends IntentService {
             return;
         }
         if (rooted) {
+            sendBroadcast(new LaunchingIntent(_(R.string.status_about_to_launch_in_root_mode), 20));
             try {
                 String output = ShellUtils.sudo("iptables -L -v -n");
                 if (output.contains("udp spt:53 dpt:1 NFQUEUE num 2")) {
@@ -86,6 +85,11 @@ public class LaunchService extends IntentService {
                 LogUtils.e("failed to check iptables", e);
             }
         } else {
+            if (Build.VERSION.SDK_INT < 14) {
+                handleFatalError(_(R.string.status_root_is_requried_below_4_0));
+                return;
+            }
+            sendBroadcast(new LaunchingIntent(_(R.string.status_about_to_launch_in_vpn_mode), 20));
             File managerLogFile = new File("/data/data/fq.router2/log/fqsocks.log");
             if (managerLogFile.exists() && !managerLogFile.canWrite()) {
                 handleFatalError(LogUtils.e(_(R.string.status_root_permission_lost)));
@@ -116,13 +120,14 @@ public class LaunchService extends IntentService {
         } catch (Exception e) {
             LogUtils.e("failed to kill manager process before launch", e);
         }
+        sendBroadcast(new LaunchingIntent(_(R.string.status_cleaned_environment), 25));
         Deployer deployer = new Deployer(this);
         String fatalError = deployer.deploy();
         if (fatalError.length() > 0) {
             handleFatalError(fatalError);
             return;
         }
-        updateConfigFile(this);
+        sendBroadcast(new LaunchingIntent(_(R.string.status_starting_manager), 45));
         LogUtils.i("Launching...");
         if (ShellUtils.checkRooted()) {
             fatalError = launch(false);
@@ -132,10 +137,6 @@ public class LaunchService extends IntentService {
                 handleFatalError(fatalError);
             }
         } else {
-            if (Build.VERSION.SDK_INT < 14) {
-                handleFatalError(_(R.string.status_root_is_requried_below_4_0));
-                return;
-            }
             fatalError = launch(true);
             if (fatalError.length() == 0) {
                 sendBroadcast(new LaunchedIntent(true));
@@ -155,6 +156,7 @@ public class LaunchService extends IntentService {
                 if (hasProcessExited(process)) {
                     return "manager quit";
                 }
+                sendBroadcast(new LaunchingIntent(_(R.string.status_starting_manager), 45 + i));
                 sleepOneSecond();
             }
             return "timed out";
@@ -193,7 +195,7 @@ public class LaunchService extends IntentService {
             return process;
         } else {
             String runMode = ManagerProcess.getRunMode();
-            if("run-needs-su".equals(runMode)) {
+            if ("run-needs-su".equals(runMode)) {
                 Process process = ShellUtils.executeNoWait(env, ShellUtils.BUSYBOX_FILE.getAbsolutePath(), "sh");
                 OutputStreamWriter stdin = new OutputStreamWriter(process.getOutputStream());
                 try {
@@ -252,6 +254,7 @@ public class LaunchService extends IntentService {
             String myVersion = getMyVersion(context);
             String content = HttpUtils.get("http://127.0.0.1:2515/ping");
             if (isVpnMode ? ("VPN PONG/" + myVersion).equals(content) : ("PONG/" + myVersion).equals(content)) {
+                LogUtils.e("ping " + isVpnMode + " succeeded");
                 return true;
             } else {
                 LogUtils.e("ping " + isVpnMode + " failed: " + content);
@@ -271,29 +274,6 @@ public class LaunchService extends IntentService {
             sendBroadcast(new HandleAlertIntent(HandleAlertIntent.ALERT_TYPE_RUN_NEEDS_SU));
         }
         sendBroadcast(new HandleFatalErrorIntent(message));
-    }
-
-    public static void updateConfigFile(Context context) {
-        try {
-            SharedPreferences preferences = PreferenceManager.getDefaultSharedPreferences(context);
-            JSONObject configJson = new JSONObject();
-            configJson.put("wifi_hotspot_ssid", preferences.getString("WifiHotspotSSID", "fqrouter"));
-            configJson.put("wifi_hotspot_password", preferences.getString("WifiHotspotPassword", "12345678"));
-            configJson.put("tcp_scrambler_enabled", preferences.getBoolean("TcpScramblerEnabled", true));
-            configJson.put("youtube_scrambler_enabled", preferences.getBoolean("YoutubeScramblerEnabled", true));
-            configJson.put("china_shortcut_enabled", preferences.getBoolean("ChinaShortcutEnabled", true));
-            configJson.put("direct_access_enabled", preferences.getBoolean("DirectAccessEnabled", true));
-            configJson.put("access_check_enabled", preferences.getBoolean("AutoAccessCheckEnabled", true));
-            configJson.put("goagent_public_servers_enabled",
-                    preferences.getBoolean("GoAgentPublicServersEnabled", true));
-            configJson.put("shadowsocks_public_servers_enabled",
-                    preferences.getBoolean("ShadowsocksPublicServersEnabled", true));
-            configJson.put("http_proxy_public_servers_enabled",
-                    preferences.getBoolean("HttpProxyPublicServersEnabled", true));
-            IOUtils.writeToFile(FQROUTER_CONFIG_FILE, configJson.toString());
-        } catch (Exception e) {
-            LogUtils.e("failed to update config file", e);
-        }
     }
 
     public static void execute(Context context) {

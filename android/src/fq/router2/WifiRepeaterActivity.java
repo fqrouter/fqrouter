@@ -190,7 +190,6 @@ public class WifiRepeaterActivity extends Activity implements WifiRepeaterChange
         String password = ((EditText) findViewById(R.id.passwordEditText)).getText().toString();
         editor.putString("WifiHotspotPassword", password);
         editor.commit();
-        LaunchService.updateConfigFile(this);
         StartWifiRepeaterService.execute(this);
         findViewById(R.id.ssidEditText).setEnabled(false);
         findViewById(R.id.passwordEditText).setEnabled(false);

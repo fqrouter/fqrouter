@@ -5,24 +5,27 @@ import android.content.Intent;
 import android.content.IntentFilter;
 import fq.router2.utils.LoggedBroadcastReceiver;
 
-public class ExitIntent extends Intent {
-    private final static String ACTION_EXIT = "Exit";
+public class LaunchingIntent extends Intent {
 
-    public ExitIntent() {
-        setAction(ACTION_EXIT);
+    public final static String ACTION_LAUNCHING = "Launching";
+
+    public LaunchingIntent(String status, int progress) {
+        setAction(ACTION_LAUNCHING);
+        putExtra("status", status);
+        putExtra("progress", progress);
     }
 
     public static void register(final Handler handler) {
         handler.getBaseContext().registerReceiver(new LoggedBroadcastReceiver() {
             @Override
             public void handle(Context context, Intent intent) {
-                handler.exit();
+                handler.updateStatus(intent.getStringExtra("status"), intent.getIntExtra("progress", 0));
             }
-        }, new IntentFilter(ACTION_EXIT));
+        }, new IntentFilter(ACTION_LAUNCHING));
     }
 
     public static interface Handler {
-        void exit();
+        void updateStatus(String status, int progress);
 
         Context getBaseContext();
     }

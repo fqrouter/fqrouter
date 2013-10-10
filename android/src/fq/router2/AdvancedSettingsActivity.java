@@ -65,7 +65,6 @@ public class AdvancedSettingsActivity extends PreferenceActivity implements Shar
             }
         }
         showToast(_(R.string.pref_restart_app));
-        LaunchService.updateConfigFile(this);
     }
 
     private String _(int id) {
