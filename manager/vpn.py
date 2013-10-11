@@ -219,7 +219,7 @@ class VpnUdpHandler(object):
         except:
             LOGGER.exception('failed to handle udp')
 
-fqsocks.fqsocks.DNS_HANDLER = VpnUdpHandler(fqsocks.fqsocks.DNS_HANDLER)
+fqsocks.fqsocks.DNS_HANDLER = VpnUdpHandler(DNS_HANDLER)
 
 if '__main__' == __name__:
     setup_logging()
@@ -231,7 +231,7 @@ if '__main__' == __name__:
     except:
         LOGGER.exception('failed to patch ssl')
     fqsocks.config_file.path = '/data/data/fq.router2/etc/fqsocks.json'
-    http_manager_port = fqsocks.config_file.read_config()['http_manager']['port']
+    http_manager_port = fqsocks.config_file._read_config()['http_manager']['port']
     try:
         response = urllib2.urlopen('http://127.0.0.1:%s/exit' % http_manager_port, '').read()
         if 'EXITING' == response:

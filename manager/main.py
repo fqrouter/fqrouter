@@ -21,6 +21,7 @@ import functools
 import comp_scrambler
 import comp_shortcut
 import fqsocks.pages.downstream
+import fqdns
 
 __import__('free_internet')
 
@@ -55,6 +56,10 @@ SOCKS_RULES = [
         ('nat', 'PREROUTING', '-p tcp ! -s 10.1.2.3 -j DNAT --to-destination 10.1.2.3:12345')
     )]
 default_dns_server = config.get_default_dns_server()
+DNS_HANDLER = fqdns.DnsHandler(
+    enable_china_domain=True, enable_hosted_domain=True,
+    original_upstream=default_dns_server.split(':') if default_dns_server else '')
+fqsocks.fqsocks.DNS_HANDLER = DNS_HANDLER
 
 
 def handle_ping(environ, start_response):
@@ -126,8 +131,6 @@ def run():
         '--tcp-gateway-listen', '10.1.2.3:12345',
         '--dns-server-listen', '10.1.2.3:12345']
     args = config.configure_fqsocks(args)
-    if config.read().get('tcp_scrambler_enabled', True):
-        args += ['--tcp-scrambler']
     fqsocks.fqsocks.main(args)
 
 
