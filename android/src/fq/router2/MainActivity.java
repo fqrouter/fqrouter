@@ -15,9 +15,11 @@ import android.preference.PreferenceManager;
 import android.provider.Settings;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.app.NotificationCompat;
-import android.view.Menu;
-import android.view.MenuItem;
-import android.view.View;
+import android.support.v4.view.GestureDetectorCompat;
+import android.view.*;
+import android.webkit.WebView;
+import android.webkit.WebViewClient;
+import android.widget.FrameLayout;
 import android.widget.ProgressBar;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -25,6 +27,7 @@ import com.google.analytics.tracking.android.EasyTracker;
 import fq.router2.feedback.*;
 import fq.router2.free_internet.CheckDnsPollutionService;
 import fq.router2.free_internet.DnsPollutedIntent;
+import fq.router2.free_internet.SocksVpnConnectedIntent;
 import fq.router2.life_cycle.*;
 import fq.router2.utils.*;
 
@@ -45,7 +48,7 @@ public class MainActivity extends Activity implements
         DnsPollutedIntent.Handler,
         HandleAlertIntent.Handler,
         ExitingIntent.Handler,
-        LaunchingIntent.Handler {
+        LaunchingIntent.Handler, SocksVpnConnectedIntent.Handler {
 
     public final static int SHOW_AS_ACTION_IF_ROOM = 1;
     private final static int ITEM_ID_EXIT = 1;
@@ -53,7 +56,7 @@ public class MainActivity extends Activity implements
     private final static int ITEM_ID_SETTINGS = 3;
     private final static int ITEM_ID_UPGRADE_MANUALLY = 4;
     private final static int ASK_VPN_PERMISSION = 1;
-    private static boolean isLaunched;
+    private static boolean isReady;
     private Handler handler = new Handler();
     private String upgradeUrl;
     private boolean downloaded;
@@ -69,6 +72,7 @@ public class MainActivity extends Activity implements
         IOUtils.createCommonDirs();
     }
 
+    private GestureDetectorCompat gestureDetector;
 
 
     @Override
@@ -88,6 +92,8 @@ public class MainActivity extends Activity implements
         DnsPollutedIntent.register(this);
         HandleAlertIntent.register(this);
         ExitingIntent.register(this);
+        SocksVpnConnectedIntent.register(this);
+        gestureDetector = new GestureDetectorCompat(this, new MyGestureDetector());
         updateStatus(_(R.string.status_check_apn), 5);
         String apnName = getApnName();
         LogUtils.i("apn name: " + apnName);
@@ -117,6 +123,12 @@ public class MainActivity extends Activity implements
         } else {
             LaunchService.execute(this);
         }
+    }
+
+    @Override
+    public boolean onTouchEvent(MotionEvent event){
+        this.gestureDetector.onTouchEvent(event);
+        return super.onTouchEvent(event);
     }
 
     private String getApnName() {
@@ -171,7 +183,7 @@ public class MainActivity extends Activity implements
 
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
-        if (isLaunched) {
+        if (isReady) {
             menu.add(Menu.NONE, ITEM_ID_SETTINGS, Menu.NONE, R.string.menu_settings);
         }
         if (upgradeUrl != null) {
@@ -283,7 +295,6 @@ public class MainActivity extends Activity implements
 
     @Override
     public void onLaunched(boolean isVpnMode) {
-        isLaunched = true;
         ActivityCompat.invalidateOptionsMenu(this);
         if (isVpnMode) {
             sendBroadcast(new LaunchingIntent(_(R.string.status_acquire_vpn_permission), 75));
@@ -292,9 +303,18 @@ public class MainActivity extends Activity implements
                 startVpn();
             }
         } else {
-            sendBroadcast(new LaunchingIntent(_(R.string.status_launched), 100));
-            displayNotification(this, _(R.string.status_launched));
+            onReady();
         }
+    }
+
+    public void onReady() {
+        isReady = true;
+        sendBroadcast(new LaunchingIntent(_(R.string.status_ready), 100));
+        displayNotification(this, _(R.string.status_ready));
+        WebView webView = (WebView) findViewById(R.id.webView);
+        findViewById(R.id.hintTextView).setVisibility(View.VISIBLE);
+        webView.getSettings().setJavaScriptEnabled(true);
+        webView.loadUrl("http://127.0.0.1:2515");
     }
 
     private void checkUpdate() {
@@ -464,10 +484,38 @@ public class MainActivity extends Activity implements
     @Override
     public void onExiting() {
         showNotification(_(R.string.status_exiting));
-        isLaunched = false;
+        isReady = false;
         ActivityCompat.invalidateOptionsMenu(this);
+        findViewById(R.id.webView).setVisibility(View.GONE);
         findViewById(R.id.progressBar).setVisibility(View.GONE);
+        findViewById(R.id.hintTextView).setVisibility(View.GONE);
+        findViewById(R.id.statusTextView).setVisibility(View.VISIBLE);
         TextView statusTextView = (TextView) findViewById(R.id.statusTextView);
         statusTextView.setText(_(R.string.status_exiting));
+    }
+
+    private class MyGestureDetector extends GestureDetector.SimpleOnGestureListener {
+        private static final int SWIPE_MIN_DISTANCE = 120;
+        private static final int SWIPE_MAX_OFF_PATH = 250;
+        private static final int SWIPE_THRESHOLD_VELOCITY = 200;
+        @Override
+        public boolean onFling(MotionEvent e1, MotionEvent e2, float velocityX, float velocityY) {
+            try {
+                if (Math.abs(e1.getY() - e2.getY()) > SWIPE_MAX_OFF_PATH)
+                    return false;
+                // right to left swipe
+                if(e1.getX() - e2.getX() > SWIPE_MIN_DISTANCE && Math.abs(velocityX) > SWIPE_THRESHOLD_VELOCITY) {
+                    if (isReady) {
+                        findViewById(R.id.statusTextView).setVisibility(View.GONE);
+                        findViewById(R.id.progressBar).setVisibility(View.GONE);
+                        findViewById(R.id.hintTextView).setVisibility(View.GONE);
+                        findViewById(R.id.webView).setVisibility(View.VISIBLE);
+                    }
+                }
+            } catch (Exception e) {
+                LogUtils.e("failed to swipe", e);
+            }
+            return false;
+        }
     }
 }

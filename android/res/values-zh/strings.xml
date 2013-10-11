@@ -21,7 +21,7 @@
     <string name="status_free_internet_disconnecting">正在关闭翻墙功能</string>
     <string name="status_wifi_repeater_starting">正在开启无线中继</string>
     <string name="status_wifi_repeater_stopping">正在关闭无线中继</string>
-    <string name="status_launched">youtube/twitter 应该能访问了吧？</string>
+    <string name="status_ready">youtube/twitter 应该能访问了吧？</string>
     <string name="status_downloading">正在下载</string>
     <string name="status_launching">启动中</string>
     <string name="status_launch_vpn">VPN启动中</string>
@@ -208,6 +208,8 @@
     <string name="status_clear_old_files">清理老版本文件</string>
     <string name="status_copy_files">拷贝文件</string>
     <string name="status_unzip_files">解压缩文件</string>
-    <string name="status_starting_manager">启动管理</string>
+    <string name="status_starting_manager">启动管理程序</string>
     <string name="status_acquire_vpn_permission">获取VPN权限</string>
+    <string name="hint_swipe_left">向左滑动即刻获得更多功能</string>
+    <string name="status_load_page">加载页面</string>
 </resources>

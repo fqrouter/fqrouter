@@ -17,7 +17,7 @@
     <string name="menu_upgrade_manually">Upgrade Manually</string>
     <string name="menu_report_error">Report Error</string>
     <string name="menu_exit">Exit</string>
-    <string name="status_launched">You may try youtube/twitter now</string>
+    <string name="status_ready">You may try youtube/twitter now</string>
     <string name="status_free_internet_connecting">Connecting to free internet</string>
     <string name="status_free_internet_disconnecting">Disconnecting from free internet</string>
     <string name="status_wifi_repeater_starting">Starting wifi repeater</string>
@@ -238,5 +238,6 @@
     <string name="status_copy_files">Copy files</string>
     <string name="status_unzip_files">Unzip files</string>
     <string name="status_starting_manager">Starting manager</string>
-    <string name="status_acquire_vpn_permission">Acquire VPN permission</string>
+    <string name="status_acquire_vpn_permission">Acquire VPN permission</string><string name="hint_swipe_left">Swipe left to access full power</string>
+    <string name="status_load_page">Load page</string>
 </resources>

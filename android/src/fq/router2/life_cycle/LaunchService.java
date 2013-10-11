@@ -113,6 +113,7 @@ public class LaunchService extends IntentService {
     }
 
     private void deployAndLaunch() {
+        sendBroadcast(new LaunchingIntent(_(R.string.status_clean_environment), 25));
         try {
             LogUtils.i("Kill existing manager process");
             LogUtils.i("try to kill manager process before launch");
@@ -120,7 +121,6 @@ public class LaunchService extends IntentService {
         } catch (Exception e) {
             LogUtils.e("failed to kill manager process before launch", e);
         }
-        sendBroadcast(new LaunchingIntent(_(R.string.status_cleaned_environment), 25));
         Deployer deployer = new Deployer(this);
         String fatalError = deployer.deploy();
         if (fatalError.length() > 0) {
