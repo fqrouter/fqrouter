@@ -18,16 +18,11 @@ import android.support.v4.app.NotificationCompat;
 import android.support.v4.view.GestureDetectorCompat;
 import android.view.*;
 import android.webkit.WebView;
-import android.webkit.WebViewClient;
-import android.widget.FrameLayout;
 import android.widget.ProgressBar;
 import android.widget.TextView;
 import android.widget.Toast;
 import com.google.analytics.tracking.android.EasyTracker;
 import fq.router2.feedback.*;
-import fq.router2.free_internet.CheckDnsPollutionService;
-import fq.router2.free_internet.DnsPollutedIntent;
-import fq.router2.free_internet.SocksVpnConnectedIntent;
 import fq.router2.life_cycle.*;
 import fq.router2.utils.*;
 
@@ -165,7 +160,7 @@ public class MainActivity extends Activity implements
                     if (LaunchService.SOCKS_VPN_SERVICE_CLASS == null) {
                         onHandleFatalError("vpn class not loaded");
                     } else {
-                        updateStatus(_(R.string.status_launch_vpn), 5);
+                        updateStatus(_(R.string.status_launch_vpn), 80);
                         stopService(new Intent(this, LaunchService.SOCKS_VPN_SERVICE_CLASS));
                         startService(new Intent(this, LaunchService.SOCKS_VPN_SERVICE_CLASS));
                     }
@@ -222,18 +217,18 @@ public class MainActivity extends Activity implements
     }
 
     private void showNotification(String text) {
-        if (!PreferenceManager.getDefaultSharedPreferences(this).getBoolean("NotificationEnabled", true)) {
-            clearNotification(this);
-            return;
-        }
-        if (LaunchService.isVpnRunning()) {
-            clearNotification(this);
-            return;
-        }
         displayNotification(this, text);
     }
 
     public static void displayNotification(Context context, String text) {
+        if (!PreferenceManager.getDefaultSharedPreferences(context).getBoolean("NotificationEnabled", true)) {
+            clearNotification(context);
+            return;
+        }
+        if (LaunchService.isVpnRunning()) {
+            clearNotification(context);
+            return;
+        }
         try {
             Intent openIntent = new Intent(context, MainActivity.class);
             Notification notification = new NotificationCompat.Builder(context)
@@ -273,13 +268,6 @@ public class MainActivity extends Activity implements
         progressBar.setProgress(progress);
     }
 
-    private void clearStatus() {
-//        TextView textView = (TextView) findViewById(R.id.statusTextView);
-//        if (!textView.getText().toString().startsWith("Error:")) {
-//            textView.setText("");
-//        }
-    }
-
     public void exit() {
         if (LaunchService.isVpnRunning()) {
             Toast.makeText(this, R.string.vpn_exit_hint, 5000).show();
@@ -309,8 +297,9 @@ public class MainActivity extends Activity implements
 
     public void onReady() {
         isReady = true;
-        sendBroadcast(new LaunchingIntent(_(R.string.status_ready), 100));
-        displayNotification(this, _(R.string.status_ready));
+        ActivityCompat.invalidateOptionsMenu(this);
+        updateStatus(_(R.string.status_ready), 100);
+        showNotification(_(R.string.status_ready));
         WebView webView = (WebView) findViewById(R.id.webView);
         findViewById(R.id.hintTextView).setVisibility(View.VISIBLE);
         webView.getSettings().setJavaScriptEnabled(true);

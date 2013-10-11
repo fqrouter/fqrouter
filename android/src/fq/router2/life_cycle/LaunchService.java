@@ -8,7 +8,7 @@ import android.os.Build;
 import fq.router2.R;
 import fq.router2.feedback.HandleAlertIntent;
 import fq.router2.feedback.HandleFatalErrorIntent;
-import fq.router2.free_internet.SocksVpnService;
+import fq.router2.SocksVpnService;
 import fq.router2.utils.*;
 
 import java.io.File;
@@ -23,7 +23,7 @@ public class LaunchService extends IntentService {
 
     static {
         try {
-            SOCKS_VPN_SERVICE_CLASS = LaunchService.class.forName("fq.router2.free_internet.SocksVpnService");
+            SOCKS_VPN_SERVICE_CLASS = LaunchService.class.forName("fq.router2.SocksVpnService");
         } catch (ClassNotFoundException e) {
             LogUtils.e("failed to load SocksVpnService.class", e);
         }

@@ -230,8 +230,18 @@ if '__main__' == __name__:
         gevent.monkey.patch_ssl()
     except:
         LOGGER.exception('failed to patch ssl')
+    args = [
+        '--log-level', 'DEBUG',
+        '--log-file', '/data/data/fq.router2/log/fqsocks.log',
+        '--tcp-gateway-listen', '10.25.1.1:12345',
+        '--dns-server-listen', '10.25.1.1:12345',
+        '--no-http-manager', # already started before
+        '--no-tcp-scrambler', # no root permission
+    ]
+    args = config.configure_fqsocks(args)
+    fqsocks.fqsocks.init_config(args)
     fqsocks.config_file.path = '/data/data/fq.router2/etc/fqsocks.json'
-    http_manager_port = fqsocks.config_file._read_config()['http_manager']['port']
+    http_manager_port = fqsocks.config_file.read_config()['http_manager']['port']
     try:
         response = urllib2.urlopen('http://127.0.0.1:%s/exit' % http_manager_port, '').read()
         if 'EXITING' == response:
@@ -248,13 +258,5 @@ if '__main__' == __name__:
         LOGGER.exception('failed to get tun fd')
         sys.exit(1)
     greenlet = gevent.spawn(redirect_tun_traffic, tun_fd)
-    args = [
-        '--log-level', 'INFO',
-        '--log-file', '/data/data/fq.router2/log/fqsocks.log',
-        '--tcp-gateway-listen', '10.25.1.1:12345',
-        '--dns-server-listen', '10.25.1.1:12345',
-        '--no-http-manager', # already started before
-    ]
-    args = config.configure_fqsocks(args)
-    gevent.spawn(fqsocks.fqsocks.main, args)
+    gevent.spawn(fqsocks.fqsocks.main)
     greenlet.join()

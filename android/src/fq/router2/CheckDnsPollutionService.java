@@ -1,4 +1,4 @@
-package fq.router2.free_internet;
+package fq.router2;
 
 import android.app.IntentService;
 import android.content.Context;

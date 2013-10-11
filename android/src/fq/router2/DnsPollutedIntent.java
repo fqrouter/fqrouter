@@ -1,28 +1,32 @@
-package fq.router2.free_internet;
+package fq.router2;
 
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import fq.router2.utils.LoggedBroadcastReceiver;
 
-public class SocksVpnConnectedIntent extends Intent{
-    public final static String ACTION_SOCKS_VPN_CONNECTED= "SocksVpnConnected";
+import java.util.Date;
 
-    public SocksVpnConnectedIntent() {
-        setAction(ACTION_SOCKS_VPN_CONNECTED);
+public class DnsPollutedIntent extends Intent {
+
+    private final static String ACTION_DNS_POLLUTED = "DnsPolluted";
+
+    public DnsPollutedIntent(long pollutedAt) {
+        setAction(ACTION_DNS_POLLUTED);
+        putExtra("pollutedAt", pollutedAt);
     }
 
     public static void register(final Handler handler) {
         handler.getBaseContext().registerReceiver(new LoggedBroadcastReceiver() {
             @Override
             public void handle(Context context, Intent intent) {
-                handler.onReady();
+                handler.onDnsPolluted(intent.getLongExtra("pollutedAt", 0));
             }
-        }, new IntentFilter(ACTION_SOCKS_VPN_CONNECTED));
+        }, new IntentFilter(ACTION_DNS_POLLUTED));
     }
 
     public static interface Handler {
-        void onReady();
+        void onDnsPolluted(long pollutedAt);
 
         Context getBaseContext();
     }
