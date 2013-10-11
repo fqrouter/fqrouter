@@ -28,22 +28,7 @@
                 <category android:name="android.intent.category.LAUNCHER"/>
             </intent-filter>
         </activity>
-        <activity android:name=".WifiRepeaterActivity"
-                  android:label="@string/button_wifi_repeater"
-                  android:launchMode="singleTask"
-                  android:configChanges="keyboard|keyboardHidden|orientation|screenSize">
-        </activity>
         <activity android:name=".MainSettingsActivity">
-        </activity>
-        <activity android:name=".GoAgentSettingsActivity">
-        </activity>
-        <activity android:name=".ShadowsocksSettingsActivity">
-        </activity>
-        <activity android:name=".HttpProxySettingsActivity">
-        </activity>
-        <activity android:name=".SshSettingsActivity">
-        </activity>
-        <activity android:name=".AdvancedSettingsActivity">
         </activity>
         <service android:name=".life_cycle.LaunchService">
         </service>
@@ -53,23 +38,7 @@
         </service>
         <service android:name=".feedback.CheckUpdateService">
         </service>
-        <service android:name=".wifi_repeater.WifiGuardService">
-        </service>
-        <service android:name=".wifi_repeater.CheckWifiRepeaterService">
-        </service>
-        <service android:name=".wifi_repeater.StartWifiRepeaterService">
-        </service>
-        <service android:name=".wifi_repeater.StopWifiRepeaterService">
-        </service>
-        <service android:name=".free_internet.ConnectFreeInternetService">
-        </service>
-        <service android:name=".free_internet.DisconnectFreeInternetService">
-        </service>
-        <service android:name=".free_internet.CheckFreeInternetService">
-        </service>
         <service android:name=".free_internet.CheckDnsPollutionService">
-        </service>
-        <service android:name=".pick_and_play.CheckPickAndPlayService">
         </service>
         <service android:name=".wifi_repeater.AcquireWifiLockService">
         </service>

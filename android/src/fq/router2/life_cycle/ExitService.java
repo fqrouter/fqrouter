@@ -1,7 +1,6 @@
 package fq.router2.life_cycle;
 
 import android.app.IntentService;
-import android.app.NotificationManager;
 import android.content.Context;
 import android.content.Intent;
 import android.os.Build;
@@ -10,7 +9,7 @@ import com.google.analytics.tracking.android.Tracker;
 import fq.router2.MainActivity;
 import fq.router2.R;
 import fq.router2.utils.*;
-import fq.router2.wifi_repeater.WifiGuardService;
+import fq.router2.wifi_repeater.AcquireWifiLockService;
 
 import java.io.File;
 
@@ -54,7 +53,7 @@ public class ExitService extends IntentService {
         } catch (Exception e) {
             LogUtils.e("failed to kill manager process", e);
         }
-        stopService(new Intent(this, WifiGuardService.class));
+        stopService(new Intent(this, AcquireWifiLockService.class));
         sendBroadcast(new ExitedIntent());
         MainActivity.clearNotification(this);
     }

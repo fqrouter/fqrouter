@@ -1,73 +1,18 @@
 <?xml version="1.0" encoding="utf-8"?>
 <PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android">
     <CheckBoxPreference
-            android:key="FreeInternetConnected"
-            android:title="@string/pref_free_internet_connected"
-            android:summary="@string/pref_free_internet_connected_summary"
+            android:key="NotificationEnabled"
+            android:title="@string/pref_general_notification_enabled"
+            android:defaultValue="true"/>
+    <CheckBoxPreference
+            android:key="AutoUpdateEnabled"
+            android:title="@string/pref_general_auto_update"
+            android:summary="@string/pref_general_auto_update_summary"
+            android:defaultValue="true"/>
+    <CheckBoxPreference
+            android:key="AutoLaunchEnabled"
+            android:title="@string/pref_general_launch_after_booted"
             android:defaultValue="false"/>
-    <PreferenceCategory android:title="@string/pref_goagent_category">
-        <CheckBoxPreference
-                android:key="GoAgentPublicServersEnabled"
-                android:title="@string/pref_goagent_public_servers"
-                android:summary="@string/pref_goagent_public_servers_summary"
-                android:defaultValue="true"/>
-        <ListPreference
-                android:key="GoAgentPrivateServersPicker"
-                android:title="@string/pref_goagent_private_servers"
-                android:summary="@string/pref_goagent_private_servers_summary"
-                android:defaultValue=""/>
-    </PreferenceCategory>
-    <PreferenceCategory android:title="@string/pref_shadowsocks_category">
-        <CheckBoxPreference
-                android:key="ShadowsocksPublicServersEnabled"
-                android:title="@string/pref_shadowsocks_public_servers"
-                android:summary="@string/pref_shadowsocks_public_servers_summary"
-                android:defaultValue="true"/>
-        <ListPreference
-                android:key="ShadowsocksPrivateServersPicker"
-                android:title="@string/pref_shadowsocks_private_servers"
-                android:defaultValue=""/>
-    </PreferenceCategory>
-    <PreferenceCategory android:title="@string/pref_http_proxy_category">
-        <CheckBoxPreference
-                android:key="HttpProxyPublicServersEnabled"
-                android:title="@string/pref_http_proxy_public_servers"
-                android:summary="@string/pref_http_proxy_public_servers_summary"
-                android:defaultValue="true"/>
-        <ListPreference
-                android:key="HttpProxyPrivateServersPicker"
-                android:title="@string/pref_http_proxy_private_servers"
-                android:defaultValue=""/>
-    </PreferenceCategory>
-    <PreferenceCategory android:title="@string/pref_ssh_category">
-        <ListPreference
-                android:key="SshPrivateServersPicker"
-                android:title="@string/pref_ssh_public_servers"
-                android:defaultValue=""/>
-    </PreferenceCategory>
-    <PreferenceCategory android:title="@string/pref_general_category" android:key="General">
-        <CheckBoxPreference
-                android:key="NotificationEnabled"
-                android:title="@string/pref_general_notification_enabled"
-                android:defaultValue="true"/>
-        <CheckBoxPreference
-                android:key="AutoAccessCheckEnabled"
-                android:title="@string/pref_general_auto_access_check"
-                android:summary="@string/pref_general_auto_access_check_summary"
-                android:defaultValue="true"/>
-        <CheckBoxPreference
-                android:key="AutoUpdateEnabled"
-                android:title="@string/pref_general_auto_update"
-                android:summary="@string/pref_general_auto_update_summary"
-                android:defaultValue="true"/>
-        <CheckBoxPreference
-                android:key="AutoLaunchEnabled"
-                android:title="@string/pref_general_launch_after_booted"
-                android:defaultValue="false"/>
-    </PreferenceCategory>
-    <Preference
-            android:key="OpenAdvancedSettings"
-            android:title="@string/pref_open_advanced_settings"/>
     <Preference
             android:key="OpenFullGooglePlay"
             android:title="@string/pref_open_full_google_play"
