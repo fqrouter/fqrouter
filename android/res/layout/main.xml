@@ -17,13 +17,19 @@
     <TextView
             android:layout_width="fill_parent"
             android:layout_height="wrap_content"
-            android:id="@+id/statusTextView" android:layout_gravity="center" android:layout_marginTop="-70dp"
+            android:id="@+id/statusTextView" android:layout_gravity="center" android:layout_marginTop="-50dp"
             android:layout_marginLeft="10dp"
             android:layout_marginRight="10dp" android:gravity="center" android:textSize="18dp"/>
     <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:text="@string/hint_swipe_left"
-            android:id="@+id/hintTextView" android:layout_gravity="center_horizontal|bottom"
-            android:layout_marginBottom="10dp" android:visibility="gone" android:textIsSelectable="false"/>
+            android:id="@+id/hintTextView" android:layout_gravity="center"
+            android:visibility="gone" android:textIsSelectable="false" android:layout_marginTop="70dp"/>
+    <Button
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/button_full_power"
+            android:id="@+id/fullPowerButton" android:layout_gravity="center" android:layout_marginTop="40dp"
+            android:visibility="gone"/>
 </FrameLayout>

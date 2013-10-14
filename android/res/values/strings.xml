@@ -238,6 +238,6 @@
     <string name="status_copy_files">Copy files</string>
     <string name="status_unzip_files">Unzip files</string>
     <string name="status_starting_manager">Starting manager</string>
-    <string name="status_acquire_vpn_permission">Acquire VPN permission</string><string name="hint_swipe_left">Swipe left to access full power</string>
-    <string name="status_load_page">Load page</string>
+    <string name="status_acquire_vpn_permission">Acquire VPN permission</string><string name="hint_swipe_left">Or Swipe left</string>
+    <string name="status_load_page">Load page</string><string name="button_full_power">Full Power</string>
 </resources>

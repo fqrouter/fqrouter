@@ -18,6 +18,7 @@ import android.support.v4.app.NotificationCompat;
 import android.support.v4.view.GestureDetectorCompat;
 import android.view.*;
 import android.webkit.WebView;
+import android.widget.Button;
 import android.widget.ProgressBar;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -89,6 +90,13 @@ public class MainActivity extends Activity implements
         ExitingIntent.register(this);
         SocksVpnConnectedIntent.register(this);
         gestureDetector = new GestureDetectorCompat(this, new MyGestureDetector());
+        Button fullPowerButton = (Button) findViewById(R.id.fullPowerButton);
+        fullPowerButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                openWebView();
+            }
+        });
         updateStatus(_(R.string.status_check_apn), 5);
         String apnName = getApnName();
         LogUtils.i("apn name: " + apnName);
@@ -150,6 +158,24 @@ public class MainActivity extends Activity implements
     public void onStop() {
         super.onStop();
         EasyTracker.getInstance().activityStop(this);
+    }
+
+    @Override
+    protected void onPause() {
+        super.onPause();
+        if (isReady) {
+            WebView webView = (WebView) findViewById(R.id.webView);
+            webView.loadData("", "text/html", "utf8");
+        }
+    }
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+        if (isReady) {
+            WebView webView = (WebView) findViewById(R.id.webView);
+            webView.loadUrl("http://127.0.0.1:2515");
+        }
     }
 
     @Override
@@ -216,10 +242,6 @@ public class MainActivity extends Activity implements
         return super.onMenuItemSelected(featureId, item);
     }
 
-    private void showNotification(String text) {
-        displayNotification(this, text);
-    }
-
     public static void displayNotification(Context context, String text) {
         if (!PreferenceManager.getDefaultSharedPreferences(context).getBoolean("NotificationEnabled", true)) {
             clearNotification(context);
@@ -274,7 +296,7 @@ public class MainActivity extends Activity implements
             return;
         }
         ExitService.execute(this);
-        showNotification(_(R.string.status_exiting));
+        displayNotification(this, _(R.string.status_exiting));
     }
 
     private String _(int id) {
@@ -299,9 +321,11 @@ public class MainActivity extends Activity implements
         isReady = true;
         ActivityCompat.invalidateOptionsMenu(this);
         updateStatus(_(R.string.status_ready), 100);
-        showNotification(_(R.string.status_ready));
+        displayNotification(this, _(R.string.status_ready));
         WebView webView = (WebView) findViewById(R.id.webView);
+        findViewById(R.id.progressBar).setVisibility(View.GONE);
         findViewById(R.id.hintTextView).setVisibility(View.VISIBLE);
+        findViewById(R.id.fullPowerButton).setVisibility(View.VISIBLE);
         webView.getSettings().setJavaScriptEnabled(true);
         webView.loadUrl("http://127.0.0.1:2515");
     }
@@ -377,7 +401,7 @@ public class MainActivity extends Activity implements
     @Override
     public void onDownloading(String url, String downloadTo, int percent) {
         if (System.currentTimeMillis() % (2 * 1000) == 0) {
-            showNotification(_(R.string.status_downloading) + " " + Uri.parse(url).getLastPathSegment() + ": " + percent + "%");
+            displayNotification(this, _(R.string.status_downloading) + " " + Uri.parse(url).getLastPathSegment() + ": " + percent + "%");
         }
         TextView textView = (TextView) findViewById(R.id.statusTextView);
         textView.setText(_(R.string.status_downloaded) + " " + percent + "%");
@@ -472,12 +496,13 @@ public class MainActivity extends Activity implements
 
     @Override
     public void onExiting() {
-        showNotification(_(R.string.status_exiting));
+        displayNotification(this, _(R.string.status_exiting));
         isReady = false;
         ActivityCompat.invalidateOptionsMenu(this);
         findViewById(R.id.webView).setVisibility(View.GONE);
         findViewById(R.id.progressBar).setVisibility(View.GONE);
         findViewById(R.id.hintTextView).setVisibility(View.GONE);
+        findViewById(R.id.fullPowerButton).setVisibility(View.GONE);
         findViewById(R.id.statusTextView).setVisibility(View.VISIBLE);
         TextView statusTextView = (TextView) findViewById(R.id.statusTextView);
         statusTextView.setText(_(R.string.status_exiting));
@@ -494,17 +519,22 @@ public class MainActivity extends Activity implements
                     return false;
                 // right to left swipe
                 if(e1.getX() - e2.getX() > SWIPE_MIN_DISTANCE && Math.abs(velocityX) > SWIPE_THRESHOLD_VELOCITY) {
-                    if (isReady) {
-                        findViewById(R.id.statusTextView).setVisibility(View.GONE);
-                        findViewById(R.id.progressBar).setVisibility(View.GONE);
-                        findViewById(R.id.hintTextView).setVisibility(View.GONE);
-                        findViewById(R.id.webView).setVisibility(View.VISIBLE);
-                    }
+                    openWebView();
                 }
             } catch (Exception e) {
                 LogUtils.e("failed to swipe", e);
             }
             return false;
+        }
+    }
+
+    private void openWebView() {
+        if (isReady) {
+            findViewById(R.id.statusTextView).setVisibility(View.GONE);
+            findViewById(R.id.progressBar).setVisibility(View.GONE);
+            findViewById(R.id.hintTextView).setVisibility(View.GONE);
+            findViewById(R.id.fullPowerButton).setVisibility(View.GONE);
+            findViewById(R.id.webView).setVisibility(View.VISIBLE);
         }
     }
 }
