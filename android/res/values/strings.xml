@@ -146,7 +146,10 @@
     <string name="report_error_alert_ok">I will!</string>
     <string name="report_error_alert_no">Maybe next time</string>
     <string name="dns_polluted_alert_title">DNS Polluted</string>
-    <string name="dns_polluted_alert_message">You can not access some website is because the DNS has been polluted. Toggle airplane mode will clear the DNS pollution. Other devices route via fqrouter might also suffer from DNS pollution, clear DNS cache using the way suitable for target device.</string>
+    <string name="dns_polluted_alert_message">
+        You may have accessed some blocked websites before starting fqrouter, which might cause DNS cache being polluted.
+        Toggle airplane mode will clear the DNS pollution.
+        Other devices route via fqrouter might also suffer from DNS pollution, clear DNS cache using the way suitable for target device.</string>
     <string name="dns_polluted_alert_ack">OK</string>
     <string name="dns_polluted_alert_fix">Toggle it now</string>
     <string name="dns_polluted_alert_toggle_failed">Failed to toggle airplane mode, you need to do it manually</string>
@@ -239,5 +242,7 @@
     <string name="status_unzip_files">Unzip files</string>
     <string name="status_starting_manager">Starting manager</string>
     <string name="status_acquire_vpn_permission">Acquire VPN permission</string><string name="hint_swipe_left">Or Swipe left</string>
-    <string name="status_load_page">Load page</string><string name="button_full_power">Full Power</string>
+    <string name="status_loading_page">Loading page</string>
+    <string name="button_full_power">Full Power</string>
+    <string name="menu_clean_dns">Clean DNS Cache</string>
 </resources>

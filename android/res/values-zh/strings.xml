@@ -137,7 +137,10 @@
     <string name="report_error_alert_ok">没问题！</string>
     <string name="report_error_alert_no">那再说吧</string>
     <string name="dns_polluted_alert_title">DNS 被污染了</string>
-    <string name="dns_polluted_alert_message">你不能访问某些网站是因为DNS已经被污染了。开关一下飞行模式可以清除DNS污染。其他设备通过fqrouter翻墙，如果遇到无法访问请使用适合该设备的方法清除DNS缓存。</string>
+    <string name="dns_polluted_alert_message">
+        打开fqrouter之前访问过被墙的网站的话可能会导致DNS缓存被污染。
+        开关一下飞行模式可以清除DNS污染。
+        其他设备通过fqrouter翻墙，如果遇到无法访问请使用适合该设备的方法清除DNS缓存。</string>
     <string name="dns_polluted_alert_ack">明白了</string>
     <string name="dns_polluted_alert_fix">帮我弄了吧</string>
     <string name="dns_polluted_alert_toggle_failed">没搞定，你还是自己手工开关一下飞行模式吧</string>
@@ -211,6 +214,7 @@
     <string name="status_starting_manager">启动管理程序</string>
     <string name="status_acquire_vpn_permission">获取VPN权限</string>
     <string name="hint_swipe_left">也可以向左滑动</string>
-    <string name="status_load_page">加载页面</string>
+    <string name="status_loading_page">页面加载中</string>
     <string name="button_full_power">即刻开启更多功能</string>
+    <string name="menu_clean_dns">清理DNS污染</string>
 </resources>

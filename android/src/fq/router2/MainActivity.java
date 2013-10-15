@@ -51,6 +51,7 @@ public class MainActivity extends Activity implements
     private final static int ITEM_ID_REPORT_ERROR = 2;
     private final static int ITEM_ID_SETTINGS = 3;
     private final static int ITEM_ID_UPGRADE_MANUALLY = 4;
+    private final static int ITEM_ID_CLEAN_DNS = 5;
     private final static int ASK_VPN_PERMISSION = 1;
     private static boolean isReady;
     private Handler handler = new Handler();
@@ -94,7 +95,7 @@ public class MainActivity extends Activity implements
         fullPowerButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                openWebView();
+                showWebView();
             }
         });
         updateStatus(_(R.string.status_check_apn), 5);
@@ -124,7 +125,12 @@ public class MainActivity extends Activity implements
                     })
                     .show();
         } else {
-            LaunchService.execute(this);
+            if (isReady) {
+                loadWebView();
+                showWebView();
+            } else {
+                LaunchService.execute(this);
+            }
         }
     }
 
@@ -173,9 +179,15 @@ public class MainActivity extends Activity implements
     protected void onResume() {
         super.onResume();
         if (isReady) {
-            WebView webView = (WebView) findViewById(R.id.webView);
-            webView.loadUrl("http://127.0.0.1:2515");
+            CheckDnsPollutionService.execute(this);
+            loadWebView();
         }
+    }
+
+    private void loadWebView() {
+        WebView webView = (WebView) findViewById(R.id.webView);
+        webView.getSettings().setJavaScriptEnabled(true);
+        webView.loadUrl("http://127.0.0.1:2515");
     }
 
     @Override
@@ -206,6 +218,7 @@ public class MainActivity extends Activity implements
     public boolean onCreateOptionsMenu(Menu menu) {
         if (isReady) {
             menu.add(Menu.NONE, ITEM_ID_SETTINGS, Menu.NONE, R.string.menu_settings);
+            menu.add(Menu.NONE, ITEM_ID_CLEAN_DNS, Menu.NONE, R.string.menu_clean_dns);
         }
         if (upgradeUrl != null) {
             menu.add(Menu.NONE, ITEM_ID_UPGRADE_MANUALLY, Menu.NONE, R.string.menu_upgrade_manually);
@@ -238,6 +251,8 @@ public class MainActivity extends Activity implements
             startActivity(new Intent(this, MainSettingsActivity.class));
         } else if (ITEM_ID_UPGRADE_MANUALLY == item.getItemId()) {
             startActivity(new Intent(Intent.ACTION_VIEW, Uri.parse(upgradeUrl)));
+        } else if (ITEM_ID_CLEAN_DNS == item.getItemId()) {
+            showDnsPollutedAlert();
         }
         return super.onMenuItemSelected(featureId, item);
     }
@@ -307,9 +322,11 @@ public class MainActivity extends Activity implements
     public void onLaunched(boolean isVpnMode) {
         ActivityCompat.invalidateOptionsMenu(this);
         if (isVpnMode) {
-            sendBroadcast(new LaunchingIntent(_(R.string.status_acquire_vpn_permission), 75));
+            updateStatus(_(R.string.status_acquire_vpn_permission), 75);
             clearNotification(this);
-            if (!LaunchService.isVpnRunning()) {
+            if (LaunchService.isVpnRunning()) {
+                onReady();
+            } else {
                 startVpn();
             }
         } else {
@@ -322,12 +339,10 @@ public class MainActivity extends Activity implements
         ActivityCompat.invalidateOptionsMenu(this);
         updateStatus(_(R.string.status_ready), 100);
         displayNotification(this, _(R.string.status_ready));
-        WebView webView = (WebView) findViewById(R.id.webView);
         findViewById(R.id.progressBar).setVisibility(View.GONE);
         findViewById(R.id.hintTextView).setVisibility(View.VISIBLE);
         findViewById(R.id.fullPowerButton).setVisibility(View.VISIBLE);
-        webView.getSettings().setJavaScriptEnabled(true);
-        webView.loadUrl("http://127.0.0.1:2515");
+        loadWebView();
     }
 
     private void checkUpdate() {
@@ -453,36 +468,40 @@ public class MainActivity extends Activity implements
     @Override
     public void onDnsPolluted(final long pollutedAt) {
         if (!dnsPollutionAcked) {
-            new AlertDialog.Builder(MainActivity.this)
-                    .setIcon(android.R.drawable.ic_dialog_alert)
-                    .setTitle(R.string.dns_polluted_alert_title)
-                    .setMessage(R.string.dns_polluted_alert_message)
-                    .setPositiveButton(R.string.dns_polluted_alert_fix, new DialogInterface.OnClickListener() {
-                        @Override
-                        public void onClick(DialogInterface dialogInterface, int i) {
-                            dnsPollutionAcked = true;
-                            new Thread(new Runnable() {
-                                @Override
-                                public void run() {
-                                    try {
-                                        AirplaneModeUtils.toggle(MainActivity.this);
-                                        showToast(R.string.dns_polluted_alert_toggle_succeed);
-                                    } catch (Exception e) {
-                                        LogUtils.e("failed to toggle airplane mode", e);
-                                        showToast(R.string.dns_polluted_alert_toggle_failed);
-                                    }
-                                }
-                            }).start();
-                        }
-                    })
-                    .setNegativeButton(R.string.dns_polluted_alert_ack, new DialogInterface.OnClickListener() {
-                        @Override
-                        public void onClick(DialogInterface dialogInterface, int i) {
-                            dnsPollutionAcked = true;
-                        }
-                    })
-                    .show();
+            showDnsPollutedAlert();
         }
+    }
+
+    private void showDnsPollutedAlert() {
+        new AlertDialog.Builder(MainActivity.this)
+                .setIcon(android.R.drawable.ic_dialog_alert)
+                .setTitle(R.string.dns_polluted_alert_title)
+                .setMessage(R.string.dns_polluted_alert_message)
+                .setPositiveButton(R.string.dns_polluted_alert_fix, new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialogInterface, int i) {
+                        dnsPollutionAcked = true;
+                        new Thread(new Runnable() {
+                            @Override
+                            public void run() {
+                                try {
+                                    AirplaneModeUtils.toggle(MainActivity.this);
+                                    showToast(R.string.dns_polluted_alert_toggle_succeed);
+                                } catch (Exception e) {
+                                    LogUtils.e("failed to toggle airplane mode", e);
+                                    showToast(R.string.dns_polluted_alert_toggle_failed);
+                                }
+                            }
+                        }).start();
+                    }
+                })
+                .setNegativeButton(R.string.dns_polluted_alert_ack, new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialogInterface, int i) {
+                        dnsPollutionAcked = true;
+                    }
+                })
+                .show();
     }
 
     private void showToast(final int message) {
@@ -519,7 +538,7 @@ public class MainActivity extends Activity implements
                     return false;
                 // right to left swipe
                 if(e1.getX() - e2.getX() > SWIPE_MIN_DISTANCE && Math.abs(velocityX) > SWIPE_THRESHOLD_VELOCITY) {
-                    openWebView();
+                    showWebView();
                 }
             } catch (Exception e) {
                 LogUtils.e("failed to swipe", e);
@@ -528,9 +547,17 @@ public class MainActivity extends Activity implements
         }
     }
 
-    private void openWebView() {
+    private void showWebView() {
         if (isReady) {
-            findViewById(R.id.statusTextView).setVisibility(View.GONE);
+            final TextView statusTextView = (TextView) findViewById(R.id.statusTextView);
+            statusTextView.setText(R.string.status_loading_page);
+            statusTextView.setVisibility(View.VISIBLE);
+            handler.postDelayed(new Runnable() {
+                @Override
+                public void run() {
+                    statusTextView.setVisibility(View.GONE);
+                }
+            }, 3000);
             findViewById(R.id.progressBar).setVisibility(View.GONE);
             findViewById(R.id.hintTextView).setVisibility(View.GONE);
             findViewById(R.id.fullPowerButton).setVisibility(View.GONE);

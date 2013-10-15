@@ -231,7 +231,7 @@ if '__main__' == __name__:
     except:
         LOGGER.exception('failed to patch ssl')
     args = [
-        '--log-level', 'DEBUG',
+        '--log-level', 'INFO',
         '--log-file', '/data/data/fq.router2/log/fqsocks.log',
         '--tcp-gateway-listen', '10.25.1.1:12345',
         '--dns-server-listen', '10.25.1.1:12345',
