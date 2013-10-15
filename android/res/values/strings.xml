@@ -245,4 +245,5 @@
     <string name="status_loading_page">Loading page</string>
     <string name="button_full_power">Full Power</string>
     <string name="menu_clean_dns">Clean DNS Cache</string>
+    <string name="menu_about">About</string>
 </resources>

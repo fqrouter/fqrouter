@@ -18,6 +18,7 @@ import android.support.v4.app.NotificationCompat;
 import android.support.v4.view.GestureDetectorCompat;
 import android.view.*;
 import android.webkit.WebView;
+import android.webkit.WebViewClient;
 import android.widget.Button;
 import android.widget.ProgressBar;
 import android.widget.TextView;
@@ -52,6 +53,7 @@ public class MainActivity extends Activity implements
     private final static int ITEM_ID_SETTINGS = 3;
     private final static int ITEM_ID_UPGRADE_MANUALLY = 4;
     private final static int ITEM_ID_CLEAN_DNS = 5;
+    private final static int ITEM_ID_ABOUT = 6;
     private final static int ASK_VPN_PERMISSION = 1;
     private static boolean isReady;
     private Handler handler = new Handler();
@@ -171,7 +173,7 @@ public class MainActivity extends Activity implements
         super.onPause();
         if (isReady) {
             WebView webView = (WebView) findViewById(R.id.webView);
-            webView.loadData("", "text/html", "utf8");
+            webView.loadUrl("javascript:onPause()");
         }
     }
 
@@ -180,7 +182,8 @@ public class MainActivity extends Activity implements
         super.onResume();
         if (isReady) {
             CheckDnsPollutionService.execute(this);
-            loadWebView();
+            WebView webView = (WebView) findViewById(R.id.webView);
+            webView.loadUrl("javascript:onResume()");
         }
     }
 
@@ -224,6 +227,7 @@ public class MainActivity extends Activity implements
             menu.add(Menu.NONE, ITEM_ID_UPGRADE_MANUALLY, Menu.NONE, R.string.menu_upgrade_manually);
         }
         menu.add(Menu.NONE, ITEM_ID_REPORT_ERROR, Menu.NONE, R.string.menu_report_error);
+        menu.add(Menu.NONE, ITEM_ID_ABOUT, Menu.NONE, R.string.menu_about);
         addMenuItem(menu, ITEM_ID_EXIT, _(R.string.menu_exit));
         return super.onCreateOptionsMenu(menu);
     }
@@ -253,8 +257,34 @@ public class MainActivity extends Activity implements
             startActivity(new Intent(Intent.ACTION_VIEW, Uri.parse(upgradeUrl)));
         } else if (ITEM_ID_CLEAN_DNS == item.getItemId()) {
             showDnsPollutedAlert();
+        } else if (ITEM_ID_ABOUT == item.getItemId()) {
+            openAbout();
         }
         return super.onMenuItemSelected(featureId, item);
+    }
+
+    private void openAbout() {
+        WebView web = new WebView(this);
+        web.loadUrl("file:///android_asset/pages/about.html");
+        web.setWebViewClient(new WebViewClient() {
+            @Override
+            public boolean shouldOverrideUrlLoading(WebView view, String url) {
+                startActivity(new Intent(Intent.ACTION_VIEW, Uri.parse(url)));
+                return true;
+            }
+        });
+        new AlertDialog.Builder(this)
+                .setTitle(String.format(_(R.string.about_info_title), LaunchService.getMyVersion(this)))
+                .setCancelable(false)
+                .setNegativeButton(R.string.about_info_close, new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialogInterface, int i) {
+                        dialogInterface.cancel();
+                    }
+                })
+                .setView(web)
+                .create()
+                .show();
     }
 
     public static void displayNotification(Context context, String text) {

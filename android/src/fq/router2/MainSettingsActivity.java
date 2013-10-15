@@ -36,41 +36,10 @@ public class MainSettingsActivity extends PreferenceActivity {
                 return false;
             }
         });
-        findPreference("OpenAbout").setOnPreferenceClickListener(new Preference.OnPreferenceClickListener() {
-            @Override
-            public boolean onPreferenceClick(Preference preference) {
-                openAbout();
-                return false;
-            }
-        });
         if (!ShellUtils.isRooted()) {
             getPreferenceScreen().removePreference(findPreference("AutoLaunchEnabled"));
             getPreferenceScreen().removePreference(findPreference("NotificationEnabled"));
         }
-    }
-
-    private void openAbout() {
-        WebView web = new WebView(this);
-        web.loadUrl("file:///android_asset/pages/about.html");
-        web.setWebViewClient(new WebViewClient() {
-            @Override
-            public boolean shouldOverrideUrlLoading(WebView view, String url) {
-                startActivity(new Intent(Intent.ACTION_VIEW, Uri.parse(url)));
-                return true;
-            }
-        });
-        new AlertDialog.Builder(this)
-                .setTitle(String.format(_(R.string.about_info_title), LaunchService.getMyVersion(this)))
-                .setCancelable(false)
-                .setNegativeButton(R.string.about_info_close, new DialogInterface.OnClickListener() {
-                    @Override
-                    public void onClick(DialogInterface dialogInterface, int i) {
-                        dialogInterface.cancel();
-                    }
-                })
-                .setView(web)
-                .create()
-                .show();
     }
 
     private void openFullGooglePlay() {

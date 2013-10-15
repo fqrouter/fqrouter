@@ -217,4 +217,5 @@
     <string name="status_loading_page">页面加载中</string>
     <string name="button_full_power">即刻开启更多功能</string>
     <string name="menu_clean_dns">清理DNS污染</string>
+    <string name="menu_about">关于</string>
 </resources>
