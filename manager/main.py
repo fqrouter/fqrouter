@@ -46,6 +46,9 @@ DNS_RULES = [
     )]
 SOCKS_RULES = [
     (
+        {'target': 'DROP', 'extra': 'icmp type 5'},
+        ('filter', 'OUTPUT', '-p icmp --icmp-type 5 -j DROP')
+    ), (
         {'target': 'ACCEPT', 'destination': '127.0.0.1'},
         ('nat', 'OUTPUT', '-p tcp -d 127.0.0.1 -j ACCEPT')
     ), (
