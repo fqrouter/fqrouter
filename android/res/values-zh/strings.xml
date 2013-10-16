@@ -157,9 +157,9 @@
     <string name="internet_speed_alert_message">禁用它会使得网速变慢，而且会消耗非常多的公共资源。如确实有需要，请添加个人代理。</string>
     <string name="internet_speed_alert_ok">明白了</string>
     <string name="stop_google_play_title">需要先关闭Google Play</string>
-    <string name="stop_google_play_message">在弹出的窗口中点“强行停止”，然后再点“清除数据”,然后点回退键回到本界面</string>
-    <string name="stop_google_play_done">搞定了</string>
-    <string name="stop_google_play_do">这就去搞</string>
+    <string name="stop_google_play_message">本功能不保证能用。点击第一步在弹出的窗口中点“强行停止”，然后再点“清除数据”,然后点回退键回到本界面。再点击第二步打开完整版的Google市场。</string>
+    <string name="stop_google_play_done">第二步</string>
+    <string name="stop_google_play_do">第一步</string>
     <string name="failed_to_open_google_play">打开Google Play失败</string>
     <string name="wap_apn_alert_title">不兼容的移动网络APN</string>
     <string name="wap_apn_alert_message">fqrouter与当前设置的移动网络接入点（APN）不兼容，你需要把它设置为%s之外的选项</string>
@@ -220,4 +220,10 @@
     <string name="menu_about">关于</string>
     <string name="status_failed_to_launch">启动失败</string>
     <string name="status_timed_out">启动超时</string>
+    <string name="menu_open_full_google_play">打开Google市场</string>
+    <string name="full_google_play_title">打开美国版市场</string>
+    <string name="full_google_play_message">
+        本功能不保证能用。如果点打开没有效果，尝试使用“清理之后打开”。注意你的Google Play的设置会被清空。</string>
+    <string name="full_google_play_open">打开</string>
+    <string name="full_google_play_clean_and_open">清理之后打开</string>
 </resources>

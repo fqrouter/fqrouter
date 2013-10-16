@@ -58,7 +58,7 @@ SOCKS_RULES = [
 default_dns_server = config.get_default_dns_server()
 DNS_HANDLER = fqdns.DnsHandler(
     enable_china_domain=True, enable_hosted_domain=True,
-    original_upstream=default_dns_server.split(':') if default_dns_server else '')
+    original_upstream=(default_dns_server, 53) if default_dns_server else None)
 fqsocks.fqsocks.DNS_HANDLER = DNS_HANDLER
 
 

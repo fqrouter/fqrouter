@@ -170,9 +170,9 @@
     </string>
     <string name="internet_speed_alert_ok">OK</string>
     <string name="stop_google_play_title">Google play should be stopped first</string>
-    <string name="stop_google_play_message">Need to stop google play and clear its data directory first</string>
-    <string name="stop_google_play_done">Done, go next</string>
-    <string name="stop_google_play_do">Do it now</string>
+    <string name="stop_google_play_message">Click step 1 to stop google play and clear its data directory, then click step 2 to open it.</string>
+    <string name="stop_google_play_done">Step 2</string>
+    <string name="stop_google_play_do">Step 1</string>
     <string name="failed_to_open_google_play">Failed to open Google Play</string>
     <string name="wap_apn_alert_title">incompatible mobile network APN</string>
     <string name="wap_apn_alert_message">fqrouter is not compatible with the current mobile network access point
@@ -248,4 +248,10 @@
     <string name="menu_about">About</string>
     <string name="status_failed_to_launch">Failed to launch</string>
     <string name="status_timed_out">Timed out</string>
+    <string name="menu_open_full_google_play">Open Google Play</string>
+    <string name="full_google_play_title">Open US Market</string>
+    <string name="full_google_play_message">
+        <![CDATA[If open does not work, try clean & open which will clear all your Google Play settings.]]></string>
+    <string name="full_google_play_open">Open</string>
+    <string name="full_google_play_clean_and_open"><![CDATA[Clean & Open]]></string>
 </resources>

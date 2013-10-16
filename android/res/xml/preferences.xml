@@ -13,8 +13,4 @@
             android:key="AutoLaunchEnabled"
             android:title="@string/pref_general_launch_after_booted"
             android:defaultValue="false"/>
-    <Preference
-            android:key="OpenFullGooglePlay"
-            android:title="@string/pref_open_full_google_play"
-            android:summary="@string/pref_open_full_google_play_summary"/>
 </PreferenceScreen>

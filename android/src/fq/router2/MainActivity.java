@@ -55,6 +55,7 @@ public class MainActivity extends Activity implements
     private final static int ITEM_ID_UPGRADE_MANUALLY = 4;
     private final static int ITEM_ID_CLEAN_DNS = 5;
     private final static int ITEM_ID_ABOUT = 6;
+    private final static int ITEM_ID_OPEN_FULL_GOOGLE_PLAY = 7;
     private final static int ASK_VPN_PERMISSION = 1;
     private static boolean isReady;
     private Handler handler = new Handler();
@@ -223,6 +224,7 @@ public class MainActivity extends Activity implements
         if (isReady) {
             menu.add(Menu.NONE, ITEM_ID_SETTINGS, Menu.NONE, R.string.menu_settings);
             menu.add(Menu.NONE, ITEM_ID_CLEAN_DNS, Menu.NONE, R.string.menu_clean_dns);
+            menu.add(Menu.NONE, ITEM_ID_OPEN_FULL_GOOGLE_PLAY, Menu.NONE, R.string.menu_open_full_google_play);
         }
         if (upgradeUrl != null) {
             menu.add(Menu.NONE, ITEM_ID_UPGRADE_MANUALLY, Menu.NONE, R.string.menu_upgrade_manually);
@@ -260,6 +262,8 @@ public class MainActivity extends Activity implements
             showDnsPollutedAlert();
         } else if (ITEM_ID_ABOUT == item.getItemId()) {
             openAbout();
+        } else if (ITEM_ID_OPEN_FULL_GOOGLE_PLAY == item.getItemId()) {
+            openFullGooglePlay();
         }
         return super.onMenuItemSelected(featureId, item);
     }
@@ -573,5 +577,80 @@ public class MainActivity extends Activity implements
             findViewById(R.id.fullPowerButton).setVisibility(View.GONE);
             findViewById(R.id.webView).setVisibility(View.VISIBLE);
         }
+    }
+
+    private void openFullGooglePlay() {
+        if (ShellUtils.isRooted()) {
+            new AlertDialog.Builder(this)
+                    .setIcon(android.R.drawable.ic_dialog_info)
+                    .setTitle(R.string.full_google_play_title)
+                    .setMessage(R.string.full_google_play_message)
+                    .setPositiveButton(R.string.full_google_play_open, new DialogInterface.OnClickListener() {
+
+                        @Override
+                        public void onClick(DialogInterface dialogInterface, int i) {
+                            killGooglePlay();
+                            openGooglePlay();
+                        }
+                    })
+                    .setNegativeButton(R.string.full_google_play_clean_and_open, new DialogInterface.OnClickListener() {
+                        @Override
+                        public void onClick(DialogInterface dialogInterface, int i) {
+                            killGooglePlay();
+                            try {
+                                ShellUtils.sudo("/data/data/fq.router2/busybox", "rm", "-rf", "/data/data/com.android.vending/*");
+                            } catch (Exception e) {
+                                LogUtils.e("failed to clear google play data", e);
+                                showToast(R.string.failed_to_open_google_play);
+                                return;
+                            }
+                            openGooglePlay();
+                        }
+                    })
+                    .show();
+        } else {
+            new AlertDialog.Builder(this)
+                    .setIcon(android.R.drawable.ic_dialog_info)
+                    .setTitle(R.string.stop_google_play_title)
+                    .setMessage(R.string.stop_google_play_message)
+                    .setPositiveButton(R.string.stop_google_play_done, new DialogInterface.OnClickListener() {
+
+                        @Override
+                        public void onClick(DialogInterface dialogInterface, int i) {
+                            openGooglePlay();
+                        }
+                    })
+                    .setNegativeButton(R.string.stop_google_play_do, new DialogInterface.OnClickListener() {
+                        @Override
+                        public void onClick(DialogInterface dialogInterface, int i) {
+                            ApkUtils.showInstalledAppDetails(MainActivity.this, "com.android.vending");
+                        }
+                    })
+                    .show();
+        }
+    }
+
+    private void killGooglePlay() {
+        try {
+            ShellUtils.sudo("/data/data/fq.router2/busybox", "killall", "com.android.vending");
+        } catch (Exception e) {
+            LogUtils.e("failed to stop google play", e);
+        }
+    }
+
+    private void openGooglePlay() {
+        new Thread(new Runnable() {
+            @Override
+            public void run() {
+                try {
+                    HttpUtils.post("http://127.0.0.1:2515/force-us-ip");
+                    Intent LaunchIntent = getPackageManager().getLaunchIntentForPackage("com.android.vending");
+                    startActivity(LaunchIntent);
+                } catch (Exception e) {
+                    LogUtils.e("failed to open google play", e);
+                    showToast(R.string.failed_to_open_google_play);
+                }
+            }
+        }).start();
     }
 }

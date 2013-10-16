@@ -9,7 +9,7 @@ def get_default_dns_server():
     try:
         default_dns_server = shell.check_output(['getprop', 'net.dns1']).strip()
         if default_dns_server:
-            return '%s:53' % default_dns_server
+            return default_dns_server
         else:
             return ''
     except:
