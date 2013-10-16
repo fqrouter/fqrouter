@@ -192,7 +192,7 @@ public class MainActivity extends Activity implements
     private void loadWebView() {
         WebView webView = (WebView) findViewById(R.id.webView);
         webView.getSettings().setJavaScriptEnabled(true);
-        webView.loadUrl("http://127.0.0.1:2515");
+        webView.loadUrl("http://127.0.0.1:" + ConfigUtils.getHttpManagerPort());
     }
 
     @Override
@@ -643,7 +643,7 @@ public class MainActivity extends Activity implements
             @Override
             public void run() {
                 try {
-                    HttpUtils.post("http://127.0.0.1:2515/force-us-ip");
+                    HttpUtils.post("http://127.0.0.1:" + ConfigUtils.getHttpManagerPort() + "/force-us-ip");
                     Intent LaunchIntent = getPackageManager().getLaunchIntentForPackage("com.android.vending");
                     startActivity(LaunchIntent);
                 } catch (Exception e) {

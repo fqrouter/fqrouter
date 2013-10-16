@@ -6,10 +6,7 @@ import android.content.Intent;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
 import fq.router2.life_cycle.LaunchService;
-import fq.router2.utils.HttpUtils;
-import fq.router2.utils.IOUtils;
-import fq.router2.utils.LogUtils;
-import fq.router2.utils.ShellUtils;
+import fq.router2.utils.*;
 
 import java.io.File;
 
@@ -37,6 +34,6 @@ public class ConnectivityChangeReceiver extends BroadcastReceiver {
     }
 
     private void clearStates() throws Exception {
-        HttpUtils.post("http://127.0.0.1:2515/clear-states");
+        HttpUtils.post("http://127.0.0.1:" + ConfigUtils.getHttpManagerPort() + "/clear-states");
     }
 }
