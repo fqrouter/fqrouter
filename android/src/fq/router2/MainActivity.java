@@ -5,6 +5,7 @@ import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.SharedPreferences;
+import android.graphics.Color;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
 import android.net.Uri;
@@ -467,32 +468,11 @@ public class MainActivity extends Activity implements
 
     @Override
     public void onHandleFatalError(String message) {
-        updateStatus("Error: " + message, 5);
-        CheckDnsPollutionService.execute(this);
+        findViewById(R.id.progressBar).setVisibility(View.GONE);
+        TextView statusTextView = (TextView) findViewById(R.id.statusTextView);
+        statusTextView.setTextColor(Color.RED);
+        statusTextView.setText(message);
         checkUpdate();
-        if (ApkUtils.isInstalled(this, "fq.router")) {
-            new AlertDialog.Builder(this)
-                    .setIcon(android.R.drawable.ic_dialog_alert)
-                    .setTitle(R.string.old_version_alert_title)
-                    .setMessage(R.string.old_version_alert_message)
-                    .setPositiveButton(R.string.old_version_alert_button, new DialogInterface.OnClickListener() {
-
-                        @Override
-                        public void onClick(DialogInterface dialog, int which) {
-                            clearNotification(MainActivity.this);
-                            MainActivity.this.finish();
-                        }
-
-                    })
-                    .setOnCancelListener(new DialogInterface.OnCancelListener() {
-                        @Override
-                        public void onCancel(DialogInterface dialogInterface) {
-                            clearNotification(MainActivity.this);
-                            MainActivity.this.finish();
-                        }
-                    })
-                    .show();
-        }
     }
 
     @Override

@@ -246,4 +246,6 @@
     <string name="button_full_power">Full Power</string>
     <string name="menu_clean_dns">Clean DNS Cache</string>
     <string name="menu_about">About</string>
+    <string name="status_failed_to_launch">Failed to launch</string>
+    <string name="status_timed_out">Timed out</string>
 </resources>

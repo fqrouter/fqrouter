@@ -218,4 +218,6 @@
     <string name="button_full_power">即刻开启更多功能</string>
     <string name="menu_clean_dns">清理DNS污染</string>
     <string name="menu_about">关于</string>
+    <string name="status_failed_to_launch">启动失败</string>
+    <string name="status_timed_out">启动超时</string>
 </resources>

@@ -154,12 +154,12 @@ public class LaunchService extends IntentService {
                     return "";
                 }
                 if (hasProcessExited(process)) {
-                    return "manager quit";
+                    return _(R.string.status_failed_to_launch);
                 }
                 sendBroadcast(new LaunchingIntent(_(R.string.status_starting_manager), 45 + i));
                 sleepOneSecond();
             }
-            return "timed out";
+            return _(R.string.status_timed_out);
         } catch (Exception e) {
             return LogUtils.e("failed to launch", e);
         }
