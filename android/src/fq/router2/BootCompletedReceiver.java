@@ -19,6 +19,7 @@ public class BootCompletedReceiver extends BroadcastReceiver {
         try {
             if (intent.getAction().equals(Intent.ACTION_BOOT_COMPLETED)) {
                 LaunchService.execute(context);
+                MainActivity.displayNotification(context, context.getString(R.string.status_ready));
             }
         } catch (Exception e) {
             LogUtils.e("failed to handle boot completed", e);
