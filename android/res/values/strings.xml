@@ -254,4 +254,8 @@
         <![CDATA[If open does not work, try clean & open which will clear all your Google Play settings.]]></string>
     <string name="full_google_play_open">Open</string>
     <string name="full_google_play_clean_and_open"><![CDATA[Clean & Open]]></string>
+    <string name="open_manager">Open Manager</string>
+    <string name="open_manager_summary">
+        You can share uncensored internet to your friends and add your own proxy server there
+    </string>
 </resources>

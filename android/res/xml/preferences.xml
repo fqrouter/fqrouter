@@ -1,5 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?>
 <PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android">
+    <Preference
+            android:key="OpenManager"
+            android:title="@string/open_manager"
+            android:summary="@string/open_manager_summary"/>
     <CheckBoxPreference
             android:key="NotificationEnabled"
             android:title="@string/pref_general_notification_enabled"

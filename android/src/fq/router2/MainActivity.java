@@ -186,6 +186,7 @@ public class MainActivity extends Activity implements
             CheckDnsPollutionService.execute(this);
             WebView webView = (WebView) findViewById(R.id.webView);
             webView.loadUrl("javascript:onResume()");
+            showWebView();
         }
     }
 
@@ -479,6 +480,7 @@ public class MainActivity extends Activity implements
 
     @Override
     public void onHandleFatalError(String message) {
+        LogUtils.e("fatal error: " + message);
         findViewById(R.id.progressBar).setVisibility(View.GONE);
         TextView statusTextView = (TextView) findViewById(R.id.statusTextView);
         statusTextView.setTextColor(Color.RED);
@@ -578,7 +580,7 @@ public class MainActivity extends Activity implements
                 public void run() {
                     statusTextView.setVisibility(View.GONE);
                 }
-            }, 3000);
+            }, 2000);
             findViewById(R.id.progressBar).setVisibility(View.GONE);
             findViewById(R.id.hintTextView).setVisibility(View.GONE);
             findViewById(R.id.fullPowerButton).setVisibility(View.GONE);

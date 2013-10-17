@@ -23,12 +23,17 @@ import java.util.List;
 
 public class MainSettingsActivity extends PreferenceActivity {
 
-    private Handler handler = new Handler();
-
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         addPreferencesFromResource(R.xml.preferences);
+        findPreference("OpenManager").setOnPreferenceClickListener(new Preference.OnPreferenceClickListener() {
+            @Override
+            public boolean onPreferenceClick(Preference preference) {
+                finish();
+                return false;
+            }
+        });
         if (!ShellUtils.isRooted()) {
             getPreferenceScreen().removePreference(findPreference("AutoLaunchEnabled"));
             getPreferenceScreen().removePreference(findPreference("NotificationEnabled"));
