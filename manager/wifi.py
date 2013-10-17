@@ -50,6 +50,7 @@ CHANNELS = {
     '5745': 149, '5765': 153, '5785': 157, '5805': 161, '5825': 165
 }
 netd_sequence_number = None # turn off by default
+has_started_before = False
 
 RULES = [
     (
@@ -114,6 +115,8 @@ def stop_hotspot():
 
 
 def start_hotspot(ssid, password):
+    global has_started_before
+    has_started_before = True
     try:
         am_path = shell_execute('%s am' % WHICH_PATH).strip()
         if am_path:

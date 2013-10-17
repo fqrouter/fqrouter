@@ -162,8 +162,10 @@ def wifi_reset():
     wifi.restore_config_files()
     wifi.stop_hotspot()
 
+_is_wifi_repeater_supported = None
 
-def is_wifi_repeater_supported():
+
+def check_wifi_repeater_supported():
     try:
         api_version = wifi.shell_execute('getprop ro.build.version.sdk').strip()
         if api_version:
@@ -175,9 +177,22 @@ def is_wifi_repeater_supported():
         return True
 
 
+def is_wifi_repeater_supported():
+    global _is_wifi_repeater_supported
+    if _is_wifi_repeater_supported is None:
+        _is_wifi_repeater_supported = check_wifi_repeater_supported()
+    return _is_wifi_repeater_supported
+
+
+def is_wifi_repeater_started():
+    if wifi.has_started_before:
+        return wifi.get_working_hotspot_iface()
+    return False
+
+
 fqsocks.pages.downstream.spi_wifi_repeater = {
     'is_supported': is_wifi_repeater_supported,
-    'is_started': wifi.get_working_hotspot_iface,
+    'is_started': is_wifi_repeater_started,
     'start': wifi.start_hotspot,
     'stop': wifi.stop_hotspot,
     'reset': wifi_reset
