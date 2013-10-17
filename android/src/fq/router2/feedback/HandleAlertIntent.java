@@ -14,7 +14,6 @@ import fq.router2.utils.ShellUtils;
 import java.io.File;
 
 public class HandleAlertIntent extends Intent {
-    public final static String ALERT_TYPE_ABNORMAL_EXIT = "AbnormalExit";
     public final static String ALERT_TYPE_HOSTS_MODIFIED = "HostsModified";
     public final static  String ALERT_TYPE_RUN_NEEDS_SU = "RunNeedsSu";
     private final static String ACTION_HANDLE_ALERT = "HandleAlert";
@@ -30,24 +29,13 @@ public class HandleAlertIntent extends Intent {
             @Override
             protected void handle(Context context, Intent intent) {
                 String alertType = intent.getStringExtra("alertType");
-                if (ALERT_TYPE_ABNORMAL_EXIT.equals(alertType)) {
-                    showAbnormalExitAlert(context);
-                } else if (ALERT_TYPE_HOSTS_MODIFIED.equals(alertType)) {
+                if (ALERT_TYPE_HOSTS_MODIFIED.equals(alertType)) {
                     showHostsModifiedAlert(context);
                 } else if (ALERT_TYPE_RUN_NEEDS_SU.equals(alertType)) {
                     showRunNeedsSuAlert(context);
                 }
             }
         }, new IntentFilter(ACTION_HANDLE_ALERT));
-    }
-
-    private static void showAbnormalExitAlert(Context context) {
-        new AlertDialog.Builder(context)
-                .setIcon(android.R.drawable.ic_dialog_alert)
-                .setTitle(R.string.abnormal_exit_alert_title)
-                .setMessage(R.string.abnormal_exit_alert_message)
-                .setPositiveButton(R.string.abnormal_exit_alert_ok, null)
-                .show();
     }
 
     private static void showHostsModifiedAlert(Context context) {

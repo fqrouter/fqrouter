@@ -189,11 +189,11 @@
     </string>
     <string name="abnormal_exit_alert_ok">OK</string>
     <string name="pref_open_advanced_settings">Advanced Settings</string>
-    <string name="hosts_modified_alert_title">Hosts file modified</string>
-    <string name="hosts_modified_alert_message">If the modified hosts file is not up to date, it might cause some
-        website not accessible. Using fqrouter does not recommend modifying the hosts file
+    <string name="hosts_modified_alert_title">Hosts file modification detected</string>
+    <string name="hosts_modified_alert_message">
+        If twitter or other website is not accessible, it might be caused by you have modified your host file (for example using SmartHosts)
     </string>
-    <string name="hosts_modified_alert_revert">Clear Hosts</string>
+    <string name="hosts_modified_alert_revert">Reset Hosts</string>
     <string name="hosts_modified_alert_ignore">Ignore</string>
     <string name="run_needs_su_alert_title">ROOT not working</string>
     <string name="run_needs_su_alert_message">You may exit and restart without ROOT permission, fqrouter might work in

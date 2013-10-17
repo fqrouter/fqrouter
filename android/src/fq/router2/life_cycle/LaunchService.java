@@ -98,7 +98,6 @@ public class LaunchService extends IntentService {
         }
         try {
             if (StartedAtFlag.read() > 0) {
-                sendBroadcast(new HandleAlertIntent(HandleAlertIntent.ALERT_TYPE_ABNORMAL_EXIT));
                 StartedAtFlag.delete();
             }
             StartedAtFlag.create();

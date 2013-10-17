@@ -171,9 +171,11 @@
     <string name="abnormal_exit_alert_message">fqrouter上次没有被正常退出，它可能是因为软件升级的时候fqrouter仍然在后台运行导致的。异常启动一般不会造成什么影响，如果你遇到了无法翻墙或者退出无法上网等现象，请尝试重启手机。</string>
     <string name="abnormal_exit_alert_ok">明白了</string>
     <string name="pref_open_advanced_settings">高级设置</string>
-    <string name="hosts_modified_alert_title">Hosts文件被修改了</string>
-    <string name="hosts_modified_alert_message">如果使用了未及时更新的hosts文件，可能会导致某些网站无法访问。使用fqrouter不推荐修改hosts文件</string>
-    <string name="hosts_modified_alert_revert">清空Hosts文件</string>
+    <string name="hosts_modified_alert_title">检测到Host文件被改过</string>
+    <string name="hosts_modified_alert_message">
+        如果不能访问Twitter或者别的什么网站，可能是因为你修改了Hot文件造成的（比如使用了SmartHosts）
+    </string>
+    <string name="hosts_modified_alert_revert">重置Hosts文件</string>
     <string name="hosts_modified_alert_ignore">不再提示</string>
     <string name="run_needs_su_alert_title">ROOT了不好使</string>
     <string name="run_needs_su_alert_message">你可以退出然后不给ROOT权限重新进入，fqrouter可能可以用VPN模式启动</string>
