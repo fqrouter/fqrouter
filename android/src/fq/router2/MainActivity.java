@@ -192,7 +192,14 @@ public class MainActivity extends Activity implements
     private void loadWebView() {
         WebView webView = (WebView) findViewById(R.id.webView);
         webView.getSettings().setJavaScriptEnabled(true);
-        webView.loadUrl("http://127.0.0.1:" + ConfigUtils.getHttpManagerPort());
+        webView.loadUrl("http://127.0.0.1:" + ConfigUtils.getHttpManagerPort() + "/home");
+        webView.setWebViewClient(new WebViewClient() {
+            @Override
+            public boolean shouldOverrideUrlLoading(WebView view, String url) {
+                startActivity(new Intent(Intent.ACTION_VIEW, Uri.parse(url)));
+                return true;
+            }
+        });
     }
 
     @Override
