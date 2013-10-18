@@ -144,6 +144,9 @@ def parse(output):
                     continue
                 parts = RE_SPACE.split(line)
                 rule = {}
+                if len(parts) < 9:
+                    LOGGER.error('bad line: %s' % line)
+                    continue
                 rule['pkts'], rule['bytes'], rule['target'], rule['prot'], rule['opt'], \
                 rule['iface_in'], rule['iface_out'], rule['source'], rule['destination'] = parts[:9]
                 rule['extra'] = ' '.join(parts[9:])
