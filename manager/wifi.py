@@ -494,8 +494,11 @@ def start_hotspot_on_wcnss(ssid, password):
     control_socket_dir = get_wpa_supplicant_control_socket_dir()
     load_p2p_firmware(control_socket_dir)
     product_model = shell_execute('getprop ro.product.model').strip()
-    is_xiaomi_2 = product_model.startswith('MI 2') and not 'MI 2A' == product_model
-    if 'p2p0' in list_wifi_ifaces() and not is_xiaomi_2:
+    force_using_wlan0 = product_model.startswith('MI 2') and not 'MI 2A' == product_model
+    if force_using_wlan0:
+        if 'CDMA' == shell_execute('getprop persist.radio.modem').strip(): # MI 2SC
+            force_using_wlan0 = False
+    if 'p2p0' in list_wifi_ifaces() and not force_using_wlan0:
         LOGGER.info('start p2p persistent group using p2p0')
         shell_execute('netcfg p2p0 up')
         p2p_control_socket_dir = get_p2p_supplicant_control_socket_dir()
