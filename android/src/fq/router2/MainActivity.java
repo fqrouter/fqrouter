@@ -386,6 +386,7 @@ public class MainActivity extends Activity implements
         findViewById(R.id.hintTextView).setVisibility(View.VISIBLE);
         findViewById(R.id.fullPowerButton).setVisibility(View.VISIBLE);
         loadWebView();
+        checkUpdate();
     }
 
     private void checkUpdate() {
