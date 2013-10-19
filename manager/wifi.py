@@ -495,9 +495,11 @@ def start_hotspot_on_wcnss(ssid, password):
     load_p2p_firmware(control_socket_dir)
     product_model = shell_execute('getprop ro.product.model').strip()
     force_using_wlan0 = product_model.startswith('MI 2') and not 'MI 2A' == product_model
+    sets_channel = True
     if force_using_wlan0:
         if 'CDMA' == shell_execute('getprop persist.radio.modem').strip(): # MI 2SC
             force_using_wlan0 = False
+            sets_channel = False
     if 'p2p0' in list_wifi_ifaces() and not force_using_wlan0:
         LOGGER.info('start p2p persistent group using p2p0')
         shell_execute('netcfg p2p0 up')
@@ -507,7 +509,7 @@ def start_hotspot_on_wcnss(ssid, password):
     else:
         LOGGER.info('start p2p persistent group using %s' % WIFI_INTERFACE)
         delete_existing_p2p_persistent_networks(WIFI_INTERFACE, control_socket_dir)
-        start_p2p_persistent_network(WIFI_INTERFACE, control_socket_dir, ssid, password, sets_channel=True)
+        start_p2p_persistent_network(WIFI_INTERFACE, control_socket_dir, ssid, password, sets_channel=sets_channel)
     log_upstream_wifi_status('after p2p persistent group created', control_socket_dir)
 
 

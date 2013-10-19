@@ -232,4 +232,11 @@
     <string name="open_manager_summary">
         在那里你可以把翻墙网络共享给你周围的朋友以及添加自己的个人代理
     </string>
+    <string name="about_info_share">发送给好友</string>
+    <string name="share_subject">推荐给你一个翻墙神器</string>
+    <string name="share_content">
+        我在安卓手机上安装了免费翻墙软件fqrouter，一键即可翻墙。速度很快，连youtube都可以看。你也试试吧： %s
+    </string>
+    <string name="share_channel">用什么方式发送？</string>
+    <string name="share_url_domain">cn.url.share.fqrouter.com</string>
 </resources>

@@ -258,4 +258,12 @@
     <string name="open_manager_summary">
         You can share uncensored internet to your friends and add your own proxy server there
     </string>
+    <string name="about_info_share">Share</string>
+    <string name="share_subject">You would need this if you are in China</string>
+    <string name="share_content">
+        fqrouter is a Android app that unblocks twitter/facebook and youtube!
+        Absolutely free and super fast! Download: %s
+    </string>
+    <string name="share_channel">How do you want to share?</string>
+    <string name="share_url_domain">en.url.share.fqrouter.com</string>
 </resources>

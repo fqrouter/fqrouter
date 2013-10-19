@@ -74,6 +74,7 @@ public class MainActivity extends Activity implements
     }
 
     private GestureDetectorCompat gestureDetector;
+    private String shareUrl;
 
 
     @Override
@@ -289,6 +290,20 @@ public class MainActivity extends Activity implements
         new AlertDialog.Builder(this)
                 .setTitle(String.format(_(R.string.about_info_title), LaunchService.getMyVersion(this)))
                 .setCancelable(false)
+                .setPositiveButton(R.string.about_info_share, new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialogInterface, int i) {
+                        Intent intent=new Intent(android.content.Intent.ACTION_SEND);
+                        intent.setType("text/plain");
+                        intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_WHEN_TASK_RESET);
+                        intent.putExtra(Intent.EXTRA_SUBJECT, _(R.string.share_subject));
+                        if (null == shareUrl || shareUrl.trim().isEmpty()) {
+                            shareUrl = "https://s3-ap-southeast-1.amazonaws.com/fqrouter/fqrouter-latest.apk";
+                        }
+                        intent.putExtra(Intent.EXTRA_TEXT, String.format(_(R.string.share_content), shareUrl));
+                        startActivity(Intent.createChooser(intent, _(R.string.share_channel)));
+                    }
+                })
                 .setNegativeButton(R.string.about_info_close, new DialogInterface.OnClickListener() {
                     @Override
                     public void onClick(DialogInterface dialogInterface, int i) {
@@ -298,6 +313,16 @@ public class MainActivity extends Activity implements
                 .setView(web)
                 .create()
                 .show();
+        new Thread(new Runnable() {
+            @Override
+            public void run() {
+                try {
+                    shareUrl = DnsUtils.resolveTXT(_(R.string.share_url_domain));
+                } catch (Exception e) {
+                    LogUtils.e("failed to resolve share url");
+                }
+            }
+        }).start();
     }
 
     public static void displayNotification(Context context, String text) {
