@@ -175,14 +175,14 @@ public class DnsUtils {
         try {
             return resolveTXTOverUdp(dnsServer, request);
         } catch (Exception e) {
-            LogUtils.e("failed to resolve txt over udp", e);
+            LogUtils.e("failed to resolve txt over udp at " + dnsServer, e);
             return resolveTXTOverTcp(dnsServer, request);
         }
     }
 
     private static String resolveTXTOverUdp(InetSocketAddress dnsServer, byte[] query) throws Exception {
         DatagramSocket datagramSocket = new DatagramSocket();
-        datagramSocket.setSoTimeout(1000);
+        datagramSocket.setSoTimeout(2000);
         try {
             datagramSocket.connect(dnsServer.getAddress(), dnsServer.getPort());
             datagramSocket.send(new DatagramPacket(query, query.length));
