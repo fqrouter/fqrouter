@@ -34,7 +34,7 @@ public class MainSettingsActivity extends PreferenceActivity {
                 return false;
             }
         });
-        if (!ShellUtils.isRooted()) {
+        if (!ShellUtils.checkRooted()) {
             getPreferenceScreen().removePreference(findPreference("AutoLaunchEnabled"));
             getPreferenceScreen().removePreference(findPreference("NotificationEnabled"));
         }
