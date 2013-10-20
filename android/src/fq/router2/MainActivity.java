@@ -25,6 +25,8 @@ import android.widget.ProgressBar;
 import android.widget.TextView;
 import android.widget.Toast;
 import com.google.analytics.tracking.android.EasyTracker;
+import com.google.analytics.tracking.android.GoogleAnalytics;
+import com.google.analytics.tracking.android.Tracker;
 import fq.router2.feedback.*;
 import fq.router2.life_cycle.*;
 import fq.router2.utils.*;
@@ -100,6 +102,9 @@ public class MainActivity extends Activity implements
         fullPowerButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
+                GoogleAnalytics gaInstance = GoogleAnalytics.getInstance(MainActivity.this);
+                Tracker gaTracker = gaInstance.getTracker("UA-37740383-2");
+                gaTracker.sendEvent("more-power", "click", "", new Long(0));
                 showWebView();
             }
         });
@@ -587,6 +592,9 @@ public class MainActivity extends Activity implements
                     return false;
                 // right to left swipe
                 if(e1.getX() - e2.getX() > SWIPE_MIN_DISTANCE && Math.abs(velocityX) > SWIPE_THRESHOLD_VELOCITY) {
+                    GoogleAnalytics gaInstance = GoogleAnalytics.getInstance(MainActivity.this);
+                    Tracker gaTracker = gaInstance.getTracker("UA-37740383-2");
+                    gaTracker.sendEvent("more-power", "swipe", "", new Long(0));
                     showWebView();
                 }
             } catch (Exception e) {
