@@ -235,8 +235,9 @@
     <string name="about_info_share">发送给好友</string>
     <string name="share_subject">推荐给你一个翻墙神器</string>
     <string name="share_content">
-        我在安卓手机上安装了免费翻墙软件fqrouter，一键即可翻墙。速度很快，连youtube都可以看。你也试试吧： %s
+        我在安卓手机上安装了免费翻墙软件fqrouter，一键即可翻墙。速度很快，连youtube都可以看。最神的是还可以共享翻墙网络给其他设备用！你也试试吧： %s
     </string>
     <string name="share_channel">用什么方式发送？</string>
     <string name="share_url_domain">cn.url.share.fqrouter.com</string>
+    <string name="about_page">file:///android_asset/pages/about-cn.html</string>
 </resources>

@@ -284,7 +284,7 @@ public class MainActivity extends Activity implements
 
     private void openAbout() {
         WebView web = new WebView(this);
-        web.loadUrl("file:///android_asset/pages/about.html");
+        web.loadUrl(_(R.string.about_page));
         web.setWebViewClient(new WebViewClient() {
             @Override
             public boolean shouldOverrideUrlLoading(WebView view, String url) {

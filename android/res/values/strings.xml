@@ -261,9 +261,10 @@
     <string name="about_info_share">Share</string>
     <string name="share_subject">You would need this if you are in China</string>
     <string name="share_content">
-        fqrouter is a Android app that unblocks twitter/facebook and youtube!
-        Absolutely free and super fast! Download: %s
+        Do you miss twitter/facebook/youtube while you are in China?
+        Install fqrouter on your Android mobile now %s
     </string>
     <string name="share_channel">How do you want to share?</string>
     <string name="share_url_domain">en.url.share.fqrouter.com</string>
+    <string name="about_page">file:///android_asset/pages/about-en.html</string>
 </resources>
