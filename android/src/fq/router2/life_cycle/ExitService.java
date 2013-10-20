@@ -26,6 +26,7 @@ public class ExitService extends IntentService {
     }
 
     private void exit() {
+        MainActivity.isReady = false;
         MainActivity.displayNotification(this, getResources().getString(R.string.status_exiting));
         sendBroadcast(new ExitingIntent());
         long elapsedTime = StartedAtFlag.delete();

@@ -57,7 +57,7 @@ public class MainActivity extends Activity implements
     private final static int ITEM_ID_ABOUT = 6;
     private final static int ITEM_ID_OPEN_FULL_GOOGLE_PLAY = 7;
     private final static int ASK_VPN_PERMISSION = 1;
-    private static boolean isReady;
+    public static boolean isReady;
     private Handler handler = new Handler();
     private String upgradeUrl;
     private boolean downloaded;
