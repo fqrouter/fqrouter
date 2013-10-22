@@ -18,6 +18,7 @@ import android.support.v4.app.ActivityCompat;
 import android.support.v4.app.NotificationCompat;
 import android.support.v4.view.GestureDetectorCompat;
 import android.view.*;
+import android.webkit.CookieSyncManager;
 import android.webkit.WebView;
 import android.webkit.WebViewClient;
 import android.widget.Button;
@@ -77,6 +78,7 @@ public class MainActivity extends Activity implements
 
     private GestureDetectorCompat gestureDetector;
     private String shareUrl;
+    private Tracker gaTracker;
 
 
     @Override
@@ -99,11 +101,12 @@ public class MainActivity extends Activity implements
         SocksVpnConnectedIntent.register(this);
         gestureDetector = new GestureDetectorCompat(this, new MyGestureDetector());
         Button fullPowerButton = (Button) findViewById(R.id.fullPowerButton);
+        GoogleAnalytics gaInstance = GoogleAnalytics.getInstance(MainActivity.this);
+        gaTracker = gaInstance.getTracker("UA-37740383-2");
+        CookieSyncManager.createInstance(this);
         fullPowerButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                GoogleAnalytics gaInstance = GoogleAnalytics.getInstance(MainActivity.this);
-                Tracker gaTracker = gaInstance.getTracker("UA-37740383-2");
                 gaTracker.sendEvent("more-power", "click", "", new Long(0));
                 showWebView();
             }
@@ -182,6 +185,7 @@ public class MainActivity extends Activity implements
         if (isReady) {
             WebView webView = (WebView) findViewById(R.id.webView);
             webView.loadUrl("javascript:onPause()");
+            CookieSyncManager.getInstance().sync();
         }
     }
 
@@ -199,12 +203,19 @@ public class MainActivity extends Activity implements
     private void loadWebView() {
         WebView webView = (WebView) findViewById(R.id.webView);
         webView.getSettings().setJavaScriptEnabled(true);
+        webView.getSettings().setAppCacheEnabled(false);
         webView.loadUrl("http://127.0.0.1:" + ConfigUtils.getHttpManagerPort() + "/home");
         webView.setWebViewClient(new WebViewClient() {
             @Override
             public boolean shouldOverrideUrlLoading(WebView view, String url) {
+                LogUtils.i("url: " + url);
                 startActivity(new Intent(Intent.ACTION_VIEW, Uri.parse(url)));
                 return true;
+            }
+
+            @Override
+            public void onPageFinished(WebView view, String url) {
+                CookieSyncManager.getInstance().sync();
             }
         });
     }
@@ -592,8 +603,6 @@ public class MainActivity extends Activity implements
                     return false;
                 // right to left swipe
                 if(e1.getX() - e2.getX() > SWIPE_MIN_DISTANCE && Math.abs(velocityX) > SWIPE_THRESHOLD_VELOCITY) {
-                    GoogleAnalytics gaInstance = GoogleAnalytics.getInstance(MainActivity.this);
-                    Tracker gaTracker = gaInstance.getTracker("UA-37740383-2");
                     gaTracker.sendEvent("more-power", "swipe", "", new Long(0));
                     showWebView();
                 }
