@@ -240,4 +240,5 @@
     <string name="share_channel">用什么方式发送？</string>
     <string name="share_url_domain">cn.url.share.fqrouter.com</string>
     <string name="about_page">file:///android_asset/pages/about-cn.html</string>
+    <string name="x86_is_not_supported">尚未支持x86的设备</string>
 </resources>

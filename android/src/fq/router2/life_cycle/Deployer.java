@@ -79,7 +79,15 @@ public class Deployer {
         try {
             unzipPayloadZip();
         } catch (Exception e) {
-            return logFatalError("failed to unzip payload.zip", e);
+            String msg = logFatalError("failed to unzip payload.zip", e);
+            try {
+                if (ShellUtils.execute("getprop", "ro.product.cpu.abi").trim().equals("x86")) {
+                    return _(R.string.x86_is_not_supported);
+                }
+            } catch (Exception e2) {
+                // ignore
+            }
+            return msg;
         }
         try {
             linkLibs();
