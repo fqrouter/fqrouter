@@ -21,6 +21,7 @@ import functools
 import comp_scrambler
 import comp_shortcut
 import fqsocks.pages.downstream
+import fqsocks.config_file
 import fqdns
 
 __import__('free_internet')
@@ -119,12 +120,6 @@ def run():
     except:
         LOGGER.exception('failed to start comp_scrambler')
         comp_scrambler.stop()
-    try:
-        comp_shortcut.start()
-        shutdown_hook.add(comp_shortcut.stop)
-    except:
-        LOGGER.exception('failed to start comp_shortcut')
-        comp_shortcut.stop()
     args = [
         '--log-level', 'INFO',
         '--log-file', '/data/data/fq.router2/log/fqsocks.log',
@@ -134,7 +129,15 @@ def run():
         '--tcp-gateway-listen', '10.1.2.3:12345',
         '--dns-server-listen', '10.1.2.3:12345']
     args = config.configure_fqsocks(args)
-    fqsocks.fqsocks.main(args)
+    fqsocks.fqsocks.init_config(args)
+    if fqsocks.config_file.read_config()['china_shortcut_enabled']:
+        try:
+            comp_shortcut.start()
+            shutdown_hook.add(comp_shortcut.stop)
+        except:
+            LOGGER.exception('failed to start comp_shortcut')
+            comp_shortcut.stop()
+    fqsocks.fqsocks.main()
 
 
 def clean():
