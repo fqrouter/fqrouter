@@ -17,6 +17,7 @@ logging.basicConfig(level=logging.DEBUG, format='%(asctime)s %(levelname)s %(mes
 def check_proxy(ip, port, password, encrypt_method):
     try:
         sock = socket.socket()
+        sock.settimeout(5)
         sock.connect((ip, port))
         encryptor = encrypt.Encryptor(password, encrypt_method)
         addr_to_send = '\x01'
@@ -51,7 +52,8 @@ while True:
         proxies = [('192.81.133.165', 12121, 'wendangku.org', 'aes-256-cfb'),
                    ('198.199.92.59', random.choice([21, 20, 23]), 'u1rRWTssNv0p', 'bf-cfb'),
                    ('88.191.139.226', random.choice([21, 20, 23]), 'u1rRWTssNv0p', 'bf-cfb'),
-                   ('198.46.158.191', 10086, '321654', 'bf-cfb')] + proxies
+                   ('198.46.158.191', 10086, '321654', 'bf-cfb'),
+                   ('23.90.8.131', 1993, 'shadowsocks.pw', 'table')] + proxies
         i = 1
         for ip, port, password, encrypt_method in proxies:
             if check_proxy(ip, port, password, encrypt_method) or check_proxy(ip, port, password, encrypt_method):
