@@ -41,15 +41,15 @@ def check_proxy(ip, port, password, encrypt_method):
 while True:
     try:
         proxies = [
-            ('69.163.40.146', 8318, 'fqrouter', 'rc4'),
-            ('174.140.169.55', 220, 'A76nOIHdZEYw', 'bf-cfb'),
-            ('174.140.171.244', 220, 'A76nOIHdZEYw', 'aes-256-cfb'),
-            ('192.184.80.11', 8318, 'fqrouter', 'rc4'),
-            ('199.188.75.60', 8318, 'fqrouter', 'rc4'),
-            ('176.56.236.63', 8318, 'fqrouter', 'rc4'),
-            ('162.220.11.191', 8318, 'fqrouter', 'aes-256-cfb'),
-            ('192.249.61.233', 8318, 'fqrouter', 'rc4'),
-            ('198.98.49.121', 8318, 'fqrouter', 'rc4'),
+            ('69.163.40.146', 20, 'A76nOIHdZEYw', 'bf-cfb'), #ds1
+            ('174.140.169.55', 20, 'A76nOIHdZEYw', 'bf-cfb'), #ds2
+            ('174.140.171.244', 20, 'A76nOIHdZEYw', 'bf-cfb'), #ds3
+            ('192.184.80.11', 20, 'A76nOIHdZEYw', 'bf-cfb'), #ramnode2
+            ('199.188.75.60', 20, 'A76nOIHdZEYw', 'bf-cfb'), #raidlogic
+            ('176.56.236.63', 20, 'A76nOIHdZEYw', 'bf-cfb'), #ramnode3
+            ('162.220.11.191', 20, 'A76nOIHdZEYw', 'bf-cfb'), #bf-cfb
+            ('192.249.61.233', 8318, 'fqrouter', 'rc4'), #ramnode1
+            ('198.98.49.121', 8318, 'fqrouter', 'rc4'), #buyvm1
         ]
         random.shuffle(proxies)
         proxies = [
