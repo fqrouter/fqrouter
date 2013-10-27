@@ -24,9 +24,6 @@ import fqsocks.pages.downstream
 import fqsocks.config_file
 import fqdns
 
-__import__('free_internet')
-
-
 FQROUTER_VERSION = 'UNKNOWN'
 LOGGER = logging.getLogger('fqrouter.%s' % __name__)
 LOG_DIR = '/data/data/fq.router2/log'
@@ -62,7 +59,7 @@ SOCKS_RULES = [
 default_dns_server = config.get_default_dns_server()
 DNS_HANDLER = fqdns.DnsHandler(
     enable_china_domain=True, enable_hosted_domain=True,
-    original_upstream=(default_dns_server, 53) if default_dns_server else None)
+    original_upstream=('udp', default_dns_server, 53) if default_dns_server else None)
 fqsocks.fqsocks.DNS_HANDLER = DNS_HANDLER
 
 

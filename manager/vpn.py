@@ -21,11 +21,7 @@ import dpkt
 import config
 import traceback
 import urllib2
-import argparse
-import functools
 import fqsocks.httpd
-
-__import__('free_internet')
 
 FQROUTER_VERSION = 'UNKNOWN'
 LOGGER = logging.getLogger('fqrouter.%s' % __name__)
@@ -37,7 +33,7 @@ nat_map = {} # sport => (dst, dport), src always be 10.25.1.1
 default_dns_server = config.get_default_dns_server()
 DNS_HANDLER = fqdns.DnsHandler(
     enable_china_domain=True, enable_hosted_domain=True,
-    original_upstream=(default_dns_server, 53) if default_dns_server else None)
+    original_upstream=('udp', default_dns_server, 53) if default_dns_server else None)
 
 
 def handle_ping(environ, start_response):
@@ -152,6 +148,7 @@ def create_udp_socket():
 
 
 fqdns.SPI['create_udp_socket'] = create_udp_socket
+fqdns.SPI['create_tcp_socket'] = create_tcp_socket
 
 
 def setup_logging():
