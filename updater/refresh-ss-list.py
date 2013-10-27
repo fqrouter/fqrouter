@@ -17,7 +17,7 @@ logging.basicConfig(level=logging.DEBUG, format='%(asctime)s %(levelname)s %(mes
 def check_proxy(ip, port, password, encrypt_method):
     try:
         sock = socket.socket()
-        sock.settimeout(5)
+        sock.settimeout(10)
         sock.connect((ip, port))
         encryptor = encrypt.Encryptor(password, encrypt_method)
         addr_to_send = '\x01'
@@ -41,6 +41,8 @@ def check_proxy(ip, port, password, encrypt_method):
 while True:
     try:
         proxies = [
+            ('69.163.40.146', 8318, 'fqrouter', 'rc4'),
+            ('174.140.169.55', 220, 'A76nOIHdZEYw', 'bf-cfb'),
             ('192.184.80.11', 8318, 'fqrouter', 'rc4'),
             ('199.188.75.60', 8318, 'fqrouter', 'rc4'),
             ('176.56.236.63', 8318, 'fqrouter', 'rc4'),
@@ -49,11 +51,12 @@ while True:
             ('198.98.49.121', 8318, 'fqrouter', 'rc4'),
         ]
         random.shuffle(proxies)
-        proxies = [('192.81.133.165', 12121, 'wendangku.org', 'aes-256-cfb'),
-                   ('198.199.92.59', random.choice([21, 20, 23]), 'u1rRWTssNv0p', 'bf-cfb'),
-                   ('88.191.139.226', random.choice([21, 20, 23]), 'u1rRWTssNv0p', 'bf-cfb'),
-                   ('198.46.158.191', 10086, '321654', 'bf-cfb'),
-                   ('23.90.8.131', 1993, 'shadowsocks.pw', 'table')] + proxies
+        proxies = [
+                      # ('192.81.133.165', 12121, 'wendangku.org', 'aes-256-cfb'),
+                      # ('198.199.92.59', random.choice([21, 20, 23, 220]), 'A76nOIHdZEYw', 'bf-cfb'),
+                      ('88.191.139.226', random.choice([20, 220]), 'A76nOIHdZEYw', 'bf-cfb'),
+                      # ('198.46.158.191', 10086, '321654', 'bf-cfb'),
+                      ('23.90.8.131', 1993, 'shadowsocks.pw', 'table')] + proxies
         i = 1
         for ip, port, password, encrypt_method in proxies:
             if check_proxy(ip, port, password, encrypt_method) or check_proxy(ip, port, password, encrypt_method):
