@@ -241,6 +241,7 @@ if len(sys.argv) > 1:
     T2_APP_IDS = []
 
 random.shuffle(T1_APP_IDS)
+random.shuffle(T2_APP_IDS)
 
 APP_ID_QUEUE = gevent.queue.Queue(items=T1_APP_IDS + T2_APP_IDS)
 good_app_ids_count = 0

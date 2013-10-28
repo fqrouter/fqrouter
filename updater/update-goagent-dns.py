@@ -17,6 +17,6 @@ if len(appids) < 20:
 for appid in appids:
     domain = 'goagent%s' % current_index
     print('%s => %s' % (domain, appid))
-    subprocess.call('cli53 rrcreate fqrouter.com %s TXT %s --ttl 900 --replace' % (domain, appid), shell=True)
+    subprocess.call('cli53 rrcreate fqrouter.com %s TXT %s --ttl 300 --replace' % (domain, appid), shell=True)
     current_index += 1
 
