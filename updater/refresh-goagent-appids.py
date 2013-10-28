@@ -13,6 +13,11 @@ import socket
 import subprocess
 import time
 import datetime
+import logging
+
+LOGGER = logging.getLogger(__name__)
+
+logging.basicConfig(level=logging.DEBUG, format='%(asctime)s %(levelname)s %(message)s')
 
 T1_APP_IDS = []
 for i in range(1, 215):
@@ -283,7 +288,7 @@ def check():
             app_status = fqsocks.proxies.goagent.gae_urlfetch(
                 FakeClient(), FakeProxy('https://%s.appspot.com/2?' % appid),
                 'GET', 'http://www.baidu.com', {}, '').app_status
-            print('%s => %s\n' % (appid, app_status))
+            LOGGER.info('%s => %s\n' % (appid, app_status))
             if app_status == 200:
                 if len(good_app_ids) >= 20:
                     return
@@ -302,10 +307,10 @@ def main():
             greenlet.join()
         for i, appid in enumerate(good_app_ids):
             domain = 'goagent%s' % (i + 1)
-            print('%s => %s' % (domain, appid))
+            LOGGER.info('%s => %s' % (domain, appid))
             subprocess.call('cli53 rrcreate fqrouter.com %s TXT %s --ttl 120 --replace' % (domain, appid), shell=True)
             time.sleep(1)
-        print('%s done' % datetime.datetime.now())
+        LOGGER.info('%s done' % datetime.datetime.now())
         time.sleep(120)
 
 
