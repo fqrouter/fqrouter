@@ -281,7 +281,7 @@ good_app_ids = set()
 
 def check():
     while True:
-        if len(good_app_ids) >= 20:
+        if len(good_app_ids) >= 40:
             return
         appid = APP_ID_QUEUE.get()
         try:
@@ -290,7 +290,7 @@ def check():
                 'GET', 'http://www.baidu.com', {}, '').app_status
             LOGGER.info('%s => %s\n' % (appid, app_status))
             if app_status == 200:
-                if len(good_app_ids) >= 20:
+                if len(good_app_ids) >= 40:
                     return
                 good_app_ids.add(appid)
         except:
@@ -308,10 +308,10 @@ def main():
         for i, appid in enumerate(good_app_ids):
             domain = 'goagent%s' % (i + 1)
             LOGGER.info('%s => %s' % (domain, appid))
-            subprocess.call('cli53 rrcreate fqrouter.com %s TXT %s --ttl 120 --replace' % (domain, appid), shell=True)
-            time.sleep(1)
+            subprocess.call('cli53 rrcreate fqrouter.com %s TXT %s --ttl 60 --replace' % (domain, appid), shell=True)
+            time.sleep(0.5)
         LOGGER.info('%s done' % datetime.datetime.now())
-        time.sleep(120)
+        time.sleep(60)
 
 
 
