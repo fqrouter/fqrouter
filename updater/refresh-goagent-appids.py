@@ -21,9 +21,20 @@ LOGGER = logging.getLogger(__name__)
 logging.basicConfig(level=logging.DEBUG, format='%(asctime)s %(levelname)s %(message)s')
 
 T1_APP_IDS = []
+for i in range(1, 215):
+    for j in range(1, 11):
+        T1_APP_IDS.append('i8964-%03d-%02d' % (i, j))
+for i in range(215, 317):
+    for j in range(1, 11):
+        T1_APP_IDS.append('iwatch-%03d-%02d' % (i, j))
+
+
+T2_APP_IDS = []
 for i in range(1, 1000):
-    T1_APP_IDS.append('freegoagent%03d' % i)
-T2_APP_IDS = ['fgabootstrap001', 'fgabootstrap002', 'fgabootstrap003', 'fgabootstrap004',
+    T2_APP_IDS.append('freegoagent%03d' % i)
+
+
+T3_APP_IDS = ['fgabootstrap001', 'fgabootstrap002', 'fgabootstrap003', 'fgabootstrap004',
              'fgabootstrap005', 'fgabootstrap006', 'fgabootstrap007', 'fgabootstrap008', 'fgabootstrap009',
              'fgabootstrap010', 'fgaupdate001', 'fgaupdate002', 'fgaupdate003', 'fgaupdate004', 'fgaupdate005',
              'fgaupdate006', 'fgaupdate007', 'fgaupdate008', 'fgaupdate009', 'fgaupdate010', 'fganr001', 'fganr002',
@@ -254,15 +265,7 @@ T2_APP_IDS = ['fgabootstrap001', 'fgabootstrap002', 'fgabootstrap003', 'fgaboots
 
 
 for i in range(1, 60):
-    T2_APP_IDS.append('goagentbiz%s' % i)
-
-T3_APP_IDS = []
-for i in range(1, 215):
-    for j in range(1, 11):
-        T3_APP_IDS.append('i8964-%03d-%02d' % (i, j))
-for i in range(215, 317):
-    for j in range(1, 11):
-        T3_APP_IDS.append('iwatch-%03d-%02d' % (i, j))
+    T3_APP_IDS.append('goagentbiz%s' % i)
 
 # txwgtxwg-01|txwgtxwg-02|txwgtxwg-03|txwgtxwg-04|txwgtxwg-05|txwgtxwg-06|txwgtxwg-07|txwgtxwg-08|txwgtxwg-09|txwgtxwg-10|txwg001|txwg002|txwg003|txwg004|txwg005|txwg006|txwg007|txwg008|txwg009|txwg010|jzz1945-01|jzz1945-02|jzz1945-03|jzz1945-04|jzz1945-05|jzz1945-006|jzz1945-007|jzz1945-008|jzz1945-009|jzz1945-010|iwatch-215-01|jzz1946-01|jzz1946-02|jzz1946-03|jzz1946-04|jzz1946-05|jzz1946-06|jzz1946-07|jzz1946-08|jzz1946-09|jzz1946-10|jzz1947-01|jzz1947-02|jzz1947-03|jzz1947-04|jzz1947-05|jzz1947-06|jzz1947-07|jzz1947-08|jzz1947-09|jzz1947-10|jzz1948-01|jzz1948-02|jzz1948-03|jzz1948-04|jzz1948-05|jzz1948-06|jzz1948-07|jzz1948-08|jzz1948-09|jzz1948-10|jzzjzz00101|jzzjzz00102|jzzjzz00103|jzzjzz01|jzzjzz002|jzzjzz003|jzzjzz004|jzzjzz005|jzzjzz006|jzzjzz001|txwgtxwg001-01|txwgtxwg001-02|txwgtxwg001-03|txwgtxwg001-04|txwgtxwg001-05|txwgtxwg001-06|txwgtxwg001-07|txwgtxwg001-08|txwgtxwg001-09|txwgtxwg001-10|txwgtxwg002-01|txwgtxwg002-02|txwgtxwg002-03|txwgtxwg002-04|txwgtxwg002-05|txwgtxwg002-06|txwgtxwg002-07|txwgtxwg002-08|txwgtxwg002-09|txwgtxwg002-10|txwgtxwg003-01|txwgtxwg003-02|txwgtxwg003-03|txwgtxwg003-04|txwgtxwg003-05|txwgtxwg003-06|txwgtxwg003-07|txwgtxwg003-08|txwgtxwg003-09|txwgtxwg003-10|txwgtxwg004-01|txwgtxwg004-02|txwgtxwg004-03|txwgtxwg004-04|txwgtxwg004-05|txwgtxwg004-06|txwgtxwg004-07|txwgtxwg004-08|txwgtxwg004-09|txwgtxwg004-10|txwgtxwg005-01|txwgtxwg005-02|txwgtxwg005-03|txwgtxwg005-04|txwgtxwg005-05|txwgtxwg005-06|txwgtxwg005-07|txwgtxwg005-08|txwgtxwg005-09|txwgtxwg005-10|txwgtxwg006-01|txwgtxwg006-02|txwgtxwg006-03|txwgtxwg006-04|txwgtxwg006-05|txwgtxwg006-06|txwgtxwg006-07|txwgtxwg006-08|txwgtxwg006-09|txwgtxwg006-10|txwgtxwg007-01|txwgtxwg007-02|txwgtxwg007-03|txwgtxwg007-04|txwgtxwg007-05|txwgtxwg007-06|txwgtxwg007-07|txwgtxwg007-08|txwgtxwg007-09|txwgtxwg007-10|txwgtxwg008-01|txwgtxwg008-02|txwgtxwg008-03|txwgtxwg008-04|txwgtxwg008-05|txwgtxwg008-06|txwgtxwg008-07|txwgtxwg008-08|txwgtxwg008-09|txwgtxwg008-10|txwgtxwg009-01|txwgtxwg009-02|txwgtxwg009-03|txwgtxwg009-04|txwgtxwg009-05|txwgtxwg009-06|txwgtxwg009-07|txwgtxwg009-08|txwgtxwg009-09|txwgtxwg009-10|txwgtxwg010-01|txwgtxwg010-02|txwgtxwg010-03|txwgtxwg010-04|txwgtxwg010-05|txwgtxwg010-06|txwgtxwg010-07|txwgtxwg010-08|txwgtxwg010-09|txwgtxwg010-10|txwgtxwg011-01|txwgtxwg011-02|txwgtxwg011-03|txwgtxwg011-04|txwgtxwg011-05|txwgtxwg011-06|txwgtxwg011-07|txwgtxwg011-08|txwgtxwg011-09|txwgtxwg011-10|txwgtxwg012-01|txwgtxwg012-02|txwgtxwg012-03|txwgtxwg012-04|txwgtxwg012-05|txwgtxwg012-06|txwgtxwg012-07|txwgtxwg012-08|txwgtxwg012-09|txwgtxwg012-10|txwgtxwg013-01|txwgtxwg013-02|txwgtxwg013-03|txwgtxwg013-04|txwgtxwg013-05|txwgtxwg013-06|txwgtxwg013-07|txwgtxwg013-08|txwgtxwg013-09|txwgtxwg013-010|txwgtxwg014-01|txwgtxwg014-02|txwgtxwg014-03|txwgtxwg014-04|txwgtxwg014-05|txwgtxwg014-06|txwgtxwg014-07|txwgtxwg014-08|txwgtxwg014-09|txwgtxwg014-10|txwgtxwg015-01|txwgtxwg015-02|txwgtxwg015-03|txwgtxwg015-04|txwgtxwg015-05|txwgtxwg015-06|txwgtxwg015-07|txwgtxwg015-08|txwgtxwg015-09|txwgtxwg015-10|txwgtxwg016-01|txwgtxwg016-02|txwgtxwg016-03|txwgtxwg016-04|txwgtxwg016-05|txwgtxwg016-06|txwgtxwg016-07|txwgtxwg016-08|txwgtxwg016-09|txwgtxwg016-10|txwgtxwg017-01|txwgtxwg017-02|txwgtxwg017-03|txwgtxwg017-04|txwgtxwg017-05|txwgtxwg017-06|txwgtxwg017-07|txwgtxwg017-08|txwgtxwg017-09|txwgtxwg017-10|txwgtxwg018-01|txwgtxwg018-02|txwgtxwg018-03|txwgtxwg018-04|txwgtxwg018-05|txwgtxwg018-06|txwgtxwg018-07|txwgtxwg018-08|txwgtxwg018-09|txwgtxwg018-10|txwgtxwg019-01|txwgtxwg019-02|txwgtxwg019-03|txwgtxwg019-04|txwgtxwg019-05|txwgtxwg019-06|txwgtxwg019-07|txwgtxwg019-08|txwgtxwg019-09|txwgtxwg019-10|txwgtxwg020-01|txwgtxwg020-02|txwgtxwg020-03|txwgtxwg020-04|txwgtxwg020-05|txwgtxwg020-06|txwgtxwg020-07|txwgtxwg020-08|txwgtxwg020-09|txwgtxwg020-10|txwgtxwg021-01|txwgtxwg021-02|txwgtxwg021-03|txwgtxwg021-04|txwgtxwg021-05|txwgtxwg021-06|txwgtxwg021-07|txwgtxwg021-08|txwgtxwg021-09|txwgtxwg021-10|txwgtxwg022-01|txwgtxwg022-02|txwgtxwg022-03|txwgtxwg022-04|txwgtxwg022-05|txwgtxwg022-06|txwgtxwg022-07|txwgtxwg022-08|txwgtxwg022-09|txwgtxwg022-10|txwgtxwg023-01|txwgtxwg023-02|txwgtxwg023-03|txwgtxwg023-04|txwgtxwg023-05|txwgtxwg023-06|txwgtxwg023-07|txwgtxwg023-08|txwgtxwg023-09|txwgtxwg023-10|txwgtxwg024-01|txwgtxwg024-02|txwgtxwg024-03|txwgtxwg024-04|txwgtxwg024-05|txwgtxwg024-06|txwgtxwg024-07|txwgtxwg024-08|txwgtxwg024-09|txwgtxwg024-10|txwgtxwg025-01|txwgtxwg025-02|txwgtxwg025-03|txwgtxwg025-04|txwgtxwg025-05|txwgtxwg025-06|txwgtxwg025-07|txwgtxwg025-08|txwgtxwg025-09|txwgtxwg025-10|txwgtxwg026-01|txwgtxwg026-02|txwgtxwg026-03|txwgtxwg026-04|txwgtxwg026-05|txwgtxwg026-06|txwgtxwg026-07|txwgtxwg026-08|txwgtxwg026-09|txwgtxwg026-10|txwgtxwg027-01|txwgtxwg027-02|txwgtxwg027-03|txwgtxwg027-04|txwgtxwg027-05|txwgtxwg027-06|txwgtxwg027-07|txwgtxwg027-08|txwgtxwg027-09|txwgtxwg027-10|txwgtxwg028-01|txwgtxwg028-02|txwgtxwg028-03|txwgtxwg028-04|txwgtxwg028-05|txwgtxwg028-06|txwgtxwg028-07|txwgtxwg028-08|txwgtxwg028-09|txwgtxwg028-10|txwgtxwg029-01|txwgtxwg029-02|txwgtxwg029-03|txwgtxwg029-04|txwgtxwg029-05|txwgtxwg029-06|txwgtxwg029-07|txwgtxwg029-08|txwgtxwg029-09|txwgtxwg029-10|txwgtxwg030-01|txwgtxwg030-02|txwgtxwg030-03|txwgtxwg030-04|txwgtxwg030-05|txwgtxwg030-06|txwgtxwg030-07|txwgtxwg030-08|txwgtxwg030-09|txwgtxwg030-10|txwgtxwg031-01|txwgtxwg031-02|txwgtxwg031-03|txwgtxwg031-04|txwgtxwg031-05|txwgtxwg031-06|txwgtxwg031-07|txwgtxwg031-08|txwgtxwg031-09|txwgtxwg031-10|txwgtxwg032-01|txwgtxwg032-02|txwgtxwg032-03|txwgtxwg032-04|txwgtxwg032-05|txwgtxwg032-06|txwgtxwg032-07|txwgtxwg032-08|txwgtxwg032-09|txwgtxwg032-10|txwgtxwg033-01|txwgtxwg033-02|txwgtxwg033-03|txwgtxwg033-04|txwgtxwg033-05|txwgtxwg033-06|txwgtxwg033-07|txwgtxwg033-08|txwgtxwg033-09|txwgtxwg033-10|txwgtxwg034-01|txwgtxwg034-02|txwgtxwg034-03|txwgtxwg034-04|txwgtxwg034-05|txwgtxwg034-06|txwgtxwg034-07|txwgtxwg034-08|txwgtxwg034-09|txwgtxwg034-10|txwgtxwg035-01|txwgtxwg035-02|txwgtxwg035-03|txwgtxwg035-04|txwgtxwg035-05|txwgtxwg035-06|txwgtxwg035-07|txwgtxwg035-08|txwgtxwg035-09|txwgtxwg035-10|txwgtxwg036-01|txwgtxwg036-02|txwgtxwg036-03|txwgtxwg036-04|txwgtxwg036-05|txwgtxwg036-06|txwgtxwg036-07|txwgtxwg036-08|txwgtxwg036-09|txwgtxwg036-10|txwgtxwg037-01|txwgtxwg037-02|txwgtxwg037-03|txwgtxwg037-04|txwgtxwg037-05|txwgtxwg037-06|txwgtxwg037-07|txwgtxwg037-08|txwgtxwg037-09|txwgtxwg037-10|txwgtxwg038-01|txwgtxwg038-02|txwgtxwg038-03|txwgtxwg038-04|txwgtxwg038-05|txwgtxwg038-06|txwgtxwg038-07|txwgtxwg038-08|txwgtxwg038-09|txwgtxwg038-10|txwgtxwg039-01|txwgtxwg039-02|txwgtxwg039-03|txwgtxwg039-04|txwgtxwg039-05|txwgtxwg039-06|txwgtxwg039-07|txwgtxwg039-08|txwgtxwg039-09|txwgtxwg039-10|txwgtxwg040-01|txwgtxwg040-02|txwgtxwg040-03|txwgtxwg040-04|txwgtxwg040-05|txwgtxwg040-06|txwgtxwg040-07|txwgtxwg040-08|txwgtxwg040-09|txwgtxwg040-10|txwgtxwg041-01|txwgtxwg041-02|txwgtxwg041-03|txwgtxwg041-04|txwgtxwg041-05|txwgtxwg041-06|txwgtxwg041-07|txwgtxwg041-08|txwgtxwg041-09|txwgtxwg041-10|txwgtxwg042-01|txwgtxwg042-02|txwgtxwg042-03|txwgtxwg042-04|txwgtxwg042-05|txwgtxwg042-06|txwgtxwg042-07|txwgtxwg042-08|txwgtxwg042-09|txwgtxwg042-10|txwgtxwg043-01|txwgtxwg043-02|txwgtxwg043-03|txwgtxwg043-04|txwgtxwg043-05|txwgtxwg043-06|txwgtxwg043-07|txwgtxwg043-08|txwgtxwg043-09|txwgtxwg043-10|txwgtxwg044-01|txwgtxwg044-02|txwgtxwg044-03|txwgtxwg044-04|txwgtxwg044-05|txwgtxwg044-06|txwgtxwg044-07|txwgtxwg044-08|txwgtxwg044-09|txwgtxwg044-10|txwgtxwg045-01|txwgtxwg045-02|txwgtxwg045-03|txwgtxwg045-04|txwgtxwg045-05|txwgtxwg045-06|txwgtxwg045-07|txwgtxwg045-08|txwgtxwg045-09|txwgtxwg045-10|txwgtxwg046-01|txwgtxwg046-02|txwgtxwg046-03|txwgtxwg046-04|txwgtxwg046-05|txwgtxwg046-06|txwgtxwg046-07|txwgtxwg046-08|txwgtxwg046-09|txwgtxwg046-10|txwgtxwg047-01|txwgtxwg047-02|txwgtxwg047-03|txwgtxwg047-04|txwgtxwg047-05|txwgtxwg047-06|txwgtxwg047-07|txwgtxwg047-08|txwgtxwg047-09|txwgtxwg047-10|txwgtxwg048-01|txwgtxwg048-02|txwgtxwg048-03|txwgtxwg048-04|txwgtxwg048-05|txwgtxwg048-06|txwgtxwg048-07|txwgtxwg048-08|txwgtxwg048-09|txwgtxwg048-10|txwgtxwg049-01|txwgtxwg049-02|txwgtxwg049-03|txwgtxwg049-04|txwgtxwg049-05|txwgtxwg049-06|txwgtxwg049-07|txwgtxwg049-08|txwgtxwg049-09|txwgtxwg049-10|txwgtxwg050-01|txwgtxwg050-02|txwgtxwg050-03|txwgtxwg050-04|txwgtxwg050-05|txwgtxwg050-06|txwgtxwg050-07|txwgtxwg050-08|txwgtxwg050-09|txwgtxwg050-10|txwgtxwg051-01|txwgtxwg051-02|txwgtxwg051-03|txwgtxwg051-04|txwgtxwg051-05|txwgtxwg051-06|txwgtxwg051-07|txwgtxwg051-08|txwgtxwg051-09|txwgtxwg051-10|txwgtxwg052-01|txwgtxwg052-02|txwgtxwg052-03|txwgtxwg052-04|txwgtxwg052-05|txwgtxwg052-06|txwgtxwg052-07|txwgtxwg052-08|txwgtxwg052-09|txwgtxwg052-10|txwgtxwg053-01|txwgtxwg053-02|txwgtxwg053-03|txwgtxwg053-04|txwgtxwg053-05|txwgtxwg053-06|txwgtxwg053-07|txwgtxwg053-08|txwgtxwg053-09|txwgtxwg053-10|txwgtxwg054-01|txwgtxwg054-02|txwgtxwg054-03|txwgtxwg054-04|txwgtxwg054-05|txwgtxwg054-06|txwgtxwg054-07|txwgtxwg054-08|txwgtxwg054-09|txwgtxwg054-10|txwgtxwg055-01|txwgtxwg055-02|txwgtxwg055-03|txwgtxwg055-04|txwgtxwg055-05|txwgtxwg055-06|txwgtxwg055-07|txwgtxwg055-08|txwgtxwg055-09|txwgtxwg055-10|txwgtxwg056-01|txwgtxwg056-02|txwgtxwg056-03|txwgtxwg056-04|txwgtxwg056-05|txwgtxwg056-06|txwgtxwg056-07|txwgtxwg056-08|txwgtxwg056-09|txwgtxwg056-10|txwgtxwg057-01|txwgtxwg057-02|txwgtxwg057-03|txwgtxwg057-04|txwgtxwg057-05|txwgtxwg057-06|txwgtxwg057-07|txwgtxwg057-08|txwgtxwg057-09|txwgtxwg057-10|txwgtxwg058-01|txwgtxwg058-02|txwgtxwg058-03|txwgtxwg058-04|txwgtxwg058-05|txwgtxwg058-06|txwgtxwg058-07|txwgtxwg058-08|txwgtxwg058-09|txwgtxwg058-10|txwgtxwg059-01|txwgtxwg059-02|txwgtxwg059-03|txwgtxwg059-04|txwgtxwg059-05|txwgtxwg059-06|txwgtxwg059-07|txwgtxwg059-08|txwgtxwg059-09|txwgtxwg059-10|txwgtxwg060-01|txwgtxwg060-02|txwgtxwg060-03|txwgtxwg060-04|txwgtxwg060-05|txwgtxwg060-06|txwgtxwg060-07|txwgtxwg060-08|txwgtxwg060-09|txwgtxwg060-10|txwgtxwg061-01|txwgtxwg061-02|txwgtxwg061-03|txwgtxwg061-04|txwgtxwg061-05|txwgtxwg061-06|txwgtxwg061-07|txwgtxwg061-08|txwgtxwg061-09|txwgtxwg061-10|txwgtxwg062-01|txwgtxwg062-02|txwgtxwg062-03|txwgtxwg062-04|txwgtxwg062-05|txwgtxwg062-06|txwgtxwg062-07|txwgtxwg062-08|txwgtxwg062-09|txwgtxwg062-10|txwgtxwg063-01|txwgtxwg063-02|txwgtxwg063-03|txwgtxwg063-04|txwgtxwg063-05|txwgtxwg063-06|txwgtxwg063-07|txwgtxwg063-08|txwgtxwg063-09|txwgtxwg063-10|txwgtxwg064-01|txwgtxwg064-02|txwgtxwg064-03|txwgtxwg064-04|txwgtxwg064-05|txwgtxwg064-06|txwgtxwg064-07|txwgtxwg064-08|txwgtxwg064-09|txwgtxwg064-10|txwgtxwg65-01|txwgtxwg65-02|txwgtxwg65-03|txwgtxwg65-04|txwgtxwg65-05|txwgtxwg65-06|txwgtxwg65-07|txwgtxwg65-08|txwgtxwg65-09|txwgtxwg65-10|txwgtxwg0066-01|txwgtxwg0066-02|txwgtxwg0066-03|txwgtxwg0066-04|txwgtxwg0066-05|txwgtxwg0066-06|txwgtxwg0066-07|txwgtxwg0066-08|txwgtxwg0066-09|txwgtxwg0066-10|txwgtxwg67-01|txwgtxwg67-02|txwgtxwg67-03|txwgtxwg67-04|txwgtxwg67-05|txwgtxwg67-06|txwgtxwg67-07|txwgtxwg67-08|txwgtxwg67-09|txwgtxwg67-10|txwgtxwg68-01|txwgtxwg68-02|txwgtxwg68-03|txwgtxwg68-04|txwgtxwg68-05|txwgtxwg68-06|txwgtxwg68-07|txwgtxwg68-08|txwgtxwg68-09|txwgtxwg68-10|txwgtxwg69-01|txwgtxwg69-02|txwgtxwg69-03|txwgtxwg69-04|txwgtxwg69-05|txwgtxwg69-06|txwgtxwg69-07|txwgtxwg69-08|txwgtxwg69-09|txwgtxwg69-10|txwgtxwg70-01|txwgtxwg70-02|txwgtxwg70-03|txwgtxwg70-04|txwgtxwg70-05|txwgtxwg70-06|txwgtxwg70-07|txwgtxwg70-08|txwgtxwg70-09|txwgtxwg70-10|txwgtxwg71-01|txwgtxwg71-02|txwgtxwg71-03|txwgtxwg71-04|txwgtxwg71-05|txwgtxwg71-06|txwgtxwg71-07|txwgtxwg71-08|txwgtxwg71-09|txwgtxwg71-10|txwgtxwg72-01|txwgtxwg72-02|txwgtxwg72-03|txwgtxwg72-04|txwgtxwg72-05|txwgtxwg72-06|txwgtxwg72-07|txwgtxwg72-08|txwgtxwg72-09|txwgtxwg72-10|txwgtxwg73-01|txwgtxwg73-02|txwgtxwg73-03|txwgtxwg73-04|txwgtxwg73-05|txwgtxwg73-06|txwgtxwg73-07|txwgtxwg73-08|txwgtxwg73-09|txwgtxwg73-10|txwgtxwg74-01|txwgtxwg74-02|txwgtxwg74-03|txwgtxwg74-04|txwgtxwg74-05|txwgtxwg74-06|txwgtxwg74-07|txwgtxwg74-08|txwgtxwg74-09|txwgtxwg74-10|txwgtxwg75-01|txwgtxwg75-02|txwgtxwg75-03|txwgtxwg75-04|txwgtxwg75-05|txwgtxwg75-06|txwgtxwg75-07|txwgtxwg75-08|txwgtxwg75-09|txwgtxwg75-10|txwgtxwg76-01|txwgtxwg76-02|txwgtxwg76-03|txwgtxwg76-04|txwgtxwg76-05|txwgtxwg76-06|txwgtxwg76-07|txwgtxwg76-08|txwgtxwg76-09|txwgtxwg76-10|txwgtxwg77-01|txwgtxwg77-02|txwgtxwg77-03|txwgtxwg77-04|txwgtxwg77-05|txwgtxwg77-06|txwgtxwg77-07|txwgtxwg77-08|txwgtxwg77-09|txwgtxwg77-10|txwgtxwg78-01|txwgtxwg78-02|txwgtxwg78-03|txwgtxwg78-04|txwgtxwg78-05|txwgtxwg78-06|txwgtxwg78-07|txwgtxwg78-08|txwgtxwg78-09|txwgtxwg78-10|txwgtxwg79-01|txwgtxwg79-02|txwgtxwg79-03|txwgtxwg79-04|txwgtxwg79-05|txwgtxwg79-06|txwgtxwg79-07|txwgtxwg79-08|txwgtxwg79-09|0txwgtxwg79-10|txwgtxwg80-01|txwgtxwg80-02|txwgtxwg80-03|txwgtxwg80-04|txwgtxwg80-05|txwgtxwg80-06|txwgtxwg80-07|txwgtxwg80-08|txwgtxwg80-09|txwgtxwg80-10|txwgtxwg81-01|txwgtxwg81-02|txwgtxwg81-03|txwgtxwg81-04|txwgtxwg81-05|txwgtxwg81-06|txwgtxwg81-07|txwgtxwg81-08|txwgtxwg81-09|txwgtxwg81-10|txwgtxwg82-01|txwgtxwg82-02|txwgtxwg82-03|txwgtxwg82-04|txwgtxwg82-05|txwgtxwg82-06|txwgtxwg82-07|txwgtxwg82-08|txwgtxwg82-09|txwgtxwg82-10|txwgtxwg83-01|txwgtxwg83-02|txwgtxwg83-03|txwgtxwg83-04|txwgtxwg83-05|txwgtxwg83-06|txwgtxwg83-07|txwgtxwg83-08|txwgtxwg83-09|txwgtxwg83-10|txwgtxwg84-01|txwgtxwg84-02|txwgtxwg84-03|txwgtxwg84-04|txwgtxwg84-05|txwgtxwg84-06|txwgtxwg84-07|txwgtxwg84-08|txwgtxwg84-09|txwgtxwg84-10|txwgtxwg85-01|txwgtxwg85-02|txwgtxwg85-03|txwgtxwg85-04|txwgtxwg85-05|txwgtxwg85-06|txwgtxwg85-07|txwgtxwg85-08|txwgtxwg85-09|txwgtxwg85-10|txwgtxwg86-01|txwgtxwg86-02|txwgtxwg86-03|txwgtxwg86-04|txwgtxwg86-05|txwgtxwg86-06|txwgtxwg86-07|txwgtxwg86-08|txwgtxwg86-09|txwgtxwg86-10|txwgtxwg87-01|txwgtxwg87-02|txwgtxwg87-03|txwgtxwg87-04|txwgtxwg87-05|txwgtxwg87-06|txwgtxwg87-07|txwgtxwg87-08|txwgtxwg87-09|txwgtxwg87-10|txwgtxwg88-01|txwgtxwg88-02|txwgtxwg88-03|txwgtxwg88-04|txwgtxwg88-05|txwgtxwg88-06|txwgtxwg88-07|txwgtxwg88-08|txwgtxwg88-09|txwgtxwg88-10|txwgtxwg89-01|txwgtxwg89-02|txwgtxwg89-03|txwgtxwg89-04|txwgtxwg89-05|txwgtxwg89-06|txwgtxwg89-07|txwgtxwg89-08|txwgtxwg89-09|txwgtxwg89-10|txwgtxwg90-01|txwgtxwg90-02|txwgtxwg90-03|txwgtxwg90-04|txwgtxwg90-05|txwgtxwg90-06|txwgtxwg90-07|txwgtxwg90-08|txwgtxwg90-09|txwgtxwg90-10|txwgtxwg91-01|txwgtxwg91-02|txwgtxwg91-03|txwgtxwg91-04|txwgtxwg91-05|txwgtxwg91-06|txwgtxwg91-07|txwgtxwg91-08|txwgtxwg91-09|txwgtxwg91-10|txwgtxwg92-01|txwgtxwg92-02|txwgtxwg92-03|txwgtxwg92-04|txwgtxwg92-05|txwgtxwg92-06|txwgtxwg92-07|txwgtxwg92-08|txwgtxwg92-09|txwgtxwg92-10|txwgtxwg93-01|txwgtxwg93-02|txwgtxwg93-03|txwgtxwg93-04|txwgtxwg93-05|txwgtxwg93-06|txwgtxwg93-07|txwgtxwg93-08|txwgtxwg93-09|txwgtxwg93-10|txwgtxwg94-01|txwgtxwg94-02|txwgtxwg94-03|txwgtxwg94-04|txwgtxwg94-05|txwgtxwg94-06|txwgtxwg94-07|txwgtxwg94-08|txwgtxwg94-09|txwgtxwg94-10|txwgtxwg95-01|txwgtxwg95-02|txwgtxwg95-03|txwgtxwg95-04|txwgtxwg95-05|txwgtxwg95-06|txwgtxwg95-07|txwgtxwg95-08|txwgtxwg95-09|txwgtxwg95-10|txwgtxwg96-01|txwgtxwg96-02|txwgtxwg96-03|txwgtxwg96-04|txwgtxwg96-05|txwgtxwg96-06|txwgtxwg96-07|txwgtxwg96-08|txwgtxwg96-09|txwgtxwg96-10|txwgtxwg97-01|txwgtxwg97-02|txwgtxwg97-03|txwgtxwg97-04|txwgtxwg97-05|txwgtxwg97-06|txwgtxwg97-07|txwgtxwg97-08|txwgtxwg97-09|txwgtxwg97-10|txwgtxwg98-01|txwgtxwg98-02|txwgtxwg98-03|txwgtxwg98-04|txwgtxwg98-05|txwgtxwg98-06|txwgtxwg98-07|txwgtxwg98-08|txwgtxwg98-09|txwgtxwg98-10|txwgtxwg99-01|txwgtxwg99-02|txwgtxwg99-03|txwgtxwg99-04|txwgtxwg99-05|txwgtxwg99-06|txwgtxwg99-07|txwgtxwg99-08|txwgtxwg99-09|txwgtxwg99-10|txwgtxwg0100-01|txwgtxwg0100-02|txwgtxwg0100-03|txwgtxwg0100-04|txwgtxwg0100-05|txwgtxwg0100-06|txwgtxwg0100-07|txwgtxwg0100-08|txwgtxwg0100-09|txwgtxwg0100-10|txwgtxwg0101-01|txwgtxwg0101-02|txwgtxwg
 
@@ -288,6 +291,7 @@ class FakeProxy(object):
 
 
 good_app_ids = set()
+bad_app_ids = set()
 APP_ID_QUEUE = None
 
 def check():
@@ -296,11 +300,14 @@ def check():
             return
         appid = APP_ID_QUEUE.get()
         try:
+            if appid in bad_app_ids:
+                continue
             response = fqsocks.proxies.goagent.gae_urlfetch(
                 FakeClient(), FakeProxy('https://%s.appspot.com/2?' % appid),
                 'GET', 'http://www.baidu.com', {}, '')
             if '百度' not in response.read():
                 LOGGER.info('%s => invalid' % appid)
+                bad_app_ids.add(appid)
                 continue
             app_status = response.app_status
             LOGGER.info('%s => %s' % (appid, app_status))
@@ -308,6 +315,8 @@ def check():
                 if len(good_app_ids) >= 20:
                     return
                 good_app_ids.add(appid)
+            else:
+                bad_app_ids.add(appid)
         except:
             traceback.print_exc()
 
@@ -316,26 +325,28 @@ def main():
     gevent.monkey.patch_all()
     fqsocks.proxies.goagent.GoAgentProxy.GOOGLE_IPS = socket.gethostbyname_ex('goagent-google-ip.fqrouter.com')[2]
     while True:
-        for group_id in ['a', 'b', 'c', 'd', 'e']:
-            good_app_ids.clear()
-            random.shuffle(T1_APP_IDS)
-            random.shuffle(T2_APP_IDS)
-            random.shuffle(T3_APP_IDS)
-            APP_ID_QUEUE = gevent.queue.Queue(items=T2_APP_IDS + T1_APP_IDS + T3_APP_IDS)
-            LOGGER.info('begin group: %s' % group_id)
-            greenlets = []
-            for i in range(8):
-                greenlets.append(gevent.spawn(check))
-            for greenlet in greenlets:
-                greenlet.join()
-            for i, appid in enumerate(good_app_ids):
-                domain = 'goagent%s' % (i + 1)
-                LOGGER.info('%s => %s' % (domain, appid))
-                subprocess.call('cli53 rrcreate fqrouter.com %s.%s TXT %s --ttl 120 --replace' % (domain, group_id, appid), shell=True)
-                time.sleep(1)
-            subprocess.call('cli53 rrcreate fqrouter.com proxies TXT "1:goagent:20:goagent#.%s" "2:ss:7:ss#" --ttl 120 --replace' % group_id, shell=True)
-            LOGGER.info('group %s done at %s ' % (group_id, datetime.datetime.now()))
-            time.sleep(30)
+        bad_app_ids.clear()
+        for i in range(10):
+            for group_id in ['a', 'b', 'c', 'd', 'e']:
+                good_app_ids.clear()
+                random.shuffle(T1_APP_IDS)
+                random.shuffle(T2_APP_IDS)
+                random.shuffle(T3_APP_IDS)
+                APP_ID_QUEUE = gevent.queue.Queue(items=T1_APP_IDS + T2_APP_IDS + T3_APP_IDS)
+                LOGGER.info('begin group: %s' % group_id)
+                greenlets = []
+                for i in range(8):
+                    greenlets.append(gevent.spawn(check))
+                for greenlet in greenlets:
+                    greenlet.join()
+                for i, appid in enumerate(good_app_ids):
+                    domain = 'goagent%s' % (i + 1)
+                    LOGGER.info('%s => %s' % (domain, appid))
+                    subprocess.call('cli53 rrcreate fqrouter.com %s.%s TXT %s --ttl 450 --replace' % (domain, group_id, appid), shell=True)
+                    time.sleep(1)
+                subprocess.call('cli53 rrcreate fqrouter.com proxies TXT "1:goagent:20:goagent#.%s" "2:ss:7:ss#" --ttl 150 --replace' % group_id, shell=True)
+                LOGGER.info('group %s done at %s ' % (group_id, datetime.datetime.now()))
+                time.sleep(60)
 
 
 
