@@ -1,4 +1,5 @@
 #!/usr/bin/env python
+# coding=utf-8
 import sys
 import os
 import random
@@ -299,10 +300,14 @@ def check():
             return
         appid = APP_ID_QUEUE.get()
         try:
-            app_status = fqsocks.proxies.goagent.gae_urlfetch(
+            response = fqsocks.proxies.goagent.gae_urlfetch(
                 FakeClient(), FakeProxy('https://%s.appspot.com/2?' % appid),
-                'GET', 'http://www.baidu.com', {}, '').app_status
-            LOGGER.info('%s => %s\n' % (appid, app_status))
+                'GET', 'http://www.baidu.com', {}, '')
+            if '百度' not in response.read():
+                LOGGER.info('%s => invalid' % appid)
+                continue
+            app_status = response.app_status
+            LOGGER.info('%s => %s' % (appid, app_status))
             if app_status == 200:
                 if len(good_app_ids) >= 20:
                     return
