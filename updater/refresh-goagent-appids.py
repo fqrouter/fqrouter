@@ -272,11 +272,6 @@ if len(sys.argv) > 1:
     T2_APP_IDS = []
     T3_APP_IDS = []
 
-random.shuffle(T1_APP_IDS)
-random.shuffle(T2_APP_IDS)
-random.shuffle(T3_APP_IDS)
-
-APP_ID_QUEUE = gevent.queue.Queue(items=T2_APP_IDS + T1_APP_IDS + T3_APP_IDS)
 
 class FakeClient(object):
     def __init__(self):
@@ -293,6 +288,7 @@ class FakeProxy(object):
 
 
 good_app_ids = set()
+APP_ID_QUEUE = None
 
 def check():
     while True:
@@ -316,11 +312,16 @@ def check():
             traceback.print_exc()
 
 def main():
+    global APP_ID_QUEUE
     gevent.monkey.patch_all()
     fqsocks.proxies.goagent.GoAgentProxy.GOOGLE_IPS = socket.gethostbyname_ex('goagent-google-ip.fqrouter.com')[2]
     while True:
         for group_id in ['a', 'b', 'c', 'd', 'e']:
             good_app_ids.clear()
+            random.shuffle(T1_APP_IDS)
+            random.shuffle(T2_APP_IDS)
+            random.shuffle(T3_APP_IDS)
+            APP_ID_QUEUE = gevent.queue.Queue(items=T2_APP_IDS + T1_APP_IDS + T3_APP_IDS)
             LOGGER.info('begin group: %s' % group_id)
             greenlets = []
             for i in range(8):
@@ -330,10 +331,11 @@ def main():
             for i, appid in enumerate(good_app_ids):
                 domain = 'goagent%s' % (i + 1)
                 LOGGER.info('%s => %s' % (domain, appid))
-                subprocess.call('cli53 rrcreate fqrouter.com %s.%s TXT %s --ttl 60 --replace' % (domain, group_id, appid), shell=True)
+                subprocess.call('cli53 rrcreate fqrouter.com %s.%s TXT %s --ttl 120 --replace' % (domain, group_id, appid), shell=True)
                 time.sleep(1)
-            subprocess.call('cli53 rrcreate fqrouter.com proxies TXT "1:goagent:20:goagent#.%s" "2:ss:7:ss#" --ttl 60 --replace' % group_id, shell=True)
+            subprocess.call('cli53 rrcreate fqrouter.com proxies TXT "1:goagent:20:goagent#.%s" "2:ss:7:ss#" --ttl 120 --replace' % group_id, shell=True)
             LOGGER.info('group %s done at %s ' % (group_id, datetime.datetime.now()))
+            time.sleep(30)
 
 
 
