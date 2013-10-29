@@ -325,10 +325,9 @@ def main():
                 domain = 'goagent%s' % (i + 1)
                 LOGGER.info('%s => %s' % (domain, appid))
                 subprocess.call('cli53 rrcreate fqrouter.com %s.%s TXT %s --ttl 60 --replace' % (domain, group_id, appid), shell=True)
-                time.sleep(0.5)
+                time.sleep(1)
             subprocess.call('cli53 rrcreate fqrouter.com proxies TXT "1:goagent:20:goagent#.%s" "2:ss:7:ss#" --ttl 60 --replace' % group_id, shell=True)
             LOGGER.info('group %s done at %s ' % (group_id, datetime.datetime.now()))
-            time.sleep(60)
 
 
 
