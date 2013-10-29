@@ -241,7 +241,16 @@ T2_APP_IDS = ['fgabootstrap001', 'fgabootstrap002', 'fgabootstrap003', 'fgaboots
               'wowdonate-fuyong-02', 'wowdonate-tts-09', 'gfanqiang012-4', 'gfanqiang009-5', 'wowdonate-m18-02',
               'gfanqiang021-9', 'gfanqiang022-7', 'youxiang012310', 'lovejiani047', 'szdsdf9104-09', 'wowdonate-sx-13',
               'wowdonate-100-07', 'gfanqiang030-1', 'gfanqiang001-6', 'gfanqiang017-6', 'lovejiani049',
-              'wowdonate-sd-39']
+              'wowdonate-sd-39', 'goagent-3e8', 'goagent-3e9', 'goagent-3ea', 'goagent-3eb', 'goagent-3ec',
+              'goagent-3ed', 'goagent-3ee', 'goagent-3ef', 'goagent-3f0', 'goagent-3f1', 'goagent-3f2',
+              'goagent-3f3', 'goagent-3f4', 'goagent-3f5', 'goagent-3f6', 'goagent-3f7', 'goagent-3f8',
+              'goagent-3f9', 'goagent-3fa', 'goagent-3fb', 'goagent-12', 'goagent-13', 'goagent-14', 'goagent-15',
+              'goagent-16', 'goagent-17', 'goagent-18', 'goagent-19', 'goagent-20', 'goagent-21', 'goagent-22',
+              'goagent--1', 'goagent--2', 'goagent--3', 'goagent--4', 'goagent--5', 'goagent--6', 'goagent--7',
+              'goagent--8', 'goagent--9', 'goagent--0', 'goagent-2711', 'goagent-2712', 'goagent-2713', 'goagent-2714',
+              'goagent-2715', 'goagent-2716', 'goagent-2717', 'goagent-2718', 'goagent-2719', 'goagent-271a']
+
+
 
 for i in range(1, 60):
     T2_APP_IDS.append('goagentbiz%s' % i)
@@ -260,6 +269,7 @@ for i in range(215, 317):
 if len(sys.argv) > 1:
     T1_APP_IDS = [sys.argv[1]]
     T2_APP_IDS = []
+    T3_APP_IDS = []
 
 random.shuffle(T1_APP_IDS)
 random.shuffle(T2_APP_IDS)
