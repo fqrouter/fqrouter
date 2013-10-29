@@ -57,6 +57,8 @@ while True:
             ('162.220.11.191', 221, 'A76nOIHdZEYw', 'rc4'), #crissic
             ('209.141.57.22', 220, 'A76nOIHdZEYw', 'rc4'), #buyvm2
             ('209.141.57.22', 221, 'A76nOIHdZEYw', 'rc4'), #buyvm2
+            ('174.140.169.62', 220, 'A76nOIHdZEYw', 'rc4'), #ds4
+            ('174.140.169.62', 221, 'A76nOIHdZEYw', 'rc4'), #ds4
             # ('192.249.61.233', 8318, 'fqrouter', 'rc4'), #ramnode1
             # ('198.98.49.121', 8318, 'fqrouter', 'rc4'), #buyvm1
         ]
