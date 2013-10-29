@@ -59,6 +59,8 @@ while True:
             ('209.141.57.22', 221, 'A76nOIHdZEYw', 'rc4'), #buyvm2
             ('174.140.169.62', 220, 'A76nOIHdZEYw', 'rc4'), #ds4
             ('174.140.169.62', 221, 'A76nOIHdZEYw', 'rc4'), #ds4
+            ('174.140.169.65', 220, 'A76nOIHdZEYw', 'rc4'), #ds5
+            ('174.140.169.65', 221, 'A76nOIHdZEYw', 'rc4'), #ds5
             # ('192.249.61.233', 8318, 'fqrouter', 'rc4'), #ramnode1
             # ('198.98.49.121', 8318, 'fqrouter', 'rc4'), #buyvm1
         ]
