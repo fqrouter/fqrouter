@@ -265,7 +265,7 @@ random.shuffle(T1_APP_IDS)
 random.shuffle(T2_APP_IDS)
 random.shuffle(T3_APP_IDS)
 
-APP_ID_QUEUE = gevent.queue.Queue(items=T1_APP_IDS + T2_APP_IDS + T3_APP_IDS)
+APP_ID_QUEUE = gevent.queue.Queue(items=T2_APP_IDS + T1_APP_IDS + T3_APP_IDS)
 
 class FakeClient(object):
     def __init__(self):
