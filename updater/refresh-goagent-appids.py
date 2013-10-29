@@ -320,6 +320,7 @@ def main():
     fqsocks.proxies.goagent.GoAgentProxy.GOOGLE_IPS = socket.gethostbyname_ex('goagent-google-ip.fqrouter.com')[2]
     while True:
         for group_id in ['a', 'b', 'c', 'd', 'e']:
+            good_app_ids.clear()
             LOGGER.info('begin group: %s' % group_id)
             greenlets = []
             for i in range(8):
