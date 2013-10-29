@@ -45,6 +45,8 @@ while True:
             ('69.163.40.146', 221, 'A76nOIHdZEYw', 'rc4'), #ds1
             ('174.140.169.55', 220, 'A76nOIHdZEYw', 'rc4'), #ds2
             ('174.140.169.55', 221, 'A76nOIHdZEYw', 'rc4'), #ds2
+            ('174.140.169.55', 222, 'A76nOIHdZEYw', 'rc4'), #ds2
+            ('174.140.169.55', 223, 'A76nOIHdZEYw', 'rc4'), #ds2
             ('174.140.171.244', 220, 'A76nOIHdZEYw', 'rc4'), #ds3
             ('174.140.171.244', 221, 'A76nOIHdZEYw', 'rc4'), #ds3
             ('192.184.80.11', 220, 'A76nOIHdZEYw', 'rc4'), #ramnode2
@@ -74,7 +76,7 @@ while True:
                   ] + proxies
         i = 1
         for ip, port, password, encrypt_method in proxies:
-            if check_proxy(ip, port, password, encrypt_method) or check_proxy(ip, port, password, encrypt_method):
+            if check_proxy(ip, port, password, encrypt_method):
                 subprocess.call('cli53 rrcreate fqrouter.com ss%s TXT %s:%s:%s:%s --ttl 300 --replace'
                                 % (i, ip, port, password, encrypt_method), shell=True)
                 i += 1

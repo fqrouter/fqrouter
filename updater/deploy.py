@@ -1,7 +1,18 @@
 import sys
+import os
+import shutil
 
 ip = sys.argv[1]
 
+if not os.path.exists('/usr/bin/ss-server.orig'):
+    shutil.move('/usr/bin/ss-server', '/usr/bin/ss-server.orig')
+    with open('/usr/bin/ss-server', 'w') as f:
+        f.write(
+"""#!/bin/sh
+ulimit -n 8000
+exec /usr/bin/ss-server.orig $@
+""")
+    os.chmod('/usr/bin/ss-server', 0755)
 
 with open('/etc/shadowsocks/config.json', 'w') as f:
     f.write(
@@ -16,7 +27,7 @@ with open('/etc/shadowsocks/config.json', 'w') as f:
 }
         """ % ip)
 
-for i in range(1):
+for i in range(3):
     index = i + 1
     with open('/etc/shadowsocks/config%s.json' % index, 'w') as f:
         f.write(
