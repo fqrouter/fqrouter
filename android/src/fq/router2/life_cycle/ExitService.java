@@ -9,6 +9,7 @@ import com.google.analytics.tracking.android.GoogleAnalytics;
 import com.google.analytics.tracking.android.Tracker;
 import fq.router2.MainActivity;
 import fq.router2.R;
+import fq.router2.feedback.DownloadService;
 import fq.router2.utils.*;
 import fq.router2.wifi_repeater.AcquireWifiLockService;
 
@@ -49,7 +50,7 @@ public class ExitService extends IntentService {
                 LogUtils.e("failed to chmod files to non-root", e);
             }
         }
-        Downloader.shutdown();
+        stopService(new Intent(this, DownloadService.class));
         try {
             ManagerProcess.kill();
         } catch (Exception e) {

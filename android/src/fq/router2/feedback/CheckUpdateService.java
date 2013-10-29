@@ -22,7 +22,7 @@ public class CheckUpdateService extends IntentService {
     public void checkUpdate() {
         try {
             LogUtils.i("checking update...");
-            String versionInfo = DnsUtils.resolveTXT("beta.android.ver.fqrouter.com");
+            String versionInfo = DnsUtils.resolveTXT("prod.android.ver.fqrouter.com");
             String latestVersion = versionInfo.split("\\|")[0];
             String upgradeUrl = versionInfo.split("\\|")[1];
             if (isNewer(latestVersion, LaunchService.getMyVersion(this))) {
@@ -32,7 +32,6 @@ public class CheckUpdateService extends IntentService {
                 LogUtils.i("already running the latest version");
             }
         } catch (Exception e) {
-            LogUtils.i("check updates failed");
             LogUtils.e("check updates failed", e);
         }
     }
