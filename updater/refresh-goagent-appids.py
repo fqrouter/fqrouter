@@ -285,7 +285,7 @@ good_app_ids = set()
 
 def check():
     while True:
-        if len(good_app_ids) >= 40:
+        if len(good_app_ids) >= 20:
             return
         appid = APP_ID_QUEUE.get()
         try:
@@ -294,7 +294,7 @@ def check():
                 'GET', 'http://www.baidu.com', {}, '').app_status
             LOGGER.info('%s => %s\n' % (appid, app_status))
             if app_status == 200:
-                if len(good_app_ids) >= 40:
+                if len(good_app_ids) >= 20:
                     return
                 good_app_ids.add(appid)
         except:
@@ -304,18 +304,21 @@ def main():
     gevent.monkey.patch_all()
     fqsocks.proxies.goagent.GoAgentProxy.GOOGLE_IPS = socket.gethostbyname_ex('goagent-google-ip.fqrouter.com')[2]
     while True:
-        greenlets = []
-        for i in range(8):
-            greenlets.append(gevent.spawn(check))
-        for greenlet in greenlets:
-            greenlet.join()
-        for i, appid in enumerate(good_app_ids):
-            domain = 'goagent%s' % (i + 1)
-            LOGGER.info('%s => %s' % (domain, appid))
-            subprocess.call('cli53 rrcreate fqrouter.com %s TXT %s --ttl 60 --replace' % (domain, appid), shell=True)
-            time.sleep(0.5)
-        LOGGER.info('%s done' % datetime.datetime.now())
-        time.sleep(60)
+        for group_id in ['a', 'b', 'c', 'd', 'e']:
+            LOGGER.info('begin group: %s' % group_id)
+            greenlets = []
+            for i in range(8):
+                greenlets.append(gevent.spawn(check))
+            for greenlet in greenlets:
+                greenlet.join()
+            for i, appid in enumerate(good_app_ids):
+                domain = 'goagent%s' % (i + 1)
+                LOGGER.info('%s => %s' % (domain, appid))
+                subprocess.call('cli53 rrcreate fqrouter.com %s.%s TXT %s --ttl 60 --replace' % (domain, group_id, appid), shell=True)
+                time.sleep(0.5)
+            subprocess.call('cli53 rrcreate fqrouter.com proxies TXT "1:goagent:20:goagent#.%s" "2:ss:7:ss#" --ttl 60 --replace' % group_id, shell=True)
+            LOGGER.info('group %s done at %s ' % (group_id, datetime.datetime.now()))
+            time.sleep(60)
 
 
 
