@@ -39,14 +39,6 @@ public class Deployer {
         } catch (Exception e) {
             return logFatalError("failed to copy busybox", e);
         }
-        context.sendBroadcast(new LaunchingIntent(_(R.string.status_check_host_file), 25));
-        try {
-            if (ShellUtils.sudo(ShellUtils.BUSYBOX_FILE + " cat /system/etc/hosts").contains("google")) {
-                context.sendBroadcast(new HandleAlertIntent(HandleAlertIntent.ALERT_TYPE_HOSTS_MODIFIED));
-            }
-        } catch (Exception e) {
-            LogUtils.e("failed to check hosts file", e);
-        }
         boolean foundPayloadUpdate;
         try {
             foundPayloadUpdate = shouldDeployPayload();
@@ -239,6 +231,9 @@ public class Deployer {
     }
 
     private void linkLibs() throws Exception {
+        if (!shouldLinkLibs()) {
+            return;
+        }
         ShellUtils.sudo("/data/data/fq.router2/busybox", "mount", "-o", "remount,rw", "/system");
         try {
             File[] files = new File(PYTHON_DIR, "lib").listFiles();
@@ -260,6 +255,21 @@ public class Deployer {
         } finally {
             ShellUtils.sudo("/data/data/fq.router2/busybox", "mount", "-o", "remount,ro", "/system");
         }
+    }
+
+    private boolean shouldLinkLibs() throws Exception {
+        File[] files = new File(PYTHON_DIR, "lib").listFiles();
+        if (files == null) {
+            throw new Exception(new File(PYTHON_DIR, "lib") + " not found");
+        } else {
+            for (File file : files) {
+                String targetPath = "/system/lib/" + file.getName();
+                if (!new File(targetPath).exists()) {
+                    return true;
+                }
+            }
+        }
+        return false;
     }
 
     private void makePayloadExecutable() throws Exception {

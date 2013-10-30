@@ -17,7 +17,6 @@ import java.util.HashMap;
 import java.util.Map;
 
 public class LaunchService extends IntentService {
-    private final static File FQROUTER_CONFIG_FILE = new File("/data/data/fq.router2/etc/fqrouter.json");
 
     public static Class SOCKS_VPN_SERVICE_CLASS;
 
@@ -43,21 +42,17 @@ public class LaunchService extends IntentService {
         sendBroadcast(new LaunchingIntent(_(R.string.status_check_root), 10));
         boolean rooted = ShellUtils.checkRooted();
         LogUtils.i("rooted: " + rooted);
-        if (!rooted && isOldVersionRunning()) {
-            handleFatalError(LogUtils.e("old version is still running"));
-            return;
-        }
         if (isVpnRunning()) {
             LogUtils.i("manager is already running in vpn mode");
             sendBroadcast(new LaunchedIntent(true));
             return;
         }
-        if (ping(this, false)) {
+        if (ping(this, false, 1000)) {
             LogUtils.i("manager is already running in root mode");
             sendBroadcast(new LaunchedIntent(false));
             return;
         }
-        if (ping(this, true)) {
+        if (ping(this, true, 1000)) {
             sendBroadcast(new LaunchingIntent(_(R.string.status_restart_vpn), 0));
             LogUtils.i("Restart manager");
             try {
@@ -76,14 +71,6 @@ public class LaunchService extends IntentService {
         }
         if (rooted) {
             sendBroadcast(new LaunchingIntent(_(R.string.status_about_to_launch_in_root_mode), 20));
-            try {
-                String output = ShellUtils.sudo("iptables -L -v -n");
-                if (output.contains("udp spt:53 dpt:1 NFQUEUE num 2")) {
-                    LogUtils.e("left over found in iptables: " + output);
-                }
-            } catch (Exception e) {
-                LogUtils.e("failed to check iptables", e);
-            }
         } else {
             if (Build.VERSION.SDK_INT < 14) {
                 handleFatalError(_(R.string.status_root_is_requried_below_4_0));
@@ -238,20 +225,14 @@ public class LaunchService extends IntentService {
         }
     }
 
-    private static boolean isOldVersionRunning() {
-        try {
-            String content = HttpUtils.get("http://127.0.0.1:" + ConfigUtils.getHttpManagerPort() + "/ping");
-            return content.equals("PONG") || content.equals("VPN PONG");
-        } catch (Exception e) {
-            LogUtils.e("check is old version running failed: " + e);
-            return false;
-        }
+    public static boolean ping(Context context, boolean isVpnMode) {
+        return ping(context, isVpnMode, 3000);
     }
 
-    public static boolean ping(Context context, boolean isVpnMode) {
+    public static boolean ping(Context context, boolean isVpnMode, int timeout) {
         try {
             String myVersion = getMyVersion(context);
-            String content = HttpUtils.get("http://127.0.0.1:" + ConfigUtils.getHttpManagerPort() + "/ping");
+            String content = HttpUtils.get("http://127.0.0.1:" + ConfigUtils.getHttpManagerPort() + "/ping", null, timeout);
             if (isVpnMode ? ("VPN PONG/" + myVersion).equals(content) : ("PONG/" + myVersion).equals(content)) {
                 LogUtils.e("ping " + isVpnMode + " succeeded");
                 return true;
