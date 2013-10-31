@@ -41,28 +41,32 @@ def check_proxy(ip, port, password, encrypt_method):
 while True:
     try:
         proxies = [
-            ('69.163.40.146', 220, 'A76nOIHdZEYw', 'rc4'), #ds1
-            ('69.163.40.146', 221, 'A76nOIHdZEYw', 'rc4'), #ds1
+            # ('69.163.40.146', 220, 'A76nOIHdZEYw', 'rc4'), #ds1
+            # ('69.163.40.146', 221, 'A76nOIHdZEYw', 'rc4'), #ds1
             ('174.140.169.55', 220, 'A76nOIHdZEYw', 'rc4'), #ds2
-            ('174.140.169.55', 221, 'A76nOIHdZEYw', 'rc4'), #ds2
-            ('174.140.169.55', 222, 'A76nOIHdZEYw', 'rc4'), #ds2
-            ('174.140.169.55', 223, 'A76nOIHdZEYw', 'rc4'), #ds2
+            # ('174.140.169.55', 221, 'A76nOIHdZEYw', 'rc4'), #ds2
+            # ('174.140.169.55', 222, 'A76nOIHdZEYw', 'rc4'), #ds2
+            # ('174.140.169.55', 223, 'A76nOIHdZEYw', 'rc4'), #ds2
             ('174.140.171.244', 220, 'A76nOIHdZEYw', 'rc4'), #ds3
-            ('174.140.171.244', 221, 'A76nOIHdZEYw', 'rc4'), #ds3
-            ('192.184.80.11', 220, 'A76nOIHdZEYw', 'rc4'), #ramnode2
-            ('192.184.80.11', 221, 'A76nOIHdZEYw', 'rc4'), #ramnode2
-            ('199.188.75.60', 220, 'A76nOIHdZEYw', 'rc4'), #raidlogic
-            ('199.188.75.60', 221, 'A76nOIHdZEYw', 'rc4'), #raidlogic
-            ('176.56.236.63', 220, 'A76nOIHdZEYw', 'rc4'), #ramnode3
+            # ('174.140.171.244', 221, 'A76nOIHdZEYw', 'rc4'), #ds3
+            # ('192.184.80.11', 220, 'A76nOIHdZEYw', 'rc4'), #ramnode2
+            # ('192.184.80.11', 221, 'A76nOIHdZEYw', 'rc4'), #ramnode2
+            # ('199.188.75.60', 220, 'A76nOIHdZEYw', 'rc4'), #raidlogic
+            # ('199.188.75.60', 221, 'A76nOIHdZEYw', 'rc4'), #raidlogic
+            # ('176.56.236.63', 220, 'A76nOIHdZEYw', 'rc4'), #ramnode3
             ('176.56.236.63', 221, 'A76nOIHdZEYw', 'rc4'), #ramnode3
-            ('162.220.11.191', 220, 'A76nOIHdZEYw', 'rc4'), #crissic
+            # ('162.220.11.191', 220, 'A76nOIHdZEYw', 'rc4'), #crissic
             ('162.220.11.191', 221, 'A76nOIHdZEYw', 'rc4'), #crissic
-            ('209.141.57.22', 220, 'A76nOIHdZEYw', 'rc4'), #buyvm2
+            # ('209.141.57.22', 220, 'A76nOIHdZEYw', 'rc4'), #buyvm2
             ('209.141.57.22', 221, 'A76nOIHdZEYw', 'rc4'), #buyvm2
             ('174.140.169.62', 220, 'A76nOIHdZEYw', 'rc4'), #ds4
-            ('174.140.169.62', 221, 'A76nOIHdZEYw', 'rc4'), #ds4
+            # ('174.140.169.62', 221, 'A76nOIHdZEYw', 'rc4'), #ds4
             ('174.140.169.65', 220, 'A76nOIHdZEYw', 'rc4'), #ds5
-            ('174.140.169.65', 221, 'A76nOIHdZEYw', 'rc4'), #ds5
+            # ('174.140.169.65', 221, 'A76nOIHdZEYw', 'rc4'), #ds5
+            ('162.217.248.65', 220, 'A76nOIHdZEYw', 'rc4'), #iniz1
+            ('162.217.248.65', 221, 'A76nOIHdZEYw', 'rc4'), #iniz1
+            ('162.217.248.65', 222, 'A76nOIHdZEYw', 'rc4'), #iniz1
+            ('162.217.248.65', 223, 'A76nOIHdZEYw', 'rc4'), #iniz1
             # ('192.249.61.233', 8318, 'fqrouter', 'rc4'), #ramnode1
             # ('198.98.49.121', 8318, 'fqrouter', 'rc4'), #buyvm1
         ]
@@ -77,12 +81,12 @@ while True:
         i = 1
         for ip, port, password, encrypt_method in proxies:
             if check_proxy(ip, port, password, encrypt_method):
-                subprocess.call('cli53 rrcreate fqrouter.com ss%s.a TXT %s:%s:%s:%s --ttl 450 --replace'
-                                % (i, ip, port, password, encrypt_method), shell=True)
+                # subprocess.call('cli53 rrcreate fqrouter.com ss%s.a TXT %s:%s:%s:%s --ttl 450 --replace'
+                #                 % (i, ip, port, password, encrypt_method), shell=True)
                 i += 1
-        for j in range(i, 11):
-            LOGGER.info('[N/A] ss%s.fqrouter.com' % j)
-            subprocess.call('cli53 rrcreate fqrouter.com ss%s.a TXT "" --ttl 450 --replace' % j, shell=True)
+        # for j in range(i, 11):
+        #     LOGGER.info('[N/A] ss%s.fqrouter.com' % j)
+        #     subprocess.call('cli53 rrcreate fqrouter.com ss%s.a TXT "" --ttl 450 --replace' % j, shell=True)
         print('%s done' % datetime.datetime.now())
     except:
         LOGGER.exception('failed to update proxies')
