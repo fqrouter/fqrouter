@@ -241,4 +241,6 @@
     <string name="share_url_domain">cn.url.share.fqrouter.com</string>
     <string name="about_page">file:///android_asset/pages/about-cn.html</string>
     <string name="x86_is_not_supported">尚未支持x86的设备</string>
+    <string name="status_3g_apn_has_proxy">3G APN 不能是 wap</string>
+    <string name="status_check_existing_process">检查是否已经启动了</string>
 </resources>

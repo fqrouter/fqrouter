@@ -268,4 +268,6 @@
     <string name="share_url_domain">en.url.share.fqrouter.com</string>
     <string name="about_page">file:///android_asset/pages/about-en.html</string>
     <string name="x86_is_not_supported">x86 is not supported</string>
+    <string name="status_3g_apn_has_proxy">3G APN can not be wap</string>
+    <string name="status_check_existing_process">Check if already started</string>
 </resources>

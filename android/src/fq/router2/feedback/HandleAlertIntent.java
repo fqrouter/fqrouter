@@ -5,6 +5,7 @@ import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.IntentFilter;
+import android.widget.Toast;
 import fq.router2.R;
 import fq.router2.utils.IOUtils;
 import fq.router2.utils.LogUtils;
@@ -16,6 +17,7 @@ import java.io.File;
 public class HandleAlertIntent extends Intent {
     public final static String ALERT_TYPE_HOSTS_MODIFIED = "HostsModified";
     public final static  String ALERT_TYPE_RUN_NEEDS_SU = "RunNeedsSu";
+    public final static  String ALERT_TYPE_3G_APN = "3GAPN";
     private final static String ACTION_HANDLE_ALERT = "HandleAlert";
 
     public HandleAlertIntent(String alertType) {
@@ -33,6 +35,8 @@ public class HandleAlertIntent extends Intent {
                     showHostsModifiedAlert(context);
                 } else if (ALERT_TYPE_RUN_NEEDS_SU.equals(alertType)) {
                     showRunNeedsSuAlert(context);
+                } else if (ALERT_TYPE_3G_APN.equals(alertType)) {
+                    Toast.makeText(context, R.string.status_3g_apn_has_proxy, 8000).show();
                 }
             }
         }, new IntentFilter(ACTION_HANDLE_ALERT));

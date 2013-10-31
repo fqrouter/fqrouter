@@ -133,20 +133,27 @@ public class ShellUtils {
     public static boolean checkRooted() {
         IS_ROOTED = null;
         try {
-            try {
-                Process process = executeNoWait(new HashMap<String, String>(), findCommand("su"), "-v");
-                OutputStreamWriter writer = new OutputStreamWriter(process.getOutputStream());
-                writer.write("exit\n");
-                writer.close();
-                LogUtils.i("su version: " + waitFor("su -v", process).trim());
-            } catch (Exception e) {
-                LogUtils.e("failed to get su version", e);
-            }
             IS_ROOTED = sudo("echo", "hello").contains("hello");
         } catch (Exception e) {
             IS_ROOTED = false;
         }
         return IS_ROOTED;
+    }
+
+    public static void dumpSuVersion() {
+        try {
+            Process process = executeNoWait(new HashMap<String, String>(), findCommand("su"), "-v");
+            try {
+                OutputStreamWriter writer = new OutputStreamWriter(process.getOutputStream());
+                writer.write("exit\n");
+                writer.close();
+            }  catch (Exception e) {
+                // ignore
+            }
+            LogUtils.i("su version: " + waitFor("su -v", process).trim());
+        } catch (Exception e) {
+            LogUtils.e("failed to get su version", e);
+        }
     }
 
     public static boolean isRooted() {

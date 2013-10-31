@@ -65,12 +65,6 @@ public class MainActivity extends Activity implements
     private String upgradeUrl;
     private boolean downloaded;
     private static boolean dnsPollutionAcked = false;
-    private static final Set<String> WAP_APN_LIST = new HashSet<String>(){{
-        add("cmwap");
-        add("uniwap");
-        add("3gwap");
-        add("ctwap");
-    }};
 
     static {
         IOUtils.createCommonDirs();
@@ -111,39 +105,11 @@ public class MainActivity extends Activity implements
                 showWebView();
             }
         });
-        updateStatus(_(R.string.status_check_apn), 5);
-        String apnName = getApnName();
-        LogUtils.i("apn name: " + apnName);
-        final File ignoredFile = new File("/data/data/fq.router2/etc/apn-alert-ignored");
-        if (apnName != null && WAP_APN_LIST.contains(apnName.trim().toLowerCase()) && !ignoredFile.exists()) {
-            new AlertDialog.Builder(MainActivity.this)
-                    .setIcon(android.R.drawable.ic_dialog_alert)
-                    .setTitle(R.string.wap_apn_alert_title)
-                    .setMessage(String.format(_(R.string.wap_apn_alert_message), apnName))
-                    .setPositiveButton(R.string.wap_apn_alert_change_now, new DialogInterface.OnClickListener() {
-                        @Override
-                        public void onClick(DialogInterface dialogInterface, int i) {
-                            Intent intent = new Intent(Settings.ACTION_APN_SETTINGS);
-                            startActivity(intent);
-                            clearNotification(MainActivity.this);
-                            MainActivity.this.finish();
-                        }
-                    })
-                    .setNegativeButton(R.string.wap_apn_alert_ignore, new DialogInterface.OnClickListener() {
-                        @Override
-                        public void onClick(DialogInterface dialogInterface, int i) {
-                            IOUtils.writeToFile(ignoredFile, "OK");
-                            LaunchService.execute(MainActivity.this);
-                        }
-                    })
-                    .show();
+        if (isReady) {
+            loadWebView();
+            showWebView();
         } else {
-            if (isReady) {
-                loadWebView();
-                showWebView();
-            } else {
-                LaunchService.execute(this);
-            }
+            LaunchService.execute(this);
         }
     }
 
@@ -151,20 +117,6 @@ public class MainActivity extends Activity implements
     public boolean onTouchEvent(MotionEvent event){
         this.gestureDetector.onTouchEvent(event);
         return super.onTouchEvent(event);
-    }
-
-    private String getApnName() {
-        try {
-            ConnectivityManager conManager = (ConnectivityManager) this.getSystemService(Context.CONNECTIVITY_SERVICE);
-            NetworkInfo ni = conManager.getActiveNetworkInfo();
-            if (null == ni) {
-                return null;
-            }
-            return ni.getExtraInfo();
-        } catch (Exception e) {
-            LogUtils.e("failed to get apn name", e);
-            return null;
-        }
     }
 
     @Override

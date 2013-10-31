@@ -1,10 +1,16 @@
 package fq.router2.life_cycle;
 
+import android.app.AlertDialog;
 import android.app.IntentService;
 import android.content.Context;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.pm.PackageInfo;
+import android.net.ConnectivityManager;
+import android.net.NetworkInfo;
 import android.os.Build;
+import android.provider.Settings;
+import android.widget.Toast;
 import fq.router2.R;
 import fq.router2.feedback.HandleAlertIntent;
 import fq.router2.feedback.HandleFatalErrorIntent;
@@ -14,11 +20,19 @@ import fq.router2.utils.*;
 import java.io.File;
 import java.io.OutputStreamWriter;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Map;
+import java.util.Set;
 
 public class LaunchService extends IntentService {
 
     public static Class SOCKS_VPN_SERVICE_CLASS;
+    private static final Set<String> WAP_APN_LIST = new HashSet<String>(){{
+        add("cmwap");
+        add("uniwap");
+        add("3gwap");
+        add("ctwap");
+    }};
 
     static {
         try {
@@ -39,20 +53,28 @@ public class LaunchService extends IntentService {
     @Override
     protected void onHandleIntent(Intent intent) {
         LogUtils.i("ver: " + getMyVersion(this));
-        sendBroadcast(new LaunchingIntent(_(R.string.status_check_root), 10));
+        sendBroadcast(new LaunchingIntent(_(R.string.status_check_root), 5));
         boolean rooted = ShellUtils.checkRooted();
         LogUtils.i("rooted: " + rooted);
+        sendBroadcast(new LaunchingIntent(_(R.string.status_check_existing_process), 10));
+        new Thread(new Runnable() {
+            @Override
+            public void run() {
+                ShellUtils.dumpSuVersion();
+            }
+        }).start();
         if (isVpnRunning()) {
             LogUtils.i("manager is already running in vpn mode");
             sendBroadcast(new LaunchedIntent(true));
             return;
         }
-        if (ping(this, false, 1000)) {
+        String runningAs = isRunningAs();
+        if ("ROOT".equals(runningAs)) {
             LogUtils.i("manager is already running in root mode");
             sendBroadcast(new LaunchedIntent(false));
             return;
         }
-        if (ping(this, true, 1000)) {
+        if ("VPN".equals(runningAs)) {
             sendBroadcast(new LaunchingIntent(_(R.string.status_restart_vpn), 0));
             LogUtils.i("Restart manager");
             try {
@@ -92,6 +114,22 @@ public class LaunchService extends IntentService {
             LogUtils.e("failed to check started at flag", e);
         }
         deployAndLaunch();
+    }
+
+    private String isRunningAs() {
+        try {
+            String content = HttpUtils.get("http://127.0.0.1:" + ConfigUtils.getHttpManagerPort() + "/ping", null, 1000);
+            String myVersion = getMyVersion(this);
+            if (("VPN PONG/" + myVersion).equals(content)) {
+                return "VPN";
+            }
+            if (("PONG/" + myVersion).equals(content)) {
+                return "ROOT";
+            }
+            return "";
+        } catch (Exception e) {
+            return "";
+        }
     }
 
     private String _(int id) {
@@ -135,6 +173,12 @@ public class LaunchService extends IntentService {
     private String launch(boolean isVpnMode) {
         try {
             Process process = executeManager(isVpnMode);
+            String apnName = getApnName();
+            LogUtils.i("apn name: " + apnName);
+            if (WAP_APN_LIST.contains(apnName.trim().toLowerCase())) {
+                sendBroadcast(new HandleAlertIntent(HandleAlertIntent.ALERT_TYPE_3G_APN));
+                Thread.sleep(3000);
+            }
             for (int i = 0; i < 30; i++) {
                 if (ping(this, isVpnMode)) {
                     return "";
@@ -145,9 +189,26 @@ public class LaunchService extends IntentService {
                 sendBroadcast(new LaunchingIntent(_(R.string.status_starting_manager), 45 + i));
                 sleepOneSecond();
             }
+            if (WAP_APN_LIST.contains(apnName.trim().toLowerCase())) {
+                return _(R.string.status_3g_apn_has_proxy);
+            }
             return _(R.string.status_timed_out);
         } catch (Exception e) {
             return LogUtils.e("failed to launch", e);
+        }
+    }
+
+    private String getApnName() {
+        try {
+            ConnectivityManager conManager = (ConnectivityManager) this.getSystemService(Context.CONNECTIVITY_SERVICE);
+            NetworkInfo ni = conManager.getActiveNetworkInfo();
+            if (null == ni) {
+                return null;
+            }
+            return ni.getExtraInfo();
+        } catch (Exception e) {
+            LogUtils.e("failed to get apn name", e);
+            return null;
         }
     }
 
