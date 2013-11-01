@@ -175,7 +175,7 @@ public class LaunchService extends IntentService {
             Process process = executeManager(isVpnMode);
             String apnName = getApnName();
             LogUtils.i("apn name: " + apnName);
-            if (WAP_APN_LIST.contains(apnName.trim().toLowerCase())) {
+            if (apnName != null && WAP_APN_LIST.contains(apnName.trim().toLowerCase())) {
                 sendBroadcast(new HandleAlertIntent(HandleAlertIntent.ALERT_TYPE_3G_APN));
                 Thread.sleep(3000);
             }
@@ -189,7 +189,7 @@ public class LaunchService extends IntentService {
                 sendBroadcast(new LaunchingIntent(_(R.string.status_starting_manager), 45 + i));
                 sleepOneSecond();
             }
-            if (WAP_APN_LIST.contains(apnName.trim().toLowerCase())) {
+            if (apnName != null && WAP_APN_LIST.contains(apnName.trim().toLowerCase())) {
                 return _(R.string.status_3g_apn_has_proxy);
             }
             return _(R.string.status_timed_out);
@@ -203,12 +203,12 @@ public class LaunchService extends IntentService {
             ConnectivityManager conManager = (ConnectivityManager) this.getSystemService(Context.CONNECTIVITY_SERVICE);
             NetworkInfo ni = conManager.getActiveNetworkInfo();
             if (null == ni) {
-                return null;
+                return "";
             }
             return ni.getExtraInfo();
         } catch (Exception e) {
             LogUtils.e("failed to get apn name", e);
-            return null;
+            return "";
         }
     }
 
