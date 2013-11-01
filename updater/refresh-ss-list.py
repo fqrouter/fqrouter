@@ -43,41 +43,21 @@ while True:
         proxies = [
             # ('69.163.40.146', 220, 'A76nOIHdZEYw', 'rc4'), #ds1
             # ('69.163.40.146', 221, 'A76nOIHdZEYw', 'rc4'), #ds1
-            ('174.140.169.55', 220, 'A76nOIHdZEYw', 'rc4'), #ds2
-            # ('174.140.169.55', 221, 'A76nOIHdZEYw', 'rc4'), #ds2
-            # ('174.140.169.55', 222, 'A76nOIHdZEYw', 'rc4'), #ds2
-            # ('174.140.169.55', 223, 'A76nOIHdZEYw', 'rc4'), #ds2
-            ('174.140.171.244', 220, 'A76nOIHdZEYw', 'rc4'), #ds3
-            # ('174.140.171.244', 221, 'A76nOIHdZEYw', 'rc4'), #ds3
-            # ('192.184.80.11', 220, 'A76nOIHdZEYw', 'rc4'), #ramnode2
-            # ('192.184.80.11', 221, 'A76nOIHdZEYw', 'rc4'), #ramnode2
-            # ('199.188.75.60', 220, 'A76nOIHdZEYw', 'rc4'), #raidlogic
-            # ('199.188.75.60', 221, 'A76nOIHdZEYw', 'rc4'), #raidlogic
-            # ('176.56.236.63', 220, 'A76nOIHdZEYw', 'rc4'), #ramnode3
-            ('176.56.236.63', 221, 'A76nOIHdZEYw', 'rc4'), #ramnode3
-            # ('162.220.11.191', 220, 'A76nOIHdZEYw', 'rc4'), #crissic
-            ('162.220.11.191', 221, 'A76nOIHdZEYw', 'rc4'), #crissic
-            # ('209.141.57.22', 220, 'A76nOIHdZEYw', 'rc4'), #buyvm2
-            ('209.141.57.22', 221, 'A76nOIHdZEYw', 'rc4'), #buyvm2
-            ('174.140.169.62', 220, 'A76nOIHdZEYw', 'rc4'), #ds4
-            # ('174.140.169.62', 221, 'A76nOIHdZEYw', 'rc4'), #ds4
-            ('174.140.169.65', 220, 'A76nOIHdZEYw', 'rc4'), #ds5
-            # ('174.140.169.65', 221, 'A76nOIHdZEYw', 'rc4'), #ds5
-            ('162.217.248.65', 220, 'A76nOIHdZEYw', 'rc4'), #iniz1
-            ('162.217.248.65', 221, 'A76nOIHdZEYw', 'rc4'), #iniz1
-            ('162.217.248.65', 222, 'A76nOIHdZEYw', 'rc4'), #iniz1
-            ('162.217.248.65', 223, 'A76nOIHdZEYw', 'rc4'), #iniz1
-            # ('192.249.61.233', 8318, 'fqrouter', 'rc4'), #ramnode1
-            # ('198.98.49.121', 8318, 'fqrouter', 'rc4'), #buyvm1
+            ('174.140.169.55', random.choice([220, 221, 222, 223]), 'A76nOIHdZEYw', 'rc4'), #ds2
+            ('174.140.171.244', random.choice([220, 221]), 'A76nOIHdZEYw', 'rc4'), #ds3
+            ('192.184.80.11', random.choice([220, 221]), 'A76nOIHdZEYw', 'rc4'), #ramnode2
+            ('199.188.75.60', random.choice([220, 221]), 'A76nOIHdZEYw', 'rc4'), #raidlogic
+            ('176.56.236.63', random.choice([220, 221]), 'A76nOIHdZEYw', 'rc4'), #ramnode3
+            ('162.220.11.191', random.choice([220, 221]), 'A76nOIHdZEYw', 'rc4'), #crissic
+            ('209.141.57.22', random.choice([220, 221]), 'A76nOIHdZEYw', 'rc4'), #buyvm2
+            ('174.140.169.62', random.choice([220, 221]), 'A76nOIHdZEYw', 'rc4'), #ds4
+            ('174.140.169.65', random.choice([220, 221]), 'A76nOIHdZEYw', 'rc4'), #ds5
+            ('162.217.248.65', random.choice([220, 221, 222, 223]), 'A76nOIHdZEYw', 'rc4'), #iniz1
+            ('162.217.248.91', random.choice([220, 221, 222, 223]), 'A76nOIHdZEYw', 'rc4'), #iniz2
+            ('192.249.61.233', random.choice([220, 221]), 'A76nOIHdZEYw', 'rc4'), #ramnode1
+            ('198.98.49.121', random.choice([220, 221]), 'A76nOIHdZEYw', 'rc4'), #buyvm1
         ]
         random.shuffle(proxies)
-        proxies = [
-                      # ('192.81.133.165', 12121, 'wendangku.org', 'aes-256-cfb'),
-                      # ('198.199.92.59', random.choice([20, 220]), 'CSHf37eErWAV', 'bf-cfb'),
-                      # ('88.191.139.226', random.choice([20, 220]), 'CSHf37eErWAV', 'bf-cfb'),
-                      # ('198.46.158.191', 10086, '321654', 'bf-cfb'),
-                      # ('23.90.8.131', 1993, 'shadowsocks.pw', 'table')
-                  ] + proxies
         i = 1
         for ip, port, password, encrypt_method in proxies:
             if check_proxy(ip, port, password, encrypt_method):
