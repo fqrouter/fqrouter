@@ -111,12 +111,6 @@ def run():
     iptables.insert_rules(SOCKS_RULES)
     shutdown_hook.add(functools.partial(iptables.delete_rules, SOCKS_RULES))
     wifi.setup_lo_alias()
-    try:
-        comp_scrambler.start()
-        shutdown_hook.add(comp_scrambler.stop)
-    except:
-        LOGGER.exception('failed to start comp_scrambler')
-        comp_scrambler.stop()
     args = [
         '--log-level', 'INFO',
         '--log-file', '/data/data/fq.router2/log/fqsocks.log',
@@ -127,6 +121,13 @@ def run():
         '--dns-server-listen', '10.1.2.3:12345']
     args = config.configure_fqsocks(args)
     fqsocks.fqsocks.init_config(args)
+    if fqsocks.config_file.read_config()['tcp_scrambler_enabled']:
+        try:
+            comp_scrambler.start()
+            shutdown_hook.add(comp_scrambler.stop)
+        except:
+            LOGGER.exception('failed to start comp_scrambler')
+            comp_scrambler.stop()
     if fqsocks.config_file.read_config()['china_shortcut_enabled']:
         try:
             comp_shortcut.start()
