@@ -56,6 +56,8 @@ while True:
             ('162.217.248.91', random.choice([220, 221, 222, 223]), 'A76nOIHdZEYw', 'rc4'), #iniz2
             ('192.249.61.233', random.choice([220, 221]), 'A76nOIHdZEYw', 'rc4'), #ramnode1
             ('198.98.49.121', random.choice([220, 221]), 'A76nOIHdZEYw', 'rc4'), #buyvm1
+            ('192.184.94.236', random.choice([220, 221]), 'A76nOIHdZEYw', 'rc4'), #ramnode4
+            ('208.117.11.211', random.choice([220, 221, 222, 223]), 'A76nOIHdZEYw', 'rc4'), #daring
         ]
         random.shuffle(proxies)
         i = 1
