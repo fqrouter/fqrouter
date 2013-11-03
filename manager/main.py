@@ -119,6 +119,8 @@ def run():
         '--outbound-ip', '10.1.2.3',
         '--tcp-gateway-listen', '10.1.2.3:12345',
         '--dns-server-listen', '10.1.2.3:12345']
+    if shell.USE_SU:
+        args.append('--no-tcp-scrambler')
     args = config.configure_fqsocks(args)
     fqsocks.fqsocks.init_config(args)
     if fqsocks.config_file.read_config()['tcp_scrambler_enabled']:
