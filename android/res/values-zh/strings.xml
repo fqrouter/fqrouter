@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="app_name">fqrouter2</string>
+    <string name="app_name">翻墙路由器</string>
     <string name="old_version_alert_title">fqrouter已经升级到了2.x.x版</string>
     <string name="old_version_alert_message">如果你遇到了错误，请重启手机然后卸载fqrouter旧的1.x.x版。</string>
     <string name="old_version_alert_button">好吧，我这就去做</string>

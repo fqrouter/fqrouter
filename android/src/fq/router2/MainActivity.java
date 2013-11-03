@@ -10,6 +10,7 @@ import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
 import android.net.Uri;
 import android.net.VpnService;
+import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
 import android.preference.PreferenceManager;
@@ -102,11 +103,16 @@ public class MainActivity extends Activity implements
             @Override
             public void onClick(View view) {
                 gaTracker.sendEvent("more-power", "click", "", new Long(0));
-                showWebView();
+                if (Build.VERSION.SDK_INT < 14) {
+                    Uri uri = Uri.parse("http://127.0.0.1:" + ConfigUtils.getHttpManagerPort());
+                    startActivity(new Intent(Intent.ACTION_VIEW, uri));
+                } else {
+                    showWebView();
+                }
             }
         });
         if (isReady) {
-            loadWebView();
+            onReady();
             showWebView();
         } else {
             LaunchService.execute(this);
@@ -153,6 +159,9 @@ public class MainActivity extends Activity implements
     }
 
     private void loadWebView() {
+        if (Build.VERSION.SDK_INT < 14) {
+            return;
+        }
         WebView webView = (WebView) findViewById(R.id.webView);
         webView.getSettings().setJavaScriptEnabled(true);
         webView.getSettings().setAppCacheEnabled(false);
@@ -570,6 +579,9 @@ public class MainActivity extends Activity implements
     }
 
     private void showWebView() {
+        if (Build.VERSION.SDK_INT < 14) {
+            return;
+        }
         if (isReady) {
             final TextView statusTextView = (TextView) findViewById(R.id.statusTextView);
             statusTextView.setText(R.string.status_loading_page);

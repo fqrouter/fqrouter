@@ -117,8 +117,11 @@ public class LaunchService extends IntentService {
     }
 
     private String isRunningAs() {
+        if (!ManagerProcess.exists()) {
+            return "";
+        }
         try {
-            String content = HttpUtils.get("http://127.0.0.1:" + ConfigUtils.getHttpManagerPort() + "/ping", null, 1000);
+            String content = HttpUtils.get("http://127.0.0.1:" + ConfigUtils.getHttpManagerPort() + "/ping");
             String myVersion = getMyVersion(this);
             if (("VPN PONG/" + myVersion).equals(content)) {
                 return "VPN";

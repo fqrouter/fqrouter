@@ -42,21 +42,21 @@ public class ExitService extends IntentService {
             new Thread(new Runnable() {
                 @Override
                 public void run() {
+                    stopService(new Intent(ExitService.this, DownloadService.class));
+                    stopService(new Intent(ExitService.this, AcquireWifiLockService.class));
                     if (ShellUtils.isRooted()) {
-                        try {
-                            for (File file : new File[]{IOUtils.ETC_DIR, IOUtils.LOG_DIR, IOUtils.VAR_DIR}) {
-                                if (file.listFiles().length > 0) {
+                        for (File file : new File[]{IOUtils.ETC_DIR, IOUtils.LOG_DIR, IOUtils.VAR_DIR}) {
+                            if (file.listFiles().length > 0) {
+                                try {
                                     ShellUtils.sudo(ShellUtils.BUSYBOX_FILE + " chmod 666 " + file + "/*");
+                                } catch (Exception e) {
+                                    LogUtils.e("failed to chmod files to non-root", e);
                                 }
                             }
-                        } catch (Exception e) {
-                            LogUtils.e("failed to chmod files to non-root", e);
                         }
                     }
                 }
             }).start();
-            stopService(new Intent(this, DownloadService.class));
-            stopService(new Intent(this, AcquireWifiLockService.class));
             try {
                 ManagerProcess.kill();
             } catch (Exception e) {

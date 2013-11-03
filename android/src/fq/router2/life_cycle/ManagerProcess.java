@@ -10,6 +10,7 @@ public class ManagerProcess {
 
     public static void kill() throws Exception {
         if (Deployer.MANAGER_MAIN_PY.exists() && ShellUtils.isRooted()) {
+            LogUtils.i("run clean");
             try {
                 if ("run-needs-su".equals(getRunMode())) {
                     ShellUtils.execute(
