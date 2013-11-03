@@ -140,22 +140,6 @@ public class ShellUtils {
         return IS_ROOTED;
     }
 
-    public static void dumpSuVersion() {
-        try {
-            Process process = executeNoWait(new HashMap<String, String>(), findCommand("su"), "-v");
-            try {
-                OutputStreamWriter writer = new OutputStreamWriter(process.getOutputStream());
-                writer.write("exit\n");
-                writer.close();
-            }  catch (Exception e) {
-                // ignore
-            }
-            LogUtils.i("su version: " + waitFor("su -v", process).trim());
-        } catch (Exception e) {
-            LogUtils.e("failed to get su version", e);
-        }
-    }
-
     public static boolean isRooted() {
         return Boolean.TRUE.equals(IS_ROOTED);
     }

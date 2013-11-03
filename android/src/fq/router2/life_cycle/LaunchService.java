@@ -57,12 +57,6 @@ public class LaunchService extends IntentService {
         boolean rooted = ShellUtils.checkRooted();
         LogUtils.i("rooted: " + rooted);
         sendBroadcast(new LaunchingIntent(_(R.string.status_check_existing_process), 10));
-        new Thread(new Runnable() {
-            @Override
-            public void run() {
-                ShellUtils.dumpSuVersion();
-            }
-        }).start();
         if (isVpnRunning()) {
             LogUtils.i("manager is already running in vpn mode");
             sendBroadcast(new LaunchedIntent(true));
