@@ -328,9 +328,13 @@ public class MainActivity extends Activity implements
     }
 
     public static void clearNotification(Context context) {
-        NotificationManager notificationManager =
-                (NotificationManager) context.getSystemService(NOTIFICATION_SERVICE);
-        notificationManager.cancel(1983);
+        try {
+            NotificationManager notificationManager =
+                    (NotificationManager) context.getSystemService(NOTIFICATION_SERVICE);
+            notificationManager.cancel(1983);
+        } catch (Exception e) {
+            LogUtils.e("failed to clear notification", e);
+        }
     }
 
     public void updateStatus(String status, int progress) {

@@ -51,7 +51,7 @@ while True:
             ('162.220.11.191', random.choice([220, 221]), 'A76nOIHdZEYw', 'rc4'), #crissic
             ('209.141.57.22', random.choice([220, 221]), 'A76nOIHdZEYw', 'rc4'), #buyvm2
             ('174.140.169.62', random.choice([220, 221]), 'A76nOIHdZEYw', 'rc4'), #ds4
-            ('174.140.169.65', random.choice([220, 221]), 'A76nOIHdZEYw', 'rc4'), #ds5
+            ('174.140.169.65', random.choice([220, 221, 222, 223]), 'A76nOIHdZEYw', 'rc4'), #ds5
             ('162.217.248.65', random.choice([220, 221, 222, 223]), 'A76nOIHdZEYw', 'rc4'), #iniz1
             ('162.217.248.91', random.choice([220, 221, 222, 223]), 'A76nOIHdZEYw', 'rc4'), #iniz2
             ('192.249.61.233', random.choice([220, 221]), 'A76nOIHdZEYw', 'rc4'), #ramnode1
