@@ -65,13 +65,13 @@ while True:
         i = 1
         for ip, port, password, encrypt_method in proxies:
             if check_proxy(ip, port, password, encrypt_method):
-                subprocess.call('cli53 rrcreate fqrouter.com ss%s.a TXT %s:%s:%s:%s --ttl 450 --replace'
+                subprocess.call('cli53 rrcreate fqrouter.com ss%s.a TXT %s:%s:%s:%s --ttl 900 --replace'
                                 % (i, ip, port, password, encrypt_method), shell=True)
                 i += 1
         for j in range(i, 11):
             LOGGER.info('[N/A] ss%s.fqrouter.com' % j)
-            subprocess.call('cli53 rrcreate fqrouter.com ss%s.a TXT "" --ttl 450 --replace' % j, shell=True)
+            subprocess.call('cli53 rrcreate fqrouter.com ss%s.a TXT "" --ttl 900 --replace' % j, shell=True)
         print('%s done' % datetime.datetime.now())
     except:
         LOGGER.exception('failed to update proxies')
-    time.sleep(300)
+    time.sleep(900)

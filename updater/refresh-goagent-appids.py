@@ -342,11 +342,11 @@ def main():
                 for i, appid in enumerate(good_app_ids):
                     domain = 'goagent%s' % (i + 1)
                     LOGGER.info('%s => %s' % (domain, appid))
-                    subprocess.call('cli53 rrcreate fqrouter.com %s.%s TXT %s --ttl 450 --replace' % (domain, group_id, appid), shell=True)
+                    subprocess.call('cli53 rrcreate fqrouter.com %s.%s TXT %s --ttl 900 --replace' % (domain, group_id, appid), shell=True)
                     time.sleep(1)
-                subprocess.call('cli53 rrcreate fqrouter.com proxies TXT "1:goagent:20:goagent#.%s" "2:ss:7:ss#.a" --ttl 150 --replace' % group_id, shell=True)
+                subprocess.call('cli53 rrcreate fqrouter.com proxies TXT "1:goagent:20:goagent#.%s" "2:ss:7:ss#.a" --ttl 300 --replace' % group_id, shell=True)
                 LOGGER.info('group %s done at %s ' % (group_id, datetime.datetime.now()))
-                time.sleep(60)
+                time.sleep(150)
 
 
 
