@@ -19,20 +19,22 @@ def check_proxy(ip, port, password, encrypt_method):
         sock = socket.socket()
         sock.settimeout(10)
         sock.connect((ip, port))
-        encryptor = encrypt.Encryptor(password, encrypt_method)
-        addr_to_send = '\x01'
-        addr_to_send += socket.inet_aton(google_ip)
-        addr_to_send += struct.pack('>H', 80)
-        sock.sendall(encryptor.encrypt(addr_to_send))
-        sock.sendall(encryptor.encrypt('GET http://www.google.com/ncr HTTP/1.1\r\n\r\n'))
-        response = encryptor.decrypt(sock.recv(8192))
-        ok = '302' in response
-        if ok:
-            LOGGER.info('[OK] %s:%s' % (ip, port))
-            return True
-        else:
-            LOGGER.info('[FAIL] %s:%s\n%s' % (ip, port, response))
-            return False
+        LOGGER.info('[OK] %s:%s' % (ip, port))
+        return True
+        # encryptor = encrypt.Encryptor(password, encrypt_method)
+        # addr_to_send = '\x01'
+        # addr_to_send += socket.inet_aton(google_ip)
+        # addr_to_send += struct.pack('>H', 443)
+        # sock.sendall(encryptor.encrypt(addr_to_send))
+        # sock.sendall(encryptor.encrypt('GET http://www.google.com/ncr HTTP/1.1\r\n\r\n'))
+        # response = encryptor.decrypt(sock.recv(8192))
+        # ok = '302' in response
+        # if ok:
+        #     LOGGER.info('[OK] %s:%s' % (ip, port))
+        #     return True
+        # else:
+        #     LOGGER.info('[FAIL] %s:%s\n%s' % (ip, port, response))
+        #     return False
     except:
         LOGGER.exception('[FAIL] %s:%s' % (ip, port))
         return False
