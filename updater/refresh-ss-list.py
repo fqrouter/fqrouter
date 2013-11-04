@@ -49,11 +49,13 @@ while True:
             ('199.188.75.60', random.choice([220, 221]), 'A76nOIHdZEYw', 'rc4'), #raidlogic
             ('176.56.236.63', random.choice([220, 221]), 'A76nOIHdZEYw', 'rc4'), #ramnode3
             ('162.220.11.191', random.choice([220, 221]), 'A76nOIHdZEYw', 'rc4'), #crissic
+            ('23.226.131.18', random.choice([220, 221, 222, 223]), 'A76nOIHdZEYw', 'rc4'), #crissic2
             ('209.141.57.22', random.choice([220, 221]), 'A76nOIHdZEYw', 'rc4'), #buyvm2
             ('174.140.169.62', random.choice([220, 221]), 'A76nOIHdZEYw', 'rc4'), #ds4
             ('174.140.169.65', random.choice([220, 221, 222, 223]), 'A76nOIHdZEYw', 'rc4'), #ds5
             ('162.217.248.65', random.choice([220, 221, 222, 223]), 'A76nOIHdZEYw', 'rc4'), #iniz1
             ('162.217.248.91', random.choice([220, 221, 222, 223]), 'A76nOIHdZEYw', 'rc4'), #iniz2
+            ('162.220.240.220', random.choice([220, 221, 222, 223]), 'A76nOIHdZEYw', 'rc4'), #iniz3
             # ('192.249.61.233', random.choice([220, 221]), 'A76nOIHdZEYw', 'rc4'), #ramnode1
             ('198.98.49.121', random.choice([220, 221]), 'A76nOIHdZEYw', 'rc4'), #buyvm1
             # ('192.184.94.236', random.choice([220, 221]), 'A76nOIHdZEYw', 'rc4'), #ramnode4
