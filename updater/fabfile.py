@@ -31,7 +31,16 @@ def deploy():
         index = i + 1
         api.run('nohup ss-server -c /etc/shadowsocks/config%s.json -f /var/run/shadowsocks/shadowsocks%s.pid' % (index, index))
 
-def block_80():
+def iptables():
     api.run('iptables --flush')
-    api.run('iptables -I INPUT -d %s -p tcp --dport 3000 -j DROP' % api.env.host)
-    api.run('iptables -I OUTPUT -s %s -p tcp --dport 80 -j DROP' % api.env.host)
+    api.run('iptables -A OUTPUT -s %s -d 173.194.0.0/16 -p tcp --dport 80 -j ACCEPT' % api.env.host)
+    api.run('iptables -A OUTPUT -s %s -d 74.125.0.0/16 -p tcp --dport 80 -j ACCEPT' % api.env.host)
+    api.run('iptables -A OUTPUT -s %s -p tcp --dport 443 -j ACCEPT' % api.env.host)
+    api.run('iptables -A OUTPUT -s %s -p tcp --sport 22 -j ACCEPT' % api.env.host)
+    api.run('iptables -A OUTPUT -s %s -p tcp --sport 80 -j ACCEPT' % api.env.host)
+    api.run('iptables -A OUTPUT -s %s -p tcp --sport 220 -j ACCEPT' % api.env.host)
+    api.run('iptables -A OUTPUT -s %s -p tcp --sport 221 -j ACCEPT' % api.env.host)
+    api.run('iptables -A OUTPUT -s %s -p tcp --sport 222 -j ACCEPT' % api.env.host)
+    api.run('iptables -A OUTPUT -s %s -p tcp --sport 223 -j ACCEPT' % api.env.host)
+    api.run('iptables -A OUTPUT -s %s -j DROP' % api.env.host)
+    api.run('iptables -A INPUT -d %s -p tcp --dport 3000 -j DROP' % api.env.host)
