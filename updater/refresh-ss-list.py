@@ -47,8 +47,8 @@ while True:
             # ('69.163.40.146', 221, 'A76nOIHdZEYw', 'rc4'), #ds1
             # ('174.140.169.55', random.choice([220, 221, 222, 223]), 'A76nOIHdZEYw', 'rc4'), #ds2
             # ('174.140.171.244', random.choice([220, 221]), 'A76nOIHdZEYw', 'rc4'), #ds3
-            ('192.184.80.11', random.choice([220, 221]), 'A76nOIHdZEYw', 'rc4'), #ramnode2
-            ('199.188.75.60', random.choice([220, 221]), 'A76nOIHdZEYw', 'rc4'), #raidlogic
+            # ('192.184.80.11', random.choice([220, 221]), 'A76nOIHdZEYw', 'rc4'), #ramnode2
+            # ('199.188.75.60', random.choice([220, 221]), 'A76nOIHdZEYw', 'rc4'), #raidlogic
             ('176.56.236.63', random.choice([220, 221]), 'A76nOIHdZEYw', 'rc4'), #ramnode3
             ('162.220.11.191', random.choice([220, 221]), 'A76nOIHdZEYw', 'rc4'), #crissic
             ('23.226.131.18', random.choice([220, 221, 222, 223]), 'A76nOIHdZEYw', 'rc4'), #crissic2
@@ -63,6 +63,7 @@ while True:
             # ('192.184.94.236', random.choice([220, 221]), 'A76nOIHdZEYw', 'rc4'), #ramnode4
             ('208.117.11.211', random.choice([220, 221, 222, 223]), 'A76nOIHdZEYw', 'rc4'), #daring
             ('192.227.168.26', random.choice([220, 221, 222, 223]), 'A76nOIHdZEYw', 'rc4'), #bluevm1
+            ('192.227.161.154', random.choice([220, 221, 222, 223]), 'A76nOIHdZEYw', 'rc4'), #bluevm2
         ]
         random.shuffle(proxies)
         i = 1
