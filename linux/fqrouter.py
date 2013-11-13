@@ -50,6 +50,7 @@ def main():
         '--outbound-ip', '10.1.2.3',
         '--config-file', os.path.join(os.path.dirname(__file__), 'etc', 'fqsocks.json'),
         '--no-access-check',
+        # '--log-level', 'DEBUG',
         '--google-host', 'goagent-google-ip.fqrouter.com',
         '--google-host', 'goagent-google-ip2.fqrouter.com'
     ])
