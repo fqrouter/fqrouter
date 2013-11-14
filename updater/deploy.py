@@ -27,7 +27,7 @@ with open('/etc/shadowsocks/config.json', 'w') as f:
 }
         """ % ip)
 
-for i in range(3):
+for i in range(1):
     index = i + 1
     with open('/etc/shadowsocks/config%s.json' % index, 'w') as f:
         f.write(

@@ -50,8 +50,8 @@ while True:
             # ('192.184.80.11', random.choice([220, 221]), 'A76nOIHdZEYw', 'rc4'), #ramnode2
             # ('199.188.75.60', random.choice([220, 221]), 'A76nOIHdZEYw', 'rc4'), #raidlogic
             ('176.56.236.63', random.choice([220, 221]), 'A76nOIHdZEYw', 'rc4'), #ramnode3
-            ('162.220.11.191', random.choice([220, 221]), 'A76nOIHdZEYw', 'rc4'), #crissic
-            ('23.226.131.18', random.choice([220, 221, 222, 223]), 'A76nOIHdZEYw', 'rc4'), #crissic2
+            ('162.220.11.191', random.choice([220, 221]), 'A76nOIHdZEYw', 'rc4'), #crissic1
+            ('23.226.131.18', random.choice([220, 221]), 'A76nOIHdZEYw', 'rc4'), #crissic2
             # ('209.141.57.22', random.choice([220, 221]), 'A76nOIHdZEYw', 'rc4'), #buyvm2
             ('174.140.169.62', random.choice([220, 221]), 'A76nOIHdZEYw', 'rc4'), #ds4
             ('174.140.169.65', random.choice([220, 221, 222, 223]), 'A76nOIHdZEYw', 'rc4'), #ds5
