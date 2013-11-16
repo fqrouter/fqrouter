@@ -185,7 +185,7 @@ def read_tun_fd():
         try:
             fdsock.connect('\0fdsock2')
             fdsock.sendall('TUN\n')
-            gevent.socket.wait_read(fdsock.fileno())
+            gevent.socket.wait_read(fdsock.fileno(), timeout=3)
             tun_fd = _multiprocessing.recvfd(fdsock.fileno())
             if tun_fd == 1:
                 LOGGER.error('received invalid tun fd')
