@@ -115,15 +115,7 @@ public class MainActivity extends Activity implements
             onReady();
             showWebView();
         } else {
-            handler.postDelayed(new Runnable() {
-                @Override
-                public void run() {
-                    sendBroadcast(new LaunchingIntent(_(R.string.status_check_root), 5));
-                    boolean rooted = ShellUtils.checkRooted();
-                    LogUtils.i("rooted: " + rooted);
-                    LaunchService.execute(MainActivity.this);
-                }
-            }, 0);
+            LaunchService.execute(this);
         }
     }
 

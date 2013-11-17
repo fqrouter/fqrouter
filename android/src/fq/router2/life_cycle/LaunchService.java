@@ -53,6 +53,9 @@ public class LaunchService extends IntentService {
     @Override
     protected void onHandleIntent(Intent intent) {
         LogUtils.i("ver: " + getMyVersion(this));
+        sendBroadcast(new LaunchingIntent(_(R.string.status_check_root), 5));
+        boolean rooted = ShellUtils.checkRooted();
+        LogUtils.i("rooted: " + rooted);
         sendBroadcast(new LaunchingIntent(_(R.string.status_check_existing_process), 10));
         if (isVpnRunning()) {
             LogUtils.i("manager is already running in vpn mode");
@@ -82,7 +85,7 @@ public class LaunchService extends IntentService {
             }
             return;
         }
-        if (ShellUtils.isRooted()) {
+        if (rooted) {
             sendBroadcast(new LaunchingIntent(_(R.string.status_about_to_launch_in_root_mode), 20));
         } else {
             if (Build.VERSION.SDK_INT < 14) {
