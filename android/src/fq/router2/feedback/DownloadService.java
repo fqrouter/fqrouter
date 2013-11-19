@@ -6,6 +6,7 @@ import android.content.Intent;
 import fq.router2.utils.LogUtils;
 
 import java.io.FileOutputStream;
+import java.io.IOException;
 import java.io.InputStream;
 import java.net.HttpURLConnection;
 import java.net.URL;
@@ -18,19 +19,17 @@ public class DownloadService extends IntentService {
 
     @Override
     protected void onHandleIntent(Intent intent) {
-        final String rawUrl = intent.getStringExtra("url");
+        String rawUrl = intent.getStringExtra("url");
         final String downloadTo = intent.getStringExtra("downloadTo");
         try {
-            URL url = new URL(rawUrl);
-            HttpURLConnection connection = (HttpURLConnection) url.openConnection();
-            connection.setInstanceFollowRedirects(true);
-            connection.connect();
+            HttpURLConnection connection = followRedirect(rawUrl);
             if (connection.getResponseCode() != HttpURLConnection.HTTP_OK) {
                 LogUtils.i("download failed: http not ok " + connection.getResponseCode());
                 sendBroadcast(new DownloadFailedIntent(rawUrl, downloadTo));
                 return;
             }
             int fileLength = connection.getContentLength();
+            LogUtils.i("download length: " + fileLength);
             InputStream input = connection.getInputStream();
             try {
                 FileOutputStream output = new FileOutputStream(downloadTo);
@@ -55,6 +54,40 @@ public class DownloadService extends IntentService {
         } catch (Exception e) {
             LogUtils.e("failed to download", e);
             sendBroadcast(new DownloadFailedIntent(rawUrl, downloadTo));
+        }
+    }
+
+    private HttpURLConnection followRedirect(String rawUrl) throws Exception {
+        for (int i = 0; i < 10; i++) {
+            URL url = new URL(rawUrl);
+            HttpURLConnection connection = (HttpURLConnection) url.openConnection();
+            connection.connect();
+            try {
+                int responseCode = getResponseCode(connection);
+                LogUtils.i("download response code: " + responseCode);
+                if (responseCode == HttpURLConnection.HTTP_MOVED_TEMP ||
+                        responseCode == HttpURLConnection.HTTP_MOVED_PERM) {
+                    rawUrl = connection.getHeaderField("Location");
+                    LogUtils.i("redirect to => " + rawUrl);
+                    connection.disconnect();
+                    continue;
+                }
+            } catch (IOException e) {
+                LogUtils.e("download io exception", e);
+                continue;
+            }
+            return connection;
+        }
+        throw new Exception("too many retries");
+    }
+
+    private int getResponseCode(HttpURLConnection connection) throws Exception {
+        try {
+            return connection.getResponseCode();
+        } catch (Exception e) {
+            LogUtils.e("failed to get response code", e);
+            Thread.sleep(1000);
+            return connection.getResponseCode();
         }
     }
 

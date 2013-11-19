@@ -11,23 +11,33 @@ public class LogUtils {
 
     public static String e(String msg) {
         try {
-            Log.e("fqrouter", msg);
-            writeLogFile("ERROR", msg);
+            try {
+                Log.e("fqrouter", msg);
+                writeLogFile("ERROR", msg);
+            } catch (Exception e) {
+                System.out.println(msg);
+            }
+            return msg;
         } catch (Exception e) {
-            System.out.println(msg);
+            // ignore
+            return msg;
         }
-        return msg;
     }
 
     public static String e(String msg, Throwable exception) {
         try {
-            Log.e("fqrouter", msg, exception);
-            writeLogFile("ERROR", msg + "\r\n" + formatException(exception));
-        } catch (Exception e) {
-            System.out.println(msg);
-            exception.printStackTrace();
+            try {
+                Log.e("fqrouter", msg, exception);
+                writeLogFile("ERROR", msg + "\r\n" + formatException(exception));
+            } catch (Exception e) {
+                System.out.println(msg);
+                exception.printStackTrace();
+            }
+            return msg;
+        } catch(Exception e) {
+            // ignore
+            return msg;
         }
-        return msg;
     }
 
     private static String formatException(Throwable e) {
@@ -40,10 +50,14 @@ public class LogUtils {
 
     public static void i(String msg) {
         try {
-            Log.i("fqrouter", msg);
-            writeLogFile("INFO", msg);
-        }  catch (Exception e) {
-            System.out.println(msg);
+            try {
+                Log.i("fqrouter", msg);
+                writeLogFile("INFO", msg);
+            }  catch (Exception e) {
+                System.out.println(msg);
+            }
+        } catch (Exception e) {
+            // ignore
         }
     }
 
