@@ -65,6 +65,8 @@ while True:
             ('192.227.168.26', random.choice([220, 221, 222, 223]), 'A76nOIHdZEYw', 'rc4'), #bluevm1
             ('192.227.161.154', random.choice([220, 221]), 'A76nOIHdZEYw', 'rc4'), #bluevm2
             ('199.175.49.97', random.choice([220, 221]), 'A76nOIHdZEYw', 'rc4'), #vpscheap1
+            ('192.3.116.233', random.choice([220, 221]), 'A76nOIHdZEYw', 'rc4'), #azzavps centos
+            ('198.136.29.74', random.choice([220, 221]), 'A76nOIHdZEYw', 'rc4'), #crowncloud
         ]
         random.shuffle(proxies)
         i = 1
