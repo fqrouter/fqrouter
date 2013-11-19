@@ -4,7 +4,6 @@ import android.app.PendingIntent;
 import android.content.Intent;
 import android.net.LocalServerSocket;
 import android.net.LocalSocket;
-import android.net.Uri;
 import android.net.VpnService;
 import android.os.ParcelFileDescriptor;
 import fq.router2.feedback.HandleFatalErrorIntent;
@@ -13,12 +12,17 @@ import fq.router2.utils.LogUtils;
 
 import java.io.*;
 import java.net.*;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.Set;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
 public class SocksVpnService extends VpnService {
 
     private static ParcelFileDescriptor tunPFD;
+    private Set<String> skippedFds = new HashSet<String>();
+    private Set<Integer> stagingFds = new HashSet<Integer>();
 
     @Override
     public void onStart(Intent intent, int startId) {
@@ -62,28 +66,28 @@ public class SocksVpnService extends VpnService {
             }
             final int tunFD = tunPFD.getFd();
             LogUtils.i("tunFD is " + tunFD);
+            LogUtils.i("Started in VPN mode");
+            sendBroadcast(new SocksVpnConnectedIntent());
             new Thread(new Runnable() {
                 @Override
                 public void run() {
                     try {
-                        listenFdServerSocket(tunPFD);
+                        listenFdServerSocket(tunPFD.getFileDescriptor());
                     } catch (Exception e) {
                         LogUtils.e("fdsock failed " + e, e);
                     }
                 }
             }).start();
-            LogUtils.i("Started in VPN mode");
-            sendBroadcast(new SocksVpnConnectedIntent());
         } catch (Exception e) {
             handleFatalError(LogUtils.e("VPN establish failed", e));
         }
     }
 
-    private void listenFdServerSocket(final ParcelFileDescriptor tunPFD) throws Exception {
+    private void listenFdServerSocket(final FileDescriptor tunFD) throws Exception {
         final LocalServerSocket fdServerSocket = new LocalServerSocket("fdsock2");
         try {
-
             ExecutorService executorService = Executors.newFixedThreadPool(16);
+            int count = 0;
             while (isRunning()) {
                 try {
                     final LocalSocket fdSocket = fdServerSocket.accept();
@@ -91,12 +95,20 @@ public class SocksVpnService extends VpnService {
                         @Override
                         public void run() {
                             try {
-                                passFileDescriptor(fdSocket, tunPFD.getFileDescriptor());
+                                passFileDescriptor(fdSocket, tunFD);
                             } catch (Exception e) {
                                 LogUtils.e("failed to handle fdsock", e);
                             }
                         }
                     });
+                    count += 1;
+                    if (count % 100 == 0) {
+                        if (skippedFds.isEmpty()) {
+                            initSkippedFds();
+                        } else {
+                            closeStagingFds();
+                        }
+                    }
                 } catch (Exception e) {
                     LogUtils.e("failed to handle fdsock", e);
                 }
@@ -105,6 +117,47 @@ public class SocksVpnService extends VpnService {
         } finally {
             fdServerSocket.close();
         }
+    }
+
+    private void initSkippedFds() {
+        String[] fileNames = new File("/proc/self/fd").list();
+        LogUtils.i("init skipped fd count: " + fileNames.length);
+        Collections.addAll(skippedFds, fileNames);
+    }
+
+    private void closeStagingFds() {
+        int count = 0;
+        for (int stagingFd : stagingFds) {
+            try {
+                if (isSocket(stagingFd)) {
+                    ParcelFileDescriptor.adoptFd(stagingFd).close();
+                    count += 1;
+                }
+            } catch (Exception e) {
+                // ignore
+            }
+        }
+        LogUtils.i("closed fd count: " + count);
+        stagingFds.clear();
+        String[] fileNames = new File("/proc/self/fd").list();
+        LogUtils.i("current total fd count: " + fileNames.length);
+        for (String fileName : fileNames) {
+            if (skippedFds.contains(fileName)) {
+                continue;
+            }
+            try {
+                if (isSocket(fileName)) {
+                    stagingFds.add(Integer.parseInt(fileName));
+                }
+            } catch (Exception e) {
+                skippedFds.add(fileName);
+                continue;
+            }
+        }
+    }
+
+    private boolean isSocket(Object fileName) throws IOException {
+        return new File("/proc/self/fd/" + fileName).getCanonicalPath().contains("socket:");
     }
 
     public static boolean isRunning() {
@@ -156,15 +209,16 @@ public class SocksVpnService extends VpnService {
         Socket sock = new Socket();
         sock.setTcpNoDelay(true); // force file descriptor being created
         try {
-            if (protect(sock)) {
+            ParcelFileDescriptor fd = ParcelFileDescriptor.fromSocket(sock);
+            if (protect(fd.getFd())) {
                 try {
                     sock.connect(new InetSocketAddress(dstIp, dstPort), connectTimeout);
-                    ParcelFileDescriptor fd = ParcelFileDescriptor.fromSocket(sock);
                     try {
                         fdSocket.setFileDescriptorsForSend(new FileDescriptor[]{fd.getFileDescriptor()});
                         outputStream.write('*');
                         outputStream.flush();
                     } finally {
+                        sock.close();
                         fd.close();
                     }
                 } catch (ConnectException e) {
@@ -187,13 +241,14 @@ public class SocksVpnService extends VpnService {
     private void passUdpFileDescriptor(LocalSocket fdSocket, OutputStream outputStream) throws Exception {
         DatagramSocket sock = new DatagramSocket();
         try {
-            if (protect(sock)) {
-                ParcelFileDescriptor fd = ParcelFileDescriptor.fromDatagramSocket(sock);
+            ParcelFileDescriptor fd = ParcelFileDescriptor.fromDatagramSocket(sock);
+            if (protect(fd.getFd())) {
                 try {
                     fdSocket.setFileDescriptorsForSend(new FileDescriptor[]{fd.getFileDescriptor()});
                     outputStream.write('*');
                     outputStream.flush();
                 } finally {
+                    sock.close();
                     fd.close();
                 }
             } else {
@@ -203,6 +258,7 @@ public class SocksVpnService extends VpnService {
             sock.close();
         }
     }
+
 
     private void stopVpn() {
         if (tunPFD != null) {

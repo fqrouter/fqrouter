@@ -307,7 +307,7 @@ public class MainActivity extends Activity implements
             clearNotification(context);
             return;
         }
-        if (LaunchService.isVpnRunning()) {
+        if (LaunchService.isVpnRunning(context)) {
             clearNotification(context);
             return;
         }
@@ -355,7 +355,7 @@ public class MainActivity extends Activity implements
     }
 
     public void exit() {
-        if (LaunchService.isVpnRunning()) {
+        if (LaunchService.isVpnRunning(this)) {
             Toast.makeText(this, R.string.vpn_exit_hint, 5000).show();
             return;
         }
@@ -373,7 +373,7 @@ public class MainActivity extends Activity implements
         if (isVpnMode) {
             updateStatus(_(R.string.status_acquire_vpn_permission), 75);
             clearNotification(this);
-            if (LaunchService.isVpnRunning()) {
+            if (LaunchService.isVpnRunning(this)) {
                 onReady();
             } else {
                 startVpn();
@@ -473,7 +473,7 @@ public class MainActivity extends Activity implements
     }
 
     private void startVpn() {
-        if (LaunchService.isVpnRunning()) {
+        if (LaunchService.isVpnRunning(this)) {
             LogUtils.e("vpn is already running, do not start it again");
             return;
         }

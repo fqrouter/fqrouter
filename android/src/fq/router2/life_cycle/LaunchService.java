@@ -1,28 +1,21 @@
 package fq.router2.life_cycle;
 
-import android.app.AlertDialog;
+import android.app.ActivityManager;
 import android.app.IntentService;
 import android.content.Context;
-import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.pm.PackageInfo;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
 import android.os.Build;
-import android.provider.Settings;
-import android.widget.Toast;
 import fq.router2.R;
 import fq.router2.feedback.HandleAlertIntent;
 import fq.router2.feedback.HandleFatalErrorIntent;
-import fq.router2.SocksVpnService;
 import fq.router2.utils.*;
 
 import java.io.File;
 import java.io.OutputStreamWriter;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
 public class LaunchService extends IntentService {
 
@@ -46,8 +39,20 @@ public class LaunchService extends IntentService {
         super("Launch");
     }
 
-    public static boolean isVpnRunning() {
-        return SOCKS_VPN_SERVICE_CLASS != null && SocksVpnService.isRunning();
+    public static boolean isVpnRunning(Context context) {
+        if (SOCKS_VPN_SERVICE_CLASS == null) {
+            return false;
+        }
+        ActivityManager activityManager = (ActivityManager) context.getSystemService(Context.ACTIVITY_SERVICE);
+        List<ActivityManager.RunningServiceInfo> services = activityManager.getRunningServices(Integer.MAX_VALUE);
+        if (services != null) {
+            for (ActivityManager.RunningServiceInfo service : services) {
+                if (service.service.getClassName().equals("fq.router2.SocksVpnService")) {
+                    return true;
+                }
+            }
+        }
+        return false;
     }
 
     @Override
@@ -57,7 +62,7 @@ public class LaunchService extends IntentService {
         boolean rooted = ShellUtils.checkRooted();
         LogUtils.i("rooted: " + rooted);
         sendBroadcast(new LaunchingIntent(_(R.string.status_check_existing_process), 10));
-        if (isVpnRunning()) {
+        if (isVpnRunning(this)) {
             LogUtils.i("manager is already running in vpn mode");
             sendBroadcast(new LaunchedIntent(true));
             return;
