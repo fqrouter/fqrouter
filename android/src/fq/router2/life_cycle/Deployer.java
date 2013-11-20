@@ -1,6 +1,7 @@
 package fq.router2.life_cycle;
 
 import android.content.Context;
+import android.os.Build;
 import fq.router2.R;
 import fq.router2.feedback.HandleAlertIntent;
 import fq.router2.utils.IOUtils;
@@ -231,8 +232,11 @@ public class Deployer {
     }
 
     private void linkLibs() throws Exception {
+        if (Build.VERSION.SDK_INT >= 14) {
+            return; // try narrow the effect range
+        }
         if (isXperia()) {
-            LogUtils.i("skip link libs for xperia");
+            LogUtils.i("skip link libs for xperia"); // will cause reboot
             return;
         }
         if (!shouldLinkLibs()) {

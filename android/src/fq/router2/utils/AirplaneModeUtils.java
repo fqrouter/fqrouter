@@ -17,10 +17,15 @@ public class AirplaneModeUtils {
 
     private static void toggleAboveApiLevel17() throws Exception {
         // Android 4.2 and above
-        ShellUtils.sudo("settings", "put", "global", "airplane_mode_on", "1");
-        ShellUtils.sudo("am", "broadcast", "-a", "android.intent.action.AIRPLANE_MODE", "--ez state", "true");
-        ShellUtils.sudo("settings", "put", "global", "airplane_mode_on", "0");
-        ShellUtils.sudo("am", "broadcast", "-a", "android.intent.action.AIRPLANE_MODE", "--ez state", "false");
+        try {
+            ShellUtils.sudo("ndc", "resolver", "flushdefaultif");
+        } catch (Exception e) {
+            LogUtils.e("failed to flush dns cache via ndc", e);
+            ShellUtils.sudo("settings", "put", "global", "airplane_mode_on", "1");
+            ShellUtils.sudo("am", "broadcast", "-a", "android.intent.action.AIRPLANE_MODE", "--ez state", "true");
+            ShellUtils.sudo("settings", "put", "global", "airplane_mode_on", "0");
+            ShellUtils.sudo("am", "broadcast", "-a", "android.intent.action.AIRPLANE_MODE", "--ez state", "false");
+        }
     }
 
     private static void toggleBelowApiLevel17(Context context) throws Exception {
