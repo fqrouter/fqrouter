@@ -231,6 +231,10 @@ public class Deployer {
     }
 
     private void linkLibs() throws Exception {
+        if (isXperia()) {
+            LogUtils.i("skip link libs for xperia");
+            return;
+        }
         if (!shouldLinkLibs()) {
             return;
         }
@@ -244,6 +248,7 @@ public class Deployer {
                     String targetPath = "/system/lib/" + file.getName();
                     if (!new File(targetPath).exists()) {
                         try {
+                            LogUtils.i("rm " + targetPath);
                             ShellUtils.sudo("rm " + targetPath);
                         } catch (Exception e) {
                             // ignore
@@ -254,6 +259,15 @@ public class Deployer {
             }
         } finally {
             ShellUtils.sudo("/data/data/fq.router2/busybox", "mount", "-o", "remount,ro", "/system");
+        }
+    }
+
+    private boolean isXperia() {
+        try {
+            return new File("/sbin/ric").exists();
+        } catch (Exception e) {
+            LogUtils.e("failed to tell if it is xperia", e);
+            return true;
         }
     }
 
