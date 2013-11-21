@@ -103,11 +103,7 @@ public class SocksVpnService extends VpnService {
                     });
                     count += 1;
                     if (count % 100 == 0) {
-                        if (skippedFds.isEmpty()) {
-                            initSkippedFds();
-                        } else {
-                            closeStagingFds();
-                        }
+                        garbageCollectFds();
                     }
                 } catch (Exception e) {
                     LogUtils.e("failed to handle fdsock", e);
@@ -119,8 +115,28 @@ public class SocksVpnService extends VpnService {
         }
     }
 
+    private void garbageCollectFds() {
+        if (listFds() == null) {
+            LogUtils.e("can not gc fd as can not list them");
+        } else {
+            if (skippedFds.isEmpty()) {
+                initSkippedFds();
+            } else {
+                closeStagingFds();
+            }
+        }
+    }
+
+    private String[] listFds() {
+        String[] fds = new File("/proc/" + android.os.Process.myPid() + "/fd").list();
+        if (null != fds) {
+            return fds;
+        }
+        return new File("/proc/self/fd").list();
+    }
+
     private void initSkippedFds() {
-        String[] fileNames = new File("/proc/self/fd").list();
+        String[] fileNames = listFds();
         LogUtils.i("init skipped fd count: " + fileNames.length);
         Collections.addAll(skippedFds, fileNames);
     }
@@ -139,7 +155,7 @@ public class SocksVpnService extends VpnService {
         }
         LogUtils.i("closed fd count: " + count);
         stagingFds.clear();
-        String[] fileNames = new File("/proc/self/fd").list();
+        String[] fileNames = listFds();
         LogUtils.i("current total fd count: " + fileNames.length);
         for (String fileName : fileNames) {
             if (skippedFds.contains(fileName)) {
