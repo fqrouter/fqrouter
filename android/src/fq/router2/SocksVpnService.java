@@ -102,7 +102,7 @@ public class SocksVpnService extends VpnService {
                         }
                     });
                     count += 1;
-                    if (count % 100 == 0) {
+                    if (count % 300 == 0) {
                         garbageCollectFds();
                     }
                 } catch (Exception e) {

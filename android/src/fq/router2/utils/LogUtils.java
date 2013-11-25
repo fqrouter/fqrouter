@@ -64,7 +64,7 @@ public class LogUtils {
     private static void writeLogFile(String level, String line) {
         if (logFile == null) {
             logFile = new File("/data/data/fq.router2/log/current-java.log");
-            if (logFile.exists()) {
+            if (logFile.length() > 1024 * 1024) {
                 logFile.delete();
             }
         }
