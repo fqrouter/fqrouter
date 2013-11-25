@@ -365,10 +365,6 @@ public class MainActivity extends Activity implements
     public void onLaunched(boolean isVpnMode) {
         ActivityCompat.invalidateOptionsMenu(this);
         if (isVpnMode) {
-            if (Build.VERSION.SDK_INT >= 19) { // 4.4
-                onHandleFatalError(_(R.string.android_4_4_vpn_unsupported));
-                return;
-            }
             updateStatus(_(R.string.status_acquire_vpn_permission), 75);
             clearNotification(this);
             if (LaunchService.isVpnRunning(this)) {
