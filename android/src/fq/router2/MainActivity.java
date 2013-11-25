@@ -6,15 +6,12 @@ import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.graphics.Color;
-import android.net.ConnectivityManager;
-import android.net.NetworkInfo;
 import android.net.Uri;
 import android.net.VpnService;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
 import android.preference.PreferenceManager;
-import android.provider.Settings;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.app.NotificationCompat;
 import android.support.v4.view.GestureDetectorCompat;
@@ -33,10 +30,7 @@ import fq.router2.feedback.*;
 import fq.router2.life_cycle.*;
 import fq.router2.utils.*;
 
-import java.io.File;
 import java.lang.reflect.Method;
-import java.util.HashSet;
-import java.util.Set;
 
 
 public class MainActivity extends Activity implements
@@ -120,7 +114,7 @@ public class MainActivity extends Activity implements
     }
 
     @Override
-    public boolean onTouchEvent(MotionEvent event){
+    public boolean onTouchEvent(MotionEvent event) {
         this.gestureDetector.onTouchEvent(event);
         return super.onTouchEvent(event);
     }
@@ -270,7 +264,7 @@ public class MainActivity extends Activity implements
                 .setPositiveButton(R.string.about_info_share, new DialogInterface.OnClickListener() {
                     @Override
                     public void onClick(DialogInterface dialogInterface, int i) {
-                        Intent intent=new Intent(android.content.Intent.ACTION_SEND);
+                        Intent intent = new Intent(android.content.Intent.ACTION_SEND);
                         intent.setType("text/plain");
                         intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_WHEN_TASK_RESET);
                         intent.putExtra(Intent.EXTRA_SUBJECT, _(R.string.share_subject));
@@ -371,6 +365,10 @@ public class MainActivity extends Activity implements
     public void onLaunched(boolean isVpnMode) {
         ActivityCompat.invalidateOptionsMenu(this);
         if (isVpnMode) {
+            if (Build.VERSION.SDK_INT >= 19) { // 4.4
+                onHandleFatalError(_(R.string.android_4_4_vpn_unsupported));
+                return;
+            }
             updateStatus(_(R.string.status_acquire_vpn_permission), 75);
             clearNotification(this);
             if (LaunchService.isVpnRunning(this)) {
@@ -561,13 +559,14 @@ public class MainActivity extends Activity implements
         private static final int SWIPE_MIN_DISTANCE = 120;
         private static final int SWIPE_MAX_OFF_PATH = 250;
         private static final int SWIPE_THRESHOLD_VELOCITY = 200;
+
         @Override
         public boolean onFling(MotionEvent e1, MotionEvent e2, float velocityX, float velocityY) {
             try {
                 if (Math.abs(e1.getY() - e2.getY()) > SWIPE_MAX_OFF_PATH)
                     return false;
                 // right to left swipe
-                if(e1.getX() - e2.getX() > SWIPE_MIN_DISTANCE && Math.abs(velocityX) > SWIPE_THRESHOLD_VELOCITY) {
+                if (e1.getX() - e2.getX() > SWIPE_MIN_DISTANCE && Math.abs(velocityX) > SWIPE_THRESHOLD_VELOCITY) {
                     gaTracker.sendEvent("more-power", "swipe", "", new Long(0));
                     showWebView();
                 }

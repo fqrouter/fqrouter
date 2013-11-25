@@ -102,7 +102,7 @@ public class SocksVpnService extends VpnService {
                         }
                     });
                     count += 1;
-                    if (count % 300 == 0) {
+                    if (count % 200 == 0) {
                         garbageCollectFds();
                     }
                 } catch (Exception e) {
@@ -128,10 +128,6 @@ public class SocksVpnService extends VpnService {
     }
 
     private String[] listFds() {
-        String[] fds = new File("/proc/" + android.os.Process.myPid() + "/fd").list();
-        if (null != fds) {
-            return fds;
-        }
         return new File("/proc/self/fd").list();
     }
 
