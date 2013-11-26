@@ -30,6 +30,7 @@ import fq.router2.feedback.*;
 import fq.router2.life_cycle.*;
 import fq.router2.utils.*;
 
+import java.io.File;
 import java.lang.reflect.Method;
 
 
@@ -469,6 +470,17 @@ public class MainActivity extends Activity implements
     private void startVpn() {
         if (LaunchService.isVpnRunning(this)) {
             LogUtils.e("vpn is already running, do not start it again");
+            return;
+        }
+        String[] fds = new File("/proc/self/fd").list();
+        if (null == fds) {
+            LogUtils.e("failed to list /proc/self/fd");
+            onHandleFatalError(_(R.string.status_vpn_rejected));
+            return;
+        }
+        if (fds.length > 500) {
+            LogUtils.e("too many fds before start: " + fds.length);
+            onHandleFatalError(_(R.string.status_vpn_rejected));
             return;
         }
         Intent intent = VpnService.prepare(MainActivity.this);

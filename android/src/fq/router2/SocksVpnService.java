@@ -39,6 +39,7 @@ public class SocksVpnService extends VpnService {
     @Override
     public void onRevoke() {
         stopSelf();
+        stopVpn();
     }
 
     @Override
@@ -57,7 +58,48 @@ public class SocksVpnService extends VpnService {
                     .setConfigureIntent(pIntent)
                     .setSession("fqrouter2")
                     .addAddress("10.25.1.1", 24)
-                    .addRoute("0.0.0.0", 0)
+                    .addRoute("1.0.0.0", 8)
+                    .addRoute("2.0.0.0", 7)
+                    .addRoute("4.0.0.0", 6)
+                    .addRoute("8.0.0.0", 7)
+                    // 10.0.0.0 - 10.255.255.255
+                    .addRoute("11.0.0.0", 8)
+                    .addRoute("12.0.0.0", 6)
+                    .addRoute("16.0.0.0", 4)
+                    .addRoute("32.0.0.0", 3)
+                    .addRoute("64.0.0.0", 2)
+                    .addRoute("139.0.0.0", 8)
+                    .addRoute("140.0.0.0", 6)
+                    .addRoute("144.0.0.0", 4)
+                    .addRoute("160.0.0.0", 5)
+                    .addRoute("168.0.0.0", 6)
+                    .addRoute("172.0.0.0", 12)
+                    // 172.16.0.0 - 172.31.255.255
+                    .addRoute("172.32.0.0", 11)
+                    .addRoute("172.64.0.0", 10)
+                    .addRoute("172.128.0.0", 9)
+                    .addRoute("173.0.0.0", 8)
+                    .addRoute("174.0.0.0", 7)
+                    .addRoute("176.0.0.0", 4)
+                    .addRoute("192.0.0.0", 9)
+                    .addRoute("192.128.0.0", 11)
+                    .addRoute("192.160.0.0", 13)
+                    // 192.168.0.0 - 192.168.255.255
+                    .addRoute("192.169.0.0", 16)
+                    .addRoute("192.170.0.0", 15)
+                    .addRoute("192.172.0.0", 14)
+                    .addRoute("192.176.0.0", 12)
+                    .addRoute("192.192.0.0", 10)
+                    .addRoute("193.0.0.0", 8)
+                    .addRoute("194.0.0.0", 7)
+                    .addRoute("196.0.0.0", 6)
+                    .addRoute("200.0.0.0", 5)
+                    .addRoute("208.0.0.0", 4)
+                    .addRoute("224.0.0.0", 4)
+                    .addRoute("240.0.0.0",5)
+                    .addRoute("248.0.0.0",6)
+                    .addRoute("252.0.0.0",7)
+                    .addRoute("254.0.0.0",8)
                     .addDnsServer("8.8.8.8")
                     .establish();
             if (tunPFD == null) {

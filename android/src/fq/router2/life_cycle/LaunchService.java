@@ -16,6 +16,7 @@ import fq.router2.utils.*;
 import java.io.File;
 import java.io.OutputStreamWriter;
 import java.util.*;
+import fq.router2.SocksVpnService;
 
 public class LaunchService extends IntentService {
 
@@ -40,19 +41,7 @@ public class LaunchService extends IntentService {
     }
 
     public static boolean isVpnRunning(Context context) {
-        if (SOCKS_VPN_SERVICE_CLASS == null) {
-            return false;
-        }
-        ActivityManager activityManager = (ActivityManager) context.getSystemService(Context.ACTIVITY_SERVICE);
-        List<ActivityManager.RunningServiceInfo> services = activityManager.getRunningServices(Integer.MAX_VALUE);
-        if (services != null) {
-            for (ActivityManager.RunningServiceInfo service : services) {
-                if (service.service.getClassName().equals("fq.router2.SocksVpnService")) {
-                    return true;
-                }
-            }
-        }
-        return false;
+        return SOCKS_VPN_SERVICE_CLASS != null && SocksVpnService.isRunning();
     }
 
     @Override
