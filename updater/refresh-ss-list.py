@@ -50,6 +50,7 @@ while True:
             # ('174.140.169.62', random.choice([220, 221]), 'A76nOIHdZEYw', 'rc4'), #ds4
             # ('174.140.169.65', random.choice([220, 221, 222, 223]), 'A76nOIHdZEYw', 'rc4'), #ds5
             ('174.140.168.47', random.choice([220, 221]), 'A76nOIHdZEYw', 'rc4'), #ds6
+            ('69.163.40.139', random.choice([220, 221]), 'A76nOIHdZEYw', 'rc4'), #ds7
             ('192.249.61.233', random.choice([220, 221]), 'A76nOIHdZEYw', 'rc4'), #ramnode1
             # ('192.184.80.11', random.choice([220, 221]), 'A76nOIHdZEYw', 'rc4'), #ramnode2
             ('176.56.236.63', random.choice([220, 221]), 'A76nOIHdZEYw', 'rc4'), #ramnode3
