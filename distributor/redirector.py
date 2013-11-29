@@ -10,9 +10,11 @@ import cgi
 import os
 import signal
 import urllib2
+import urllib
 
 LOGGER = logging.getLogger(__name__)
-RAW_URL = 'http://down.iscka.com/jx/360sQUYB8tmjPaqdm.apk'
+PAN_WEIYUN_URL = 'https://duyaoblog.duapp.com/download.php?type=w&fid=e7ddc2708c20dc20e0c7a47d53d2f722&uid='
+PAN_360_URL = 'http://down.iscka.com/jx/360sQUYB8tmjPaqdm.apk'
 HANDLERS = {}
 
 real_link = None
@@ -73,19 +75,49 @@ def main():
 
 
 def refresh_real_link():
+    global real_link
     while True:
         try:
-            update_real_link()
+            real_link = update_from_pan_360()
         except:
-            LOGGER.exception('failed to update link')
+            LOGGER.exception('failed to update from pan 360')
+            try:
+                real_link = update_from_pan_weiyun()
+            except:
+                LOGGER.exception('failed to update from pan weiyun')
         gevent.sleep(60 * 60)
 
 
-def update_real_link():
-    global real_link
-    html = urllib2.urlopen(RAW_URL).read()
+def update_from_pan_360():
+    html = urllib2.urlopen(PAN_360_URL).read()
     real_link = html.rpartition('url=')[2][:-2]
-    LOGGER.info('updated link: %s' % real_link)
+    if 'yunpan.cn' not in real_link:
+        raise Exception('invalid link: %s' % real_link)
+    LOGGER.info('updated pan 360: %s' % real_link)
+    return real_link
+
+
+class NoRedirectHandler(urllib2.HTTPRedirectHandler):
+    def http_error_302(self, req, fp, code, msg, headers):
+        infourl = urllib.addinfourl(fp, headers, req.get_full_url())
+        infourl.status = code
+        infourl.code = code
+        return infourl
+
+    http_error_300 = http_error_302
+    http_error_301 = http_error_302
+    http_error_303 = http_error_302
+    http_error_307 = http_error_302
+
+
+def update_from_pan_weiyun():
+    opener = urllib2.build_opener(NoRedirectHandler())
+    urllib2.install_opener(opener)
+    real_link = opener.open(PAN_WEIYUN_URL).headers['Location']
+    if 'qq.com' not in real_link:
+        raise Exception('invalid link: %s' % real_link)
+    LOGGER.info('updated pan weiyun: %s' % real_link)
+    return real_link
 
 
 if '__main__' == __name__:
