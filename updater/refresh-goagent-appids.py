@@ -320,10 +320,9 @@ def check():
         except:
             traceback.print_exc()
 
-def main():
+def refresh():
     global APP_ID_QUEUE
-    gevent.monkey.patch_all()
-    fqsocks.proxies.goagent.GoAgentProxy.GOOGLE_IPS = socket.gethostbyname_ex('goagent-google-ip.fqrouter.com')[2]
+    fqsocks.proxies.goagent.GoAgentProxy.GOOGLE_IPS = socket.gethostbyname_ex('goagent-google-ip2.fqrouter.com')[2]
     while True:
         bad_app_ids.clear()
         for i in range(10):
@@ -348,7 +347,14 @@ def main():
                 LOGGER.info('group %s done at %s ' % (group_id, datetime.datetime.now()))
                 time.sleep(150)
 
-
+def main():
+    gevent.monkey.patch_all()
+    while True:
+        try:
+            refresh()
+        except:
+            LOGGER.exception('loop exit')
+            time.sleep(150)
 
 if '__main__' == __name__:
     main()
