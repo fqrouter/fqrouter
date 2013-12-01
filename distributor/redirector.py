@@ -15,6 +15,7 @@ import urllib
 LOGGER = logging.getLogger(__name__)
 PAN_WEIYUN_URL = 'https://duyaoblog.duapp.com/download.php?type=w&fid=e7ddc2708c20dc20e0c7a47d53d2f722&uid='
 PAN_360_URL = 'http://down.iscka.com/jx/360sQUYB8tmjPaqdm.apk'
+FALLBACK_URL = 'http://69.163.40.146:8080/fqrouter-2.8.6.apk'
 HANDLERS = {}
 
 real_link = None
@@ -78,6 +79,13 @@ def refresh_real_link():
     global real_link
     while True:
         try:
+            if real_link:
+                verify_real_link(real_link)
+                gevent.sleep(60)
+                continue
+        except:
+            LOGGER.exception('real link expired')
+        try:
             real_link = update_from_pan_360()
         except:
             LOGGER.exception('failed to update from pan 360')
@@ -85,7 +93,10 @@ def refresh_real_link():
                 real_link = update_from_pan_weiyun()
             except:
                 LOGGER.exception('failed to update from pan weiyun')
-        gevent.sleep(60 * 60)
+                LOGGER.critical('!!! stop update, fallback !!!')
+                real_link = FALLBACK_URL
+                return
+        gevent.sleep(60)
 
 
 def update_from_pan_360():
@@ -93,6 +104,7 @@ def update_from_pan_360():
     real_link = html.rpartition('url=')[2][:-2]
     if 'yunpan.cn' not in real_link:
         raise Exception('invalid link: %s' % real_link)
+    verify_real_link(real_link)
     LOGGER.info('updated pan 360: %s' % real_link)
     return real_link
 
@@ -116,8 +128,13 @@ def update_from_pan_weiyun():
     real_link = opener.open(PAN_WEIYUN_URL).headers['Location']
     if 'qq.com' not in real_link:
         raise Exception('invalid link: %s' % real_link)
+    verify_real_link(real_link)
     LOGGER.info('updated pan weiyun: %s' % real_link)
     return real_link
+
+
+def verify_real_link(link):
+    assert int(urllib2.urlopen(link).headers['Content-Length']) > (1024 * 1024)
 
 
 if '__main__' == __name__:
