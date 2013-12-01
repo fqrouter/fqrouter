@@ -86,11 +86,11 @@ def refresh_real_link():
         except:
             LOGGER.exception('real link expired')
         try:
-            real_link = update_from_pan_360()
+            real_link = gevent.spawn(update_from_pan_360).get(timeout=30)
         except:
             LOGGER.exception('failed to update from pan 360')
             try:
-                real_link = update_from_pan_weiyun()
+                real_link = gevent.spawn(update_from_pan_weiyun).get(timeout=30)
             except:
                 LOGGER.exception('failed to update from pan weiyun')
                 LOGGER.critical('!!! stop update, fallback !!!')
