@@ -5,3 +5,7 @@
 </a>
 
 fqrouter released under the terms of GPL v3.0
+
+
+[![Bitdeli Badge](https://d2weczhvl823v0.cloudfront.net/fqrouter/fqrouter/trend.png)](https://bitdeli.com/free "Bitdeli Badge")
+
